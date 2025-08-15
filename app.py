@@ -10,6 +10,7 @@ from datetime import datetime
 from flask import Flask, jsonify, send_from_directory, send_file, request, session
 from flask_cors import CORS
 from flask_login import LoginManager
+from flask_session import Session
 
 # ====================================
 # CONFIGURATION APPLICATION
@@ -28,6 +29,13 @@ CORS(app, origins=["*"])
 
 # Configuration de base
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev_secret_key")
+
+# Configuration des sessions persistantes
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 heures
+app.config['SESSION_TYPE'] = 'filesystem'  # Stockage fichier pour persistance
+
+# Initialisation de Flask-Session
+Session(app)
 
 # ====================================
 # ROUTE DE DIAGNOSTIC RAILWAY
@@ -172,13 +180,8 @@ def simulate_migration():
 # CHARGEMENT DE LA CONFIGURATION
 # ====================================
 
-# Charger la configuration de test si disponible
-try:
-    from test_config import setup_test_environment
-    setup_test_environment()
-    print("✅ Configuration de test chargée")
-except ImportError:
-    print("⚠️  Configuration de test non disponible, utilisation des variables système")
+# Configuration des variables d'environnement
+print("🔧 Configuration depuis variables système")
 
 # ====================================
 # INITIALISATION SUPABASE
