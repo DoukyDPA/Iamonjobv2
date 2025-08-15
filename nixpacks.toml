@@ -1,0 +1,22 @@
+[phases.setup]
+nixPkgs = ["nodejs", "python3", "python3Packages.pip"]
+
+[phases.install]
+cmds = [
+  "echo '=== NIXPACKS DEPLOYMENT START ==='",
+  "python --version && node --version && npm --version",
+  "pip install --break-system-packages -r requirements.txt",
+  "echo '=== FRONTEND BUILD ==='",
+  "cd frontend && npm install && npm run build && cd ..",
+  "echo '=== VERIFYING GUNICORN ==='",
+  "python -m gunicorn --version || echo 'Gunicorn not found'"
+]
+
+[phases.build]
+cmds = [
+  "echo '=== BUILD PHASE COMPLETED ==='",
+  "ls -la frontend/build/ || echo 'No build directory'"
+]
+
+[start]
+cmd = "python -m gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120"

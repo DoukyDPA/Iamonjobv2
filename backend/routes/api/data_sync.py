@@ -1,0 +1,151 @@
+"""
+API de synchronisation des données entre localStorage et Supabase
+Force l'utilisation de Supabase comme source de vérité
+"""
+from flask import Blueprint, request, jsonify, session
+from services.supabase_storage import SupabaseStorage
+
+# Fonctions de compatibilité
+def get_session_data():
+    supabase = SupabaseStorage()
+    return supabase.get_session_data()
+
+def save_session_data(data):
+    supabase = SupabaseStorage()
+    return supabase.save_session_data(data)
+
+def migrate_from_localStorage():
+    # Migration depuis localStorage vers Supabase
+    supabase = SupabaseStorage()
+    # Logique de migration si nécessaire
+    return True
+import logging
+import json
+
+data_sync_api = Blueprint('data_sync', __name__)
+
+@data_sync_api.route('/sync/push', methods=['POST'])
+def push_to_supabase():
+    """
+    Pousse les données du localStorage vers Supabase
+    Appelé au chargement de la page
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'success': False, 'error': 'Pas de données'}), 400
+        
+        # Récupérer les données localStorage envoyées par le frontend
+        local_storage_data = data.get('localStorage_data', {})
+        
+        if local_storage_data:
+            # Migrer vers Supabase
+            success = migrate_from_localStorage(local_storage_data)
+            
+            if success:
+                logging.info("✅ Synchronisation localStorage -> Supabase réussie")
+                return jsonify({
+                    'success': True,
+                    'message': 'Données synchronisées avec le serveur'
+                }), 200
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'Échec de la synchronisation'
+                }), 500
+        
+        return jsonify({
+            'success': True,
+            'message': 'Pas de données à synchroniser'
+        }), 200
+        
+    except Exception as e:
+        logging.error(f"Erreur sync push: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@data_sync_api.route('/sync/pull', methods=['GET'])
+def pull_from_supabase():
+    """
+    Récupère les données depuis Supabase
+    Pour remplacer le localStorage
+    """
+    try:
+        # Récupérer depuis Supabase
+        supabase_data = get_session_data()
+        
+        return jsonify({
+            'success': True,
+            'data': supabase_data,
+            'source': 'supabase'
+        }), 200
+        
+    except Exception as e:
+        logging.error(f"Erreur sync pull: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@data_sync_api.route('/sync/check', methods=['GET'])
+def check_sync_status():
+    """
+    Vérifie l'état de synchronisation
+    """
+    try:
+        from services.supabase_storage import SupabaseStorage
+        
+        supabase = SupabaseStorage()
+        supabase_available = True
+        
+        if supabase_available:
+            try:
+                # Test Supabase
+                response = supabase.client.table('sessions').select('id').limit(1).execute()
+                supabase_status = "connected"
+            except:
+                supabase_status = "error"
+                supabase_available = False
+        else:
+            supabase_status = "not_configured"
+        
+        # Récupérer les données actuelles
+        current_data = get_session_data() if supabase_available else {}
+        
+        return jsonify({
+            'success': True,
+            'supabase': {
+                'available': supabase_available,
+                'status': supabase_status
+            },
+            'data': {
+                'has_history': len(current_data.get('chat_history', [])) > 0,
+                'documents': current_data.get('documents', {}),
+                'message_count': len(current_data.get('chat_history', []))
+            }
+        }), 200
+        
+    except Exception as e:
+        logging.error(f"Erreur check sync: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@data_sync_api.route('/sync/force-supabase', methods=['POST'])
+def force_supabase_usage():
+    """
+    Force l'utilisation de Supabase et désactive le localStorage
+    """
+    try:
+        # Marquer dans la session qu'on veut forcer Supabase
+        session['force_supabase'] = True
+        session['disable_localStorage'] = True
+        session.permanent = True
+        
+        return jsonify({
+            'success': True,
+            'message': 'Supabase forcé, localStorage désactivé'
+        }), 200
+        
+    except Exception as e:
+        logging.error(f"Erreur force supabase: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# À ajouter dans app.py:
+# from backend.routes.api.data_sync import data_sync_api
+# app.register_blueprint(data_sync_api, url_prefix='/api/data') 

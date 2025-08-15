@@ -1,0 +1,12 @@
+flask==2.3.3
+flask-cors==4.0.0
+flask-login==0.6.2
+gunicorn==21.2.0
+# redis supprimé - remplacé par Supabase
+PyPDF2==3.0.1
+python-docx==0.8.11
+requests==2.31.0
+werkzeug==2.3.7
+PyJWT>=2.0.0
+psutil==5.9.5
+supabase>=2.3.0,<3.0.0
