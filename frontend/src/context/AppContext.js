@@ -166,10 +166,10 @@ export const AppProvider = ({ children }) => {
           }
         }
 
-        // Actualiser l'historique
-        setTimeout(() => {
-          refreshChatHistory();
-        }, 1000);
+        // Actualiser l'historique - DÉSACTIVÉ TEMPORAIREMENT
+        // setTimeout(() => {
+        //   refreshChatHistory();
+        // }, 1000);
 
         toast.success(`${file.name} uploadé avec succès !`);
         
@@ -246,10 +246,10 @@ export const AppProvider = ({ children }) => {
           }
         }
 
-        // Actualiser l'historique
-        setTimeout(() => {
-          refreshChatHistory();
-        }, 1000);
+        // Actualiser l'historique - DÉSACTIVÉ TEMPORAIREMENT
+        // setTimeout(() => {
+        //   refreshChatHistory();
+        // }, 1000);
 
         toast.success('Texte enregistré avec succès !');
         
@@ -311,9 +311,9 @@ export const AppProvider = ({ children }) => {
         setMessages(prev => [...prev, aiMessage]);
         
         if (data.chat_updated) {
-          setTimeout(() => {
-            refreshChatHistory();
-          }, 500);
+          // setTimeout(() => {
+          //   refreshChatHistory();
+          // }, 500);
         }
         
       } else {
