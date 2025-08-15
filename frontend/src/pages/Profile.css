@@ -1,0 +1,260 @@
+/* Profile Page Styles */
+.profile-page {
+  min-height: calc(100vh - 200px);
+  padding: 2rem 0;
+}
+
+.profile-header {
+  margin-bottom: 2rem;
+}
+
+.profile-header h1 {
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+.profile-header p {
+  color: var(--text-light);
+  font-size: 1.1rem;
+}
+
+/* Profile Content Layout */
+.profile-content {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* Sidebar */
+.profile-sidebar {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  box-shadow: var(--shadow-md);
+  height: fit-content;
+}
+
+.profile-tab {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: none;
+  border: none;
+  color: var(--text-color);
+  text-align: left;
+  cursor: pointer;
+  transition: var(--transition);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.profile-tab:hover {
+  background: var(--secondary-color);
+  color: var(--primary-color);
+}
+
+.profile-tab.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+.profile-tab svg {
+  font-size: 1.25rem;
+}
+
+/* Main Content */
+.profile-main {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
+}
+
+.profile-section h2 {
+  margin-bottom: 2rem;
+  color: var(--text-color);
+  font-size: 1.5rem;
+}
+
+/* Profile Form */
+.profile-form {
+  max-width: 500px;
+}
+
+.profile-form .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.profile-form .form-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.profile-form .form-label svg {
+  font-size: 1rem;
+  color: var(--text-light);
+}
+
+.form-help {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.profile-form button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+
+/* Security Info */
+.security-info {
+  margin-top: 3rem;
+  padding: 1.5rem;
+  background: var(--secondary-color);
+  border-radius: var(--border-radius);
+  border-left: 4px solid var(--primary-color);
+}
+
+.security-info h3 {
+  margin-bottom: 1rem;
+  color: var(--text-color);
+  font-size: 1.1rem;
+}
+
+.security-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.security-info li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+}
+
+.security-info li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-box {
+  background: var(--secondary-color);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: var(--transition);
+}
+
+.stat-box:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  font-size: 1.5rem;
+}
+
+.stat-info h3 {
+  margin: 0;
+  font-size: 1.75rem;
+  color: var(--primary-color);
+}
+
+.stat-info p {
+  margin: 0;
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+/* Activity Info */
+.activity-info {
+  background: var(--secondary-color);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 2rem;
+}
+
+.activity-info p {
+  margin: 0.5rem 0;
+  color: var(--text-color);
+}
+
+.activity-info strong {
+  color: var(--text-color);
+}
+
+/* Profile Actions */
+.profile-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .profile-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-sidebar {
+    display: flex;
+    overflow-x: auto;
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+  
+  .profile-tab {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  
+  .profile-main {
+    padding: 1.5rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .profile-actions {
+    flex-direction: column;
+  }
+  
+  .profile-actions .btn {
+    width: 100%;
+  }
+}

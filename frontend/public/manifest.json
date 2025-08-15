@@ -1,0 +1,15 @@
+{
+  "short_name": "IAMONJOB",
+  "name": "IAMONJOB - Assistant IA pour l'emploi",
+  "icons": [
+    {
+      "src": "logo_iamonjob.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0a6b79",
+  "background_color": "#ffffff"
+}

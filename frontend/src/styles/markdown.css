@@ -1,0 +1,596 @@
+/* ===================================================================
+   📝 MARKDOWN RENDERER - Styles optimisés et centralisés
+   Remplace les styles inline de MarkdownRenderer.js
+   ================================================================== */
+
+/* ===== CONTENEUR PRINCIPAL ===== */
+.markdown-renderer {
+  font-family: var(--font-family-base);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-color);
+}
+
+/* ===== VARIANTES PAR TYPE DE SERVICE ===== */
+.markdown-renderer.default {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-2xl);
+}
+
+.markdown-renderer.matching-cv-offre {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 1px solid #cbd5e1;
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-3xl);
+  position: relative;
+}
+
+.markdown-renderer.matching-cv-offre::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), var(--info-color));
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+}
+
+.markdown-renderer.cover-letter {
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-2xl);
+  position: relative;
+}
+
+.markdown-renderer.cover-letter::before {
+  content: '✉️';
+  position: absolute;
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
+  font-size: var(--font-size-xl);
+  opacity: 0.3;
+}
+
+.markdown-renderer.interview-prep {
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-2xl);
+  position: relative;
+}
+
+.markdown-renderer.interview-prep::before {
+  content: '🎯';
+  position: absolute;
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
+  font-size: var(--font-size-xl);
+  opacity: 0.3;
+}
+
+/* ===== TITRES ===== */
+.markdown-renderer h1 {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-color);
+  margin-bottom: var(--spacing-2xl);
+  margin-top: var(--spacing-3xl);
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: var(--spacing-md);
+  line-height: var(--line-height-tight);
+}
+
+.markdown-renderer h1:first-child {
+  margin-top: 0;
+}
+
+.markdown-renderer h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-color);
+  margin-bottom: var(--spacing-xl);
+  margin-top: var(--spacing-3xl);
+  position: relative;
+  padding-left: var(--spacing-lg);
+}
+
+.markdown-renderer h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 24px;
+  background: var(--primary-color);
+  border-radius: var(--border-radius-sm);
+}
+
+.markdown-renderer h3 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-color);
+  margin-bottom: var(--spacing-lg);
+  margin-top: var(--spacing-2xl);
+}
+
+.markdown-renderer h4 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-color);
+  margin-bottom: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+}
+
+.markdown-renderer h5,
+.markdown-renderer h6 {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-color);
+  margin-bottom: var(--spacing-sm);
+  margin-top: var(--spacing-lg);
+}
+
+/* ===== PARAGRAPHES ===== */
+.markdown-renderer p {
+  margin-bottom: var(--spacing-lg);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-color);
+}
+
+.markdown-renderer p:last-child {
+  margin-bottom: 0;
+}
+
+/* ===== LISTES ===== */
+.markdown-renderer ul,
+.markdown-renderer ol {
+  margin-bottom: var(--spacing-lg);
+  padding-left: var(--spacing-2xl);
+}
+
+.markdown-renderer ul {
+  list-style-type: none;
+  position: relative;
+}
+
+.markdown-renderer ul li {
+  position: relative;
+  margin-bottom: var(--spacing-sm);
+  padding-left: var(--spacing-lg);
+}
+
+.markdown-renderer ul li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--primary-color);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
+}
+
+.markdown-renderer ol {
+  counter-reset: list-counter;
+}
+
+.markdown-renderer ol li {
+  counter-increment: list-counter;
+  margin-bottom: var(--spacing-sm);
+  padding-left: var(--spacing-lg);
+  position: relative;
+}
+
+.markdown-renderer ol li::before {
+  content: counter(list-counter) '.';
+  position: absolute;
+  left: 0;
+  color: var(--primary-color);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ===== LISTES IMBRIQUÉES ===== */
+.markdown-renderer ul ul,
+.markdown-renderer ol ol,
+.markdown-renderer ul ol,
+.markdown-renderer ol ul {
+  margin-top: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+/* ===== CITATIONS ===== */
+.markdown-renderer blockquote {
+  background: var(--bg-tertiary);
+  border-left: 4px solid var(--primary-color);
+  margin: var(--spacing-2xl) 0;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  position: relative;
+}
+
+.markdown-renderer blockquote::before {
+  content: '"';
+  position: absolute;
+  top: var(--spacing-sm);
+  left: var(--spacing-sm);
+  font-size: var(--font-size-4xl);
+  color: var(--primary-color);
+  opacity: 0.3;
+  line-height: 1;
+}
+
+.markdown-renderer blockquote p {
+  margin-bottom: var(--spacing-md);
+  font-style: italic;
+  color: var(--text-light);
+}
+
+.markdown-renderer blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* ===== CODE ===== */
+.markdown-renderer code {
+  background: var(--bg-tertiary);
+  color: var(--primary-color);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  border: 1px solid var(--border-color);
+}
+
+.markdown-renderer pre {
+  background: var(--text-color);
+  color: var(--text-inverse);
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius);
+  overflow-x: auto;
+  margin: var(--spacing-2xl) 0;
+  position: relative;
+}
+
+.markdown-renderer pre::before {
+  content: 'Code';
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.1);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  opacity: 0.7;
+}
+
+.markdown-renderer pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  border: none;
+  font-size: var(--font-size-sm);
+}
+
+/* ===== LIENS ===== */
+.markdown-renderer a {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  transition: var(--transition);
+  position: relative;
+}
+
+.markdown-renderer a:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+.markdown-renderer a::after {
+  content: '↗';
+  margin-left: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  opacity: 0.7;
+}
+
+.markdown-renderer a[href^="#"]::after,
+.markdown-renderer a[href^="mailto:"]::after,
+.markdown-renderer a[href^="tel:"]::after {
+  display: none;
+}
+
+/* ===== EMPHASES ===== */
+.markdown-renderer strong {
+  font-weight: var(--font-weight-bold);
+  color: var(--text-color);
+}
+
+.markdown-renderer em {
+  font-style: italic;
+  color: var(--text-light);
+}
+
+.markdown-renderer del {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.markdown-renderer mark {
+  background: #fef08a;
+  color: var(--text-color);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+}
+
+/* ===== SÉPARATEURS ===== */
+.markdown-renderer hr {
+  border: none;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+  margin: var(--spacing-4xl) 0;
+}
+
+/* ===== TABLEAUX ===== */
+.markdown-renderer table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--spacing-2xl) 0;
+  background: var(--bg-primary);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.markdown-renderer thead {
+  background: var(--bg-tertiary);
+}
+
+.markdown-renderer th,
+.markdown-renderer td {
+  padding: var(--spacing-md) var(--spacing-lg);
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.markdown-renderer th {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-color);
+  text-transform: uppercase;
+  font-size: var(--font-size-sm);
+  letter-spacing: 0.05em;
+}
+
+.markdown-renderer tr:hover {
+  background: var(--bg-tertiary);
+}
+
+.markdown-renderer tr:last-child td {
+  border-bottom: none;
+}
+
+/* ===== BADGES ET ÉLÉMENTS SPÉCIAUX ===== */
+.markdown-renderer .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--primary-color);
+  color: var(--text-inverse);
+  border-radius: var(--border-radius-lg);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.markdown-renderer .highlight-box {
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  border-left: 4px solid var(--info-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin: var(--spacing-2xl) 0;
+}
+
+.markdown-renderer .warning-box {
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-left: 4px solid var(--warning-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin: var(--spacing-2xl) 0;
+}
+
+.markdown-renderer .success-box {
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  border-left: 4px solid var(--success-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin: var(--spacing-2xl) 0;
+}
+
+.markdown-renderer .error-box {
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  border-left: 4px solid var(--error-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin: var(--spacing-2xl) 0;
+}
+
+/* ===== SECTIONS SPÉCIALISÉES ===== */
+.markdown-renderer .cv-section {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid var(--info-border);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-2xl);
+  margin: var(--spacing-3xl) 0;
+  position: relative;
+}
+
+.markdown-renderer .cv-section::before {
+  content: '📄';
+  position: absolute;
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
+  font-size: var(--font-size-2xl);
+  opacity: 0.3;
+}
+
+.markdown-renderer .job-section {
+  background: linear-gradient(135deg, #fef7ff 0%, #fae8ff 100%);
+  border: 1px solid #d8b4fe;
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-2xl);
+  margin: var(--spacing-3xl) 0;
+  position: relative;
+}
+
+.markdown-renderer .job-section::before {
+  content: '💼';
+  position: absolute;
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
+  font-size: var(--font-size-2xl);
+  opacity: 0.3;
+}
+
+.markdown-renderer .recommendation-section {
+  background: linear-gradient(135deg, var(--success-bg) 0%, #dcfce7 100%);
+  border: 1px solid var(--success-border);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-2xl);
+  margin: var(--spacing-3xl) 0;
+  position: relative;
+}
+
+.markdown-renderer .recommendation-section::before {
+  content: '💡';
+  position: absolute;
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
+  font-size: var(--font-size-2xl);
+  opacity: 0.3;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+  .markdown-renderer {
+    font-size: var(--font-size-sm);
+  }
+  
+  .markdown-renderer.matching-cv-offre,
+  .markdown-renderer.cover-letter,
+  .markdown-renderer.interview-prep,
+  .markdown-renderer.default {
+    padding: var(--spacing-lg);
+  }
+  
+  .markdown-renderer h1 {
+    font-size: var(--font-size-2xl);
+    margin-top: var(--spacing-2xl);
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .markdown-renderer h2 {
+    font-size: var(--font-size-xl);
+    margin-top: var(--spacing-2xl);
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .markdown-renderer h3 {
+    font-size: var(--font-size-lg);
+    margin-top: var(--spacing-xl);
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .markdown-renderer ul,
+  .markdown-renderer ol {
+    padding-left: var(--spacing-lg);
+  }
+  
+  .markdown-renderer blockquote {
+    margin: var(--spacing-lg) 0;
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+  
+  .markdown-renderer pre {
+    padding: var(--spacing-md);
+    overflow-x: scroll;
+  }
+  
+  .markdown-renderer table {
+    font-size: var(--font-size-sm);
+  }
+  
+  .markdown-renderer th,
+  .markdown-renderer td {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .markdown-renderer .cv-section,
+  .markdown-renderer .job-section,
+  .markdown-renderer .recommendation-section {
+    padding: var(--spacing-lg);
+    margin: var(--spacing-2xl) 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .markdown-renderer.matching-cv-offre,
+  .markdown-renderer.cover-letter,
+  .markdown-renderer.interview-prep,
+  .markdown-renderer.default {
+    padding: var(--spacing-md);
+  }
+  
+  .markdown-renderer h1 {
+    font-size: var(--font-size-xl);
+  }
+  
+  .markdown-renderer h2 {
+    font-size: var(--font-size-lg);
+    padding-left: var(--spacing-md);
+  }
+  
+  .markdown-renderer h2::before {
+    width: 3px;
+    height: 18px;
+  }
+  
+  .markdown-renderer .cv-section,
+  .markdown-renderer .job-section,
+  .markdown-renderer .recommendation-section {
+    padding: var(--spacing-md);
+  }
+}
+
+/* ===== IMPRESSION ===== */
+@media print {
+  .markdown-renderer {
+    background: white !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: black !important;
+  }
+  
+  .markdown-renderer::before {
+    display: none !important;
+  }
+  
+  .markdown-renderer a {
+    color: black !important;
+    text-decoration: underline !important;
+  }
+  
+  .markdown-renderer a::after {
+    display: none !important;
+  }
+  
+  .markdown-renderer code,
+  .markdown-renderer pre {
+    background: #f5f5f5 !important;
+    color: black !important;
+  }
+}

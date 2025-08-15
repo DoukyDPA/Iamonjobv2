@@ -1,0 +1,185 @@
+
+/* ===== ONGLETS PLUS GROS ===== */
+.revolutionary-tabs-container .revolutionary-tabs {
+  padding: 12px;
+}
+
+.revolutionary-tabs-container .revolutionary-tab-button {
+  padding: 18px 28px;
+  font-size: 1.1rem;
+  min-width: 140px;
+}
+
+.revolutionary-tabs-container .revolutionary-tab-icon {
+  font-size: 1.3rem;
+}
+
+/* Hide mobile tab labels on desktop */
+.revolutionary-tab-label-mobile {
+  display: none;
+  width: 100%;
+  text-align: center;
+
+}
+
+/* ===== DOCUMENTS 4 COLONNES PROPREMENT ===== */
+/* Grille documents révolutionnaire pour le dashboard */
+.revolutionary-dashboard .revolutionary-document-types {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  max-width: 1600px;
+  margin: 0 auto 40px auto;
+}
+
+/* ===== CARTES DOCUMENTS PLUS PETITES ===== */
+.revolutionary-dashboard .revolutionary-document-card {
+  padding: 18px;
+  min-height: 180px;
+  border-radius: 14px;
+}
+
+.revolutionary-dashboard .revolutionary-document-icon {
+  width: 48px;
+  height: 48px;
+  font-size: 1.8rem;
+  border-radius: 10px;
+}
+
+
+/* === Nouveau style pour les cartes Documents === */
+.document-tile {
+  position: relative;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 14px;
+  padding: 28px;
+  color: #166534;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s ease;
+}
+
+.document-tile::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--tile-color, #0a6b79);
+  border-radius: 14px 14px 0 0;
+}
+
+.document-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--tile-color, #0a6b79);
+}
+
+.revolutionary-dashboard .revolutionary-document-info h4 {
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
+
+.revolutionary-dashboard .revolutionary-document-info p {
+  font-size: 0.85rem;
+}
+
+/* ===== TITRE PLUS PETIT ===== */
+.revolutionary-dashboard .revolutionary-section-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.revolutionary-dashboard .revolutionary-section-description {
+  font-size: 1.1rem;
+  max-width: 600px;
+}
+
+/* ===== BOUTONS PLUS COMPACTS ===== */
+.revolutionary-dashboard .revolutionary-btn-upload,
+.revolutionary-dashboard .revolutionary-btn-text,
+.revolutionary-dashboard .revolutionary-btn-questionnaire {
+  padding: 9px 14px;
+  font-size: 0.8rem;
+  border-radius: 18px;
+}
+
+/* ===== RESPONSIVE PROPRE ===== */
+@media (max-width: 1400px) {
+  .revolutionary-dashboard .revolutionary-document-types {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .revolutionary-dashboard .revolutionary-document-types {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+/* ===== GRID DASHBOARD RESPONSIVE ===== */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto auto;
+  grid-template-areas: 
+    "cv questionnaire offre"
+    "metier conseils conseils";
+  gap: 2rem;
+  margin-bottom: 2rem;
+  align-items: start;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    grid-template-areas: 
+      "cv questionnaire"
+      "offre metier"
+      "conseils conseils";
+    gap: 1rem;
+  }
+  
+  .revolutionary-tabs-container .revolutionary-tab-button {
+    padding: 14px 20px;
+    font-size: 1rem;
+    min-width: 120px;
+    justify-content: center;
+  }
+
+  .revolutionary-tabs-container .revolutionary-tabs {
+    justify-content: flex-start;
+  }
+  
+  .revolutionary-tabs-container .revolutionary-tab-label {
+    display: none;
+  }
+
+  .revolutionary-tab-label-mobile {
+    display: inline;
+    width: 100%;
+    text-align: center;
+
+  }
+  
+  /* Masquer le pavé de progression en mobile */
+  .desktop-only {
+    display: none !important;
+  }
+  
+  /* Ajuster les cartes pour mobile */
+  .document-tile {
+    padding: 20px;
+    min-height: 160px;
+  }
+  
+  .revolutionary-dashboard .revolutionary-section-title {
+    font-size: 1.8rem;
+  }
+} 
