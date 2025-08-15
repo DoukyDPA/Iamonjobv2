@@ -17,11 +17,26 @@ class SupabaseStorage:
         key = os.getenv('SUPABASE_ANON_KEY')
         
         if not url or not key:
-            raise ValueError("⚠️ SUPABASE_URL et SUPABASE_ANON_KEY requis dans les variables d'environnement")
+            # Au lieu de crasher, marquer comme non disponible
+            self.available = False
+            self.client = None
+            self.cache = {}
+            logging.warning("⚠️ SUPABASE_URL et SUPABASE_ANON_KEY manquants - mode dégradé")
+            return
         
-        self.client: Client = create_client(url, key)
-        self.cache = {}  # Cache local 1 minute
-        logging.info("✅ Supabase Storage initialisé")
+        try:
+            self.client: Client = create_client(url, key)
+            self.cache = {}  # Cache local 1 minute
+            self.available = True
+            logging.info("✅ Supabase Storage initialisé")
+        except Exception as e:
+            logging.error(f"❌ Erreur init Supabase: {e}")
+            self.available = False
+            self.client = None
+    
+    def is_available(self) -> bool:
+        """Vérifie si Supabase est disponible"""
+        return hasattr(self, 'available') and self.available
     
     def get_user_key(self) -> str:
         """Compatible avec votre système actuel"""
@@ -40,6 +55,10 @@ class SupabaseStorage:
         Récupération des données de session
         API identique pour compatibilité
         """
+        if not self.is_available():
+            logging.warning("Supabase non disponible - retour données par défaut")
+            return self._default_session_data()
+            
         user_key = self.get_user_key()
         
         try:
@@ -69,10 +88,14 @@ class SupabaseStorage:
         Sauvegarde des données de session
         API identique pour compatibilité
         """
+        if not self.is_available():
+            logging.warning("Supabase non disponible - sauvegarde impossible")
+            return False
+            
         user_key = self.get_user_key()
         
         try:
-            # Upsert (update ou insert)
+            # Upsert (update ou insert) - utiliser la colonne unique user_email
             response = self.client.table('sessions').upsert({
                 'user_email': user_key,
                 'chat_history': data.get('chat_history', []),
