@@ -10,7 +10,6 @@ from datetime import datetime
 from flask import Flask, jsonify, send_from_directory, send_file, request, session
 from flask_cors import CORS
 from flask_login import LoginManager
-from flask_session import Session
 
 # ====================================
 # CONFIGURATION APPLICATION
@@ -32,10 +31,6 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev_secret_key")
 
 # Configuration des sessions persistantes
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 heures
-app.config['SESSION_TYPE'] = 'filesystem'  # Stockage fichier pour persistance
-
-# Initialisation de Flask-Session
-Session(app)
 
 # ====================================
 # ROUTE DE DIAGNOSTIC RAILWAY
