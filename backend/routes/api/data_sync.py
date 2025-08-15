@@ -2,23 +2,36 @@
 API de synchronisation des données entre localStorage et Supabase
 Force l'utilisation de Supabase comme source de vérité
 """
+import logging
 from flask import Blueprint, request, jsonify, session
 from services.supabase_storage import SupabaseStorage
 
 # Fonctions de compatibilité
 def get_session_data():
-    supabase = SupabaseStorage()
-    return supabase.get_session_data()
+    try:
+        supabase = SupabaseStorage()
+        return supabase.get_session_data()
+    except Exception as e:
+        logging.warning(f"Impossible d'accéder à Supabase: {e}")
+        return {}
 
 def save_session_data(data):
-    supabase = SupabaseStorage()
-    return supabase.save_session_data(data)
+    try:
+        supabase = SupabaseStorage()
+        return supabase.save_session_data(data)
+    except Exception as e:
+        logging.warning(f"Impossible de sauvegarder sur Supabase: {e}")
+        return False
 
 def migrate_from_localStorage():
     # Migration depuis localStorage vers Supabase
-    supabase = SupabaseStorage()
-    # Logique de migration si nécessaire
-    return True
+    try:
+        supabase = SupabaseStorage()
+        # Logique de migration si nécessaire
+        return True
+    except Exception as e:
+        logging.warning(f"Impossible de migrer vers Supabase: {e}")
+        return False
 import logging
 import json
 
@@ -92,22 +105,39 @@ def check_sync_status():
     try:
         from services.supabase_storage import SupabaseStorage
         
-        supabase = SupabaseStorage()
-        supabase_available = True
-        
-        if supabase_available:
+        # Test d'initialisation Supabase avec gestion d'erreur
+        try:
+            supabase = SupabaseStorage()
+            supabase_available = True
+            
+            # Test de connexion
             try:
-                # Test Supabase
                 response = supabase.client.table('sessions').select('id').limit(1).execute()
                 supabase_status = "connected"
-            except:
+            except Exception as test_error:
+                logging.warning(f"Test Supabase échoué: {test_error}")
                 supabase_status = "error"
                 supabase_available = False
-        else:
+                
+        except ValueError as init_error:
+            # Variables d'environnement manquantes
+            logging.warning(f"Supabase non configuré: {init_error}")
+            supabase_available = False
             supabase_status = "not_configured"
+        except Exception as other_error:
+            # Autres erreurs
+            logging.error(f"Erreur init Supabase: {other_error}")
+            supabase_available = False
+            supabase_status = "error"
         
-        # Récupérer les données actuelles
-        current_data = get_session_data() if supabase_available else {}
+        # Récupérer les données actuelles seulement si Supabase est disponible
+        current_data = {}
+        if supabase_available:
+            try:
+                current_data = get_session_data()
+            except Exception as data_error:
+                logging.warning(f"Impossible de récupérer les données: {data_error}")
+                current_data = {}
         
         return jsonify({
             'success': True,
