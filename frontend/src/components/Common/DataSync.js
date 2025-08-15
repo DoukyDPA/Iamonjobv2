@@ -162,16 +162,19 @@ const DataSync = () => {
   }, []);
 
   /**
-   * Synchronisation périodique
+   * Synchronisation périodique - DÉSACTIVÉE TEMPORAIREMENT
    */
   useEffect(() => {
     if (!syncStatus.supabaseAvailable) return;
 
-    const syncInterval = setInterval(async () => {
-              await pullFromSupabase();
-    }, 30000); // Sync toutes les 30 secondes
+    // DÉSACTIVÉ - Cause des boucles infinies
+    // const syncInterval = setInterval(async () => {
+    //   await pullFromSupabase();
+    // }, 30000); // Sync toutes les 30 secondes
 
-    return () => clearInterval(syncInterval);
+    // return () => clearInterval(syncInterval);
+    
+    console.log('⚠️ Synchronisation automatique désactivée temporairement');
   }, [syncStatus.supabaseAvailable, pullFromSupabase]);
 
   /**
