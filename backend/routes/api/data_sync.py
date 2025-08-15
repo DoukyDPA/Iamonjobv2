@@ -103,41 +103,17 @@ def check_sync_status():
     Vérifie l'état de synchronisation
     """
     try:
-        from services.supabase_storage import SupabaseStorage
-        
-        # Test d'initialisation Supabase avec gestion d'erreur
+        # Utiliser nos fonctions sécurisées au lieu d'instancier directement
         try:
-            supabase = SupabaseStorage()
+            # Test simple de disponibilité
+            current_data = get_session_data()
             supabase_available = True
-            
-            # Test de connexion
-            try:
-                response = supabase.client.table('sessions').select('id').limit(1).execute()
-                supabase_status = "connected"
-            except Exception as test_error:
-                logging.warning(f"Test Supabase échoué: {test_error}")
-                supabase_status = "error"
-                supabase_available = False
-                
-        except ValueError as init_error:
-            # Variables d'environnement manquantes
-            logging.warning(f"Supabase non configuré: {init_error}")
+            supabase_status = "connected"
+        except Exception as data_error:
+            logging.warning(f"Supabase non disponible: {data_error}")
             supabase_available = False
             supabase_status = "not_configured"
-        except Exception as other_error:
-            # Autres erreurs
-            logging.error(f"Erreur init Supabase: {other_error}")
-            supabase_available = False
-            supabase_status = "error"
-        
-        # Récupérer les données actuelles seulement si Supabase est disponible
-        current_data = {}
-        if supabase_available:
-            try:
-                current_data = get_session_data()
-            except Exception as data_error:
-                logging.warning(f"Impossible de récupérer les données: {data_error}")
-                current_data = {}
+            current_data = {}
         
         return jsonify({
             'success': True,
