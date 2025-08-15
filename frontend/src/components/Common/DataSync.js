@@ -178,15 +178,15 @@ const DataSync = () => {
   }, [syncStatus.supabaseAvailable, pullFromSupabase]);
 
   /**
-   * Synchronisation lors de la connexion/déconnexion
+   * Synchronisation lors de la connexion/déconnexion - DÉSACTIVÉE TEMPORAIREMENT
    */
-  useEffect(() => {
-    if (user && syncStatus.supabaseAvailable) {
-      // L'utilisateur s'est connecté, synchroniser
-      pushToSupabase();
-      pullFromSupabase();
-    }
-  }, [user, syncStatus.supabaseAvailable, pushToSupabase, pullFromSupabase]);
+  // useEffect(() => {
+  //   if (user && syncStatus.supabaseAvailable) {
+  //     // L'utilisateur s'est connecté, synchroniser
+  //     pushToSupabase();
+  //     pullFromSupabase();
+  //   }
+  // }, [user, syncStatus.supabaseAvailable, pushToSupabase, pullFromSupabase]);
 
   // Composant invisible (pas de rendu UI)
   return null;
