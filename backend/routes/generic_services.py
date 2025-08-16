@@ -169,19 +169,19 @@ def handle_generic_service(service_id):
         questionnaire_data = documents.get('questionnaire', {}) if config['requires_questionnaire'] else {}
         
         # Vérifications des documents obligatoires
-        if config['requires_cv'] and not cv_data.get('uploaded'):
+        if config['requires_cv'] and not cv_data.get('content'):
             return jsonify({
                 "success": False,
                 "error": "CV requis pour ce service"
             }), 400
             
-        if config['requires_job'] and not job_data.get('uploaded'):
+        if config['requires_job'] and not job_data.get('content'):
             return jsonify({
                 "success": False,
                 "error": "Offre d'emploi requise pour ce service"
             }), 400
             
-        if config['requires_questionnaire'] and not questionnaire_data.get('uploaded'):
+        if config['requires_questionnaire'] and not questionnaire_data.get('content'):
             return jsonify({
                 "success": False,
                 "error": "Questionnaire requis pour ce service"
