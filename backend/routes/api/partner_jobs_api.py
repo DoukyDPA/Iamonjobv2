@@ -229,13 +229,19 @@ def save_partners():
             for partner in partners:
                 partner_id = f"partner_{partner.get('id', hash(partner.get('name', '')))}"
                 try:
-                    # Upsert avec on_conflict pour gérer les doublons
+                    # Utiliser la structure réelle de la table partners
                     supabase.client.table('partners').upsert({
-                        'partner_id': partner_id,
-                        'data': partner
-                    }, on_conflict='partner_id').execute()
+                        'name': partner.get('name', ''),
+                        'description': partner.get('description', ''),
+                        'website': partner.get('website', ''),
+                        'logo_url': partner.get('logo', '🏢'),
+                        'contact_email': partner.get('contactAddress', ''),
+                        'status': 'active'
+                    }, on_conflict='name').execute()
+                    success_count += 1
+                    logging.info(f"✅ Partenaire {partner.get('name', '')} sauvegardé")
                 except Exception as insert_error:
-                    logging.warning(f"⚠️ Erreur insertion partenaire {partner_id}: {insert_error}")
+                    logging.error(f"❌ Erreur partenaire {partner_id}: {insert_error}")
                     # Continuer avec les autres partenaires
             
             logging.info(f"✅ {len(partners)} partenaires sauvegardés dans Supabase")
@@ -359,22 +365,26 @@ def debug_supabase():
             info["partners_count"] = len(response.data) if response.data else 0
             info["table_exists"] = True
             
-            # Tester une insertion/lecture simple
-            test_data = {"test": True, "timestamp": str(datetime.now())}
+            # Tester une insertion/lecture simple avec la structure réelle
+            test_name = f"test_debug_{datetime.now().timestamp()}"
             
             # Insérer un test
             supabase.client.table('partners').insert({
-                'partner_id': 'test_debug',
-                'data': test_data
+                'name': test_name,
+                'description': 'Test debug',
+                'website': 'https://test.com',
+                'logo_url': '🧪',
+                'contact_email': 'debug@test.com',
+                'status': 'active'
             }).execute()
             
             # Lire le test
-            test_response = supabase.client.table('partners').select('*').eq('partner_id', 'test_debug').execute()
+            test_response = supabase.client.table('partners').select('*').eq('name', test_name).execute()
             info["write_test"] = "OK"
             info["read_test"] = "OK" if test_response.data else "FAILED"
             
             # Supprimer le test
-            supabase.client.table('partners').delete().eq('partner_id', 'test_debug').execute()
+            supabase.client.table('partners').delete().eq('name', test_name).execute()
             
         except Exception as e:
             info["table_error"] = str(e)
@@ -424,3 +434,127 @@ def health_check():
             "error": str(e),
             "method": "supabase_storage"
         }), 200
+
+@partner_jobs_api.route('/admin/partners', methods=['GET', 'POST', 'PUT', 'DELETE'])
+def admin_partners():
+    """Administration des partenaires - CRUD complet"""
+    try:
+        if request.method == 'GET':
+            # Récupérer tous les partenaires pour l'admin
+            supabase = SupabaseStorage()
+            response = supabase.client.table('partners').select('*').execute()
+            
+            if response.data:
+                partners = []
+                for partner in response.data:
+                    # Convertir en format admin
+                    partner_admin = {
+                        'id': partner.get('id'),
+                        'name': partner.get('name', ''),
+                        'description': partner.get('description', ''),
+                        'website': partner.get('website', ''),
+                        'logo_url': partner.get('logo_url', '🏢'),
+                        'contact_email': partner.get('contact_email', ''),
+                        'status': partner.get('status', 'active'),
+                        'created_at': partner.get('created_at'),
+                        'updated_at': partner.get('updated_at')
+                    }
+                    partners.append(partner_admin)
+                
+                return jsonify({
+                    "success": True,
+                    "partners": partners,
+                    "count": len(partners)
+                }), 200
+            else:
+                return jsonify({
+                    "success": True,
+                    "partners": [],
+                    "count": 0
+                }), 200
+                
+        elif request.method == 'POST':
+            # Créer un nouveau partenaire
+            data = request.get_json()
+            if not data or 'name' not in data:
+                return jsonify({"success": False, "error": "Nom du partenaire requis"}), 400
+            
+            supabase = SupabaseStorage()
+            try:
+                response = supabase.client.table('partners').insert({
+                    'name': data.get('name', ''),
+                    'description': data.get('description', ''),
+                    'website': data.get('website', ''),
+                    'logo_url': data.get('logo_url', '🏢'),
+                    'contact_email': data.get('contact_email', ''),
+                    'status': data.get('status', 'active')
+                }).execute()
+                
+                if response.data:
+                    return jsonify({
+                        "success": True,
+                        "message": "Partenaire créé avec succès",
+                        "partner": response.data[0]
+                    }), 201
+                else:
+                    return jsonify({"success": False, "error": "Erreur lors de la création"}), 500
+                    
+            except Exception as e:
+                return jsonify({"success": False, "error": f"Erreur Supabase: {str(e)}"}), 500
+                
+        elif request.method == 'PUT':
+            # Modifier un partenaire existant
+            data = request.get_json()
+            if not data or 'id' not in data:
+                return jsonify({"success": False, "error": "ID du partenaire requis"}), 400
+            
+            supabase = SupabaseStorage()
+            try:
+                response = supabase.client.table('partners').update({
+                    'name': data.get('name', ''),
+                    'description': data.get('description', ''),
+                    'website': data.get('website', ''),
+                    'logo_url': data.get('logo_url', '🏢'),
+                    'contact_email': data.get('contact_email', ''),
+                    'status': data.get('status', 'active')
+                }).eq('id', data['id']).execute()
+                
+                if response.data:
+                    return jsonify({
+                        "success": True,
+                        "message": "Partenaire modifié avec succès",
+                        "partner": response.data[0]
+                    }), 200
+                else:
+                    return jsonify({"success": False, "error": "Partenaire non trouvé"}), 404
+                    
+            except Exception as e:
+                return jsonify({"success": False, "error": f"Erreur Supabase: {str(e)}"}), 500
+                
+        elif request.method == 'DELETE':
+            # Supprimer un partenaire
+            partner_id = request.args.get('id')
+            if not partner_id:
+                return jsonify({"success": False, "error": "ID du partenaire requis"}), 400
+            
+            supabase = SupabaseStorage()
+            try:
+                response = supabase.client.table('partners').delete().eq('id', partner_id).execute()
+                
+                if response.data:
+                    return jsonify({
+                        "success": True,
+                        "message": "Partenaire supprimé avec succès"
+                    }), 200
+                else:
+                    return jsonify({"success": False, "error": "Partenaire non trouvé"}), 404
+                    
+            except Exception as e:
+                return jsonify({"success": False, "error": f"Erreur Supabase: {str(e)}"}), 500
+                
+    except Exception as e:
+        logging.error(f"❌ Erreur admin partenaires: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Erreur serveur: {str(e)}"
+        }), 500
