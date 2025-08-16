@@ -16,19 +16,32 @@ class SupabaseStorage:
         url = os.getenv('SUPABASE_URL')
         key = os.getenv('SUPABASE_ANON_KEY')
         
+        logging.info(f"🔧 Initialisation Supabase - URL: {url[:50] if url else 'None'}...")
+        logging.info(f"🔑 Clé: {key[:20] if key else 'None'}...")
+        
         if not url or not key:
             # Au lieu de crasher, marquer comme non disponible
             self.available = False
             self.client = None
             self.cache = {}
-            logging.warning("⚠️ SUPABASE_URL et SUPABASE_ANON_KEY manquants - mode dégradé")
+            logging.error("❌ SUPABASE_URL et SUPABASE_ANON_KEY manquants - mode dégradé")
             return
         
         try:
             self.client: Client = create_client(url, key)
             self.cache = {}  # Cache local 1 minute
             self.available = True
-            logging.info("✅ Supabase Storage initialisé")
+            logging.info("✅ Supabase Storage initialisé avec succès")
+            
+            # Test de connexion
+            try:
+                # Test simple de connexion
+                response = self.client.table('partners').select('id').limit(1).execute()
+                logging.info("✅ Test de connexion Supabase réussi")
+            except Exception as test_error:
+                logging.warning(f"⚠️ Test de connexion échoué: {test_error}")
+                # Ne pas marquer comme indisponible pour un test échoué
+                
         except Exception as e:
             logging.error(f"❌ Erreur init Supabase: {e}")
             self.available = False
