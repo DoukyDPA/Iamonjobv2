@@ -22,6 +22,38 @@ INSTANCE_ID = str(uuid.uuid4())[:8]
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_BUILD_DIR = os.path.join(BASE_DIR, 'frontend', 'build')
 
+# Charger la configuration Supabase depuis test_config.py.backup
+try:
+    from test_config import SUPABASE_CONFIG
+    # Définir les variables d'environnement Supabase si elles ne sont pas déjà définies
+    if not os.getenv('SUPABASE_URL'):
+        os.environ['SUPABASE_URL'] = SUPABASE_CONFIG.get('SUPABASE_URL', '')
+    if not os.getenv('SUPABASE_ANON_KEY'):
+        os.environ['SUPABASE_ANON_KEY'] = SUPABASE_CONFIG.get('SUPABASE_ANON_KEY', '')
+    if not os.getenv('SUPABASE_SERVICE_KEY'):
+        os.environ['SUPABASE_SERVICE_KEY'] = SUPABASE_CONFIG.get('SUPABASE_SERVICE_KEY', '')
+    print("✅ Configuration Supabase chargée depuis test_config.py")
+except ImportError as e:
+    print(f"⚠️ Impossible de charger test_config.py: {e}")
+    # Fallback sur config.py
+    try:
+        from config import MIGRATION_CONFIG
+        if not os.getenv('SUPABASE_URL'):
+            os.environ['SUPABASE_URL'] = MIGRATION_CONFIG.get('SUPABASE_URL', '')
+        if not os.getenv('SUPABASE_ANON_KEY'):
+            os.environ['SUPABASE_ANON_KEY'] = MIGRATION_CONFIG.get('SUPABASE_ANON_KEY', '')
+        if not os.getenv('SUPABASE_SERVICE_KEY'):
+            os.environ['SUPABASE_SERVICE_KEY'] = MIGRATION_CONFIG.get('SUPABASE_SERVICE_KEY', '')
+        print("✅ Configuration Supabase chargée depuis config.py (fallback)")
+    except ImportError as e2:
+        print(f"⚠️ Impossible de charger config.py: {e2}")
+        print("🔧 Utilisation des variables d'environnement système")
+
+# Afficher la configuration finale
+print(f"🔧 Configuration finale Supabase:")
+print(f"   URL: {os.getenv('SUPABASE_URL', 'Non défini')[:50]}...")
+print(f"   Clé: {os.getenv('SUPABASE_ANON_KEY', 'Non défini')[:20]}...")
+
 # Création de l'application Flask
 app = Flask(__name__, static_folder=None)
 CORS(app, origins=["*"])
