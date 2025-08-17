@@ -1,20 +1,28 @@
+#!/usr/bin/env python3
 """
-Routes API pour l'authentification
-Modification du système d'authentification pour lier les sessions aux utilisateurs
+API d'authentification avec gestion des sessions Supabase
 """
-from flask import Blueprint, request, jsonify, render_template, session
-from flask_login import login_user, logout_user, current_user, login_required
-from services.supabase_storage import SupabaseStorage
+
 import jwt
 import datetime
 import os
 import logging
+from functools import wraps
+from flask import Blueprint, request, jsonify, session
+from flask_login import login_user, logout_user, current_user, login_required
+from werkzeug.security import check_password_hash, generate_password_hash
 from models.user import User
 
+# Configuration du logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Création du blueprint
 auth_api = Blueprint('auth_api', __name__)
 
 # Fonctions de compatibilité
 def link_session_to_user(user_id, user_email):
+    from services.supabase_storage import SupabaseStorage
     supabase = SupabaseStorage()
     session_data = supabase.get_session_data()
     session_data['user_id'] = user_id
@@ -22,21 +30,94 @@ def link_session_to_user(user_id, user_email):
     return supabase.save_session_data(session_data)
 
 def get_session_data():
+    from services.supabase_storage import SupabaseStorage
     supabase = SupabaseStorage()
     return supabase.get_session_data()
 
 def save_session_data(data):
+    from services.supabase_storage import SupabaseStorage
     supabase = SupabaseStorage()
     return supabase.save_session_data(data)
 
+# Configuration JWT
 def generate_token(user_id):
     """Génère un token JWT pour l'utilisateur"""
     payload = {
-        'user_id': str(user_id),  # Convertir en string
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+        'user_id': str(user_id),
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1),
+        'iat': datetime.datetime.utcnow()
     }
-    secret_key = os.environ.get('FLASK_SECRET_KEY') or 'dev_secret_key_for_testing_only'
+    secret_key = os.environ.get('FLASK_SECRET_KEY') or 'dev_secret_key'
     return jwt.encode(payload, secret_key, algorithm='HS256')
+
+def verify_jwt_token(f):
+    """Décorateur pour vérifier les tokens JWT au lieu de Flask-Login"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        try:
+            print("=== DEBUG JWT TOKEN START ===")
+            
+            # Récupérer le token depuis les headers
+            auth_header = request.headers.get('Authorization')
+            print(f"1. Auth header: {auth_header}")
+            if not auth_header:
+                print("2. Pas d'auth header")
+                return jsonify({"error": "Token d'authentification manquant"}), 401
+            
+            # Extraire le token (format: "Bearer <token>")
+            if auth_header.startswith('Bearer '):
+                token = auth_header[7:]
+            else:
+                token = auth_header
+            
+            print(f"3. Token extrait: {token[:50]}...")
+            if not token:
+                print("4. Token vide")
+                return jsonify({"error": "Token invalide"}), 401
+            
+            # Vérifier le token
+            secret_key = os.environ.get('FLASK_SECRET_KEY') or 'dev_secret_key'
+            print(f"5. Secret key: {secret_key}")
+            payload = jwt.decode(token, secret_key, algorithms=['HS256'])
+            print(f"6. Payload décodé: {payload}")
+            
+            # Extraire l'ID utilisateur
+            user_id = payload.get('user_id')
+            print(f"7. User ID extrait: {user_id}")
+            if not user_id:
+                print("8. Pas d'user_id dans le payload")
+                return jsonify({"error": "Token invalide - ID utilisateur manquant"}), 401
+            
+            # Récupérer l'utilisateur depuis la base
+            print(f"9. Appel User.get({user_id})")
+            user = User.get(user_id)
+            print(f"10. User récupéré: {user}")
+            if not user:
+                print("11. User non trouvé")
+                return jsonify({"error": "Utilisateur non trouvé"}), 401
+            
+            # Ajouter l'utilisateur à la requête pour compatibilité
+            request.current_user = user
+            print("12. SUCCESS - Token valide")
+            
+            return f(*args, **kwargs)
+            
+        except jwt.ExpiredSignatureError as e:
+            print(f"ERROR: Token expiré: {e}")
+            return jsonify({"error": "Token expiré"}), 401
+        except jwt.InvalidTokenError as e:
+            print(f"ERROR: Token invalide: {e}")
+            return jsonify({"error": "Token invalide"}), 401
+        except Exception as e:
+            print(f"ERROR: Exception générale: {e}")
+            import traceback
+            traceback.print_exc()
+            logging.error(f"Erreur lors de la vérification du token: {e}")
+            return jsonify({"error": "Erreur d'authentification"}), 500
+        finally:
+            print("=== DEBUG JWT TOKEN END ===")
+    
+    return decorated_function
 
 @auth_api.route('/register', methods=['GET'])
 def register_form():
@@ -236,19 +317,23 @@ def login():
         return jsonify({"error": f"Erreur lors de la connexion: {str(e)}"}), 500
 
 @auth_api.route('/logout', methods=['POST'])
-@login_required
+@verify_jwt_token
 def logout():
     """Déconnexion d'un utilisateur"""
     try:
         # Sauvegarder les données avant la déconnexion
-        user_data = get_session_data()
-        save_session_data(user_data)
+        user_email = request.current_user.email
         
-        # Nettoyer la session
-        session.pop('user_id', None)
-        session.pop('user_email', None)
+        # Sauvegarder dans Supabase
+        from services.supabase_storage import SupabaseStorage
+        supabase = SupabaseStorage()
         
-        logout_user()
+        # Récupérer les données actuelles
+        response = supabase.client.table('sessions').select('*').eq('user_email', user_email).execute()
+        if response.data and len(response.data) > 0:
+            current_data = response.data[0]
+            # Ici on pourrait sauvegarder des données finales si nécessaire
+        
         return jsonify({
             "success": True,
             "message": "Déconnexion réussie"
@@ -258,14 +343,14 @@ def logout():
         return jsonify({"error": f"Erreur lors de la déconnexion: {str(e)}"}), 500
 
 @auth_api.route('/me', methods=['GET'])
-@login_required
+@verify_jwt_token
 def get_current_user():
     """Récupère les informations de l'utilisateur connecté"""
     try:
         return jsonify({
             "user": {
-                "id": current_user.id,
-                "email": current_user.email
+                "id": request.current_user.id,
+                "email": request.current_user.email
             }
         }), 200
     except Exception as e:
@@ -305,7 +390,7 @@ def verify_token():
         print(f"7. Token final à décoder: '{token}' (longueur: {len(token)})")
         
         # 4. Décoder le token
-        secret_key = os.environ.get('FLASK_SECRET_KEY') or 'dev_secret_key_for_testing_only'
+        secret_key = os.environ.get('FLASK_SECRET_KEY') or 'dev_secret_key'
         print(f"8. Secret key: {secret_key[:10]}...")
         
         payload = jwt.decode(token, secret_key, algorithms=['HS256'])
@@ -380,19 +465,16 @@ def check_session():
         return jsonify({'error': str(e)}), 500
 
 @auth_api.route('/save-user-data', methods=['POST'])
-@login_required
+@verify_jwt_token
 def save_user_data():
     """Sauvegarde les données de l'utilisateur connecté"""
     try:
-        if not current_user.is_authenticated:
-            return jsonify({"error": "Utilisateur non connecté"}), 401
-        
         data = request.get_json()
         if not data:
             return jsonify({"error": "Données manquantes"}), 400
         
-        user_email = current_user.email
-        user_id = str(current_user.id)
+        user_email = request.current_user.email
+        user_id = str(request.current_user.id)
         
         # Sauvegarder dans Supabase
         from services.supabase_storage import SupabaseStorage
@@ -420,14 +502,11 @@ def save_user_data():
         return jsonify({"error": f"Erreur lors de la sauvegarde: {str(e)}"}), 500
 
 @auth_api.route('/get-user-data', methods=['GET'])
-@login_required
+@verify_jwt_token
 def get_user_data():
     """Récupère les données de l'utilisateur connecté"""
     try:
-        if not current_user.is_authenticated:
-            return jsonify({"error": "Utilisateur non connecté"}), 401
-        
-        user_email = current_user.email
+        user_email = request.current_user.email
         
         # Récupérer depuis Supabase
         from services.supabase_storage import SupabaseStorage
