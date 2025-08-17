@@ -164,13 +164,13 @@ export const notifyServerAndClearLocalStorage = async (documentType) => {
   try {
     console.log(`🔄 Notification serveur pour nettoyage ${documentType}`);
     
-    // Appeler l'API pour nettoyer le cache serveur
-    const response = await fetch('/api/chat/clear-local-storage', {
+    // ✅ UTILISER L'API INDIVIDUALISÉE au lieu de l'ancienne API
+    console.log('🔍 Appel API individualisée pour nettoyage cache...');
+    
+    // Utiliser documentsApi pour la cohérence
+    const { documentsApi } = await import('../services/documentApi');
+    const response = await documentsApi.makeRequest('/api/documents/clear-cache', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-      },
       body: JSON.stringify({
         document_type: documentType
       })
