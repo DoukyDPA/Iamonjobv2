@@ -83,19 +83,15 @@ def register_form():
 def register():
     """Inscription d'un nouvel utilisateur"""
     try:
-        # Gérer à la fois les données JSON et les données de formulaire
-        if request.is_json:
-            data = request.get_json()
-            email = data.get('email')
-            password = data.get('password')
-            confirm_password = data.get('confirmPassword') or data.get('confirm_password')
-            data_consent = data.get('dataConsent') or data.get('data_consent')
-        else:
-            # Données de formulaire
-            email = request.form.get('email')
-            password = request.form.get('password')
-            confirm_password = request.form.get('confirm_password')
-            data_consent = request.form.get('data_consent')
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "Données manquantes"}), 400
+            
+        email = data.get('email')
+        password = data.get('password')
+        confirm_password = data.get('confirm_password')
+        data_consent = data.get('data_consent', False)
         
         if not email or not password or not confirm_password:
             return jsonify({"error": "Tous les champs sont requis"}), 400
@@ -111,18 +107,30 @@ def register():
         user = User.create(email, password)
         print(f"DEBUG: User created: {user}, type={type(user)}")
         if user:
-            # Après inscription réussie, lier la session
+            # Créer une session persistante dans Supabase
             user_id = str(user.id)
             
-            session['user_id'] = user_id
-            session['user_email'] = email
-            session.permanent = True
+            # Créer une session dans la table sessions (sans user_id, seulement user_email)
+            from services.supabase_storage import SupabaseStorage
+            supabase = SupabaseStorage()
             
-            # Lier les données de session
-            link_success = link_session_to_user(user_id, email)
+            session_data = {
+                'user_email': email,
+                'chat_history': [],
+                'documents': {},
+                'analyses': {},
+                'created_at': datetime.datetime.utcnow().isoformat(),
+                'updated_at': datetime.datetime.utcnow().isoformat()
+            }
             
-            if link_success:
-                logging.info(f"✅ Session liée avec succès pour le nouvel utilisateur: {email}")
+            try:
+                response = supabase.client.table('sessions').insert(session_data).execute()
+                if response.data:
+                    logging.info(f"✅ Session créée dans Supabase pour l'utilisateur: {email}")
+                else:
+                    logging.warning(f"⚠️ Impossible de créer la session Supabase pour: {email}")
+            except Exception as e:
+                logging.error(f"❌ Erreur création session Supabase: {e}")
             
             # Générer un token JWT
             token = generate_token(user.id)
@@ -135,7 +143,7 @@ def register():
                     "id": user.id,
                     "email": user.email
                 },
-                "data_linked": link_success
+                "session_created": True
             }), 201
         else:
             return jsonify({"error": "Cette adresse email est déjà utilisée"}), 409
@@ -162,44 +170,13 @@ def login():
         if not email or not password:
             return jsonify({"error": "Email et mot de passe requis"}), 400
 
-        # Authentification de test temporaire
-        if email == "test@test.com" and password == "test":
-            # Créer un utilisateur de test
-            from flask_login import UserMixin
-            
-            class TestUser(UserMixin):
-                def __init__(self):
-                    self.id = "test_user"
-                    self.email = "test@test.com"
-                    self.is_admin = False
-            
-            user = TestUser()
-            login_user(user)
-            
-            # Sauvegarder dans la session
-            session['user_id'] = "test_user"
-            session['user_email'] = "test@test.com"
-            session.permanent = True
-            
-            return jsonify({
-                "success": True,
-                "message": "Connexion de test réussie",
-                "token": "test_token_123",
-                "user": {
-                    "id": "test_user",
-                    "email": "test@test.com"
-                },
-                "data_linked": True,
-                "has_history": False
-            }), 200
-        
         # Authentifier l'utilisateur normal
         user = User.authenticate(email, password)
         if user:
             # Connexion Flask-Login (pour compatibilité)
             login_user(user)
             
-            # IMPORTANT: Lier la session à l'utilisateur après connexion réussie
+            # IMPORTANT: Récupérer les données individualisées de l'utilisateur
             user_id = str(user.id)
             
             # Sauvegarder l'identifiant dans la session Flask
@@ -207,14 +184,32 @@ def login():
             session['user_email'] = email
             session.permanent = True  # Rendre la session persistante
             
-            # Lier les données de session anonyme à l'utilisateur
-            link_success = link_session_to_user(user_id, email)
+            # Récupérer les données de session de l'utilisateur depuis Supabase
+            from services.supabase_storage import SupabaseStorage
+            supabase = SupabaseStorage()
             
-            if link_success:
-                logging.info(f"✅ Session liée avec succès pour l'utilisateur: {email}")
-            
-            # Récupérer les données de l'utilisateur
-            user_data = get_session_data()
+            user_data = {}
+            try:
+                response = supabase.client.table('sessions').select('*').eq('user_email', email).execute()
+                if response.data and len(response.data) > 0:
+                    user_data = response.data[0]
+                    logging.info(f"✅ Données utilisateur récupérées depuis Supabase: {email}")
+                else:
+                    # Créer une session si elle n'existe pas
+                    session_data = {
+                        'user_email': email,
+                        'chat_history': [],
+                        'documents': {},
+                        'analyses': {},
+                        'created_at': datetime.datetime.utcnow().isoformat(),
+                        'updated_at': datetime.datetime.utcnow().isoformat()
+                    }
+                    response = supabase.client.table('sessions').insert(session_data).execute()
+                    if response.data:
+                        user_data = response.data[0]
+                        logging.info(f"✅ Nouvelle session créée pour l'utilisateur: {email}")
+            except Exception as e:
+                logging.error(f"❌ Erreur récupération données utilisateur: {e}")
             
             # Générer un token JWT
             token = generate_token(user.id)
@@ -227,7 +222,11 @@ def login():
                     "id": user.id,
                     "email": user.email
                 },
-                "data_linked": link_success,
+                "user_data": {
+                    "chat_history": user_data.get('chat_history', []),
+                    "documents": user_data.get('documents', {}),
+                    "analyses": user_data.get('analyses', {})
+                },
                 "has_history": len(user_data.get('chat_history', [])) > 0
             }), 200
         else:
@@ -380,3 +379,83 @@ def check_session():
     except Exception as e:
         logging.error(f"Erreur lors de la vérification de session: {e}")
         return jsonify({'error': str(e)}), 500
+
+@auth_api.route('/save-user-data', methods=['POST'])
+@login_required
+def save_user_data():
+    """Sauvegarde les données de l'utilisateur connecté"""
+    try:
+        if not current_user.is_authenticated:
+            return jsonify({"error": "Utilisateur non connecté"}), 401
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Données manquantes"}), 400
+        
+        user_email = current_user.email
+        user_id = str(current_user.id)
+        
+        # Sauvegarder dans Supabase
+        from services.supabase_storage import SupabaseStorage
+        supabase = SupabaseStorage()
+        
+        update_data = {
+            'chat_history': data.get('chat_history', []),
+            'documents': data.get('documents', {}),
+            'analyses': data.get('analyses', {}),
+            'updated_at': datetime.datetime.utcnow().isoformat()
+        }
+        
+        response = supabase.client.table('sessions').update(update_data).eq('user_email', user_email).execute()
+        
+        if response.data:
+            return jsonify({
+                "success": True,
+                "message": "Données sauvegardées avec succès"
+            }), 200
+        else:
+            return jsonify({"error": "Erreur lors de la sauvegarde"}), 500
+            
+    except Exception as e:
+        logging.error(f"Erreur lors de la sauvegarde des données: {e}")
+        return jsonify({"error": f"Erreur lors de la sauvegarde: {str(e)}"}), 500
+
+@auth_api.route('/get-user-data', methods=['GET'])
+@login_required
+def get_user_data():
+    """Récupère les données de l'utilisateur connecté"""
+    try:
+        if not current_user.is_authenticated:
+            return jsonify({"error": "Utilisateur non connecté"}), 401
+        
+        user_email = current_user.email
+        
+        # Récupérer depuis Supabase
+        from services.supabase_storage import SupabaseStorage
+        supabase = SupabaseStorage()
+        
+        response = supabase.client.table('sessions').select('*').eq('user_email', user_email).execute()
+        
+        if response.data and len(response.data) > 0:
+            user_data = response.data[0]
+            return jsonify({
+                "success": True,
+                "user_data": {
+                    "chat_history": user_data.get('chat_history', []),
+                    "documents": user_data.get('documents', {}),
+                    "analyses": user_data.get('analyses', {})
+                }
+            }), 200
+        else:
+            return jsonify({
+                "success": True,
+                "user_data": {
+                    "chat_history": [],
+                    "documents": {},
+                    "analyses": {}
+                }
+            }), 200
+            
+    except Exception as e:
+        logging.error(f"Erreur lors de la récupération des données: {e}")
+        return jsonify({"error": f"Erreur lors de la récupération: {str(e)}"}), 500
