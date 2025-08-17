@@ -55,6 +55,47 @@ class StatelessDataManager:
             return StatelessDataManager._emergency_fallback()
     
     @staticmethod
+    def get_user_data_by_email(user_email):
+        """
+        Récupération des données utilisateur par email pour individualisation
+        """
+        try:
+            from services.supabase_storage import SupabaseStorage
+            supabase = SupabaseStorage()
+            
+            # Récupérer les données depuis Supabase avec l'email spécifique
+            response = supabase.client.table('sessions').select('*').eq(
+                'user_email', user_email
+            ).order('updated_at', desc=True).limit(1).execute()
+            
+            if response.data and len(response.data) > 0:
+                session_data = response.data[0]
+                data = {
+                    'user_id': user_email,
+                    'chat_history': session_data.get('chat_history', []),
+                    'documents': session_data.get('documents', {}),
+                    'analyses': session_data.get('analyses', {})
+                }
+                
+                # Validation de la structure
+                if 'documents' not in data:
+                    data['documents'] = {}
+                if 'chat_history' not in data:
+                    data['chat_history'] = []
+                
+                worker_pid = os.getpid()
+                logging.info(f"📡 SUPABASE GET INDIVIDUALISÉ: {user_email} - Worker PID {worker_pid} - Documents: {list(data.get('documents', {}).keys())}")
+                
+                return data
+            else:
+                # Créer nouvelle session pour cet utilisateur
+                return StatelessDataManager._initialize_user_data()
+                
+        except Exception as e:
+            logging.error(f"Erreur critique Supabase GET individualisé pour {user_email}: {e}")
+            return StatelessDataManager._emergency_fallback()
+    
+    @staticmethod
     def save_user_data(data):
         """
         Sauvegarde des données utilisateur via l'API Supabase existante
@@ -77,17 +118,53 @@ class StatelessDataManager:
             return False
     
     @staticmethod
-    def clear_generic_actions_history(doc_type=None):
+    def save_user_data_by_email(data, user_email):
+        """
+        Sauvegarde des données utilisateur par email pour individualisation
+        """
+        try:
+            from services.supabase_storage import SupabaseStorage
+            supabase = SupabaseStorage()
+            
+            # Métadonnées professionnelles
+            data['last_modified'] = datetime.now().isoformat()
+            data['version'] = data.get('version', 0) + 1
+            data['worker_pid'] = os.getpid()
+            
+            # Sauvegarde individualisée dans Supabase
+            response = supabase.client.table('sessions').upsert({
+                'user_email': user_email,
+                'chat_history': data.get('chat_history', []),
+                'documents': data.get('documents', {}),
+                'analyses': data.get('analyses', {}),
+                'updated_at': datetime.now().isoformat()
+            }, on_conflict='user_email').execute()
+            
+            worker_pid = os.getpid()
+            logging.info(f"💾 SUPABASE SAVE INDIVIDUALISÉ: {user_email} - v{data['version']} - Worker PID {worker_pid} - Documents: {list(data.get('documents', {}).keys())}")
+            return True
+                
+        except Exception as e:
+            logging.error(f"Erreur critique Supabase SAVE individualisé pour {user_email}: {e}")
+            return False
+    
+    @staticmethod
+    def clear_generic_actions_history(doc_type=None, user_email=None):
         """
         Efface l'historique des actions génériques lors du chargement de nouveaux documents
         
         Args:
             doc_type: Type de document qui déclenche la purge (cv, offre_emploi, questionnaire)
                      Si None, purge complète de l'historique
+            user_email: Email de l'utilisateur pour individualisation
         """
         try:
-            # Récupérer les données actuelles
-            current_data = StatelessDataManager.get_user_data()
+            # Récupérer les données actuelles avec individualisation
+            if user_email:
+                current_data = StatelessDataManager.get_user_data_by_email(user_email)
+                logging.info(f"👤 Individualisation: Nettoyage historique pour {user_email}")
+            else:
+                current_data = StatelessDataManager.get_user_data()
             
             # Sauvegarder l'ancien historique pour debug
             old_history_length = len(current_data.get('chat_history', []))
@@ -161,17 +238,25 @@ class StatelessDataManager:
             documents_backup = current_data.get('documents', {})
             current_data['documents'] = documents_backup
             
-            # Sauvegarder la purge
-            StatelessDataManager.save_user_data(current_data)
+            # Sauvegarder la purge avec individualisation
+            if user_email:
+                success = StatelessDataManager.save_user_data_by_email(current_data, user_email)
+            else:
+                success = StatelessDataManager.save_user_data(current_data)
             
-            return True
+            if success:
+                logging.info(f"✅ Historique nettoyé et sauvegardé")
+                return True
+            else:
+                logging.error(f"❌ Échec sauvegarde après nettoyage")
+                return False
             
         except Exception as e:
             logging.error(f"❌ Erreur lors de l'effacement de l'historique: {e}")
             return False
     
     @staticmethod
-    def update_document_atomic(doc_type, doc_data):
+    def update_document_atomic(doc_type, doc_data, user_email=None):
         """
         Mise à jour atomique d'un document via Supabase
         Thread-safe et cross-worker safe
@@ -180,8 +265,12 @@ class StatelessDataManager:
         
         for attempt in range(max_retries):
             try:
-                # Récupération des données actuelles
-                current_data = StatelessDataManager.get_user_data()
+                # Récupération des données actuelles avec individualisation
+                if user_email:
+                    current_data = StatelessDataManager.get_user_data_by_email(user_email)
+                    logging.info(f"👤 Individualisation: Document {doc_type} pour {user_email}")
+                else:
+                    current_data = StatelessDataManager.get_user_data()
                 
                 # Mise à jour du document
                 if 'documents' not in current_data:
@@ -189,8 +278,13 @@ class StatelessDataManager:
                 
                 current_data['documents'][doc_type] = doc_data.copy()
                 
-                # Sauvegarde atomique
-                if StatelessDataManager.save_user_data(current_data):
+                # Sauvegarde atomique avec individualisation
+                if user_email:
+                    success = StatelessDataManager.save_user_data_by_email(current_data, user_email)
+                else:
+                    success = StatelessDataManager.save_user_data(current_data)
+                
+                if success:
                     logging.info(f"🔄 ATOMIC UPDATE: Document {doc_type} mis à jour (attempt {attempt + 1})")
                     return True
                 
