@@ -140,7 +140,13 @@ export const AppProvider = ({ children }) => {
       setLoading(true);
       
       // ✅ UTILISER documentsApi au lieu de fetch direct
+      console.log('🔍 Appel documentsApi.uploadDocument...');
+      console.log('🎫 Token disponible:', !!localStorage.getItem('token'));
+      console.log('📡 URL API:', documentsApi.constructor.name);
+      
       const response = await documentsApi.uploadDocument(file, documentType);
+      
+      console.log('📡 Réponse API:', response);
 
       if (response.success) {
         // Mise à jour réussie
