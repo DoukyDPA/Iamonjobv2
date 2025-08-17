@@ -5,6 +5,13 @@ Modification du système d'authentification pour lier les sessions aux utilisate
 from flask import Blueprint, request, jsonify, render_template, session
 from flask_login import login_user, logout_user, current_user, login_required
 from services.supabase_storage import SupabaseStorage
+import jwt
+import datetime
+import os
+import logging
+from models.user import User
+
+auth_api = Blueprint('auth_api', __name__)
 
 # Fonctions de compatibilité
 def link_session_to_user(user_id, user_email):
@@ -21,14 +28,6 @@ def get_session_data():
 def save_session_data(data):
     supabase = SupabaseStorage()
     return supabase.save_session_data(data)
-import jwt
-import datetime
-import os
-import logging
-
-from models.user import User
-
-auth_api = Blueprint('auth_api', __name__)
 
 def generate_token(user_id):
     """Génère un token JWT pour l'utilisateur"""
