@@ -273,6 +273,10 @@ def init_supabase_service(app):
     
     try:
         _supabase_storage = SupabaseStorage()
+        
+        # Exposer le client Supabase dans l'application Flask
+        app.supabase = _supabase_storage.client
+        
         app.logger.info("✅ Supabase service initialisé")
         return _supabase_storage
     except Exception as e:
