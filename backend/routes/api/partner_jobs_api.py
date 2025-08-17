@@ -87,14 +87,14 @@ def get_partners():
                 
                 # Sauvegarder dans Supabase avec la structure réelle
                 for partner in partners:
-                    supabase.client.table('partners').upsert({
+                    supabase.client.table('partners').insert({
                         'name': partner.get('name', ''),
                         'description': partner.get('description', ''),
                         'website': partner.get('website', ''),
                         'logo_url': partner.get('logo', '🏢'),
                         'contact_email': partner.get('contactAddress', ''),
                         'status': 'active'
-                    }, on_conflict='name').execute()
+                    }).execute()
                 
                 logging.info("🔧 Partenaires par défaut sauvegardés dans Supabase")
                 
@@ -225,19 +225,19 @@ def save_partners():
         supabase = SupabaseStorage()
         
         try:
-            # Utiliser upsert au lieu de delete + insert pour éviter les erreurs Supabase
+            # Utiliser insert simple pour éviter les erreurs Supabase
             for partner in partners:
                 partner_id = f"partner_{partner.get('id', hash(partner.get('name', '')))}"
                 try:
                     # Utiliser la structure réelle de la table partners
-                    supabase.client.table('partners').upsert({
+                    supabase.client.table('partners').insert({
                         'name': partner.get('name', ''),
                         'description': partner.get('description', ''),
                         'website': partner.get('website', ''),
                         'logo_url': partner.get('logo', '🏢'),
                         'contact_email': partner.get('contactAddress', ''),
                         'status': 'active'
-                    }, on_conflict='name').execute()
+                    }).execute()
                     success_count += 1
                     logging.info(f"✅ Partenaire {partner.get('name', '')} sauvegardé")
                 except Exception as insert_error:
@@ -306,14 +306,14 @@ def test_save_partners():
                 partner_id = f"partner_{partner.get('id', hash(partner.get('name', '')))}"
                 try:
                     # Utiliser la structure réelle de la table partners
-                    supabase.client.table('partners').upsert({
+                    supabase.client.table('partners').insert({
                         'name': partner.get('name', ''),
                         'description': partner.get('description', ''),
                         'website': partner.get('website', ''),
                         'logo_url': partner.get('logo', '🏢'),
                         'contact_email': partner.get('contactAddress', ''),
                         'status': 'active'
-                    }, on_conflict='name').execute()
+                    }).execute()
                     success_count += 1
                     logging.info(f"✅ Partenaire {partner.get('name', '')} sauvegardé")
                         
