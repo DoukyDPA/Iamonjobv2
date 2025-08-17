@@ -9,15 +9,21 @@ import os
 import tempfile
 from services.stateless_manager import StatelessDataManager
 from utils.files_utils import extraire_texte_fichier
+from backend.routes.api.auth_api import verify_jwt_token
 
 # Créer le blueprint
 documents_bp = Blueprint('documents', __name__)
 
 @documents_bp.route('/api/documents/status', methods=['GET'])
+@verify_jwt_token
 def api_documents_status():
     """Statut des documents"""
     try:
-        user_data = StatelessDataManager.get_user_data()
+        # Utiliser l'utilisateur connecté pour l'individualisation
+        user_email = request.current_user.email
+        print(f"👤 Statut documents pour utilisateur: {user_email}")
+        
+        user_data = StatelessDataManager.get_user_data_by_email(user_email)
         documents = user_data.get('documents', {})
         
         # Structure par défaut pour tous les types de documents
@@ -62,6 +68,7 @@ def api_documents_status():
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
 
 @documents_bp.route('/api/documents/upload', methods=['POST'])
+@verify_jwt_token
 def api_documents_upload():
     """Upload de document avec PURGE AUTOMATIQUE du cache"""
     try:
@@ -85,9 +92,10 @@ def api_documents_upload():
         if document_type in ['cv', 'offre_emploi', 'questionnaire']:
             print(f"🗑️ PURGE AUTOMATIQUE DU CACHE POUR NOUVEAU {document_type.upper()}")
             try:
-                # Utiliser la nouvelle fonction centralisée
-                StatelessDataManager.clear_generic_actions_history(document_type)
-                print(f"✅ Cache purgé automatiquement pour nouveau {document_type}")
+                # Utiliser la nouvelle fonction centralisée avec individualisation
+                user_email = request.current_user.email
+                StatelessDataManager.clear_generic_actions_history(document_type, user_email)
+                print(f"✅ Cache purgé automatiquement pour nouveau {document_type} de {user_email}")
                 
             except Exception as e:
                 print(f"⚠️ Erreur lors de la purge automatique: {e}")
@@ -123,7 +131,11 @@ def api_documents_upload():
             'upload_timestamp': datetime.now().isoformat()
         }
         
-        StatelessDataManager.update_document_atomic(document_type, doc_data)
+        # Utiliser l'utilisateur connecté pour l'individualisation
+        user_email = request.current_user.email
+        print(f"👤 Upload document pour utilisateur: {user_email}")
+        
+        StatelessDataManager.update_document_atomic(document_type, doc_data, user_email)
         
         print(f"✅ Nouveau {document_type} uploadé avec purge automatique")
         
@@ -140,6 +152,7 @@ def api_documents_upload():
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
 
 @documents_bp.route('/api/documents/upload-text', methods=['POST'])
+@verify_jwt_token
 def api_documents_upload_text():
     """Upload de texte avec PURGE AUTOMATIQUE du cache"""
     try:
@@ -158,9 +171,10 @@ def api_documents_upload_text():
         if document_type in ['cv', 'offre_emploi', 'questionnaire']:
             print(f"🗑️ PURGE AUTOMATIQUE DU CACHE POUR NOUVEAU {document_type.upper()} (texte)")
             try:
-                # Utiliser la nouvelle fonction centralisée
-                StatelessDataManager.clear_generic_actions_history(document_type)
-                print(f"✅ Cache purgé automatiquement pour nouveau {document_type}")
+                # Utiliser la nouvelle fonction centralisée avec individualisation
+                user_email = request.current_user.email
+                StatelessDataManager.clear_generic_actions_history(document_type, user_email)
+                print(f"✅ Cache purgé automatiquement pour nouveau {document_type} de {user_email}")
                 
             except Exception as e:
                 print(f"⚠️ Erreur lors de la purge automatique: {e}")
@@ -179,8 +193,11 @@ def api_documents_upload_text():
             'upload_timestamp': datetime.now().isoformat()
         }
         
-        # ✅ STOCKAGE ATOMIQUE DIRECT
-        success = StatelessDataManager.update_document_atomic(document_type, doc_data)
+        # ✅ STOCKAGE ATOMIQUE DIRECT avec individualisation
+        user_email = request.current_user.email
+        print(f"👤 Upload texte pour utilisateur: {user_email}")
+        
+        success = StatelessDataManager.update_document_atomic(document_type, doc_data, user_email)
         
         if success:
             print(f"✅ VRAI contenu stocké pour {document_type}")
@@ -201,6 +218,7 @@ def api_documents_upload_text():
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
 
 @documents_bp.route('/api/documents/paste', methods=['POST'])
+@verify_jwt_token
 def api_documents_paste():
     """Upload de texte avec stockage atomique"""
     try:
@@ -214,7 +232,7 @@ def api_documents_paste():
         if not content:
             return jsonify({"error": "Contenu vide"}), 400
         
-        # Sauvegarde atomique
+        # Sauvegarde atomique avec individualisation
         doc_data = {
             'uploaded': True,
             'processed': False,
@@ -224,7 +242,11 @@ def api_documents_paste():
             'upload_timestamp': datetime.now().isoformat()
         }
         
-        success = StatelessDataManager.update_document_atomic(document_type, doc_data)
+        # Utiliser l'utilisateur connecté pour l'individualisation
+        user_email = request.current_user.email
+        print(f"👤 Paste texte pour utilisateur: {user_email}")
+        
+        success = StatelessDataManager.update_document_atomic(document_type, doc_data, user_email)
         
         if success:
             return jsonify({
@@ -241,14 +263,19 @@ def api_documents_paste():
         return jsonify({"error": f"Erreur paste: {str(e)}"}), 500
 
 @documents_bp.route('/api/documents/delete/<document_type>', methods=['DELETE'])
+@verify_jwt_token
 def api_documents_delete(document_type):
     """Suppression de document avec stockage atomique"""
     try:
-        current_data = StatelessDataManager.get_user_data()
+        # Utiliser l'utilisateur connecté pour l'individualisation
+        user_email = request.current_user.email
+        print(f"👤 Suppression document pour utilisateur: {user_email}")
+        
+        current_data = StatelessDataManager.get_user_data_by_email(user_email)
         
         if 'documents' in current_data and document_type in current_data['documents']:
             del current_data['documents'][document_type]
-            success = StatelessDataManager.save_user_data(current_data)
+            success = StatelessDataManager.save_user_data_by_email(current_data, user_email)
             
             if success:
                 return jsonify({
