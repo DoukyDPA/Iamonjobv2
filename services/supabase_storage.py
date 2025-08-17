@@ -52,16 +52,35 @@ class SupabaseStorage:
         return hasattr(self, 'available') and self.available
     
     def get_user_key(self) -> str:
-        """Compatible avec votre système actuel"""
-        if 'user_email' in session and session['user_email']:
-            return session['user_email']
-        elif 'user_id' in session and session['user_id']:
-            return session['user_id']
-        else:
-            # Générer un ID unique pour les anonymes
-            if 'anonymous_id' not in session:
-                session['anonymous_id'] = f"anon_{datetime.now().timestamp()}"
-            return session['anonymous_id']
+        """Récupère la clé utilisateur depuis le token JWT ou la session"""
+        try:
+            # Essayer de récupérer depuis Flask request (si disponible)
+            from flask import request
+            if hasattr(request, 'current_user') and request.current_user:
+                return request.current_user.email
+            
+            # Fallback sur la session Flask (pour compatibilité)
+            if 'user_email' in session and session['user_email']:
+                return session['user_email']
+            elif 'user_id' in session and session['user_id']:
+                return session['user_id']
+            else:
+                # Générer un ID unique pour les anonymes
+                if 'anonymous_id' not in session:
+                    session['anonymous_id'] = f"anon_{datetime.now().timestamp()}"
+                return session['anonymous_id']
+        except Exception as e:
+            logging.warning(f"Erreur lors de la récupération de la clé utilisateur: {e}")
+            # Fallback sur la session Flask
+            if 'user_email' in session and session['user_email']:
+                return session['user_email']
+            elif 'user_id' in session and session['user_id']:
+                return session['user_id']
+            else:
+                # Générer un ID unique pour les anonymes
+                if 'anonymous_id' not in session:
+                    session['anonymous_id'] = f"anon_{datetime.now().timestamp()}"
+                return session['anonymous_id']
     
     def get_session_data(self) -> Dict[str, Any]:
         """
