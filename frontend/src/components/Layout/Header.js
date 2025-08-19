@@ -56,7 +56,7 @@ const Header = () => {
                 </Link>
                 
                 {/* Menu d'administration pour les admins */}
-                {user?.is_admin && (
+                {user?.isAdmin && (
                   <div className="admin-menu">
                     <button className="admin-menu-button">
                       ⚙️ Administration
@@ -130,7 +130,7 @@ const Header = () => {
                 </Link>
                 
                 {/* Menu d'administration mobile pour les admins */}
-                {user?.is_admin && (
+                {user?.isAdmin && (
                   <>
                     <Link
                       to="/admin/users"
