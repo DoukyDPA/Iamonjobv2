@@ -2,21 +2,58 @@
 Routes API pour l'administration
 """
 from flask import Blueprint, request, jsonify, send_from_directory
-from flask_login import login_required, current_user
 import logging
 import os
+import jwt
+from functools import wraps
+from datetime import datetime
 
 admin_api = Blueprint('admin_api', __name__)
 
+def verify_jwt_token(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        try:
+            auth_header = request.headers.get('Authorization')
+            if not auth_header:
+                return jsonify({"error": "Token d'authentification manquant"}), 401
+            if auth_header.startswith('Bearer '):
+                token = auth_header[7:]
+            else:
+                token = auth_header
+            if not token:
+                return jsonify({"error": "Token invalide"}), 401
+            secret_key = os.environ.get('FLASK_SECRET_KEY') or 'dev_secret_key'
+            payload = jwt.decode(token, secret_key, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            if not user_id:
+                return jsonify({"error": "Token invalide - ID utilisateur manquant"}), 401
+            from models.user import User
+            user = User.get(user_id)
+            if not user:
+                return jsonify({"error": "Utilisateur non trouvé"}), 401
+            if not user.is_admin:
+                return jsonify({"error": "Droits administrateur requis"}), 403
+            request.current_user = user
+            return f(*args, **kwargs)
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token expiré"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Token invalide"}), 401
+        except Exception as e:
+            logging.error(f"Erreur lors de la vérification du token: {e}")
+            return jsonify({"error": "Erreur d'authentification"}), 500
+    return decorated_function
+
 @admin_api.route('/status', methods=['GET'])
-@login_required
+@verify_jwt_token
 def admin_status():
     """Statut basique de l'administration"""
     try:
         return jsonify({
             "success": True,
             "message": "Interface admin disponible",
-            "user": current_user.email if current_user.is_authenticated else None
+            "user": request.current_user.email
         }), 200
         
     except Exception as e:
@@ -56,7 +93,7 @@ def admin_interface():
 
 
 @admin_api.route('/users', methods=['GET'])
-@login_required
+@verify_jwt_token
 def list_users():
     """Liste tous les utilisateurs avec leur consommation de tokens"""
     try:
@@ -101,7 +138,7 @@ def list_users():
 
 
 @admin_api.route('/users/<user_id>/admin', methods=['POST'])
-@login_required
+@verify_jwt_token
 def set_user_admin(user_id):
     """Met à jour le statut administrateur d'un utilisateur"""
     try:
@@ -117,7 +154,7 @@ def set_user_admin(user_id):
 
 
 @admin_api.route('/users/<user_id>/tokens', methods=['GET'])
-@login_required
+@verify_jwt_token
 def get_user_tokens(user_id):
     """Récupère l'utilisation de tokens d'un utilisateur"""
     try:
@@ -152,7 +189,7 @@ def get_user_tokens(user_id):
 
 
 @admin_api.route('/users/<user_id>/tokens/reset', methods=['POST'])
-@login_required
+@verify_jwt_token
 def reset_user_tokens_api(user_id):
     """Réinitialise les compteurs de tokens d'un utilisateur"""
     try:
