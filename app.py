@@ -55,7 +55,7 @@ print(f"   URL: {os.getenv('SUPABASE_URL', 'Non défini')[:50]}...")
 print(f"   Clé: {os.getenv('SUPABASE_ANON_KEY', 'Non défini')[:20]}...")
 
 # Création de l'application Flask
-app = Flask(__name__, static_folder=None)
+app = Flask(__name__, static_folder='frontend/build')
 CORS(app, origins=["*"])
 
 # Configuration de base
