@@ -19,7 +19,7 @@ const AdminUsersPage = () => {
 
   // Vérifier que l'utilisateur est admin
   useEffect(() => {
-    if (user && !user.is_admin) {
+    if (user && !user.isAdmin) {
       setError("Accès refusé. Droits administrateur requis.");
       setLoading(false);
     }
@@ -27,7 +27,7 @@ const AdminUsersPage = () => {
 
   // Charger les utilisateurs
   useEffect(() => {
-    if (user?.is_admin) {
+    if (user?.isAdmin) {
       loadUsers();
     }
   }, [user]);
@@ -68,7 +68,7 @@ const AdminUsersPage = () => {
   const toggleAdminStatus = async (userId, currentStatus) => {
     try {
       const response = await api.post(`/admin/users/${userId}/admin`, {
-        is_admin: !currentStatus
+        isAdmin: !currentStatus
       });
 
       if (response.success) {
@@ -76,7 +76,7 @@ const AdminUsersPage = () => {
         setUsers(prevUsers => 
           prevUsers.map(user => 
             user.id === userId 
-              ? { ...user, is_admin: !currentStatus }
+              ? { ...user, isAdmin: !currentStatus }
               : user
           )
         );
@@ -146,7 +146,7 @@ const AdminUsersPage = () => {
     return 'text-green-600';
   };
 
-  if (!user?.is_admin) {
+      if (!user?.isAdmin) {
     return (
       <div className="admin-users-page">
         <div className="access-denied">
@@ -262,9 +262,9 @@ const AdminUsersPage = () => {
                 </td>
                 
                 <td className="user-status">
-                  <span className={`status-badge ${user.is_admin ? 'admin' : 'user'}`}>
-                    {user.is_admin ? '👑 Admin' : '👤 Utilisateur'}
-                  </span>
+                          <span className={`status-badge ${user.isAdmin ? 'admin' : 'user'}`}>
+          {user.isAdmin ? '👑 Admin' : '👤 Utilisateur'}
+        </span>
                 </td>
                 
                 <td className="token-usage">
@@ -297,11 +297,11 @@ const AdminUsersPage = () => {
                   </button>
                   
                   <button 
-                    onClick={() => toggleAdminStatus(user.id, user.is_admin)}
-                    className={`action-btn ${user.is_admin ? 'remove-admin-btn' : 'make-admin-btn'}`}
-                    title={user.is_admin ? 'Retirer les droits admin' : 'Donner les droits admin'}
-                  >
-                    {user.is_admin ? '👤' : '👑'}
+                                    onClick={() => toggleAdminStatus(user.id, user.isAdmin)}
+                className={`action-btn ${user.isAdmin ? 'remove-admin-btn' : 'make-admin-btn'}`}
+                title={user.isAdmin ? 'Retirer les droits admin' : 'Donner les droits admin'}
+              >
+                {user.isAdmin ? '👤' : '👑'}
                   </button>
                   
                   <button 
@@ -341,9 +341,9 @@ const AdminUsersPage = () => {
                 
                 <div className="detail-row">
                   <label>Statut:</label>
-                  <span className={`status-badge ${selectedUser.is_admin ? 'admin' : 'user'}`}>
-                    {selectedUser.is_admin ? '👑 Administrateur' : '👤 Utilisateur'}
-                  </span>
+                          <span className={`status-badge ${selectedUser.isAdmin ? 'admin' : 'user'}`}>
+          {selectedUser.isAdmin ? '👑 Administrateur' : '👤 Utilisateur'}
+        </span>
                 </div>
               </div>
               
@@ -392,10 +392,10 @@ const AdminUsersPage = () => {
               
               <div className="modal-actions">
                 <button 
-                  onClick={() => toggleAdminStatus(selectedUser.id, selectedUser.is_admin)}
-                  className={`action-btn large ${selectedUser.is_admin ? 'remove-admin-btn' : 'make-admin-btn'}`}
+                  onClick={() => toggleAdminStatus(selectedUser.id, selectedUser.isAdmin)}
+                  className={`action-btn large ${selectedUser.isAdmin ? 'remove-admin-btn' : 'make-admin-btn'}`}
                 >
-                  {selectedUser.is_admin ? '👤 Retirer les droits admin' : '👑 Donner les droits admin'}
+                  {selectedUser.isAdmin ? '👤 Retirer les droits admin' : '👑 Donner les droits admin'}
                 </button>
                 
                 <button 
