@@ -55,6 +55,26 @@ const Header = () => {
                   Tableau de bord
                 </Link>
                 
+                {/* Menu d'administration pour les admins */}
+                {user?.is_admin && (
+                  <div className="admin-menu">
+                    <button className="admin-menu-button">
+                      ⚙️ Administration
+                    </button>
+                    <div className="admin-dropdown">
+                      <Link to="/admin/users" className="admin-dropdown-item">
+                        👥 Utilisateurs
+                      </Link>
+                      <Link to="/admin/partners" className="admin-dropdown-item">
+                        🤝 Partenaires
+                      </Link>
+                      <Link to="/admin/services" className="admin-dropdown-item">
+                        🚀 Services
+                      </Link>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="nav-user">
                   <button className="nav-user-button">
                     <FiUser />
@@ -108,6 +128,33 @@ const Header = () => {
                 >
                   Tableau de bord
                 </Link>
+                
+                {/* Menu d'administration mobile pour les admins */}
+                {user?.is_admin && (
+                  <>
+                    <Link
+                      to="/admin/users"
+                      className={`mobile-nav-link ${isActive('/admin/users') ? 'active' : ''}`}
+                      onClick={closeMobileMenu}
+                    >
+                      👥 Utilisateurs
+                    </Link>
+                    <Link
+                      to="/admin/partners"
+                      className={`mobile-nav-link ${isActive('/admin/partners') ? 'active' : ''}`}
+                      onClick={closeMobileMenu}
+                    >
+                      🤝 Partenaires
+                    </Link>
+                    <Link
+                      to="/admin/services"
+                      className={`mobile-nav-link ${isActive('/admin/services') ? 'active' : ''}`}
+                      onClick={closeMobileMenu}
+                    >
+                      🚀 Services
+                    </Link>
+                  </>
+                )}
                 
                 <button onClick={handleLogout} className="mobile-nav-link logout">
                   <FiLogOut />
