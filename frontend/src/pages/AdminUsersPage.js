@@ -35,7 +35,7 @@ const AdminUsersPage = () => {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/admin/users');
+      const response = await api.get('/api/admin/users');
       
       if (response.success) {
         setUsers(response.users);
@@ -67,7 +67,7 @@ const AdminUsersPage = () => {
 
   const toggleAdminStatus = async (userId, currentStatus) => {
     try {
-      const response = await api.post(`/admin/users/${userId}/admin`, {
+      const response = await api.post(`/api/admin/users/${userId}/admin`, {
         isAdmin: !currentStatus
       });
 
@@ -98,7 +98,7 @@ const AdminUsersPage = () => {
     }
 
     try {
-      const response = await api.post(`/admin/users/${userId}/tokens/reset`);
+      const response = await api.post(`/api/admin/users/${userId}/tokens/reset`);
 
       if (response.success) {
         alert('Tokens réinitialisés avec succès');
