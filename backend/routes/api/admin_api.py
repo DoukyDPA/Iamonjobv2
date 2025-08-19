@@ -107,8 +107,8 @@ def list_users():
                 if response.data:
                     return response.data[0]
                 else:
-                    # Créer des limites par défaut
-                    default_limits = {
+                    # Retourner des limites par défaut sans créer de table
+                    return {
                         'user_id': user_id,
                         'daily_tokens': 1000,
                         'monthly_tokens': 10000,
@@ -116,13 +116,23 @@ def list_users():
                         'used_monthly': 0,
                         'last_reset': datetime.now().isoformat()
                     }
-                    supabase.client.table('token_usage').insert(default_limits).execute()
-                    return default_limits
             except Exception as e:
-                return {}
+                logging.warning(f"Erreur token_usage pour {user_id}: {e}")
+                # Retourner des limites par défaut en cas d'erreur
+                return {
+                    'user_id': user_id,
+                    'daily_tokens': 1000,
+                    'monthly_tokens': 10000,
+                    'used_daily': 0,
+                    'used_monthly': 0,
+                    'last_reset': datetime.now().isoformat()
+                }
 
         users_info = []
-        for user in User.list_all():
+        all_users = User.list_all()
+        logging.info(f"Nombre d'utilisateurs trouvés: {len(all_users)}")
+        
+        for user in all_users:
             token_info = get_user_token_limits(user.id)
             users_info.append({
                 "id": user.id,
@@ -131,6 +141,7 @@ def list_users():
                 "tokens": token_info,
             })
 
+        logging.info(f"Utilisateurs traités: {len(users_info)}")
         return jsonify({"success": True, "users": users_info}), 200
     except Exception as e:
         logging.error(f"Erreur liste utilisateurs: {e}")
