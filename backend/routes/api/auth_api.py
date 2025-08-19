@@ -300,7 +300,8 @@ def login():
                 "token": token,
                 "user": {
                     "id": user.id,
-                    "email": user.email
+                    "email": user.email,
+                    "is_admin": user.is_admin
                 },
                 "user_data": {
                     "chat_history": user_data.get('chat_history', []),
