@@ -37,11 +37,11 @@ const AdminUsersPage = () => {
       setLoading(true);
       const response = await api.get('/api/admin/users');
       
-      if (response.success) {
-        setUsers(response.users);
-        calculateStats(response.users);
+      if (response.data.success) {
+        setUsers(response.data.users);
+        calculateStats(response.data.users);
       } else {
-        setError(response.error || 'Erreur lors du chargement des utilisateurs');
+        setError(response.data.error || 'Erreur lors du chargement des utilisateurs');
       }
     } catch (err) {
       setError('Erreur de connexion au serveur');
