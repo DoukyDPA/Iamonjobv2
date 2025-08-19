@@ -363,6 +363,25 @@ print("================================================")
 # ENREGISTREMENT DES ROUTES DE SANTÉ
 # ====================================
 
+# Route de santé racine pour Railway
+@app.route('/health')
+def health_root():
+    """Health check racine pour Railway"""
+    try:
+        return jsonify({
+            "status": "healthy",
+            "platform": "railway",
+            "server": "gunicorn",
+            "supabase_configured": bool(os.environ.get('SUPABASE_URL')),
+            "timestamp": datetime.now().isoformat()
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 503
+
 try:
     from routes.health import health_bp
     app.register_blueprint(health_bp, url_prefix='/api/health')
