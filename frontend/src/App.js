@@ -30,6 +30,7 @@ import AdminServicesPage from './pages/AdminServicesPage';
 
 // Import AdminPartnerJobs component
 import AdminPartnersPage from './pages/AdminPartnersPage';
+import AdminUsersPage from './pages/AdminUsersPage';
 
 import './App.css';
 
@@ -119,6 +120,15 @@ function App() {
                 <PrivateRoute>
                   <Layout>
                     <AdminPartnersPage />
+                  </Layout>
+                </PrivateRoute>
+              } />
+              
+              {/* Route d'administration des utilisateurs */}
+              <Route path="/admin/users" element={
+                <PrivateRoute>
+                  <Layout>
+                    <AdminUsersPage />
                   </Layout>
                 </PrivateRoute>
               } />
