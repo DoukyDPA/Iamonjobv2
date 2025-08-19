@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../services/api';
+import api from '../services/api';
 import './AdminUsersPage.css';
 
 const AdminUsersPage = () => {
@@ -93,7 +93,7 @@ const AdminUsersPage = () => {
   };
 
   const resetUserTokens = async (userId) => {
-    if (!confirm('Êtes-vous sûr de vouloir réinitialiser les tokens de cet utilisateur ?')) {
+    if (!window.confirm('Êtes-vous sûr de vouloir réinitialiser les tokens de cet utilisateur ?')) {
       return;
     }
 
