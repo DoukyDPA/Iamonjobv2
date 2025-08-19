@@ -223,6 +223,30 @@ class User(UserMixin):
             return []
 
     @staticmethod
+    def set_admin_status(user_id, is_admin):
+        """Met à jour le statut administrateur d'un utilisateur"""
+        try:
+            supabase_client = get_supabase_client()
+            if not supabase_client:
+                logging.error("Client Supabase non disponible")
+                return False
+            
+            response = supabase_client.table('users').update({
+                'is_admin': is_admin
+            }).eq('id', user_id).execute()
+            
+            if response.data:
+                logging.info(f"Statut admin de l'utilisateur {user_id} mis à jour: {is_admin}")
+                return True
+            else:
+                logging.error(f"Erreur lors de la mise à jour du statut admin de l'utilisateur {user_id}")
+                return False
+                
+        except Exception as e:
+            logging.error(f"Erreur lors de la mise à jour du statut admin: {e}")
+            return False
+
+    @staticmethod
     def update(user_id, **kwargs):
         """Met à jour un utilisateur"""
         try:
