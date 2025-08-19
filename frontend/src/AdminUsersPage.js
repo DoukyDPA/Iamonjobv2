@@ -1,0 +1,416 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../services/api';
+import './AdminUsersPage.css';
+
+const AdminUsersPage = () => {
+  const { user } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    totalTokensUsed: 0,
+    averageTokensPerUser: 0
+  });
+
+  // Vérifier que l'utilisateur est admin
+  useEffect(() => {
+    if (user && !user.is_admin) {
+      setError("Accès refusé. Droits administrateur requis.");
+      setLoading(false);
+    }
+  }, [user]);
+
+  // Charger les utilisateurs
+  useEffect(() => {
+    if (user?.is_admin) {
+      loadUsers();
+    }
+  }, [user]);
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/admin/users');
+      
+      if (response.success) {
+        setUsers(response.users);
+        calculateStats(response.users);
+      } else {
+        setError(response.error || 'Erreur lors du chargement des utilisateurs');
+      }
+    } catch (err) {
+      setError('Erreur de connexion au serveur');
+      console.error('Erreur chargement utilisateurs:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateStats = (usersList) => {
+    const totalUsers = usersList.length;
+    const activeUsers = usersList.filter(u => u.tokens?.used_daily > 0 || u.tokens?.used_monthly > 0).length;
+    const totalTokensUsed = usersList.reduce((sum, u) => sum + (u.tokens?.used_monthly || 0), 0);
+    const averageTokensPerUser = totalUsers > 0 ? Math.round(totalTokensUsed / totalUsers) : 0;
+
+    setStats({
+      totalUsers,
+      activeUsers,
+      totalTokensUsed,
+      averageTokensPerUser
+    });
+  };
+
+  const toggleAdminStatus = async (userId, currentStatus) => {
+    try {
+      const response = await api.post(`/admin/users/${userId}/admin`, {
+        is_admin: !currentStatus
+      });
+
+      if (response.success) {
+        // Mettre à jour la liste locale
+        setUsers(prevUsers => 
+          prevUsers.map(user => 
+            user.id === userId 
+              ? { ...user, is_admin: !currentStatus }
+              : user
+          )
+        );
+        
+        // Recalculer les stats
+        loadUsers();
+      } else {
+        alert(`Erreur: ${response.error}`);
+      }
+    } catch (err) {
+      alert('Erreur lors de la modification du statut admin');
+      console.error('Erreur toggle admin:', err);
+    }
+  };
+
+  const resetUserTokens = async (userId) => {
+    if (!confirm('Êtes-vous sûr de vouloir réinitialiser les tokens de cet utilisateur ?')) {
+      return;
+    }
+
+    try {
+      const response = await api.post(`/admin/users/${userId}/tokens/reset`);
+
+      if (response.success) {
+        alert('Tokens réinitialisés avec succès');
+        loadUsers(); // Recharger pour mettre à jour les données
+      } else {
+        alert(`Erreur: ${response.error}`);
+      }
+    } catch (err) {
+      alert('Erreur lors de la réinitialisation des tokens');
+      console.error('Erreur reset tokens:', err);
+    }
+  };
+
+  const openUserModal = (user) => {
+    setSelectedUser(user);
+    setShowUserModal(true);
+  };
+
+  const closeUserModal = () => {
+    setShowUserModal(false);
+    setSelectedUser(null);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Jamais';
+    try {
+      return new Date(dateString).toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return 'Date invalide';
+    }
+  };
+
+  const getTokenUsageColor = (used, limit) => {
+    if (!limit || limit === 0) return 'text-gray-500';
+    const percentage = (used / limit) * 100;
+    if (percentage >= 90) return 'text-red-600 font-bold';
+    if (percentage >= 75) return 'text-orange-600';
+    if (percentage >= 50) return 'text-yellow-600';
+    return 'text-green-600';
+  };
+
+  if (!user?.is_admin) {
+    return (
+      <div className="admin-users-page">
+        <div className="access-denied">
+          <h1>🚫 Accès Refusé</h1>
+          <p>Vous devez être administrateur pour accéder à cette page.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="admin-users-page">
+        <div className="loading">
+          <h2>Chargement des utilisateurs...</h2>
+          <div className="spinner"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="admin-users-page">
+        <div className="error">
+          <h2>❌ Erreur</h2>
+          <p>{error}</p>
+          <button onClick={loadUsers} className="retry-btn">
+            Réessayer
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-users-page">
+      <div className="admin-header">
+        <h1>👥 Administration des Utilisateurs</h1>
+        <p>Gérez les utilisateurs, leurs droits et leur consommation de tokens</p>
+      </div>
+
+      {/* Statistiques */}
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-icon">👤</div>
+          <div className="stat-content">
+            <h3>Total Utilisateurs</h3>
+            <p className="stat-number">{stats.totalUsers}</p>
+          </div>
+        </div>
+        
+        <div className="stat-card">
+          <div className="stat-icon">🟢</div>
+          <div className="stat-content">
+            <h3>Utilisateurs Actifs</h3>
+            <p className="stat-number">{stats.activeUsers}</p>
+          </div>
+        </div>
+        
+        <div className="stat-card">
+          <div className="stat-icon">🎫</div>
+          <div className="stat-content">
+            <h3>Tokens Utilisés</h3>
+            <p className="stat-number">{stats.totalTokensUsed.toLocaleString()}</p>
+          </div>
+        </div>
+        
+        <div className="stat-card">
+          <div className="stat-icon">📊</div>
+          <div className="stat-content">
+            <h3>Moyenne/Utilisateur</h3>
+            <p className="stat-number">{stats.averageTokensPerUser.toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="actions-bar">
+        <button onClick={loadUsers} className="refresh-btn">
+          🔄 Actualiser
+        </button>
+        <div className="search-box">
+          <input 
+            type="text" 
+            placeholder="Rechercher un utilisateur..."
+            onChange={(e) => {
+              // TODO: Implémenter la recherche
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Liste des utilisateurs */}
+      <div className="users-table-container">
+        <table className="users-table">
+          <thead>
+            <tr>
+              <th>Utilisateur</th>
+              <th>Statut</th>
+              <th>Tokens Quotidiens</th>
+              <th>Tokens Mensuels</th>
+              <th>Dernière Activité</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map(user => (
+              <tr key={user.id} className="user-row">
+                <td className="user-info">
+                  <div className="user-email">{user.email}</div>
+                  <div className="user-id">ID: {user.id}</div>
+                </td>
+                
+                <td className="user-status">
+                  <span className={`status-badge ${user.is_admin ? 'admin' : 'user'}`}>
+                    {user.is_admin ? '👑 Admin' : '👤 Utilisateur'}
+                  </span>
+                </td>
+                
+                <td className="token-usage">
+                  <div className="token-bar">
+                    <span className={getTokenUsageColor(user.tokens?.used_daily || 0, user.tokens?.daily_tokens || 0)}>
+                      {user.tokens?.used_daily || 0} / {user.tokens?.daily_tokens || '∞'}
+                    </span>
+                  </div>
+                </td>
+                
+                <td className="token-usage">
+                  <div className="token-bar">
+                    <span className={getTokenUsageColor(user.tokens?.used_monthly || 0, user.tokens?.monthly_tokens || 0)}>
+                      {user.tokens?.used_monthly || 0} / {user.tokens?.monthly_tokens || '∞'}
+                    </span>
+                  </div>
+                </td>
+                
+                <td className="last-activity">
+                  {formatDate(user.tokens?.last_reset)}
+                </td>
+                
+                <td className="user-actions">
+                  <button 
+                    onClick={() => openUserModal(user)}
+                    className="action-btn view-btn"
+                    title="Voir les détails"
+                  >
+                    👁️
+                  </button>
+                  
+                  <button 
+                    onClick={() => toggleAdminStatus(user.id, user.is_admin)}
+                    className={`action-btn ${user.is_admin ? 'remove-admin-btn' : 'make-admin-btn'}`}
+                    title={user.is_admin ? 'Retirer les droits admin' : 'Donner les droits admin'}
+                  >
+                    {user.is_admin ? '👤' : '👑'}
+                  </button>
+                  
+                  <button 
+                    onClick={() => resetUserTokens(user.id)}
+                    className="action-btn reset-btn"
+                    title="Réinitialiser les tokens"
+                  >
+                    🔄
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Modal de détails utilisateur */}
+      {showUserModal && selectedUser && (
+        <div className="modal-overlay" onClick={closeUserModal}>
+          <div className="user-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>👤 Détails de l'utilisateur</h2>
+              <button onClick={closeUserModal} className="close-btn">×</button>
+            </div>
+            
+            <div className="modal-content">
+              <div className="user-details">
+                <div className="detail-row">
+                  <label>Email:</label>
+                  <span>{selectedUser.email}</span>
+                </div>
+                
+                <div className="detail-row">
+                  <label>ID:</label>
+                  <span>{selectedUser.id}</span>
+                </div>
+                
+                <div className="detail-row">
+                  <label>Statut:</label>
+                  <span className={`status-badge ${selectedUser.is_admin ? 'admin' : 'user'}`}>
+                    {selectedUser.is_admin ? '👑 Administrateur' : '👤 Utilisateur'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="token-details">
+                <h3>🎫 Utilisation des Tokens</h3>
+                
+                <div className="token-section">
+                  <h4>Quotidien</h4>
+                  <div className="token-progress">
+                    <div className="progress-bar">
+                      <div 
+                        className="progress-fill daily"
+                        style={{
+                          width: `${Math.min((selectedUser.tokens?.used_daily || 0) / (selectedUser.tokens?.daily_tokens || 1) * 100, 100)}%`
+                        }}
+                      ></div>
+                    </div>
+                    <span className="token-count">
+                      {selectedUser.tokens?.used_daily || 0} / {selectedUser.tokens?.daily_tokens || '∞'}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="token-section">
+                  <h4>Mensuel</h4>
+                  <div className="token-progress">
+                    <div className="progress-bar">
+                      <div 
+                        className="progress-fill monthly"
+                        style={{
+                          width: `${Math.min((selectedUser.tokens?.used_monthly || 0) / (selectedUser.tokens?.monthly_tokens || 1) * 100, 100)}%`
+                        }}
+                      ></div>
+                    </div>
+                    <span className="token-count">
+                      {selectedUser.tokens?.used_monthly || 0} / {selectedUser.tokens?.monthly_tokens || '∞'}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="detail-row">
+                  <label>Dernière réinitialisation:</label>
+                  <span>{formatDate(selectedUser.tokens?.last_reset)}</span>
+                </div>
+              </div>
+              
+              <div className="modal-actions">
+                <button 
+                  onClick={() => toggleAdminStatus(selectedUser.id, selectedUser.is_admin)}
+                  className={`action-btn large ${selectedUser.is_admin ? 'remove-admin-btn' : 'make-admin-btn'}`}
+                >
+                  {selectedUser.is_admin ? '👤 Retirer les droits admin' : '👑 Donner les droits admin'}
+                </button>
+                
+                <button 
+                  onClick={() => resetUserTokens(selectedUser.id)}
+                  className="action-btn large reset-btn"
+                >
+                  🔄 Réinitialiser les tokens
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AdminUsersPage;
