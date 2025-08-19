@@ -95,50 +95,27 @@ def admin_interface():
 @admin_api.route('/users', methods=['GET'])
 @verify_jwt_token
 def list_users():
-    """Liste tous les utilisateurs avec leur consommation de tokens"""
+    """Liste tous les utilisateurs (sans token_usage pour l'instant)"""
     try:
         from models.user import User
-        from services.supabase_storage import SupabaseStorage
-
-        def get_user_token_limits(user_id):
-            supabase = SupabaseStorage()
-            try:
-                response = supabase.client.table('token_usage').select('*').eq('user_id', user_id).execute()
-                if response.data:
-                    return response.data[0]
-                else:
-                    # Retourner des limites par défaut sans créer de table
-                    return {
-                        'user_id': user_id,
-                        'daily_tokens': 1000,
-                        'monthly_tokens': 10000,
-                        'used_daily': 0,
-                        'used_monthly': 0,
-                        'last_reset': datetime.now().isoformat()
-                    }
-            except Exception as e:
-                logging.warning(f"Erreur token_usage pour {user_id}: {e}")
-                # Retourner des limites par défaut en cas d'erreur
-                return {
-                    'user_id': user_id,
+        
+        # Récupérer tous les utilisateurs
+        all_users = User.list_all()
+        logging.info(f"Nombre d'utilisateurs trouvés: {len(all_users)}")
+        
+        users_info = []
+        for user in all_users:
+            users_info.append({
+                "id": user.id,
+                "email": user.email,
+                "is_admin": user.is_admin,
+                "tokens": {
                     'daily_tokens': 1000,
                     'monthly_tokens': 10000,
                     'used_daily': 0,
                     'used_monthly': 0,
                     'last_reset': datetime.now().isoformat()
                 }
-
-        users_info = []
-        all_users = User.list_all()
-        logging.info(f"Nombre d'utilisateurs trouvés: {len(all_users)}")
-        
-        for user in all_users:
-            token_info = get_user_token_limits(user.id)
-            users_info.append({
-                "id": user.id,
-                "email": user.email,
-                "is_admin": user.is_admin,
-                "tokens": token_info,
             })
 
         logging.info(f"Utilisateurs traités: {len(users_info)}")
