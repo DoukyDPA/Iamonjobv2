@@ -254,8 +254,10 @@ const Dashboard = () => {
         // Déclencher l'analyse de CV si c'est un CV
         if (docType === 'cv') {
           console.log('🚀 Déclenchement analyse automatique CV...');
+          console.log('📊 État documentStatus complet:', documentStatus);
           console.log('📊 État documentStatus.cv:', documentStatus.cv);
           console.log('📊 documentStatus.cv?.uploaded:', documentStatus.cv?.uploaded);
+          console.log('📊 Type de docType:', docType);
           setCvAnalysisLoading(true);
           setCvAnalysisError(null);
           try {
