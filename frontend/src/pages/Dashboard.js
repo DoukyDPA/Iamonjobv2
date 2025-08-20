@@ -253,9 +253,13 @@ const Dashboard = () => {
         toast.success(`${docType === 'cv' ? 'CV' : 'Document'} uploadé avec succès !`);
         // Déclencher l'analyse de CV si c'est un CV
         if (docType === 'cv') {
+          console.log('🚀 Déclenchement analyse automatique CV...');
+          console.log('📊 État documentStatus.cv:', documentStatus.cv);
+          console.log('📊 documentStatus.cv?.uploaded:', documentStatus.cv?.uploaded);
           setCvAnalysisLoading(true);
           setCvAnalysisError(null);
           try {
+            console.log('📡 Appel API /api/actions/analyze-cv...');
             const response = await fetch('/api/actions/analyze-cv', {
               method: 'POST',
               headers: {
