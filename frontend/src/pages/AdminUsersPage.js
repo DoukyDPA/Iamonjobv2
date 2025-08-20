@@ -100,15 +100,35 @@ const AdminUsersPage = () => {
     try {
       const response = await api.post(`/api/admin/users/${userId}/tokens/reset`);
 
-      if (response.success) {
+      if (response.data.success) {
         alert('Tokens réinitialisés avec succès');
         loadUsers(); // Recharger pour mettre à jour les données
       } else {
-        alert(`Erreur: ${response.error}`);
+        alert(`Erreur: ${response.data.error}`);
       }
     } catch (err) {
       alert('Erreur lors de la réinitialisation des tokens');
       console.error('Erreur reset tokens:', err);
+    }
+  };
+
+  const deleteUser = async (userId) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.')) {
+      return;
+    }
+
+    try {
+      const response = await api.delete(`/api/admin/users/${userId}`);
+      
+      if (response.data.success) {
+        alert('Utilisateur supprimé avec succès');
+        // Recharger la liste des utilisateurs
+        loadUsers();
+      } else {
+        alert('Erreur lors de la suppression');
+      }
+    } catch (err) {
+      alert('Erreur de connexion au serveur');
     }
   };
 
@@ -310,6 +330,13 @@ const AdminUsersPage = () => {
                     title="Réinitialiser les tokens"
                   >
                     🔄
+                  </button>
+                  <button 
+                    onClick={() => deleteUser(user.id)}
+                    className="action-btn delete-btn"
+                    title="Supprimer l'utilisateur"
+                  >
+                    🗑️
                   </button>
                 </td>
               </tr>
