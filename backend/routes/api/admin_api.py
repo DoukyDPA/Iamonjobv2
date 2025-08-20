@@ -6,7 +6,7 @@ import logging
 import os
 import jwt
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, date
 
 admin_api = Blueprint('admin_api', __name__)
 
@@ -92,10 +92,57 @@ def admin_interface():
         }), 500
 
 
+def _compute_user_token_usage(user_email: str) -> dict:
+    """Calcule l'usage quotidien et mensuel des tokens pour un utilisateur via la table token_usage.
+
+    La table attend les colonnes: user_email (TEXT), date (DATE), tokens_used (INT)
+    """
+    try:
+        from services.supabase_storage import SupabaseStorage
+        supabase = SupabaseStorage()
+        if not supabase.is_available():
+            raise RuntimeError("Supabase indisponible")
+
+        today_str = date.today().isoformat()
+        month_start_str = date.today().replace(day=1).isoformat()
+
+        # Récupération mensuelle, on additionne côté serveur applicatif
+        monthly_resp = supabase.client.table('token_usage') \
+            .select('tokens_used,date') \
+            .eq('user_email', user_email) \
+            .gte('date', month_start_str) \
+            .lte('date', today_str) \
+            .execute()
+
+        used_monthly = 0
+        used_daily = 0
+        if monthly_resp.data:
+            for row in monthly_resp.data:
+                used_monthly += int(row.get('tokens_used') or 0)
+                if str(row.get('date')) == today_str:
+                    used_daily += int(row.get('tokens_used') or 0)
+
+        return {
+            'daily_tokens': 1000,
+            'monthly_tokens': 10000,
+            'used_daily': used_daily,
+            'used_monthly': used_monthly,
+            'last_reset': None,
+        }
+    except Exception as e:
+        logging.warning(f"Token usage indisponible pour {user_email}: {e}")
+        return {
+            'daily_tokens': 1000,
+            'monthly_tokens': 10000,
+            'used_daily': 0,
+            'used_monthly': 0,
+            'last_reset': None,
+        }
+
 @admin_api.route('/users', methods=['GET'])
 @verify_jwt_token
 def list_users():
-    """Liste tous les utilisateurs (sans token_usage pour l'instant)"""
+    """Liste tous les utilisateurs et leur consommation de tokens (agrégée)"""
     try:
         from models.user import User
         
@@ -109,13 +156,7 @@ def list_users():
                 "id": user.id,
                 "email": user.email,
                 "is_admin": user.is_admin,
-                "tokens": {
-                    'daily_tokens': 1000,
-                    'monthly_tokens': 10000,
-                    'used_daily': 0,
-                    'used_monthly': 0,
-                    'last_reset': datetime.now().isoformat()
-                }
+                "tokens": _compute_user_token_usage(user.email)
             })
 
         logging.info(f"Utilisateurs traités: {len(users_info)}")
@@ -146,30 +187,11 @@ def set_user_admin(user_id):
 def get_user_tokens(user_id):
     """Récupère l'utilisation de tokens d'un utilisateur"""
     try:
-        from services.supabase_storage import SupabaseStorage
-        
-        def get_user_token_limits(user_id):
-            supabase = SupabaseStorage()
-            try:
-                response = supabase.client.table('token_usage').select('*').eq('user_id', user_id).execute()
-                if response.data:
-                    return response.data[0]
-                else:
-                    # Créer des limites par défaut
-                    default_limits = {
-                        'user_id': user_id,
-                        'daily_tokens': 1000,
-                        'monthly_tokens': 10000,
-                        'used_daily': 0,
-                        'used_monthly': 0,
-                        'last_reset': datetime.now().isoformat()
-                    }
-                    supabase.client.table('token_usage').insert(default_limits).execute()
-                    return default_limits
-            except Exception as e:
-                return {}
-        
-        tokens = get_user_token_limits(user_id)
+        from models.user import User
+        user = User.get(user_id)
+        if not user:
+            return jsonify({"success": False, "error": "Utilisateur non trouvé"}), 404
+        tokens = _compute_user_token_usage(user.email)
         return jsonify({"success": True, "tokens": tokens}), 200
     except Exception as e:
         logging.error(f"Erreur récupération tokens: {e}")
@@ -181,28 +203,61 @@ def get_user_tokens(user_id):
 def reset_user_tokens_api(user_id):
     """Réinitialise les compteurs de tokens d'un utilisateur"""
     try:
+        from models.user import User
         from services.supabase_storage import SupabaseStorage
-        
-        def reset_user_tokens(user_id):
-            supabase = SupabaseStorage()
-            try:
-                response = supabase.client.table('token_usage').update({
-                    'used_daily': 0,
-                    'used_monthly': 0,
-                    'last_reset': datetime.now().isoformat()
-                }).eq('user_id', user_id).execute()
-                
-                if response.data:
-                    return True, "Tokens réinitialisés", 1000, 10000
-                else:
-                    return False, "Utilisateur non trouvé", 0, 0
-            except Exception as e:
-                return False, f"Erreur: {str(e)}", 0, 0
-        
-        success, message, daily, monthly = reset_user_tokens(user_id)
-        status = 200 if success else 400
-        return jsonify({"success": success, "message": message, "daily_limit": daily, "monthly_limit": monthly}), status
+        user = User.get(user_id)
+        if not user:
+            return jsonify({"success": False, "error": "Utilisateur non trouvé"}), 404
+
+        supabase = SupabaseStorage()
+        if not supabase.is_available():
+            return jsonify({"success": False, "error": "Supabase indisponible"}), 503
+
+        month_start_str = date.today().replace(day=1).isoformat()
+        today_str = date.today().isoformat()
+
+        # Supprimer les lignes d'usage pour le mois courant afin de repartir à zéro
+        try:
+            supabase.client.table('token_usage') \
+                .delete() \
+                .eq('user_email', user.email) \
+                .gte('date', month_start_str) \
+                .lte('date', today_str) \
+                .execute()
+        except Exception as e:
+            logging.warning(f"Reset tokens - suppression échouée pour {user.email}: {e}")
+
+        return jsonify({
+            "success": True,
+            "message": "Tokens réinitialisés",
+            "daily_limit": 1000,
+            "monthly_limit": 10000
+        }), 200
     except Exception as e:
         logging.error(f"Erreur reset tokens: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@admin_api.route('/users/<user_id>', methods=['DELETE'])
+@verify_jwt_token
+def delete_user(user_id):
+    """Supprime un utilisateur"""
+    try:
+        from models.user import User
+        
+        # Vérifier que l'utilisateur existe
+        user = User.get(user_id)
+        if not user:
+            return jsonify({"success": False, "error": "Utilisateur non trouvé"}), 404
+        
+        # Supprimer l'utilisateur
+        if User.delete(user_id):
+            logging.info(f"Utilisateur {user_id} supprimé avec succès")
+            return jsonify({"success": True, "message": "Utilisateur supprimé"})
+        else:
+            return jsonify({"success": False, "error": "Erreur lors de la suppression"}), 500
+            
+    except Exception as e:
+        logging.error(f"Erreur suppression utilisateur: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
