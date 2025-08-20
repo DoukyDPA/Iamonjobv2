@@ -261,3 +261,119 @@ def delete_user(user_id):
         logging.error(f"Erreur suppression utilisateur: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+
+@admin_api.route('/partners/stats', methods=['GET'])
+@verify_jwt_token
+def get_partners_stats():
+    """Récupère les statistiques de tous les partenaires"""
+    try:
+        from services.partner_offer_service import partner_offer_service
+        
+        days = request.args.get('days', 30, type=int)
+        stats = partner_offer_service.get_all_partners_stats(days)
+        
+        return jsonify({
+            "success": True,
+            "stats": stats,
+            "period_days": days
+        }), 200
+        
+    except Exception as e:
+        logging.error(f"Erreur récupération stats partenaires: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@admin_api.route('/partners/<int:partner_id>/stats', methods=['GET'])
+@verify_jwt_token
+def get_partner_stats(partner_id):
+    """Récupère les statistiques d'un partenaire spécifique"""
+    try:
+        from services.partner_offer_service import partner_offer_service
+        
+        days = request.args.get('days', 30, type=int)
+        stats = partner_offer_service.get_partner_offer_stats(partner_id, days)
+        
+        if not stats['partner_id']:
+            return jsonify({"success": False, "error": "Partenaire non trouvé"}), 404
+        
+        return jsonify({
+            "success": True,
+            "stats": stats
+        }), 200
+        
+    except Exception as e:
+        logging.error(f"Erreur récupération stats partenaire: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@admin_api.route('/partners/<int:partner_id>/offers', methods=['GET'])
+@verify_jwt_token
+def get_partner_offers(partner_id):
+    """Récupère les offres d'un partenaire"""
+    try:
+        from services.supabase_storage import SupabaseStorage
+        
+        supabase = SupabaseStorage()
+        if not supabase.is_available():
+            return jsonify({"success": False, "error": "Supabase indisponible"}), 503
+        
+        response = supabase.client.table('partner_offers') \
+            .select('*') \
+            .eq('partner_id', partner_id) \
+            .eq('is_active', True) \
+            .execute()
+        
+        offers = response.data if response.data else []
+        
+        return jsonify({
+            "success": True,
+            "partner_id": partner_id,
+            "offers": offers
+        }), 200
+        
+    except Exception as e:
+        logging.error(f"Erreur récupération offres partenaire: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@admin_api.route('/partners/<int:partner_id>/offers', methods=['POST'])
+@verify_jwt_token
+def create_partner_offer(partner_id):
+    """Crée une nouvelle offre pour un partenaire"""
+    try:
+        data = request.get_json() or {}
+        
+        required_fields = ['title', 'description', 'offer_type']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({"success": False, "error": f"Champ requis: {field}"}), 400
+        
+        from services.supabase_storage import SupabaseStorage
+        
+        supabase = SupabaseStorage()
+        if not supabase.is_available():
+            return jsonify({"success": False, "error": "Supabase indisponible"}), 503
+        
+        offer_data = {
+            'partner_id': partner_id,
+            'title': data['title'],
+            'description': data['description'],
+            'offer_type': data['offer_type'],
+            'url': data.get('url'),
+            'is_active': True
+        }
+        
+        response = supabase.client.table('partner_offers').insert(offer_data).execute()
+        
+        if response.data:
+            return jsonify({
+                "success": True,
+                "offer": response.data[0]
+            }), 201
+        else:
+            return jsonify({"success": False, "error": "Erreur lors de la création"}), 500
+        
+    except Exception as e:
+        logging.error(f"Erreur création offre partenaire: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
