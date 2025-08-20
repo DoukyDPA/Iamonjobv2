@@ -143,9 +143,6 @@ SERVICES_CONFIG = {
 
 def handle_generic_service(service_id):
     """Handler générique pour tous les services"""
-    session['user_id'] = 'main_user'
-    session.permanent = True
-    
     try:
         # Récupérer la configuration du service
         config = SERVICES_CONFIG.get(service_id)
