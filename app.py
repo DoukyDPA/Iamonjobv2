@@ -34,8 +34,23 @@ if not os.getenv('SUPABASE_URL') or not os.getenv('SUPABASE_ANON_KEY'):
 else:
     print("✅ Configuration Supabase sécurisée détectée")
 
+# ====================================
+# NOUVELLE CONFIGURATION HYBRIDE
+# ====================================
+# Test du nouveau ConfigManager en parallèle (sans casser l'existant)
+try:
+    from config.config_manager import config, diagnose_config
+    print("\n🔄 Test du nouveau ConfigManager en parallèle...")
+    diagnose_config()
+    print("✅ ConfigManager disponible pour utilisation progressive")
+    USE_CONFIG_MANAGER = True
+except ImportError as e:
+    print(f"⚠️ ConfigManager non disponible: {e}")
+    print("   L'application continue avec la configuration existante")
+    USE_CONFIG_MANAGER = False
+
 # Afficher la configuration finale
-print(f"🔧 Configuration finale Supabase:")
+print(f"\n🔧 Configuration finale Supabase:")
 print(f"   URL: {os.getenv('SUPABASE_URL', 'Non défini')[:50]}...")
 print(f"   Clé: {os.getenv('SUPABASE_ANON_KEY', 'Non défini')[:20]}...")
 
@@ -55,14 +70,14 @@ app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 heures
 
 @app.route('/debug-env')
 def debug_environment():
-    """Diagnostiquer l'environnement Railway"""
+    """Diagnostiquer l'environnement Railway (ancienne méthode)"""
     import os
     
     debug_info = {
         "critical_vars": {},
         "all_env_vars": {},
         "supabase_test": False,
-        "supabase_test": False
+        "method": "legacy"
     }
     
     # Variables critiques
@@ -88,13 +103,45 @@ def debug_environment():
     except:
         pass
     
-    # Test Supabase (remplace Redis)
-    try:
-        supabase_url = os.environ.get('SUPABASE_URL')
-        if supabase_url:
-            debug_info["supabase_test"] = True
-    except:
-        pass
+    return jsonify(debug_info)
+
+@app.route('/debug-env-v2')
+def debug_environment_v2():
+    """Diagnostiquer l'environnement Railway (nouvelle méthode avec ConfigManager)"""
+    debug_info = {
+        "method": "config_manager",
+        "config_manager_available": USE_CONFIG_MANAGER,
+        "legacy_fallback": True
+    }
+    
+    if USE_CONFIG_MANAGER:
+        try:
+            # Utiliser le ConfigManager pour le diagnostic
+            debug_info.update({
+                "environment": config.get('FLASK_ENV', 'Non défini'),
+                "fully_configured": config.is_fully_configured(),
+                "cache_available": config.has_cache(),
+                "config_details": {
+                    "SUPABASE_URL": config.get('SUPABASE_URL', 'Non défini')[:50] + "..." if config.get('SUPABASE_URL') else 'Non défini',
+                    "SUPABASE_ANON_KEY": "Défini" if config.get('SUPABASE_ANON_KEY') else 'Non défini',
+                    "FLASK_SECRET_KEY": "Défini" if config.get('FLASK_SECRET_KEY') else 'Non défini',
+                    "MISTRAL_API_KEY": "Défini" if config.get('MISTRAL_API_KEY') else 'Non défini',
+                }
+            })
+            
+            # Test Supabase via ConfigManager
+            if config.get('SUPABASE_URL') and config.get('SUPABASE_ANON_KEY'):
+                debug_info["supabase_test"] = True
+            else:
+                debug_info["supabase_test"] = False
+                
+        except Exception as e:
+            debug_info["config_manager_error"] = str(e)
+            debug_info["legacy_fallback"] = True
+    else:
+        # Fallback vers l'ancienne méthode
+        debug_info["legacy_fallback"] = True
+        debug_info["fallback_reason"] = "ConfigManager non disponible"
     
     return jsonify(debug_info)
 
