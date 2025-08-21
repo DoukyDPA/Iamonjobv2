@@ -4,11 +4,10 @@
 export const SERVICES_CONFIG = {
   analyze_cv: {
     id: 'analyze_cv',
-    title: 'Analyser mon CV',
+    title: 'Analysez votre CV',
     shortTitle: 'Analyse CV',
     icon: '📄',
-    coachAdvice: 'Obtenez une analyse experte de votre CV, puis adaptez les conseils à votre style. Vous serez recruté, pas l\'IA : reformulez tout avec vos mots pour rester authentique.',
-    description: 'Analyse complète de votre CV avec recommandations personnalisées',
+    coachAdvice: "L'IA va identifier vos points forts et axes d'amélioration. Utilisez cette analyse comme base de travail : notez 3 réalisations concrètes pour chaque compétence identifiée. Les recruteurs veulent des exemples chiffrés de VOS succès, pas des phrases génériques.",
     requiresCV: true,
     requiresJobOffer: false,
     requiresQuestionnaire: false,
@@ -26,11 +25,10 @@ export const SERVICES_CONFIG = {
 
   cv_ats_optimization: {
     id: 'cv_ats_optimization',
-    title: 'Optimiser pour les ATS',
+    title: 'Optimisez votre CV pour les ATS',
     shortTitle: 'Optimisation ATS',
     icon: '🤖',
-    coachAdvice: 'Maîtrisez les codes ATS tout en gardant votre personnalité. Testez plusieurs versions, ajoutez vos spécificités sectorielles : l\'outil s\'améliore avec vos précisions répétées.',
-    description: 'Optimisation de votre CV pour les systèmes ATS',
+    coachAdvice: "L'IA détecte les mots-clés manquants pour passer les filtres robots. Intégrez-les naturellement dans VOS expériences réelles. Astuce : reprenez l'intitulé exact du poste visé et les compétences de l'annonce dans votre CV, mais toujours avec vos vraies expériences.",
     requiresCV: true,
     requiresJobOffer: true,
     requiresQuestionnaire: false,
@@ -48,11 +46,10 @@ export const SERVICES_CONFIG = {
 
   matching_cv_offre: {
     id: 'matching_cv_offre',
-    title: 'Matching CV / Offre',
+    title: 'Vérifiez si vous correspondez aux offres d\'emploi',
     shortTitle: 'Compatibilité',
     icon: '🎯',
-    coachAdvice: 'Évaluez votre adéquation avec une offre, puis personnalisez votre approche. Redemandez en précisant votre expérience : l\'analyse s\'affine avec vos détails spécifiques.',
-    description: 'Analyse professionnelle de compatibilité avec graphiques détaillés et scores précis',
+    coachAdvice: "Ce score de compatibilité est votre point de départ. Si <60% : ne perdez pas de temps. Si 60-80% : comblez les écarts avec des formations courtes. Si >80% : foncez et personnalisez votre candidature sur les points de match identifiés.",
     requiresCV: true,
     requiresJobOffer: true,
     requiresQuestionnaire: false,
@@ -71,11 +68,10 @@ export const SERVICES_CONFIG = {
 
   cover_letter_advice: {
     id: 'cover_letter_advice',
-    title: 'Conseils lettre de motivation',
+    title: 'Apprenez à rédiger votre lettre de motivation',
     shortTitle: 'Conseils lettre',
     icon: '💡',
-    coachAdvice: 'Recevez la structure parfaite, puis réécrivez tout avec votre ton. Précisez votre secteur, votre expérience : plus vous détaillez, plus les conseils s\'ajustent.',
-    description: 'Obtenez des conseils personnalisés pour rédiger une lettre percutante',
+    coachAdvice: "L'IA vous donne la structure gagnante en 3 parties. Votre mission : remplir avec VOS exemples concrets. Paragraphe 1 : pourquoi cette entreprise (citez un projet récent). Paragraphe 2 : une réussite similaire de votre parcours. Paragraphe 3 : votre vision du poste.",
     requiresCV: true,
     requiresJobOffer: true,
     requiresQuestionnaire: false,
@@ -93,11 +89,10 @@ export const SERVICES_CONFIG = {
 
   cover_letter_generate: {
     id: 'cover_letter_generate',
-    title: 'Générer lettre de motivation',
+    title: 'Rédigez votre lettre de motivation',
     shortTitle: 'Générer lettre',
     icon: '✍️',
-    coachAdvice: 'Générez un premier jet, puis personnalisez chaque phrase. Demandez des variantes, ajoutez vos réalisations concrètes : vous devez vous reconnaître dans le texte final.',
-    description: 'Génération complète d\'une lettre de motivation personnalisée',
+    coachAdvice: "Le premier jet généré est votre brouillon de travail. Remplacez CHAQUE exemple générique par une situation réelle vécue. Ajoutez des détails : noms d'entreprises, chiffres, contextes. Une lettre efficace = 70% de votre vécu + 30% de structure IA.",
     requiresCV: true,
     requiresJobOffer: true,
     requiresQuestionnaire: true,
@@ -115,11 +110,10 @@ export const SERVICES_CONFIG = {
 
   follow_up_email: {
     id: 'follow_up_email',
-    title: 'Email de relance',
+    title: 'N\'oubliez pas l\'email de relance',
     shortTitle: 'Relance',
     icon: '📧',
-    coachAdvice: 'Créez votre relance professionnelle, puis adaptez le ton à votre relation avec l\'entreprise. Testez différentes approches : l\'IA s\'améliore quand vous précisez le contexte.',
-    description: 'Rédigez un email de relance professionnel efficace',
+    coachAdvice: "L'IA crée le cadre professionnel de votre relance. Personnalisez en ajoutant : la date précise de votre candidature, un élément spécifique de l'entreprise qui vous motive, votre disponibilité concrète. Envoyez 7-10 jours après candidature, le mardi ou jeudi matin.",
     requiresCV: false,
     requiresJobOffer: true,
     requiresQuestionnaire: false,
@@ -137,11 +131,10 @@ export const SERVICES_CONFIG = {
 
   interview_prep: {
     id: 'interview_prep',
-    title: 'Préparation entretien',
+    title: 'Prépararez votre entretien d\'embauche',
     shortTitle: 'Prep entretien',
     icon: '🎤',
-    coachAdvice: 'Préparez vos réponses types, puis entraînez-vous avec vos propres exemples. Redemandez pour d\'autres scénarios : c\'est votre histoire qu\'il faut raconter, pas celle de l\'IA.',
-    description: 'Préparation complète pour réussir votre entretien d\'embauche',
+    coachAdvice: "L'IA prédit les questions probables de votre entretien. Pour chaque question, préparez 2 exemples STAR de votre vécu (Situation-Tâche-Action-Résultat). Entraînez-vous à voix haute 3 fois minimum. Les mots-clés IA + vos histoires = succès assuré.",
     requiresCV: true,
     requiresJobOffer: true,
     requiresQuestionnaire: false,
@@ -160,11 +153,10 @@ export const SERVICES_CONFIG = {
 
   professional_pitch: {
     id: 'professional_pitch',
-    title: 'Pitch professionnel',
+    title: 'Présentez-vous en 30 secondes chrono',
     shortTitle: 'Pitch',
     icon: '🎯',
-    coachAdvice: 'Structurez votre présentation, puis répétez avec vos mots jusqu\'à la fluidité naturelle. Demandez des versions pour différents contextes : vous devez être à l\'aise et spontané.',
-    description: 'Développez un pitch percutant pour vous présenter efficacement',
+    coachAdvice: "L'IA structure votre pitch, vous le rendez vivant. Chronométrez-vous : 30 sec = 3 phrases max. Phrase 1 : Qui vous êtes. Phrase 2 : Votre meilleure réalisation. Phrase 3 : Ce que vous cherchez. Répétez 10 fois jusqu'à ce que ça soit naturel.",
     requiresCV: true,
     requiresJobOffer: false,
     requiresQuestionnaire: false,
@@ -183,11 +175,10 @@ export const SERVICES_CONFIG = {
 
   presentation_slides: {
     id: 'presentation_slides',
-    title: 'Support de présentation',
+    title: 'Préparez un support de présentation',
     shortTitle: 'Slides',
     icon: '📊',
-    coachAdvice: 'Obtenez la structure PowerPoint idéale, puis intégrez vos vrais projets et données. Précisez votre domaine d\'activité : vos slides doivent refléter votre expertise unique.',
-    description: 'Créez une présentation PowerPoint impactante pour entretien',
+    coachAdvice: "L'IA conçoit le squelette de vos slides. Remplacez tout texte générique par : vos vrais projets, vos chiffres, vos équipes. Règle d'or : max 5 mots par bullet point, 1 idée par slide. Préparez des notes détaillées pour l'oral, les slides = support visuel uniquement.",
     requiresCV: true,
     requiresJobOffer: true,
     requiresQuestionnaire: false,
@@ -205,11 +196,10 @@ export const SERVICES_CONFIG = {
 
   salary_negotiation: {
     id: 'salary_negotiation',
-    title: 'Négociation salariale',
+    title: 'Négociez votre salaire',
     shortTitle: 'Négociation',
     icon: '💰',
-    coachAdvice: 'Préparez vos arguments de négociation, puis adaptez-les à votre situation réelle. Précisez votre secteur et expérience : les données de marché s\'ajustent à votre profil.',
-    description: 'Préparez votre négociation salariale avec arguments solides',
+    coachAdvice: "L'IA compile les données marché de votre poste. Préparez 3 arguments basés sur VOS réalisations qui justifient le salaire visé. Jamais le premier à annoncer un chiffre. Si forcé : donnez une fourchette avec le salaire cible en bas de fourchette. Négociez aussi : télétravail, formation, congés.",
     requiresCV: true,
     requiresJobOffer: true,
     requiresQuestionnaire: false,
@@ -227,11 +217,10 @@ export const SERVICES_CONFIG = {
 
   reconversion_analysis: {
     id: 'reconversion_analysis',
-    title: 'Évaluer une reconversion',
+    title: 'Évaluer les chances de votre reconversion',
     shortTitle: 'Reconversion',
     icon: '🚀',
-    coachAdvice: 'Explorez les pistes de reconversion, puis confrontez-les à votre réalité personnelle. Multipliez les questions, affinez le secteur visé : votre projet doit être 100% vous.',
-    description: 'Analyse complète d\'un projet de reconversion professionnelle',
+    coachAdvice: "L'IA objective votre projet de reconversion. Listez ensuite vos contraintes réelles (finances, famille, mobilité). Pour chaque compétence manquante identifiée, trouvez une formation courte ou une expérience bénévole. Testez le métier : stage d'observation, freelance, bénévolat avant de vous lancer.",
     requiresCV: true,
     requiresJobOffer: false,
     requiresQuestionnaire: true,
@@ -253,8 +242,7 @@ export const SERVICES_CONFIG = {
     title: 'Vers quel métier aller ?',
     shortTitle: 'Orientation métier',
     icon: '🚀',
-    coachAdvice: 'Découvrez les métiers faits pour vous grâce à l\'analyse de votre CV et de vos aspirations.',
-    description: 'Bilan complet des compétences et pistes de métiers adaptés.',
+    coachAdvice: "L'IA révèle des métiers compatibles avec vos compétences. Choisissez-en 3 maximum et pour chacun : contactez 2 professionnels sur LinkedIn pour un café virtuel, regardez 5 offres d'emploi réelles, identifiez les 2-3 compétences à acquérir en priorité.",
     requiresCV: true,
     requiresJobOffer: false,
     requiresQuestionnaire: true,
@@ -274,8 +262,7 @@ export const SERVICES_CONFIG = {
     title: "Et pourquoi pas un métier dans l'industrie ?",
     shortTitle: 'Métier industrie',
     icon: '🏭',
-    coachAdvice: "Explorez les débouchés industriels compatibles avec votre profil.",
-    description: "Conseils personnalisés pour cibler des métiers dans l'industrie.",
+    coachAdvice: "L'IA identifie vos passerelles vers l'industrie. Action immédiate : visitez les sites des entreprises industrielles locales, repérez les postes ouverts sans diplôme industriel requis. Valorisez vos soft skills : rigueur, travail d'équipe, respect des process. L'industrie forme en interne si motivation prouvée.",
     requiresCV: true,
     requiresJobOffer: false,
     requiresQuestionnaire: true,
