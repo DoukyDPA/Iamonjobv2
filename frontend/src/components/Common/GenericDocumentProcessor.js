@@ -227,6 +227,18 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
           <p style={{ margin: 0 }}>{serviceConfig.coachAdvice || serviceConfig.description}</p>
         </div>
 
+        {/* Message d'offre pré-remplie automatiquement */}
+        {serviceConfig.id === 'matching_cv_offre' && documentStatus.offre_emploi?.uploaded && (
+          <div className="revolutionary-service-card" style={{ background: '#dbeafe', border: '1px solid #93c5fd', color: '#1e40af', marginBottom: '2rem', boxShadow: '0 4px 24px rgba(59,130,246,0.08)' }}>
+            <h3 style={{ margin: 0, fontWeight: 600, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              🎯 Offre d'emploi chargée automatiquement
+            </h3>
+            <p style={{ margin: 0 }}>
+              Votre offre d'emploi a été pré-remplie et est prête pour l'analyse de compatibilité avec votre CV.
+            </p>
+          </div>
+        )}
+
         {/* Statut des documents */}
         <div className="revolutionary-service-card" style={{ marginBottom: '2rem' }}>
           <h3 style={{ margin: '0 0 1rem 0', color: '#374151', fontSize: '1.1rem', fontWeight: '600' }}>
