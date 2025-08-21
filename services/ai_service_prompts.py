@@ -252,17 +252,20 @@ Personnalise selon {questionnaire_context}. Fournis le contenu détaillé de cha
 
     "reconversion_analysis": {
         "title": "ANALYSE DE RECONVERSION PROFESSIONNELLE",
-        "prompt": """Analyse le projet de reconversion professionnelle en étudiant le MÉTIER VISÉ et en le comparant au parcours actuel.
+        "prompt": """Tu es un expert en reconversion professionnelle. Tu dois analyser le MÉTIER VISÉ (décrit dans le questionnaire) et créer un plan de transition depuis le CV actuel vers ce nouveau métier.
 
 {questionnaire_instruction}
 
+## MISSION PRINCIPALE
+Analyser le MÉTIER VISÉ (objectif de reconversion) décrit dans le questionnaire et créer un plan concret pour y arriver depuis le profil actuel.
+
 ## ANALYSE DU MÉTIER VISÉ (OBJECTIF DE RECONVERSION)
 - Compétences requises pour ce métier
-- Profil type recherché par les recruteurs
+- Profil type recherché par les recruteurs  
 - Tendances du marché dans ce secteur
 - Niveau de difficulté de la reconversion
 
-## ANALYSE DE LA TRANSITION (CV vs MÉTIER VISÉ)
+## ANALYSE DE LA TRANSITION (CV ACTUEL vs MÉTIER VISÉ)
 - Compétences transférables depuis le CV actuel
 - Expériences valorisables dans le nouveau secteur
 - Compétences manquantes à développer
@@ -717,12 +720,54 @@ def get_prompt(service_id):
     """Retourne le prompt d'un service donné."""
     return AI_PROMPTS.get(service_id)
 
+def reload_prompts_from_file():
+    """Recharge les prompts depuis le fichier JSON"""
+    try:
+        import json
+        import os
+        
+        prompts_file = os.path.join(os.path.dirname(__file__), 'ai_service_prompts.json')
+        
+        if os.path.exists(prompts_file):
+            with open(prompts_file, 'r', encoding='utf-8') as f:
+                saved_prompts = json.load(f)
+                AI_PROMPTS.update(saved_prompts)
+                print(f"✅ Prompts rechargés depuis le fichier: {len(saved_prompts)} services")
+                return True
+        else:
+            print("⚠️ Fichier de prompts non trouvé, utilisation des prompts par défaut")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Erreur lors du rechargement des prompts: {e}")
+        return False
+
 
 def update_prompt(service_id, new_prompt):
     """Met à jour le contenu du prompt pour un service."""
     if service_id in AI_PROMPTS:
         AI_PROMPTS[service_id]["prompt"] = new_prompt
-        return True
+        
+        # Sauvegarder sur le disque pour persistance
+        try:
+            import json
+            import os
+            
+            # Chemin vers le fichier des prompts
+            prompts_file = os.path.join(os.path.dirname(__file__), 'ai_service_prompts.json')
+            
+            # Sauvegarder la configuration mise à jour
+            with open(prompts_file, 'w', encoding='utf-8') as f:
+                json.dump(AI_PROMPTS, f, ensure_ascii=False, indent=2)
+            
+            print(f"✅ Prompt mis à jour et sauvegardé pour {service_id}")
+            return True
+            
+        except Exception as e:
+            print(f"⚠️ Erreur lors de la sauvegarde du prompt: {e}")
+            # Retourner True car la modification en mémoire a réussi
+            return True
+            
     return False
 
 print("✅ Prompts manquants ajoutés à AI_PROMPTS")
