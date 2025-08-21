@@ -1,142 +1,284 @@
-/* PartnerJobs.css - Composant simplifié */
-.partner-jobs-simple {
-  padding: 1rem;
-}
+/* PartnerJobs.css - Styles pour l'affichage des partenaires et leurs métiers */
 
-.partner-jobs-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 16px;
+.partner-jobs-container {
   padding: 2rem;
-  color: white;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.partner-jobs-header {
   text-align: center;
-  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
-  position: relative;
+  margin-bottom: 3rem;
+}
+
+.partner-jobs-header h3 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 1rem;
+}
+
+.partner-jobs-header p {
+  font-size: 1.1rem;
+  color: #718096;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Grille des partenaires */
+.partners-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+}
+
+/* Carte partenaire */
+.partner-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid #e2e8f0;
 }
 
-.partner-jobs-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.1) 100%);
-  animation: shine 3s ease-in-out infinite;
+.partner-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-@keyframes shine {
-  0%, 100% { transform: translateX(-100%); }
-  50% { transform: translateX(100%); }
+/* En-tête du partenaire */
+.partner-header {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.partner-jobs-icon {
-  margin-bottom: 1.5rem;
-  opacity: 0.9;
+.partner-logo {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.partner-jobs-content h3 {
+.partner-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.partner-initial {
   font-size: 1.5rem;
   font-weight: 700;
-  margin: 0 0 1rem 0;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.partner-jobs-content p {
-  font-size: 1rem;
-  line-height: 1.6;
-  margin: 0 0 2rem 0;
-  opacity: 0.95;
-  max-width: 500px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.partner-jobs-btn {
-  background: rgba(255, 255, 255, 0.2);
   color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  padding: 0.75rem 2rem;
-  border-radius: 50px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  backdrop-filter: blur(10px);
 }
 
-.partner-jobs-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+.partner-info {
+  flex: 1;
 }
 
-.partner-jobs-btn:active {
-  transform: translateY(0);
+.partner-info h4 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
 }
 
-.arrow-icon {
-  transition: transform 0.3s ease;
+.partner-description {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin: 0 0 0.75rem 0;
+  line-height: 1.4;
 }
 
-.partner-jobs-btn:hover .arrow-icon {
-  transform: translateX(4px);
+.partner-website {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: opacity 0.2s ease;
 }
 
-.partner-jobs-features {
-  display: flex;
-  justify-content: center;
-  gap: 2rem;
-  margin-top: 2rem;
-  flex-wrap: wrap;
-}
-
-.feature {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  opacity: 0.8;
-  transition: opacity 0.3s ease;
-}
-
-.feature:hover {
+.partner-website:hover {
   opacity: 1;
 }
 
-.feature-icon {
-  font-size: 1.5rem;
-  opacity: 0.9;
+/* Section des métiers */
+.partner-offers {
+  padding: 1.5rem;
 }
 
-.feature span {
+.partner-offers h5 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Liste des métiers */
+.offers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.offer-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.offer-item:hover {
+  background: #edf2f7;
+  border-color: #cbd5e0;
+}
+
+.offer-content {
+  flex: 1;
+}
+
+.offer-content h6 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 0.25rem 0;
+}
+
+.offer-content p {
+  font-size: 0.9rem;
+  color: #4a5568;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+.offer-type {
+  display: inline-block;
+  background: #e6fffa;
+  color: #234e52;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Bouton de test */
+.test-btn {
+  background: #4299e1;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
   font-size: 0.9rem;
   font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.test-btn:hover {
+  background: #3182ce;
+  transform: translateY(-1px);
+}
+
+.test-btn:active {
+  transform: translateY(0);
+}
+
+/* États spéciaux */
+.no-offers {
+  text-align: center;
+  padding: 2rem;
+  color: #718096;
+}
+
+.no-offers p {
+  margin: 0;
+  font-style: italic;
+}
+
+/* États de chargement et d'erreur */
+.loading-container,
+.error-container,
+.no-partners {
+  text-align: center;
+  padding: 3rem;
+  color: #718096;
+}
+
+.loading-container h3,
+.error-container h3,
+.no-partners h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.3rem;
+}
+
+.retry-btn {
+  background: #4299e1;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1rem;
+}
+
+.retry-btn:hover {
+  background: #3182ce;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .partner-jobs-card {
-    padding: 1.5rem;
+  .partner-jobs-container {
+    padding: 1rem;
   }
   
-  .partner-jobs-content h3 {
-    font-size: 1.25rem;
+  .partners-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
   
-  .partner-jobs-content p {
-    font-size: 0.9rem;
-  }
-  
-  .partner-jobs-features {
+  .partner-header {
+    flex-direction: column;
+    text-align: center;
     gap: 1rem;
   }
   
-  .feature {
-    font-size: 0.8rem;
+  .partner-logo {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .partner-initial {
+    font-size: 2rem;
+  }
+  
+  .offer-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .test-btn {
+    width: 100%;
   }
 }
