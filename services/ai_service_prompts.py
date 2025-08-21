@@ -252,21 +252,21 @@ Personnalise selon {questionnaire_context}. Fournis le contenu détaillé de cha
 
     "reconversion_analysis": {
         "title": "ANALYSE DE RECONVERSION PROFESSIONNELLE",
-        "prompt": """Analyse le projet de reconversion professionnelle en étudiant le parcours actuel et les aspirations.
+        "prompt": """Analyse le projet de reconversion professionnelle en étudiant le MÉTIER VISÉ et en le comparant au parcours actuel.
 
 {questionnaire_instruction}
 
-## ANALYSE DU PARCOURS ACTUEL
-- Compétences transférables identifiées
-- Expériences valorisables dans le nouveau secteur
-- Points forts à capitaliser
-- Lacunes à combler
+## ANALYSE DU MÉTIER VISÉ (OBJECTIF DE RECONVERSION)
+- Compétences requises pour ce métier
+- Profil type recherché par les recruteurs
+- Tendances du marché dans ce secteur
+- Niveau de difficulté de la reconversion
 
-## ANALYSE DU PROJET DE RECONVERSION
-- Cohérence avec le parcours existant
-- Réalisme des objectifs
-- Opportunités du marché ciblé
-- Défis spécifiques à anticiper
+## ANALYSE DE LA TRANSITION (CV vs MÉTIER VISÉ)
+- Compétences transférables depuis le CV actuel
+- Expériences valorisables dans le nouveau secteur
+- Compétences manquantes à développer
+- Gap de compétences à combler
 
 ## PLAN D'ACTION STRUCTURÉ
 
