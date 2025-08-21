@@ -80,6 +80,14 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
   const missingDocuments = checkRequiredDocuments();
   const canExecute = missingDocuments.length === 0;
 
+  // 🚀 ANALYSE AUTOMATIQUE quand on arrive sur la page et que tout est prêt
+  useEffect(() => {
+    if (canExecute && !result && !serviceLoading && serviceConfig?.id) {
+      console.log(`🚀 Déclenchement automatique du service: ${serviceConfig.id}`);
+      handleExecute();
+    }
+  }, [canExecute, result, serviceLoading, serviceConfig?.id]);
+
   // Exécuter le service directement avec l'API endpoint du serviceConfig
   const handleExecute = async () => {
     if (!canExecute || !serviceConfig?.apiEndpoint) return;
