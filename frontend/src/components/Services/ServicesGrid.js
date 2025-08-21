@@ -118,7 +118,7 @@ const ServicesGrid = () => {
             padding: '0.5rem 1rem',
             borderRadius: '6px',
             background: canExecute ? '#e6f3ff' : '#f3f4f6',
-            color: canExecute ? '#0066cc' : '#6b7280',
+            color: canExecute ? '#0066cc' : 'white',
             fontSize: '0.85rem',
             textAlign: 'center',
             fontWeight: '500'
