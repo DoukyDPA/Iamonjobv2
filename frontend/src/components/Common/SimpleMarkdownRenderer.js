@@ -21,14 +21,27 @@ const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
   const preprocessContent = (text) => {
     if (!text || typeof text !== 'string') return '';
     return text
+      // Supprimer les formules de politesse
       .replace(/^Bonjour,?\n*/gm, '')
       .replace(/Cordialement,?\n*\[.*\].*$/gm, '')
       .replace(/Expert en.*$/gm, '')
+      .replace(/Merci.*$/gm, '')
+      .replace(/Bien cordialement.*$/gm, '')
+      .replace(/Sincèrement.*$/gm, '')
+      
+      // Nettoyer les titres Markdown
       .replace(/^[ \t]*(#+)\s*(.*)$/gm, (match, hashes, title) => {
         const level = Math.min(hashes.length, 3);
         return `\n[[H${level}]]${title.trim()}`;
       })
+      
+      // Nettoyer les listes mal formatées
+      .replace(/^[ \t]*[-•*]\s*/gm, '• ')
+      .replace(/^[ \t]*[0-9]+\.\s*/gm, (match) => match.trim())
+      
+      // Nettoyer les espaces multiples et lignes vides
       .replace(/\n{3,}/g, '\n\n')
+      .replace(/[ \t]+/g, ' ')
       .trim();
   };
 
@@ -106,8 +119,8 @@ const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
             <div key={`li-${index}`} style={{
               display: 'flex',
               alignItems: 'flex-start',
-              marginBottom: '0.5rem',
-              paddingLeft: '1.1rem',
+              marginBottom: '0.75rem',
+              paddingLeft: '1.5rem',
               background: 'none',
               border: 'none',
               borderRadius: 0
@@ -115,11 +128,15 @@ const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
               <span style={{
                 color: 'var(--primary-color)',
                 fontWeight: 'bold',
-                marginRight: '0.7rem',
-                minWidth: '1rem',
+                marginRight: '0.75rem',
+                minWidth: '1.2rem',
                 fontSize: '1.1rem'
               }}>•</span>
-              <span style={{ flex: 1, lineHeight: '1.6' }}>
+              <span style={{ 
+                flex: 1, 
+                lineHeight: '1.6',
+                color: '#374151'
+              }}>
                 {renderInlineFormatting(listText)}
               </span>
             </div>
@@ -210,40 +227,126 @@ const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
       }
     }
     
-    // Traiter le texte en gras **texte**
-    while (remaining.includes('**')) {
-      const start = remaining.indexOf('**');
-      const end = remaining.indexOf('**', start + 2);
+    // Traiter le texte en gras **texte** et __texte__
+    while (remaining.includes('**') || remaining.includes('__')) {
+      let start, end, marker;
+      
+      if (remaining.includes('**')) {
+        start = remaining.indexOf('**');
+        end = remaining.indexOf('**', start + 2);
+        marker = '**';
+      } else {
+        start = remaining.indexOf('__');
+        end = remaining.indexOf('__', start + 2);
+        marker = '__';
+      }
+      
       if (end !== -1) {
         if (start > 0) {
           parts.push(remaining.substring(0, start));
         }
-        const boldText = remaining.substring(start + 2, end);
+        const boldText = remaining.substring(start + marker.length, end);
         parts.push(
           <strong key={`bold-${key++}`} style={{
             fontWeight: '700',
-            color: '#1f2937',
-            background: '#fef3c7',
-            padding: '0.125rem 0.25rem',
-            borderRadius: '3px'
+            color: '#1f2937'
           }}>{boldText}</strong>
         );
-        remaining = remaining.substring(end + 2);
+        remaining = remaining.substring(end + marker.length);
       } else {
         break;
       }
+    }
+    
+    // Traiter le texte en italique *texte* et _texte_
+    while (remaining.includes('*') || remaining.includes('_')) {
+      let start, end, marker;
+      
+      if (remaining.includes('*') && !remaining.startsWith('*')) {
+        start = remaining.indexOf('*');
+        end = remaining.indexOf('*', start + 1);
+        marker = '*';
+      } else if (remaining.includes('_') && !remaining.startsWith('_')) {
+        start = remaining.indexOf('_');
+        end = remaining.indexOf('_', start + 1);
+        marker = '_';
+      } else {
+        break;
+      }
+      
+      if (end !== -1 && start < end) {
+        if (start > 0) {
+          parts.push(remaining.substring(0, start));
+        }
+        const italicText = remaining.substring(start + 1, end);
+        parts.push(
+          <em key={`italic-${key++}`} style={{
+            fontStyle: 'italic',
+            color: '#4b5563'
+          }}>{italicText}</em>
+        );
+        remaining = remaining.substring(end + 1);
+      } else {
+        break;
+      }
+    }
+    
+    // Traiter le code inline `code`
+    while (remaining.includes('`')) {
+      const start = remaining.indexOf('`');
+      const end = remaining.indexOf('`', start + 1);
+      if (end !== -1) {
+        if (start > 0) {
+          parts.push(remaining.substring(0, start));
+        }
+        const codeText = remaining.substring(start + 1, end);
+        parts.push(
+          <code key={`code-${key++}`} style={{
+            backgroundColor: '#f3f4f6',
+            padding: '0.125rem 0.25rem',
+            borderRadius: '3px',
+            fontFamily: 'monospace',
+            fontSize: '0.875em',
+            color: '#1f2937'
+          }}>{codeText}</code>
+        );
+        remaining = remaining.substring(end + 1);
+      } else {
+        break;
+      }
+    }
+    
+    // Traiter les listes numérotées et à puces qui n'ont pas été traitées
+    if (remaining.match(/^[0-9]+\.\s/) || remaining.match(/^[-•*]\s/)) {
+      const listText = remaining.replace(/^[0-9]+\.\s|^[-•*]\s/, '');
+      parts.push(
+        <span key={`list-${key++}`} style={{
+          display: 'inline-flex',
+          alignItems: 'flex-start',
+          marginBottom: '0.5rem'
+        }}>
+          <span style={{
+            color: 'var(--primary-color)',
+            fontWeight: 'bold',
+            marginRight: '0.5rem',
+            minWidth: '1rem'
+          }}>•</span>
+          <span>{listText}</span>
+        </span>
+      );
+      remaining = '';
     }
     
     if (remaining) {
       parts.push(remaining);
     }
     
-    // Si on a trouvé des liens, retourner les parties, sinon retourner le texte original
+    // Si on a trouvé des éléments formatés, retourner les parties, sinon retourner le texte original
     if (hasLinks || parts.length > 1) {
-      // console.log('🔗 Debug - Parties trouvées avec liens:', parts);
+      // console.log('🔗 Debug - Parties trouvées avec formatage:', parts);
       return parts;
     } else {
-      // console.log('🔗 Debug - Aucun lien trouvé, retour du texte original');
+      // console.log('🔗 Debug - Aucun formatage trouvé, retour du texte original');
       return text;
     }
   };
