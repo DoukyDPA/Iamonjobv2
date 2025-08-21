@@ -392,7 +392,7 @@ def register_admin_routes(app):
         return jsonify({"success": success, "service": data if success else None})
 
     # === Gestion des prompts ===
-    from services.ai_service_prompts import AI_PROMPTS, get_prompt, update_prompt
+    from services.ai_service_prompts import AI_PROMPTS, get_prompt, update_prompt, reload_prompts_from_file
 
     @app.route('/api/admin/prompts', methods=['GET'])
     def list_prompts():
@@ -412,9 +412,22 @@ def register_admin_routes(app):
         new_prompt = data.get('prompt')
         if new_prompt is None:
             return jsonify({"success": False, "error": "Champ 'prompt' manquant"}), 400
+        
+        # Mettre à jour le prompt
         if update_prompt(service_id, new_prompt):
-            return jsonify({"success": True, "service_id": service_id, "prompt": new_prompt})
+            return jsonify({
+                "success": True, 
+                "service_id": service_id, 
+                "prompt": new_prompt,
+                "message": "Prompt mis à jour et sauvegardé avec succès"
+            })
         return jsonify({"success": False, "error": "Service inconnu"}), 404
+
+    @app.route('/api/admin/prompts/reload', methods=['POST'])
+    def reload_prompts():
+        """Recharge les prompts depuis le fichier"""
+        success = reload_prompts_from_file()
+        return jsonify({"success": success, "message": "Prompts rechargés" if success else "Erreur lors du rechargement"})
 
 # Export de l'instance pour utilisation dans l'app
 __all__ = ['services_manager', 'register_admin_routes']
