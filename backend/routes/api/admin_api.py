@@ -419,3 +419,131 @@ def create_partner_offer(partner_id):
         logging.error(f"Erreur création offre partenaire: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+@admin_api.route('/partners/<partner_id>/connections', methods=['GET'])
+@verify_jwt_token
+def get_partner_connections(partner_id):
+    """Récupère les statistiques de connexions d'un partenaire"""
+    try:
+        from services.partner_connection_service import get_partner_stats
+        
+        days = request.args.get('days', 30, type=int)
+        stats = get_partner_stats(partner_id, days)
+        
+        if 'error' in stats:
+            return jsonify({"success": False, "error": stats['error']}), 500
+        
+        return jsonify({
+            "success": True,
+            "stats": stats
+        }), 200
+        
+    except Exception as e:
+        logging.error(f"Erreur récupération connexions partenaire: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# ====================================
+# GESTION COMPLÈTE DES PARTENAIRES (CRUD)
+# ====================================
+
+@admin_api.route('/partners', methods=['GET', 'POST', 'PUT', 'DELETE'])
+@verify_jwt_token
+def admin_partners():
+    """Administration des partenaires - CRUD complet"""
+    try:
+        from services.supabase_storage import SupabaseStorage
+        
+        supabase = SupabaseStorage()
+        if not supabase.is_available():
+            return jsonify({"success": False, "error": "Supabase indisponible"}), 503
+        
+        if request.method == 'GET':
+            # Récupérer tous les partenaires
+            response = supabase.client.table('partners').select('*').execute()
+            return jsonify({
+                "success": True,
+                "partners": response.data if response.data else []
+            }), 200
+        
+        elif request.method == 'POST':
+            # Créer un nouveau partenaire
+            data = request.get_json()
+            if not data:
+                return jsonify({"success": False, "error": "Données manquantes"}), 400
+            
+            required_fields = ['name', 'contact_email']
+            for field in required_fields:
+                if not data.get(field):
+                    return jsonify({"success": False, "error": f"Champ requis: {field}"}), 400
+            
+            partner_data = {
+                'name': data.get('name'),
+                'description': data.get('description'),
+                'website': data.get('website'),
+                'logo_url': data.get('logo_url'),
+                'contact_email': data.get('contact_email'),
+                'status': data.get('status', 'active')
+            }
+            
+            response = supabase.client.table('partners').insert(partner_data).execute()
+            
+            if response.data:
+                return jsonify({
+                    "success": True,
+                    "message": "Partenaire créé avec succès",
+                    "partner": response.data[0]
+                }), 201
+            else:
+                return jsonify({"success": False, "error": "Erreur lors de la création"}), 500
+        
+        elif request.method == 'PUT':
+            # Mettre à jour un partenaire existant
+            data = request.get_json()
+            if not data or not data.get('id'):
+                return jsonify({"success": False, "error": "ID et données manquants"}), 400
+            
+            partner_id = data['id']
+            update_data = {
+                'name': data.get('name'),
+                'description': data.get('description'),
+                'website': data.get('website'),
+                'logo_url': data.get('logo_url'),
+                'contact_email': data.get('contact_email'),
+                'status': data.get('status')
+            }
+            
+            # Supprimer les champs vides
+            update_data = {k: v for k, v in update_data.items() if v is not None}
+            
+            response = supabase.client.table('partners').update(update_data).eq('id', partner_id).execute()
+            
+            if response.data:
+                return jsonify({
+                    "success": True,
+                    "message": "Partenaire mis à jour avec succès",
+                    "partner": response.data[0]
+                }), 200
+            else:
+                return jsonify({"success": False, "error": "Erreur lors de la mise à jour"}), 500
+        
+        elif request.method == 'DELETE':
+            # Supprimer un partenaire
+            data = request.get_json()
+            if not data or not data.get('id'):
+                return jsonify({"success": False, "error": "ID manquant"}), 400
+            
+            partner_id = data['id']
+            response = supabase.client.table('partners').delete().eq('id', partner_id).execute()
+            
+            if response.data:
+                return jsonify({
+                    "success": True,
+                    "message": "Partenaire supprimé avec succès",
+                    "deleted_partner": response.data[0]
+                }), 200
+            else:
+                return jsonify({"success": False, "error": "Erreur lors de la suppression"}), 500
+                
+    except Exception as e:
+        logging.error(f"Erreur administration partenaires: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
