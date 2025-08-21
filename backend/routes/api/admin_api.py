@@ -436,6 +436,95 @@ def create_partner_offer(partner_id):
         logging.error(f"❌ Erreur création métier partenaire: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+@admin_api.route('/partners/<partner_id>/offers/<offer_id>', methods=['PUT'])
+@verify_jwt_token
+def update_partner_offer(partner_id, offer_id):
+    """Met à jour un métier existant d'un partenaire"""
+    try:
+        data = request.get_json() or {}
+        
+        required_fields = ['title', 'description', 'offer_type']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({"success": False, "error": f"Champ requis: {field}"}), 400
+        
+        from services.supabase_storage import SupabaseStorage
+        
+        supabase = SupabaseStorage()
+        if not supabase.is_available():
+            return jsonify({"success": False, "error": "Supabase indisponible"}), 503
+        
+        # Vérifier que le métier existe et appartient au partenaire
+        offer_response = supabase.client.table('partner_offers').select('*').eq('id', offer_id).eq('partner_id', partner_id).execute()
+        if not offer_response.data:
+            return jsonify({"success": False, "error": "Métier non trouvé"}), 404
+        
+        update_data = {
+            'title': data['title'],
+            'description': data['description'],
+            'offer_type': data['offer_type'],
+            'url': data.get('url'),
+            'is_active': data.get('is_active', True),
+            'updated_at': datetime.now().isoformat()
+        }
+        
+        logging.info(f"Tentative mise à jour métier {offer_id}: {update_data}")
+        
+        response = supabase.client.table('partner_offers').update(update_data).eq('id', offer_id).execute()
+        
+        if response.data:
+            logging.info(f"✅ Métier mis à jour avec succès: {response.data[0]}")
+            return jsonify({
+                "success": True,
+                "offer": response.data[0]
+            }), 200
+        else:
+            logging.error(f"❌ Échec mise à jour métier: pas de données retournées")
+            return jsonify({"success": False, "error": "Erreur lors de la mise à jour"}), 500
+        
+    except Exception as e:
+        logging.error(f"❌ Erreur mise à jour métier partenaire: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@admin_api.route('/partners/<partner_id>/offers/<offer_id>', methods=['DELETE'])
+@verify_jwt_token
+def delete_partner_offer(partner_id, offer_id):
+    """Supprime un métier spécifique d'un partenaire"""
+    try:
+        from services.supabase_storage import SupabaseStorage
+        
+        supabase = SupabaseStorage()
+        if not supabase.is_available():
+            return jsonify({"success": False, "error": "Supabase indisponible"}), 503
+        
+        # Vérifier que le métier existe et appartient au partenaire
+        offer_response = supabase.client.table('partner_offers').select('*').eq('id', offer_id).eq('partner_id', partner_id).execute()
+        if not offer_response.data:
+            return jsonify({"success": False, "error": "Métier non trouvé"}), 404
+        
+        offer = offer_response.data[0]
+        
+        logging.info(f"Tentative suppression métier {offer_id}: {offer}")
+        
+        # Supprimer le métier
+        response = supabase.client.table('partner_offers').delete().eq('id', offer_id).execute()
+        
+        if response.data:
+            logging.info(f"✅ Métier supprimé avec succès: {response.data[0]}")
+            return jsonify({
+                "success": True,
+                "deleted_offer": response.data[0]
+            }), 200
+        else:
+            logging.error(f"❌ Échec suppression métier: pas de données retournées")
+            return jsonify({"success": False, "error": "Erreur lors de la suppression"}), 500
+        
+    except Exception as e:
+        logging.error(f"❌ Erreur suppression métier partenaire: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @admin_api.route('/partners/<partner_id>/connections', methods=['GET'])
 @verify_jwt_token
 def get_partner_connections(partner_id):
