@@ -32,6 +32,7 @@ import ServiceRouteWrapper from './components/Common/ServiceRouteWrapper';
 import AdminServicesPage from './pages/AdminServicesPage';
 import AdminPartnersPage from './pages/AdminPartnersPage';
 import AdminUsersPage from './pages/AdminUsersPage';
+import CompatibilityTestPage from './pages/CompatibilityTestPage';
 
 // Pages légales
 import LegalNotice from './pages/LegalNotice';
@@ -96,6 +97,15 @@ function App() {
                     </PrivateRoute>
                   } />
                   
+                  {/* Route pour le test de compatibilité des métiers partenaires */}
+                  <Route path="/compatibility-test" element={
+                    <PrivateRoute>
+                      <Layout>
+                        <CompatibilityTestPage />
+                      </Layout>
+                    </PrivateRoute>
+                  } />
+                  
                   {/* Route dynamique pour tous les services IA */}
                   <Route path="/:serviceId" element={
                     <PrivateRoute>
@@ -122,13 +132,20 @@ function App() {
                     </PrivateRoute>
                   } />
                   
-                  <Route path="/admin/users" element={
-                    <PrivateRoute>
-                      <Layout>
-                        <AdminUsersPage />
-                      </Layout>
-                    </PrivateRoute>
-                  } />
+                              <Route path="/admin/users" element={
+              <PrivateRoute>
+                <Layout>
+                  <AdminUsersPage />
+                </Layout>
+              </PrivateRoute>
+            } />
+            <Route path="/admin/partners" element={
+              <PrivateRoute>
+                <Layout>
+                  <AdminPartnersPage />
+                </Layout>
+              </PrivateRoute>
+            } />
                   
                   {/* Page de test progression */}
                   <Route path="/test" element={
