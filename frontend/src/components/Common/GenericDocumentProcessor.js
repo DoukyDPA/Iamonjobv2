@@ -220,11 +220,21 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
         </p>
 
         {/* Conseils du coach */}
-        <div className="revolutionary-service-card" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', marginBottom: '2rem', boxShadow: '0 4px 24px rgba(16,185,129,0.08)' }}>
+        <div className="revolutionary-service-card" style={{ 
+          background: '#f0fdf4', 
+          border: '1px solid #bbf7d0', 
+          color: '#166534', 
+          marginBottom: '2rem', 
+          marginTop: '2rem',
+          marginLeft: '1rem',
+          marginRight: '1rem',
+          padding: '1.5rem',
+          boxShadow: '0 4px 24px rgba(16,185,129,0.08)' 
+        }}>
           <h3 style={{ margin: 0, fontWeight: 600, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             💡 Conseils du coach
           </h3>
-          <p style={{ margin: 0 }}>{serviceConfig.coachAdvice || serviceConfig.description}</p>
+          <p style={{ margin: '0.5rem 0 0 0' }}>{serviceConfig.coachAdvice || serviceConfig.description}</p>
         </div>
 
         {/* Message d'offre pré-remplie automatiquement */}
@@ -241,7 +251,7 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
 
         {/* Statut des documents */}
         <div className="revolutionary-service-card" style={{ marginBottom: '2rem' }}>
-          <h3 style={{ margin: '0 0 1rem 0', color: '#374151', fontSize: '1.1rem', fontWeight: '600' }}>
+          <h3 style={{ margin: '0 0 1rem 0', color: 'white', fontSize: '1.1rem', fontWeight: '600' }}>
             📋 Documents requis
           </h3>
           <div className="revolutionary-document-types">
