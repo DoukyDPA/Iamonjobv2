@@ -83,19 +83,58 @@ const PartnerJobs = () => {
     setSelectedPartner(null);
   };
 
-  const testCompatibility = (offer, partner) => {
-    // Stocker les informations du métier pour la page de test
-    localStorage.setItem('test_offer', JSON.stringify({
-      id: offer.id,
-      title: offer.title,
-      description: offer.description,
-      offer_type: offer.offer_type,
-      partner_id: partner.id,
-      partner_name: partner.name
-    }));
+  const testCompatibility = async (offer, partner) => {
+    console.log('🚀 Test de compatibilité direct pour:', offer.title);
+    
+    try {
+      // Pré-remplir automatiquement l'offre d'emploi
+      const token = localStorage.getItem('token');
+      
+      // Limiter la taille du contenu pour éviter l'erreur "Request Line is too large"
+      const maxDescriptionLength = 1000;
+      const truncatedDescription = offer.description 
+        ? offer.description.substring(0, maxDescriptionLength) + (offer.description.length > maxDescriptionLength ? '...' : '')
+        : 'Description indisponible';
 
-    // Rediriger vers la page de test de compatibilité
-    window.location.href = '/compatibility-test';
+      const contentLines = [
+        `Titre: ${offer.title}`,
+        `Partenaire: ${partner.name}`,
+        offer.offer_type ? `Type: ${offer.offer_type}` : null,
+        '',
+        `Description: ${truncatedDescription}`
+      ].filter(Boolean);
+
+      const textContent = contentLines.join('\n');
+
+      console.log(`📝 Pré-remplissage offre (${textContent.length} caractères)`);
+
+      // Pré-remplir le document "offre_emploi" côté serveur
+      const resp = await fetch('/api/documents/upload-text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          text: textContent,
+          document_type: 'offre_emploi'
+        })
+      });
+
+      if (resp.ok) {
+        console.log('✅ Offre d\'emploi pré-remplie avec succès');
+        // Redirection directe vers le service de compatibilité
+        window.location.href = '/matching-cv-offre';
+      } else {
+        console.warn('⚠️ Échec pré-remplissage offre, redirection quand même');
+        window.location.href = '/matching-cv-offre';
+      }
+      
+    } catch (error) {
+      console.error('❌ Erreur lors du pré-remplissage:', error);
+      // En cas d'erreur, rediriger quand même
+      window.location.href = '/matching-cv-offre';
+    }
   };
 
   if (loading) {
