@@ -182,10 +182,6 @@ const PartnerJobs = () => {
 
   return (
     <div className="partner-jobs-container">
-      <div className="partner-jobs-header">
-        <h3>🤝 Testez votre compatibilité avec les métiers de nos partenaires</h3>
-        <p>Sélectionnez un partenaire pour découvrir ses opportunités</p>
-      </div>
 
       <div className="partners-grid">
         {partners.map((partner) => (
