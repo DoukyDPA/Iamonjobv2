@@ -458,6 +458,48 @@ def get_partner_connections(partner_id):
         logging.error(f"Erreur récupération connexions partenaire: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+@admin_api.route('/partners/<partner_id>', methods=['DELETE'])
+@verify_jwt_token
+def delete_partner(partner_id):
+    """Supprimer un partenaire et tous ses métiers associés"""
+    try:
+        from services.supabase_storage import SupabaseStorage
+        
+        supabase = SupabaseStorage()
+        if not supabase.is_available():
+            return jsonify({"success": False, "error": "Supabase indisponible"}), 503
+        
+        # Vérifier que le partenaire existe
+        partner_response = supabase.client.table('partners').select('*').eq('id', partner_id).execute()
+        if not partner_response.data:
+            return jsonify({"success": False, "error": "Partenaire non trouvé"}), 404
+        
+        partner = partner_response.data[0]
+        
+        # Supprimer d'abord tous les métiers associés
+        offers_response = supabase.client.table('partner_offers').delete().eq('partner_id', partner_id).execute()
+        print(f"🗑️ Métiers supprimés pour le partenaire {partner_id}: {len(offers_response.data or [])}")
+        
+        # Supprimer les connexions associées
+        connections_response = supabase.client.table('partner_offer_tests').delete().eq('partner_id', partner_id).execute()
+        print(f"🗑️ Connexions supprimées pour le partenaire {partner_id}: {len(connections_response.data or [])}")
+        
+        # Supprimer le partenaire
+        partner_response = supabase.client.table('partners').delete().eq('id', partner_id).execute()
+        
+        if partner_response.data:
+            return jsonify({
+                "success": True,
+                "message": "Partenaire et métiers associés supprimés avec succès",
+                "deleted_partner": partner_response.data[0]
+            }), 200
+        else:
+            return jsonify({"success": False, "error": "Erreur lors de la suppression du partenaire"}), 500
+            
+    except Exception as e:
+        logging.error(f"Erreur suppression partenaire {partner_id}: {e}")
+        return jsonify({"success": False, "error": f"Erreur serveur: {str(e)}"}), 500
+
 # ====================================
 # GESTION COMPLÈTE DES PARTENAIRES (CRUD)
 # ====================================
