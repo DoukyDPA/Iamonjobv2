@@ -11,7 +11,7 @@ from typing import Optional
 
 def call_mistral_api(prompt: str, context: Optional[str] = None) -> str:
     """
-    Appelle l'API Mistral pour obtenir une réponse IA
+    Appelle l'API Mistral pour obtenir une réponse IA avec tracking des tokens
     
     Args:
         prompt: Question/demande à l'IA
@@ -55,20 +55,64 @@ def call_mistral_api(prompt: str, context: Optional[str] = None) -> str:
         }
         
         print(f"🤖 Appel Mistral API...")
+        
+        # === TRACKING DES TOKENS ===
+        # Estimer les tokens d'entrée (prompt + contexte)
+        estimated_input_tokens = len(full_prompt.split()) * 1.3  # Estimation approximative
+        
         response = requests.post(url, json=payload, headers=headers, timeout=30)
         
         if response.status_code == 200:
-            result = response.json()
-            ai_response = result['choices'][0]['message']['content']
+            response_data = response.json()
+            ai_response = response_data['choices'][0]['message']['content']
             
-            print(f"✅ Mistral API réussi")
+            # === CALCUL DES TOKENS CONSOMMÉS ===
+            usage = response_data.get('usage', {})
+            input_tokens = usage.get('prompt_tokens', estimated_input_tokens)
+            output_tokens = usage.get('completion_tokens', 0)
+            total_tokens = usage.get('total_tokens', input_tokens + output_tokens)
+            
+            print(f"✅ Réponse Mistral reçue: {len(ai_response)} caractères")
+            print(f"🔢 Tokens consommés: {total_tokens} (entrée: {input_tokens}, sortie: {output_tokens})")
+            
+            # === ENREGISTREMENT DES TOKENS ===
+            try:
+                # Récupérer l'email de l'utilisateur depuis le contexte Flask
+                from flask import request
+                if hasattr(request, 'current_user') and request.current_user:
+                    user_email = request.current_user.email
+                    
+                    # Importer et utiliser le token tracker
+                    from services.token_tracker import record_tokens
+                    
+                    # Enregistrer la consommation de tokens
+                    service_name = "mistral_api_call"
+                    if "cv" in prompt.lower():
+                        service_name = "cv_analysis"
+                    elif "compatibilite" in prompt.lower() or "matching" in prompt.lower():
+                        service_name = "compatibility_check"
+                    elif "lettre" in prompt.lower():
+                        service_name = "letter_generation"
+                    elif "entretien" in prompt.lower():
+                        service_name = "interview_prep"
+                    
+                    success = record_tokens(user_email, int(total_tokens), service_name)
+                    if success:
+                        print(f"✅ Tokens enregistrés pour {user_email}: {total_tokens} tokens")
+                    else:
+                        print(f"⚠️ Échec enregistrement tokens pour {user_email}")
+                        
+            except Exception as token_error:
+                print(f"⚠️ Erreur tracking tokens: {token_error}")
+                # Ne pas faire échouer l'appel principal pour une erreur de tracking
+            
             return ai_response
         else:
-            print(f"❌ Erreur Mistral API: {response.status_code}")
+            print(f"❌ Erreur API Mistral: {response.status_code}")
             return _fallback_response(prompt)
             
     except Exception as e:
-        print(f"❌ Erreur lors de l'appel Mistral: {e}")
+        print(f"❌ Erreur appel Mistral: {e}")
         return _fallback_response(prompt)
 
 def _build_prompt(prompt: str, context: Optional[str] = None) -> str:
