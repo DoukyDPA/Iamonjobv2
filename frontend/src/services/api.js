@@ -118,17 +118,24 @@ const api = {
     }
   },
 
-  // Méthode pour les requêtes admin avec authentification
+  // Méthode pour les requêtes admin avec authentification JWT
   postAdmin: async (url, data) => {
     const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
     console.log('API POST Admin:', fullUrl, data);
+    
+    // Récupérer le token JWT depuis localStorage
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      throw new Error('Token d\'authentification manquant pour les opérations admin');
+    }
     
     try {
       const response = await fetch(fullUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Basic U2lsdmVyaWE6QWRtaW4xMjM0IQ==', // Silveria:Admin1234! en base64
+          'Authorization': `Bearer ${token}`, // Utilisation du token JWT sécurisé
         },
         body: JSON.stringify(data),
       });
