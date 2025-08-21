@@ -29,22 +29,57 @@ const CompatibilityTestPage = () => {
     setLoading(false);
   }, []);
 
-  const startCompatibilityTest = () => {
+  const startCompatibilityTest = async () => {
     if (!testOffer) return;
-    
+
     console.log('🚀 Démarrage test de compatibilité pour:', testOffer.title);
-    
-    // Rediriger vers la page de test de compatibilité existante
-    // avec les paramètres du métier
-    const params = new URLSearchParams({
-      offer_id: testOffer.id,
-      offer_title: testOffer.title,
-      offer_description: testOffer.description,
-      partner_id: testOffer.partner_id,
-      partner_name: testOffer.partner_name
-    });
-    
-    window.location.href = `/compatibility?${params.toString()}`;
+
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Limiter la taille du contenu pour éviter l'erreur "Request Line is too large"
+      const maxDescriptionLength = 2000; // Limite à 2000 caractères
+      const truncatedDescription = testOffer.description 
+        ? testOffer.description.substring(0, maxDescriptionLength) + (testOffer.description.length > maxDescriptionLength ? '...' : '')
+        : 'Description indisponible';
+
+      const contentLines = [
+        `Titre: ${testOffer.title}`,
+        testOffer.partner_name ? `Partenaire: ${testOffer.partner_name}` : null,
+        testOffer.offer_type ? `Type: ${testOffer.offer_type}` : null,
+        '',
+        `Description: ${truncatedDescription}`
+      ].filter(Boolean);
+
+      const textContent = contentLines.join('\n');
+
+      console.log(`📝 Contenu à envoyer (${textContent.length} caractères):`, textContent.substring(0, 200) + '...');
+
+      // Pré-remplir le document "offre_emploi" côté serveur
+      const resp = await fetch('/api/documents/upload-text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          text: textContent,
+          document_type: 'offre_emploi'
+        })
+      });
+
+      if (!resp.ok) {
+        const txt = await resp.text();
+        console.warn('⚠️ Échec upload offre_emploi:', txt);
+      } else {
+        console.log('✅ Offre d\'emploi pré-remplie avec succès');
+      }
+    } catch (e) {
+      console.warn('⚠️ Erreur lors du préremplissage offre_emploi:', e);
+    }
+
+    // Redirection vers le service configuré "matching_cv_offre"
+    window.location.href = '/matching-cv-offre';
   };
 
   const goBackToPartners = () => {
