@@ -205,11 +205,10 @@ export const SERVICES_CONFIG = {
 
   salary_negotiation: {
     id: 'salary_negotiation',
-    title: 'Négociation salariale',
+    title: 'Négociez votre salaire !',
     shortTitle: 'Négociation',
     icon: '💰',
-    coachAdvice: 'Préparez vos arguments de négociation, puis adaptez-les à votre situation réelle. Précisez votre secteur et expérience : les données de marché s\'ajustent à votre profil.',
-    description: 'Préparez votre négociation salariale avec arguments solides',
+    coachAdvice: 'Avant de négocier, construisons ensemble votre argumentaire gagnant ! Commencez par identifier vos atouts, puis personnalisez votre approche : en indiquant votre secteur et votre expérience, vous obtiendrez des données de marché précises qui donneront du poids à vos arguments. C'est la clé pour négocier avec confiance et obtenir la rémunération que vous méritez vraiment.',
     requiresCV: true,
     requiresJobOffer: true,
     requiresQuestionnaire: false,
