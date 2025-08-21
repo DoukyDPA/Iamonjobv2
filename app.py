@@ -394,8 +394,8 @@ except ImportError as e:
 # ====================================
 
 try:
-    from backend.routes.generic_services import register_generic_routes
-    register_generic_routes(app)
+    from backend.routes.generic_services import generic_services_bp
+    app.register_blueprint(generic_services_bp)
     print("✅ Routes génériques activées")
 except Exception as e:
     print(f"❌ Erreur routes génériques: {e}")
