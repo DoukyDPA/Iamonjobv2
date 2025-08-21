@@ -10,6 +10,8 @@ const PartnerJobs = () => {
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState(null);
+  const [showOfferDetails, setShowOfferDetails] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState(null);
 
   useEffect(() => {
     loadPartners();
@@ -83,6 +85,16 @@ const PartnerJobs = () => {
     setSelectedPartner(null);
   };
 
+  const openOfferDetails = (offer) => {
+    setSelectedOffer(offer);
+    setShowOfferDetails(true);
+  };
+
+  const closeOfferDetails = () => {
+    setShowOfferDetails(false);
+    setSelectedOffer(null);
+  };
+
   const testCompatibility = async (offer, partner) => {
     console.log('🚀 Test de compatibilité direct pour:', offer.title);
     
@@ -106,9 +118,8 @@ const PartnerJobs = () => {
 
       const textContent = contentLines.join('\n');
 
-      console.log(`📝 Pré-remplissage offre (${textContent.length} caractères)`);
+      console.log(`📝 Pré-remplissage offre (${textContent.length} caractères):`, textContent.substring(0, 200) + '...');
 
-      // Pré-remplir le document "offre_emploi" côté serveur
       const resp = await fetch('/api/documents/upload-text', {
         method: 'POST',
         headers: {
@@ -123,7 +134,6 @@ const PartnerJobs = () => {
 
       if (resp.ok) {
         console.log('✅ Offre d\'emploi pré-remplie avec succès');
-        // Redirection directe vers le service de compatibilité
         window.location.href = '/matching-cv-offre';
       } else {
         console.warn('⚠️ Échec pré-remplissage offre, redirection quand même');
@@ -132,7 +142,6 @@ const PartnerJobs = () => {
       
     } catch (error) {
       console.error('❌ Erreur lors du pré-remplissage:', error);
-      // En cas d'erreur, rediriger quand même
       window.location.href = '/matching-cv-offre';
     }
   };
@@ -141,7 +150,8 @@ const PartnerJobs = () => {
     return (
       <div className="partner-jobs-container">
         <div className="loading-container">
-          <h3>⏳ Chargement des partenaires...</h3>
+          <div className="loading-spinner"></div>
+          <p>Chargement des partenaires...</p>
         </div>
       </div>
     );
@@ -174,12 +184,12 @@ const PartnerJobs = () => {
     <div className="partner-jobs-container">
       <div className="partner-jobs-header">
         <h3>🤝 Testez votre compatibilité avec les métiers de nos partenaires</h3>
-        <p>Sélectionnez un partenaire, puis choisissez un métier dans le modal</p>
+        <p>Sélectionnez un partenaire pour découvrir ses opportunités</p>
       </div>
 
       <div className="partners-grid">
         {partners.map((partner) => (
-          <div key={partner.id} className="partner-card small">
+          <div key={partner.id} className="partner-card compact">
             <div className="partner-header">
               <div className="partner-logo">
                 {partner.logo_url ? (
@@ -206,8 +216,8 @@ const PartnerJobs = () => {
               </div>
             </div>
             <div className="partner-actions">
-              <button className="test-btn" onClick={() => openOffersModal(partner)}>
-                👀 Voir les métiers
+              <button className="view-offers-btn" onClick={() => openOffersModal(partner)}>
+                👀 Voir les {partner.offers?.length || 0} métiers qui recrutent
               </button>
             </div>
           </div>
@@ -219,7 +229,7 @@ const PartnerJobs = () => {
         <div className="partner-modal-overlay" onClick={closeOffersModal}>
           <div className="partner-modal" onClick={(e) => e.stopPropagation()}>
             <div className="partner-modal-header">
-              <h4>🎯 Métiers de {selectedPartner.name}</h4>
+              <h4>🎯 Opportunités disponibles</h4>
               <button className="partner-modal-close" onClick={closeOffersModal}>×</button>
             </div>
             <div className="partner-modal-body">
@@ -229,15 +239,22 @@ const PartnerJobs = () => {
                     <div key={offer.id} className="offer-item">
                       <div className="offer-content">
                         <h6>{offer.title}</h6>
-                        <p>{offer.description}</p>
                         <span className="offer-type">{offer.offer_type}</span>
                       </div>
-                      <button 
-                        onClick={() => testCompatibility(offer, selectedPartner)}
-                        className="test-btn"
-                      >
-                        🧪 Tester
-                      </button>
+                      <div className="offer-actions">
+                        <button 
+                          onClick={() => openOfferDetails(offer)}
+                          className="details-btn"
+                        >
+                          📖 En savoir plus
+                        </button>
+                        <button 
+                          onClick={() => testCompatibility(offer, selectedPartner)}
+                          className="test-btn"
+                        >
+                          🧪 Tester ma compatibilité
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -246,6 +263,43 @@ const PartnerJobs = () => {
                   <p>Aucun métier disponible pour le moment</p>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de détails du métier */}
+      {showOfferDetails && selectedOffer && (
+        <div className="offer-details-overlay" onClick={closeOfferDetails}>
+          <div className="offer-details-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="offer-details-header">
+              <h4>📋 {selectedOffer.title}</h4>
+              <button className="offer-details-close" onClick={closeOfferDetails}>×</button>
+            </div>
+            <div className="offer-details-body">
+              <div className="offer-details-content">
+                <div className="offer-meta">
+                  <span className="offer-type-badge">{selectedOffer.offer_type}</span>
+                  {selectedOffer.partner_name && (
+                    <span className="partner-name-badge">{selectedOffer.partner_name}</span>
+                  )}
+                </div>
+                <div className="offer-description">
+                  <h5>Description du poste</h5>
+                  <p>{selectedOffer.description || 'Aucune description disponible.'}</p>
+                </div>
+                <div className="offer-actions">
+                  <button 
+                    onClick={() => {
+                      closeOfferDetails();
+                      testCompatibility(selectedOffer, selectedPartner);
+                    }}
+                    className="test-compatibility-btn"
+                  >
+                    🧪 Tester ma compatibilité
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
