@@ -1,740 +1,697 @@
-// FICHIER : frontend/src/pages/AdminPartnersPage.js
-// Interface d'administration complète pour gérer les partenaires, offres et connexions
+/* AdminPartnersPage.css - Version complète */
+.admin-partners-page {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  background: #f8fafc;
+  min-height: 100vh;
+}
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
-import './AdminPartnersPage.css';
+.admin-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
 
-const AdminPartnersPage = () => {
-  const { user } = useAuth();
-  const [partners, setPartners] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedPartner, setSelectedPartner] = useState(null);
-  const [showPartnerModal, setShowPartnerModal] = useState(false);
-  const [showOfferModal, setShowOfferModal] = useState(false);
-  const [showConnectionModal, setShowConnectionModal] = useState(false);
-  const [editingPartner, setEditingPartner] = useState(null);
-  const [newPartner, setNewPartner] = useState({
-    name: '',
-    description: '',
-    website: '',
-    logo_url: '',
-    contact_email: '',
-    status: 'active'
-  });
-  const [newOffer, setNewOffer] = useState({
-    title: '',
-    description: '',
-    offer_type: 'metier',
-    url: '',
-    is_active: true
-  });
-  const [isEditingOffer, setIsEditingOffer] = useState(false); // Indique si on est en mode édition d'offre
+.admin-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 1rem;
+}
 
-  // Vérifier que l'utilisateur est admin
-  useEffect(() => {
-    if (user && !user.isAdmin) {
-      setError("Accès refusé. Droits administrateur requis.");
-      setLoading(false);
-    }
-  }, [user]);
+.admin-header p {
+  font-size: 1.1rem;
+  color: #64748b;
+  max-width: 600px;
+  margin: 0 auto;
+}
 
-  // Charger les partenaires
-  useEffect(() => {
-    if (user?.isAdmin) {
-      loadPartners();
-    }
-  }, [user]);
+/* Statistiques */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
 
-  const loadPartners = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get('/api/admin/partners');
-      
-      if (response.data.success) {
-        const partnersWithOffers = await Promise.all(
-          response.data.partners.map(async (partner) => {
-            try {
-              // Charger les métiers de chaque partenaire
-              const offersResponse = await api.get(`/api/admin/partners/${partner.id}/offers`);
-              if (offersResponse.data.success) {
-                return { ...partner, offers: offersResponse.data.offers };
-              }
-            } catch (err) {
-              console.warn(`Impossible de charger les métiers pour ${partner.name}:`, err);
-            }
-            return { ...partner, offers: [] };
-          })
-        );
-        
-        console.log('📋 Partenaires chargés avec métiers:', partnersWithOffers);
-        setPartners(partnersWithOffers);
-      } else {
-        setError(response.data.error || 'Erreur lors du chargement des partenaires');
-      }
-    } catch (err) {
-      setError('Erreur de connexion au serveur');
-      console.error('Erreur chargement partenaires:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+.stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+}
 
-  const loadPartnerOffers = async (partnerId) => {
-    try {
-      const response = await api.get(`/api/admin/partners/${partnerId}/offers`);
-      if (response.data.success) {
-        return response.data.offers;
-      }
-    } catch (err) {
-      console.error('Erreur chargement offres:', err);
-    }
-    return [];
-  };
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+}
 
-  const createPartner = async () => {
-    try {
-      const response = await api.post('/api/admin/partners', newPartner);
-      if (response.data.success) {
-        setNewPartner({
-          name: '',
-          description: '',
-          website: '',
-          logo_url: '',
-          contact_email: '',
-          status: 'active'
-        });
-        loadPartners();
-      }
-    } catch (err) {
-      console.error('Erreur création partenaire:', err);
-    }
-  };
+.stat-icon {
+  font-size: 2.5rem;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+}
 
-  const updatePartner = async () => {
-    try {
-      const response = await api.put('/api/admin/partners', editingPartner);
-      if (response.data.success) {
-        setEditingPartner(null);
-        loadPartners();
-      }
-    } catch (err) {
-      console.error('Erreur mise à jour partenaire:', err);
-    }
-  };
+.stat-content h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #64748b;
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
 
-  const deletePartner = async (partnerId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce partenaire ? Cette action supprimera également tous ses métiers associés.')) {
-      try {
-        const response = await api.delete(`/api/admin/partners/${partnerId}`);
-        if (response.data.success) {
-          console.log('✅ Partenaire supprimé avec succès');
-          loadPartners();
-        } else {
-          console.error('❌ Échec suppression partenaire:', response.data.error);
-          alert(`Erreur lors de la suppression: ${response.data.error}`);
-        }
-      } catch (err) {
-        console.error('❌ Erreur suppression partenaire:', err);
-        alert(`Erreur lors de la suppression: ${err.message}`);
-      }
-    }
-  };
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
 
-  const createOffer = async () => {
-    try {
-      if (isEditingOffer) {
-        // Mode édition : mettre à jour le métier existant
-        console.log('✏️ Tentative mise à jour métier:', {
-          offerId: newOffer.id,
-          partnerId: selectedPartner.id,
-          offerData: newOffer
-        });
-        
-        const response = await api.put(`/api/admin/partners/${selectedPartner.id}/offers/${newOffer.id}`, newOffer);
-        console.log('📡 Réponse API mise à jour métier:', response);
-        
-        if (response.data.success) {
-          console.log('✅ Métier mis à jour avec succès');
-          alert('Métier mis à jour avec succès !');
-        } else {
-          console.error('❌ Échec mise à jour métier:', response.data.error);
-          alert(`Erreur mise à jour métier: ${response.data.error}`);
-        }
-      } else {
-        // Mode création : créer un nouveau métier
-        console.log('🎯 Tentative création métier:', {
-          partnerId: selectedPartner.id,
-          offerData: newOffer
-        });
-        
-        const response = await api.post(`/api/admin/partners/${selectedPartner.id}/offers`, newOffer);
-        console.log('📡 Réponse API création métier:', response);
-        
-        if (response.data.success) {
-          console.log('✅ Métier créé avec succès');
-          alert('Métier créé avec succès !');
-        } else {
-          console.error('❌ Échec création métier:', response.data.error);
-          alert(`Erreur création métier: ${response.data.error}`);
-        }
-      }
-      
-      // Réinitialiser le formulaire et fermer la modal
-      setNewOffer({
-        title: '',
-        description: '',
-        offer_type: 'metier',
-        url: '',
-        is_active: true
-      });
-      setShowOfferModal(false);
-      setIsEditingOffer(false);
-      loadPartners();
-    } catch (err) {
-      console.error('❌ Erreur métier:', err);
-      alert(`Erreur: ${err.message}`);
-    }
-  };
+/* Section partenaires */
+.partners-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  margin-bottom: 2rem;
+}
 
-  const deleteOffer = async (offerId, partnerId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce métier ?')) {
-      try {
-        const response = await api.delete(`/api/admin/partners/${partnerId}/offers/${offerId}`);
-        if (response.data.success) {
-          console.log('✅ Métier supprimé avec succès');
-          alert('Métier supprimé avec succès !');
-          loadPartners();
-        } else {
-          console.error('❌ Échec suppression métier:', response.data.error);
-          alert(`Erreur suppression métier: ${response.data.error}`);
-        }
-      } catch (err) {
-        console.error('❌ Erreur suppression métier:', err);
-        alert(`Erreur suppression métier: ${err.message}`);
-      }
-    }
-  };
+.partners-section h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 
-  const openPartnerModal = async (partner) => {
-    setSelectedPartner(partner);
-    setShowPartnerModal(true);
-    // Charger les offres du partenaire
-    const offers = await loadPartnerOffers(partner.id);
-    setSelectedPartner({ ...partner, offers });
-  };
+/* Formulaire de création de partenaire */
+.partner-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
 
-  const closePartnerModal = () => {
-    setShowPartnerModal(false);
-    setSelectedPartner(null);
-  };
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
 
-  const openOfferModal = (partner) => {
-    setSelectedPartner(partner);
-    setShowOfferModal(true);
-  };
+.partner-form input,
+.partner-form textarea,
+.partner-form select {
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
 
-  const closeOfferModal = () => {
-    setShowOfferModal(false);
-    setSelectedPartner(null);
-    setIsEditingOffer(false);
-    // Réinitialiser le formulaire
-    setNewOffer({
-      title: '',
-      description: '',
-      offer_type: 'metier',
-      url: '',
-      is_active: true
-    });
-  };
+.partner-form input:focus,
+.partner-form textarea:focus,
+.partner-form select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
 
-  const openConnectionModal = async (partner) => {
-    setSelectedPartner(partner);
-    setShowConnectionModal(true);
-    // Charger les statistiques de connexions du partenaire
-    try {
-      const response = await api.get(`/api/admin/partners/${partner.id}/connections`);
-      if (response.data.success) {
-        setSelectedPartner({ ...partner, connectionStats: response.data.stats });
-      }
-    } catch (err) {
-      console.error('Erreur chargement connexions:', err);
-    }
-  };
+.partner-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
 
-  const closeConnectionModal = () => {
-    setShowConnectionModal(false);
-    setSelectedPartner(null);
-  };
+.create-btn,
+.update-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  align-self: flex-start;
+}
 
-  const editOffer = (offer, partner) => {
-    // Pré-remplir le formulaire avec les données du métier existant
-    setNewOffer({
-      id: offer.id,
-      title: offer.title,
-      description: offer.description,
-      offer_type: offer.offer_type,
-      url: offer.url || '',
-      is_active: offer.is_active
-    });
-    setSelectedPartner(partner);
-    setShowOfferModal(true);
-    setIsEditingOffer(true); // Indiquer qu'on est en mode édition
-  };
+.create-btn:hover,
+.update-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Jamais';
-    try {
-      return new Date(dateString).toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return 'Date invalide';
-    }
-  };
+.no-partners {
+  text-align: center;
+  padding: 3rem;
+  color: #64748b;
+  font-style: italic;
+}
 
-  if (!user?.isAdmin) {
-    return (
-      <div className="admin-partners-page">
-        <div className="admin-header">
-          <h1>🚫 Accès Refusé</h1>
-          <p>Vous devez être administrateur pour accéder à cette page.</p>
-        </div>
-      </div>
-    );
+.partners-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.partner-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.partner-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
+}
+
+.partner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.partner-header h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.partner-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.view-btn,
+.edit-btn,
+.delete-btn {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.view-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+}
+
+.edit-btn {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.delete-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.view-btn:hover,
+.edit-btn:hover,
+.delete-btn:hover {
+  transform: scale(1.05);
+}
+
+.partner-info {
+  margin-bottom: 1.5rem;
+}
+
+.partner-info p {
+  margin: 0.5rem 0;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.partner-info strong {
+  color: #1e293b;
+}
+
+.status {
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status.active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status.inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.partner-actions-bottom {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.offer-btn,
+.connection-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 120px;
+}
+
+.offer-btn {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+}
+
+.connection-btn {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  color: white;
+}
+
+.offer-btn:hover,
+.connection-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1.25rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #64748b;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+/* Détails du partenaire */
+.partner-details p {
+  margin: 0.75rem 0;
+  color: #374151;
+}
+
+.partner-details strong {
+  color: #1e293b;
+}
+
+/* Liste des offres */
+.offers-list {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.offers-list h4 {
+  margin: 0 0 1rem 0;
+  color: #1e293b;
+  font-size: 1.1rem;
+}
+
+.offer-item {
+  background: #f8fafc;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 1px solid #e2e8f0;
+}
+
+.offer-item h5 {
+  margin: 0 0 0.5rem 0;
+  color: #1e293b;
+  font-size: 1rem;
+}
+
+.offer-item p {
+  margin: 0 0 0.75rem 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.offer-type,
+.offer-status {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.offer-type {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.offer-status {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* Formulaire d'offre */
+.offer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.offer-form input,
+.offer-form textarea,
+.offer-form select {
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.offer-form input:focus,
+.offer-form textarea:focus,
+.offer-form select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.offer-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Informations sur les connexions */
+.connections-info {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+}
+
+.connections-info p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+}
+
+/* Statistiques de connexions */
+.connections-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.stats-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* Connexions par offre */
+.offers-connections h4 {
+  margin: 0 0 1rem 0;
+  color: #1e293b;
+  font-size: 1.1rem;
+}
+
+.offer-connection-item {
+  background: #f8fafc;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 1px solid #e2e8f0;
+}
+
+.offer-connection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.offer-id {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.offer-connections {
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.offer-connection-details {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+/* Répartition quotidienne */
+.daily-breakdown h4 {
+  margin: 0 0 1rem 0;
+  color: #1e293b;
+  font-size: 1.1rem;
+}
+
+.daily-chart {
+  display: flex;
+  gap: 0.5rem;
+  align-items: end;
+  height: 120px;
+  padding: 1rem 0;
+}
+
+.daily-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.daily-date {
+  font-size: 0.7rem;
+  color: #64748b;
+  text-align: center;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.daily-bar-fill {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  width: 100%;
+  min-height: 20px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.daily-count {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-partners-page {
+    padding: 1rem;
   }
-
-  if (loading) {
-    return (
-      <div className="admin-partners-page">
-        <div className="admin-header">
-          <h1>⏳ Chargement...</h1>
-        </div>
-      </div>
-    );
+  
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
-
-  if (error) {
-    return (
-      <div className="admin-partners-page">
-        <div className="admin-header">
-          <h1>❌ Erreur</h1>
-          <p>{error}</p>
-        </div>
-      </div>
-    );
+  
+  .partners-grid {
+    grid-template-columns: 1fr;
   }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .partner-actions {
+    flex-direction: column;
+  }
+  
+  .partner-actions-bottom {
+    flex-direction: column;
+  }
+  
+  .modal-content {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+  }
+}
 
-  return (
-    <div className="admin-partners-page">
-      <div className="admin-header">
-        <h1>🏢 Administration des Partenaires</h1>
-        <p>Gérez vos partenaires, leurs offres et suivez les connexions des utilisateurs</p>
-      </div>
+/* Styles pour l'affichage des métiers dans les pavés */
+.offers-summary {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 1rem;
+}
 
-      {/* Statistiques */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon">🏢</div>
-          <div className="stat-content">
-            <h3>Partenaires</h3>
-            <p className="stat-number">{partners.length}</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">🎯</div>
-          <div className="stat-content">
-            <h3>Métiers Actifs</h3>
-            <p className="stat-number">
-              {partners.reduce((sum, p) => sum + (p.offers?.length || 0), 0)}
-            </p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">👥</div>
-          <div className="stat-content">
-            <h3>Connexions</h3>
-            <p className="stat-number">
-              {partners.reduce((sum, p) => sum + (p.total_connections || 0), 0)}
-            </p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">✅</div>
-          <div className="stat-content">
-            <h3>Partenaires Actifs</h3>
-            <p className="stat-number">
-              {partners.filter(p => p.status === 'active').length}
-            </p>
-          </div>
-        </div>
-      </div>
+.offers-summary h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 
-      {/* Création de partenaire */}
-      <div className="partners-section">
-        <h2>➕ Créer un nouveau partenaire</h2>
-        <div className="partner-form">
-          <div className="form-row">
-            <input
-              type="text"
-              placeholder="Nom du partenaire"
-              value={newPartner.name}
-              onChange={(e) => setNewPartner({...newPartner, name: e.target.value})}
-            />
-            <input
-              type="email"
-              placeholder="Email de contact"
-              value={newPartner.contact_email}
-              onChange={(e) => setNewPartner({...newPartner, contact_email: e.target.value})}
-            />
-          </div>
-          <div className="form-row">
-            <input
-              type="url"
-              placeholder="Site web"
-              value={newPartner.website}
-              onChange={(e) => setNewPartner({...newPartner, website: e.target.value})}
-            />
-            <input
-              type="url"
-              placeholder="URL du logo"
-              value={newPartner.logo_url}
-              onChange={(e) => setNewPartner({...newPartner, logo_url: e.target.value})}
-            />
-          </div>
-          <textarea
-            placeholder="Description du partenaire"
-            value={newPartner.description}
-            onChange={(e) => setNewPartner({...newPartner, description: e.target.value})}
-          />
-          <button onClick={createPartner} className="create-btn">
-            Créer le partenaire
-          </button>
-        </div>
-      </div>
+.offer-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  background: #f8fafc;
+}
 
-      {/* Liste des partenaires */}
-      <div className="partners-section">
-        <h2>📋 Liste des partenaires</h2>
-        {partners.length === 0 ? (
-          <div className="no-partners">
-            <p>Aucun partenaire trouvé. Créez votre premier partenaire !</p>
-          </div>
-        ) : (
-          <div className="partners-grid">
-            {partners.map((partner) => (
-              <div key={partner.id} className="partner-card">
-                <div className="partner-header">
-                  <h3>{partner.name}</h3>
-                  <div className="partner-actions">
-                    <button 
-                      onClick={() => openPartnerModal(partner)}
-                      className="view-btn"
-                    >
-                      👁️ Voir
-                    </button>
-                    <button 
-                      onClick={() => setEditingPartner(partner)}
-                      className="edit-btn"
-                    >
-                      ✏️ Modifier
-                    </button>
-                    <button 
-                      onClick={() => deletePartner(partner.id)}
-                      className="delete-btn"
-                    >
-                      🗑️ Supprimer
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="partner-info">
-                  <p><strong>Email:</strong> {partner.contact_email}</p>
-                  <p><strong>Site:</strong> {partner.website || 'Non spécifié'}</p>
-                  <p><strong>Statut:</strong> 
-                    <span className={`status ${partner.status}`}>
-                      {partner.status === 'active' ? '✅ Actif' : '❌ Inactif'}
-                    </span>
-                  </p>
-                  <p><strong>Créé le:</strong> {formatDate(partner.created_at)}</p>
-                </div>
+.offer-summary:last-child {
+  margin-bottom: 0;
+}
 
-                {/* Affichage des métiers dans le pavé */}
-                {partner.offers && partner.offers.length > 0 && (
-                  <div className="offers-summary">
-                    <h4>🎯 Métiers ({partner.offers.length})</h4>
-                    {partner.offers.map((offer) => (
-                      <div key={offer.id} className="offer-summary">
-                        <div className="offer-content">
-                          <h5>{offer.title}</h5>
-                          <p>{offer.description}</p>
-                          <span className="offer-type">{offer.offer_type}</span>
-                          <span className="offer-status">
-                            {offer.is_active ? '✅ Actif' : '❌ Inactif'}
-                          </span>
-                        </div>
-                        <div className="offer-actions">
-                          <button 
-                            onClick={() => editOffer(offer, partner)}
-                            className="edit-btn"
-                            title="Modifier ce métier"
-                          >
-                            ✏️ Modifier
-                          </button>
-                          <button 
-                            onClick={() => deleteOffer(offer.id, partner.id)}
-                            className="delete-btn"
-                            title="Supprimer ce métier"
-                          >
-                            🗑️ Supprimer
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+.offer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
 
-                <div className="partner-actions-bottom">
-                  <button 
-                    onClick={() => openOfferModal(partner)}
-                    className="offer-btn"
-                  >
-                    🎯 Gérer les métiers
-                  </button>
-                  <button 
-                    onClick={() => openConnectionModal(partner)}
-                    className="connection-btn"
-                  >
-                    👥 Voir les connexions
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+.offer-title {
+  font-size: 0.9rem;
+  color: #1e293b;
+  font-weight: 600;
+}
 
-      {/* Modal détail partenaire */}
-      {showPartnerModal && selectedPartner && (
-        <div className="modal-overlay" onClick={closePartnerModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>🏢 {selectedPartner.name}</h3>
-              <button onClick={closePartnerModal} className="close-btn">×</button>
-            </div>
-            <div className="modal-body">
-              <div className="partner-details">
-                <p><strong>Description:</strong> {selectedPartner.description || 'Aucune description'}</p>
-                <p><strong>Email:</strong> {selectedPartner.contact_email}</p>
-                <p><strong>Site web:</strong> {selectedPartner.website || 'Non spécifié'}</p>
-                <p><strong>Statut:</strong> {selectedPartner.status}</p>
-                <p><strong>Créé le:</strong> {formatDate(selectedPartner.created_at)}</p>
-              </div>
-              
-              {selectedPartner.offers && selectedPartner.offers.length > 0 && (
-                <div className="offers-list">
-                  <h4>🎯 Métiers ({selectedPartner.offers.length})</h4>
-                  {selectedPartner.offers.map((offer) => (
-                    <div key={offer.id} className="offer-item">
-                      <h5>{offer.title}</h5>
-                      <p>{offer.description}</p>
-                      <span className="offer-type">{offer.offer_type}</span>
-                      <span className="offer-status">
-                        {offer.is_active ? '✅ Actif' : '❌ Inactif'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+.offer-type {
+  font-size: 0.8rem;
+  color: #64748b;
+  text-transform: capitalize;
+}
 
-      {/* Modal création/modification d'offre */}
-      {showOfferModal && selectedPartner && (
-        <div className="modal-overlay" onClick={closeOfferModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>🎯 {isEditingOffer ? 'Modifier le métier' : 'Créer un nouveau métier'} - {selectedPartner.name}</h3>
-              <button onClick={closeOfferModal} className="close-btn">×</button>
-            </div>
-            <div className="modal-body">
-              <div className="offer-form">
-                <input
-                  type="text"
-                  placeholder="Titre du métier"
-                  value={newOffer.title}
-                  onChange={(e) => setNewOffer({...newOffer, title: e.target.value})}
-                />
-                <textarea
-                  placeholder="Description du métier"
-                  value={newOffer.description}
-                  onChange={(e) => setNewOffer({...newOffer, description: e.target.value})}
-                />
-                <select
-                  value={newOffer.offer_type}
-                  onChange={(e) => setNewOffer({...newOffer, offer_type: e.target.value})}
-                >
-                  <option value="metier">Métier</option>
-                  <option value="formation">Formation</option>
-                  <option value="service">Service</option>
-                  <option value="stage">Stage</option>
-                  <option value="emploi">Emploi</option>
-                </select>
-                <input
-                  type="url"
-                  placeholder="URL du métier (optionnel)"
-                  value={newOffer.url}
-                  onChange={(e) => setNewOffer({...newOffer, url: e.target.value})}
-                />
-                <button onClick={createOffer} className="create-btn">
-                  {isEditingOffer ? 'Mettre à jour le métier' : 'Créer le métier'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+.offer-actions {
+  display: flex;
+  gap: 0.5rem;
+}
 
-      {/* Modal connexions */}
-      {showConnectionModal && selectedPartner && (
-        <div className="modal-overlay" onClick={closeConnectionModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>👥 Connexions - {selectedPartner.name}</h3>
-              <button onClick={closeConnectionModal} className="close-btn">×</button>
-            </div>
-            <div className="modal-body">
-              {selectedPartner.connectionStats ? (
-                <div className="connections-stats">
-                  <div className="stats-overview">
-                    <div className="stat-item">
-                      <span className="stat-label">Total Connexions:</span>
-                      <span className="stat-value">{selectedPartner.connectionStats.total_connections}</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-label">Utilisateurs Uniques:</span>
-                      <span className="stat-value">{selectedPartner.connectionStats.unique_users}</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-label">Total Vues:</span>
-                      <span className="stat-value">{selectedPartner.connectionStats.total_views}</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-label">Période:</span>
-                      <span className="stat-value">{selectedPartner.connectionStats.period_days} jours</span>
-                    </div>
-                  </div>
-                  
-                  {Object.keys(selectedPartner.connectionStats.offers || {}).length > 0 && (
-                    <div className="offers-connections">
-                      <h4>📋 Connexions par offre</h4>
-                      {Object.entries(selectedPartner.connectionStats.offers).map(([offerId, offer]) => (
-                        <div key={offerId} className="offer-connection-item">
-                          <div className="offer-connection-header">
-                            <span className="offer-id">Offre #{offerId}</span>
-                            <span className="offer-connections">{offer.total_connections} connexions</span>
-                          </div>
-                          <div className="offer-connection-details">
-                            <span>Utilisateurs uniques: {offer.unique_users}</span>
-                            <span>Total vues: {offer.total_views}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {Object.keys(selectedPartner.connectionStats.daily_breakdown || {}).length > 0 && (
-                    <div className="daily-breakdown">
-                      <h4>📅 Répartition quotidienne</h4>
-                      <div className="daily-chart">
-                        {Object.entries(selectedPartner.connectionStats.daily_breakdown)
-                          .sort(([a], [b]) => b.localeCompare(a))
-                          .slice(0, 7)
-                          .map(([date, count]) => (
-                            <div key={date} className="daily-bar">
-                              <span className="daily-date">{formatDate(date)}</span>
-                              <div className="daily-bar-fill" style={{height: `${Math.max(20, count * 10)}px`}}></div>
-                              <span className="daily-count">{count}</span>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="connections-info">
-                  <p>Chargement des statistiques de connexions...</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+.test-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
 
-      {/* Modal édition partenaire */}
-      {editingPartner && (
-        <div className="modal-overlay" onClick={() => setEditingPartner(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>✏️ Modifier {editingPartner.name}</h3>
-              <button onClick={() => setEditingPartner(null)} className="close-btn">×</button>
-            </div>
-            <div className="modal-body">
-              <div className="partner-form">
-                <input
-                  type="text"
-                  placeholder="Nom du partenaire"
-                  value={editingPartner.name}
-                  onChange={(e) => setEditingPartner({...editingPartner, name: e.target.value})}
-                />
-                <input
-                  type="email"
-                  placeholder="Email de contact"
-                  value={editingPartner.contact_email}
-                  onChange={(e) => setEditingPartner({...editingPartner, contact_email: e.target.value})}
-                />
-                <input
-                  type="url"
-                  placeholder="Site web"
-                  value={editingPartner.website}
-                  onChange={(e) => setEditingPartner({...editingPartner, website: e.target.value})}
-                />
-                <input
-                  type="url"
-                  placeholder="URL du logo"
-                  value={editingPartner.logo_url}
-                  onChange={(e) => setEditingPartner({...editingPartner, logo_url: e.target.value})}
-                />
-                <textarea
-                  placeholder="Description du partenaire"
-                  value={editingPartner.description}
-                  onChange={(e) => setEditingPartner({...editingPartner, description: e.target.value})}
-                />
-                <select
-                  value={editingPartner.status}
-                  onChange={(e) => setEditingPartner({...editingPartner, status: e.target.value})}
-                >
-                  <option value="active">Actif</option>
-                  <option value="inactive">Inactif</option>
-                </select>
-                <button onClick={updatePartner} className="update-btn">
-                  Mettre à jour
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default AdminPartnersPage;
+.test-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
