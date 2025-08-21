@@ -348,10 +348,10 @@ def get_partner_stats(partner_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@admin_api.route('/partners/<int:partner_id>/offers', methods=['GET'])
+@admin_api.route('/partners/<partner_id>/offers', methods=['GET'])
 @verify_jwt_token
 def get_partner_offers(partner_id):
-    """Récupère les offres d'un partenaire"""
+    """Récupère les métiers d'un partenaire"""
     try:
         from services.supabase_storage import SupabaseStorage
         
@@ -374,14 +374,14 @@ def get_partner_offers(partner_id):
         }), 200
         
     except Exception as e:
-        logging.error(f"Erreur récupération offres partenaire: {e}")
+        logging.error(f"Erreur récupération métiers partenaire: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@admin_api.route('/partners/<int:partner_id>/offers', methods=['POST'])
+@admin_api.route('/partners/<partner_id>/offers', methods=['POST'])
 @verify_jwt_token
 def create_partner_offer(partner_id):
-    """Crée une nouvelle offre pour un partenaire"""
+    """Crée un nouveau métier pour un partenaire"""
     try:
         data = request.get_json() or {}
         
@@ -405,18 +405,22 @@ def create_partner_offer(partner_id):
             'is_active': True
         }
         
+        logging.info(f"Tentative création métier: {offer_data}")
+        
         response = supabase.client.table('partner_offers').insert(offer_data).execute()
         
         if response.data:
+            logging.info(f"✅ Métier créé avec succès: {response.data[0]}")
             return jsonify({
                 "success": True,
                 "offer": response.data[0]
             }), 201
         else:
+            logging.error(f"❌ Échec création métier: pas de données retournées")
             return jsonify({"success": False, "error": "Erreur lors de la création"}), 500
         
     except Exception as e:
-        logging.error(f"Erreur création offre partenaire: {e}")
+        logging.error(f"❌ Erreur création métier partenaire: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 @admin_api.route('/partners/<partner_id>/connections', methods=['GET'])
