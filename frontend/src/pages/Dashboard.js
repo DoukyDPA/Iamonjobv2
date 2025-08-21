@@ -236,6 +236,41 @@ const Dashboard = () => {
         toast.success(`${showTextModal === 'cv' ? 'CV' : 'Document'} enregistré avec succès !`);
         setShowTextModal(null);
         setTextContent('');
+
+        // Déclencher automatiquement l'analyse de compatibilité si une offre d'emploi a été saisie
+        // et que le CV est déjà présent
+        if (showTextModal === 'offre_emploi' && documentStatus.cv?.uploaded) {
+          try {
+            setCompatLoading(true);
+            setCompatError(null);
+            const response = await fetch('/api/actions/compatibility', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+              },
+              body: JSON.stringify({ service_id: 'matching_cv_offre' })
+            });
+            const data = await response.json();
+            if (
+              response.ok &&
+              data.success &&
+              (data.matching || data.compatibility || data.analysis || data.result || data.content)
+            ) {
+              setCompatAnalysis(
+                data.matching || data.compatibility || data.analysis || data.result || data.content
+              );
+            } else {
+              setCompatError(data.error || "Erreur lors de l'analyse de compatibilité");
+              setCompatAnalysis(null);
+            }
+          } catch (err) {
+            setCompatError("Erreur lors de l'analyse de compatibilité");
+            setCompatAnalysis(null);
+          } finally {
+            setCompatLoading(false);
+          }
+        }
       }
     } catch (error) {
       toast.error('Erreur lors de l\'enregistrement');
