@@ -28,7 +28,7 @@ const AdminPartnersPage = () => {
   const [newOffer, setNewOffer] = useState({
     title: '',
     description: '',
-    offer_type: 'job',
+    offer_type: 'metier',
     url: '',
     is_active: true
   });
@@ -124,20 +124,32 @@ const AdminPartnersPage = () => {
 
   const createOffer = async () => {
     try {
+      console.log('🎯 Tentative création métier:', {
+        partnerId: selectedPartner.id,
+        offerData: newOffer
+      });
+      
       const response = await api.post(`/api/admin/partners/${selectedPartner.id}/offers`, newOffer);
+      console.log('📡 Réponse API création métier:', response);
+      
       if (response.data.success) {
+        console.log('✅ Métier créé avec succès');
         setNewOffer({
           title: '',
           description: '',
-          offer_type: 'job',
+          offer_type: 'metier',
           url: '',
           is_active: true
         });
         setShowOfferModal(false);
         loadPartners();
+      } else {
+        console.error('❌ Échec création métier:', response.data.error);
+        alert(`Erreur création métier: ${response.data.error}`);
       }
     } catch (err) {
-      console.error('Erreur création offre:', err);
+      console.error('❌ Erreur création métier:', err);
+      alert(`Erreur création métier: ${err.message}`);
     }
   };
 
@@ -247,9 +259,9 @@ const AdminPartnersPage = () => {
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon">📋</div>
+          <div className="stat-icon">🎯</div>
           <div className="stat-content">
-            <h3>Offres Actives</h3>
+            <h3>Métiers Actifs</h3>
             <p className="stat-number">
               {partners.reduce((sum, p) => sum + (p.offers?.length || 0), 0)}
             </p>
@@ -369,7 +381,7 @@ const AdminPartnersPage = () => {
                     onClick={() => openOfferModal(partner)}
                     className="offer-btn"
                   >
-                    📋 Gérer les offres
+                    🎯 Gérer les métiers
                   </button>
                   <button 
                     onClick={() => openConnectionModal(partner)}
@@ -401,21 +413,21 @@ const AdminPartnersPage = () => {
                 <p><strong>Créé le:</strong> {formatDate(selectedPartner.created_at)}</p>
               </div>
               
-              {selectedPartner.offers && selectedPartner.offers.length > 0 && (
-                <div className="offers-list">
-                  <h4>📋 Offres ({selectedPartner.offers.length})</h4>
-                  {selectedPartner.offers.map((offer) => (
-                    <div key={offer.id} className="offer-item">
-                      <h5>{offer.title}</h5>
-                      <p>{offer.description}</p>
-                      <span className="offer-type">{offer.offer_type}</span>
-                      <span className="offer-status">
-                        {offer.is_active ? '✅ Actif' : '❌ Inactif'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
+                             {selectedPartner.offers && selectedPartner.offers.length > 0 && (
+                 <div className="offers-list">
+                   <h4>🎯 Métiers ({selectedPartner.offers.length})</h4>
+                   {selectedPartner.offers.map((offer) => (
+                     <div key={offer.id} className="offer-item">
+                       <h5>{offer.title}</h5>
+                       <p>{offer.description}</p>
+                       <span className="offer-type">{offer.offer_type}</span>
+                       <span className="offer-status">
+                         {offer.is_active ? '✅ Actif' : '❌ Inactif'}
+                       </span>
+                     </div>
+                   ))}
+                 </div>
+               )}
             </div>
           </div>
         </div>
@@ -426,19 +438,19 @@ const AdminPartnersPage = () => {
         <div className="modal-overlay" onClick={closeOfferModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>📋 Gérer les offres - {selectedPartner.name}</h3>
+              <h3>🎯 Gérer les métiers - {selectedPartner.name}</h3>
               <button onClick={closeOfferModal} className="close-btn">×</button>
             </div>
             <div className="modal-body">
               <div className="offer-form">
                 <input
                   type="text"
-                  placeholder="Titre de l'offre"
+                  placeholder="Titre du métier"
                   value={newOffer.title}
                   onChange={(e) => setNewOffer({...newOffer, title: e.target.value})}
                 />
                 <textarea
-                  placeholder="Description de l'offre"
+                  placeholder="Description du métier"
                   value={newOffer.description}
                   onChange={(e) => setNewOffer({...newOffer, description: e.target.value})}
                 />
@@ -446,19 +458,20 @@ const AdminPartnersPage = () => {
                   value={newOffer.offer_type}
                   onChange={(e) => setNewOffer({...newOffer, offer_type: e.target.value})}
                 >
-                  <option value="job">Emploi</option>
+                  <option value="metier">Métier</option>
                   <option value="formation">Formation</option>
                   <option value="service">Service</option>
                   <option value="stage">Stage</option>
+                  <option value="emploi">Emploi</option>
                 </select>
                 <input
                   type="url"
-                  placeholder="URL de l'offre"
+                  placeholder="URL du métier (optionnel)"
                   value={newOffer.url}
                   onChange={(e) => setNewOffer({...newOffer, url: e.target.value})}
                 />
                 <button onClick={createOffer} className="create-btn">
-                  Créer l'offre
+                  Créer le métier
                 </button>
               </div>
             </div>
