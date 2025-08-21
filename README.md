@@ -337,7 +337,7 @@ Propriétaire - Tous droits réservés
 
 ## 👥 Équipe
 
-Développé avec l'intelligence artificielle pour aider les demandeurs d'emploi.
+Développé par le CBE Sud 94 avec l'intelligence artificielle.
 
 ---
 
