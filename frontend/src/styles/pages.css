@@ -2416,3 +2416,15 @@
     }
 
 }
+
+/* ===== FORCER COULEUR BLANCHE DES TITRES DASHBOARD ===== */
+.revolutionary-dashboard .revolutionary-section-title,
+.revolutionary-tab-content .revolutionary-section-title,
+h2.revolutionary-section-title,
+h3.revolutionary-section-title {
+  color: white !important;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: unset !important;
+  background-clip: unset !important;
+}
