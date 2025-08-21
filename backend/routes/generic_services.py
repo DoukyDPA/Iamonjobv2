@@ -259,6 +259,36 @@ Votre profil présente une compatibilité correcte avec cette offre d'emploi.
         
         print(f"✅ {config['title']} généré: {len(result)} caractères")
         
+        # 🎯 TRACKING DES TOKENS CONSOMMÉS
+        try:
+            # Estimer la consommation de tokens (approximatif)
+            estimated_tokens = len(str(result)) // 4  # Estimation : 1 token ≈ 4 caractères
+            
+            # Récupérer l'email de l'utilisateur
+            from flask import request
+            if hasattr(request, 'current_user') and request.current_user:
+                user_email = request.current_user.email
+                
+                # Importer et utiliser le token tracker
+                try:
+                    from services.token_tracker import record_tokens
+                    
+                    # Enregistrer la consommation de tokens
+                    service_name = f"{service_id}_service"
+                    success = record_tokens(user_email, estimated_tokens, service_name)
+                    
+                    if success:
+                        print(f"✅ Tokens enregistrés pour {user_email}: {estimated_tokens} tokens (estimé)")
+                    else:
+                        print(f"⚠️ Échec enregistrement tokens pour {user_email}")
+                        
+                except Exception as token_error:
+                    print(f"⚠️ Erreur tracking tokens: {token_error}")
+                    # Ne pas faire échouer le service principal pour une erreur de tracking
+                    
+        except Exception as e:
+            print(f"⚠️ Erreur générale tracking tokens: {e}")
+        
         # ⭐ SAUVEGARDER DANS L'HISTORIQUE DU CHAT ⭐
         user_message = {
             "role": "user",
