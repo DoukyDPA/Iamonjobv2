@@ -1,86 +1,97 @@
-/* PartnerJobs.css - Styles pour l'affichage des partenaires et leurs métiers */
+/* PartnerJobs.css - Styles pour les partenaires et leurs métiers */
 
 .partner-jobs-container {
-  padding: 2rem;
+  padding: 1.5rem;
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .partner-jobs-header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 }
 
 .partner-jobs-header h3 {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #2d3748;
-  margin-bottom: 1rem;
+  color: #1f2937;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .partner-jobs-header p {
-  font-size: 1.1rem;
-  color: #718096;
-  max-width: 600px;
-  margin: 0 auto;
-  line-height: 1.6;
+  color: #6b7280;
+  font-size: 1rem;
 }
 
-/* Grille des partenaires */
+/* Grille des partenaires - 3 par ligne sur desktop */
 .partners-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-/* Carte partenaire */
-.partner-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  overflow: hidden;
-  transition: all 0.3s ease;
-  border: 1px solid #e2e8f0;
+/* Sur desktop, forcer 3 colonnes */
+@media (min-width: 1024px) {
+  .partners-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
-.partner-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-/* En-tête du partenaire */
-.partner-header {
-  padding: 1.5rem;
+/* Carte partenaire compacte */
+.partner-card.compact {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+}
+
+.partner-card.compact:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.partner-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  margin-bottom: 1rem;
+  flex: 1;
 }
 
+/* Logo partenaire - plus grand et visible */
 .partner-logo {
-  position: relative;
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.2);
+  width: 80px;
+  height: 80px;
+  margin-right: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
   flex-shrink: 0;
 }
 
 .partner-logo img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  border-radius: 12px;
+  object-fit: contain;
+  border-radius: 8px;
 }
 
 .partner-initial {
-  font-size: 1.5rem;
-  font-weight: 700;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
   color: white;
+  font-size: 2rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
 }
 
 .partner-info {
@@ -88,42 +99,109 @@
 }
 
 .partner-info h4 {
-  font-size: 1.3rem;
-  font-weight: 700;
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 600;
   margin: 0 0 0.5rem 0;
-}
-
-.partner-description {
-  font-size: 0.9rem;
-  opacity: 0.9;
-  margin: 0 0 0.75rem 0;
-  line-height: 1.4;
+  line-height: 1.2;
 }
 
 .partner-website {
   color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
-  font-size: 0.85rem;
-  transition: opacity 0.2s ease;
+  font-size: 0.875rem;
+  transition: color 0.2s ease;
 }
 
 .partner-website:hover {
-  opacity: 1;
+  color: white;
 }
 
-/* Section des métiers */
-.partner-offers {
-  padding: 1.5rem;
+.partner-actions {
+  margin-top: auto;
 }
 
-.partner-offers h5 {
-  font-size: 1.1rem;
+.view-offers-btn {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  color: #1f2937;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
   font-weight: 600;
-  color: #2d3748;
-  margin: 0 0 1rem 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.view-offers-btn:hover {
+  background: white;
+  transform: translateY(-1px);
+}
+
+/* Modal des métiers */
+.partner-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.partner-modal {
+  background: white;
+  border-radius: 16px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.partner-modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.partner-modal-header h4 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.partner-modal-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.partner-modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.partner-modal-body {
+  padding: 1.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 /* Liste des métiers */
@@ -134,151 +212,299 @@
 }
 
 .offer-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem;
-  background: #f7fafc;
-  border-radius: 8px;
+  background: #f8fafc;
   border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
   transition: all 0.2s ease;
 }
 
 .offer-item:hover {
-  background: #edf2f7;
-  border-color: #cbd5e0;
-}
-
-.offer-content {
-  flex: 1;
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
 }
 
 .offer-content h6 {
-  font-size: 1rem;
+  color: #1f2937;
+  font-size: 1.125rem;
   font-weight: 600;
-  color: #2d3748;
-  margin: 0 0 0.25rem 0;
-}
-
-.offer-content p {
-  font-size: 0.9rem;
-  color: #4a5568;
   margin: 0 0 0.5rem 0;
-  line-height: 1.4;
 }
 
 .offer-type {
   display: inline-block;
-  background: #e6fffa;
-  color: #234e52;
+  background: #e0e7ff;
+  color: #3730a3;
   padding: 0.25rem 0.75rem;
   border-radius: 20px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-/* Bouton de test */
-.test-btn {
-  background: #4299e1;
+.offer-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.details-btn {
+  background: #3b82f6;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.9rem;
+  border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  white-space: nowrap;
+  font-size: 0.875rem;
+  flex: 1;
 }
 
-.test-btn:hover {
-  background: #3182ce;
+.details-btn:hover {
+  background: #2563eb;
   transform: translateY(-1px);
 }
 
-.test-btn:active {
-  transform: translateY(0);
+.test-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  flex: 1;
 }
 
-/* États spéciaux */
-.no-offers {
-  text-align: center;
-  padding: 2rem;
-  color: #718096;
+.test-btn:hover {
+  background: #059669;
+  transform: translateY(-1px);
 }
 
-.no-offers p {
+/* Modal de détails du métier */
+.offer-details-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  padding: 1rem;
+}
+
+.offer-details-modal {
+  background: white;
+  border-radius: 16px;
+  max-width: 700px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.offer-details-header {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.offer-details-header h4 {
   margin: 0;
-  font-style: italic;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.offer-details-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.offer-details-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.offer-details-body {
+  padding: 1.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.offer-details-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.offer-meta {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.offer-type-badge {
+  background: #e0e7ff;
+  color: #3730a3;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.partner-name-badge {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.offer-description h5 {
+  color: #1f2937;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+}
+
+.offer-description p {
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.offer-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.test-compatibility-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+  min-width: 200px;
+}
+
+.test-compatibility-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -3px rgba(16, 185, 129, 0.3);
 }
 
 /* États de chargement et d'erreur */
-.loading-container,
-.error-container,
-.no-partners {
+.loading-container {
   text-align: center;
   padding: 3rem;
-  color: #718096;
 }
 
-.loading-container h3,
-.error-container h3,
-.no-partners h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1.3rem;
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-container {
+  text-align: center;
+  padding: 2rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  color: #dc2626;
 }
 
 .retry-btn {
-  background: #4299e1;
+  background: #dc2626;
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
-  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
   margin-top: 1rem;
+  transition: background 0.2s ease;
 }
 
 .retry-btn:hover {
-  background: #3182ce;
+  background: #b91c1c;
+}
+
+.no-partners {
+  text-align: center;
+  padding: 3rem;
+  color: #6b7280;
+}
+
+.no-offers {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .partner-jobs-container {
-    padding: 1rem;
-  }
-  
   .partners-grid {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 1rem;
   }
   
-  .partner-header {
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
+  .partner-card.compact {
+    min-height: 180px;
+    padding: 1.25rem;
   }
   
   .partner-logo {
-    width: 80px;
-    height: 80px;
+    width: 60px;
+    height: 60px;
   }
   
-  .partner-initial {
-    font-size: 2rem;
+  .partner-info h4 {
+    font-size: 1.125rem;
   }
   
-  .offer-item {
+  .offer-actions {
     flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-    text-align: center;
   }
   
-  .test-btn {
-    width: 100%;
+  .partner-modal,
+  .offer-details-modal {
+    margin: 1rem;
+    max-height: 90vh;
   }
 }
