@@ -81,8 +81,15 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
   const canExecute = missingDocuments.length === 0;
 
   // 🚀 ANALYSE AUTOMATIQUE quand on arrive sur la page et que tout est prêt
+  // MAIS PAS pour les services qui permettent des notes personnelles
   useEffect(() => {
     if (canExecute && !result && !serviceLoading && serviceConfig?.id) {
+      // Si le service permet des notes, ne pas lancer automatiquement
+      if (serviceConfig.allowsNotes) {
+        console.log(`⏸️ Service ${serviceConfig.id} permet des notes - analyse manuelle requise`);
+        return;
+      }
+      
       console.log(`🚀 Déclenchement automatique du service: ${serviceConfig.id}`);
       handleExecute();
     }
@@ -288,24 +295,69 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
             {/* Zone de notes personnelles */}
             {serviceConfig.allowsNotes && (
               <div style={{ marginBottom: '2rem' }}>
+                <div style={{ 
+                  background: '#f0f9ff', 
+                  border: '1px solid #0ea5e9', 
+                  borderRadius: '8px', 
+                  padding: '1rem', 
+                  marginBottom: '1rem' 
+                }}>
+                  <h4 style={{ margin: '0 0 0.5rem 0', color: '#0369a1', fontSize: '1rem' }}>
+                    💡 Voulez-vous ajouter un complément d'information ?
+                  </h4>
+                  <p style={{ margin: 0, color: '#0c4a6e', fontSize: '0.9rem', lineHeight: '1.4' }}>
+                    Ajoutez des détails personnels, exemples concrets ou contraintes pour personnaliser l'analyse de l'IA.
+                  </p>
+                </div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#374151' }}>
                   📝 Notes personnelles (optionnel)
                 </label>
                 <textarea
                   value={userNotes}
                   onChange={(e) => setUserNotes(e.target.value)}
-                  placeholder="Ajoutez des informations supplémentaires..."
+                  placeholder="Exemples : vos réalisations chiffrées, contraintes géographiques, motivations spécifiques, expériences pertinentes..."
                   style={{ width: '100%', minHeight: '100px', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.9rem', resize: 'vertical' }}
                 />
               </div>
             )}
             {/* Bouton d'exécution */}
             <div style={{ textAlign: 'center' }}>
+              {serviceConfig.allowsNotes && (
+                <div style={{ 
+                  background: '#f0fdf4', 
+                  border: '1px solid #22c55e', 
+                  borderRadius: '8px', 
+                  padding: '1rem', 
+                  marginBottom: '1rem',
+                  textAlign: 'left'
+                }}>
+                  <p style={{ margin: '0 0 0.5rem 0', color: '#166534', fontSize: '0.9rem', fontWeight: '500' }}>
+                    ✅ Prêt à lancer l'analyse
+                  </p>
+                  <p style={{ margin: 0, color: '#15803d', fontSize: '0.85rem' }}>
+                    {userNotes ? 
+                      `📝 ${userNotes.length} caractères de notes personnelles ajoutées` : 
+                      '📝 Aucune note personnelle - l\'analyse sera basée sur vos documents uniquement'
+                    }
+                  </p>
+                </div>
+              )}
               <button
                 onClick={handleExecute}
                 disabled={serviceLoading || !canExecute}
                 className="revolutionary-btn-upload"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '1rem 2rem', fontSize: '1rem', fontWeight: '500', borderRadius: '8px', background: canExecute ? undefined : '#9ca3af', cursor: canExecute ? 'pointer' : 'not-allowed' }}
+                style={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem', 
+                  padding: '1rem 2rem', 
+                  fontSize: '1rem', 
+                  fontWeight: '500', 
+                  borderRadius: '8px', 
+                  background: canExecute ? (serviceConfig.allowsNotes ? '#059669' : undefined) : '#9ca3af', 
+                  cursor: canExecute ? 'pointer' : 'not-allowed',
+                  border: serviceConfig.allowsNotes ? '2px solid #047857' : undefined
+                }}
               >
                 {serviceLoading ? (
                   <>
@@ -313,7 +365,7 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
                     Traitement en cours...
                   </>
                 ) : (
-                  <>🚀 Lancer l'analyse</>
+                  <>{serviceConfig.allowsNotes ? '🚀 Lancer l\'analyse personnalisée' : '🚀 Lancer l\'analyse'}</>
                 )}
               </button>
               {error && (
