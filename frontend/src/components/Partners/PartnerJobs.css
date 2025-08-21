@@ -4,6 +4,8 @@
   padding: 1.5rem;
   max-width: 1200px;
   margin: 0 auto;
+     width: 100%;
+  box-sizing: border-box;
 }
 
 .partner-jobs-header {
@@ -24,32 +26,33 @@
 
 /* Grille des partenaires - 3 par ligne sur desktop */
 .partners-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 1.25rem !important;
   margin-bottom: 2rem;
+  max-width: 100%;
 }
 
 /* Sur desktop, forcer 3 colonnes */
 @media (min-width: 1024px) {
   .partners-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1.25rem !important;
   }
 }
 
 /* Sur écran moyen, forcer aussi 3 colonnes */
 @media (min-width: 768px) and (max-width: 1023px) {
   .partners-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1rem !important;
   }
 }
 
 /* Sur très grand écran, optimiser l'espacement */
 @media (min-width: 1280px) {
   .partners-grid {
-    gap: 1.5rem;
+    gap: 1.5rem !important;
   }
 }
 
@@ -64,6 +67,8 @@
   flex-direction: column;
   min-height: 180px;
   max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .partner-card.compact:hover {
