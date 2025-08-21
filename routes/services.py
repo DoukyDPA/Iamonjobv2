@@ -362,7 +362,7 @@ def matching_cv_offre_analysis():
         print(f"🎯 Route compatibility appelée avec service_id: {service_id}")
         
         # Utiliser le handler générique
-        return handle_generic_service(service_id)
+        return handle_generic_service(service_id, request)
         
     except ImportError as e:
         print(f"❌ Erreur import generic_services: {e}")
