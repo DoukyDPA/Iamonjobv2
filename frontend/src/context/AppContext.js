@@ -150,16 +150,22 @@ export const AppProvider = ({ children }) => {
 
       if (response.success) {
         // Mise à jour réussie
-        setDocumentStatus(prev => ({
-          ...prev,
-          [documentType]: { 
-            uploaded: true, 
-            processed: true, 
-            name: file.name,
-            size: file.size,
-            upload_date: new Date().toISOString()
-          }
-        }));
+        console.log('🔄 Mise à jour documentStatus pour', documentType);
+        setDocumentStatus(prev => {
+          console.log('📊 État précédent:', prev);
+          const newState = {
+            ...prev,
+            [documentType]: { 
+              uploaded: true, 
+              processed: true, 
+              name: file.name,
+              size: file.size,
+              upload_date: new Date().toISOString()
+            }
+          };
+          console.log('📊 Nouvel état:', newState);
+          return newState;
+        });
 
         // 🗑️ NETTOYER LE LOCALSTORAGE POUR NOUVEAUX DOCUMENTS
         if (['cv', 'offre_emploi', 'questionnaire'].includes(documentType)) {
