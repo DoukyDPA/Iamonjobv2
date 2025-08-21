@@ -141,17 +141,18 @@ SERVICES_CONFIG = {
     }
 }
 
-def handle_generic_service(service_id):
-    """Handler générique pour tous les services"""
+def handle_generic_service(service_id, request):
+    """Gère un service générique basé sur sa configuration"""
     try:
-        # Récupérer la configuration du service
-        config = SERVICES_CONFIG.get(service_id)
-        if not config:
+        # Vérifier que le service est configuré
+        if service_id not in SERVICES_CONFIG:
+            print(f"❌ Service {service_id} non configuré")
             return jsonify({
                 "success": False,
                 "error": f"Service {service_id} non configuré"
             }), 400
 
+        config = SERVICES_CONFIG[service_id]
         print(f"🔍 === DEBUG {config['title'].upper()} ===")
         
         # Récupérer les données utilisateur
@@ -349,31 +350,30 @@ Votre profil présente une compatibilité correcte avec cette offre d'emploi.
             "error": f"Erreur lors de la génération: {str(e)}"
         }), 500
 
-# Ajouter ces routes à app.py
-def register_generic_routes(app):
-    """Enregistre toutes les routes génériques dans l'app Flask"""
-    
-    # === NOUVELLES ROUTES SANS CONFLIT ===
-    @app.route('/api/actions/analyze-cv', methods=['POST'])
-    def analyze_cv_unified():
-        """Route unifiée pour l'analyse CV via le système générique"""
-        return handle_generic_service('analyze_cv')
+# Créer un Blueprint pour les routes génériques
+generic_services_bp = Blueprint('generic_services', __name__)
+
+# === NOUVELLES ROUTES SANS CONFLIT ===
+@generic_services_bp.route('/api/actions/analyze-cv', methods=['POST'])
+def analyze_cv_unified():
+    """Route unifiée pour l'analyse CV via le système générique"""
+    return handle_generic_service('analyze_cv', request)
 
 
-    @app.route("/api/cv/ats-optimize", methods=["POST"])
-    def cv_ats_optimization_unified():
-        """Route unifiée pour l'optimisation ATS"""
-        return handle_generic_service("cv_ats_optimization")
+@generic_services_bp.route("/api/cv/ats-optimize", methods=["POST"])
+def cv_ats_optimization_unified():
+    """Route unifiée pour l'optimisation ATS"""
+    return handle_generic_service("cv_ats_optimization", request)
 
 
-    # === ÉVITER LES ROUTES EN CONFLIT ===
-    # Ne pas enregistrer interview_prepare, pitch_generate, etc.
-    # car elles existent déjà dans app.py
-    
-    print("✅ Routes génériques sans conflit enregistrées")
+# === ÉVITER LES ROUTES EN CONFLIT ===
+# Ne pas enregistrer interview_prepare, pitch_generate, etc.
+# car elles existent déjà dans app.py
+
+print("✅ Routes génériques sans conflit enregistrées")
 
 # Export pour utilisation dans app.py
-__all__ = ['register_generic_routes', 'handle_generic_service', 'SERVICES_CONFIG']
+__all__ = ['generic_services_bp', 'handle_generic_service', 'SERVICES_CONFIG']
 
 def get_fallback_services_config():
     """Configuration de fallback des services"""
