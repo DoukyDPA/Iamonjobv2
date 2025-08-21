@@ -309,9 +309,7 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
                     Ajoutez des détails personnels, exemples concrets ou contraintes pour personnaliser l'analyse de l'IA.
                   </p>
                 </div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#374151' }}>
-                  📝 Notes personnelles (optionnel)
-                </label>
+
                 <textarea
                   value={userNotes}
                   onChange={(e) => setUserNotes(e.target.value)}
