@@ -1,5 +1,5 @@
 // FICHIER : frontend/src/pages/AdminPartnersPage.js
-// Interface d'administration pour gérer les partenaires - VERSION SIMPLIFIÉE
+// Interface d'administration complète pour gérer les partenaires, offres et connexions
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -13,11 +13,24 @@ const AdminPartnersPage = () => {
   const [error, setError] = useState(null);
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [showPartnerModal, setShowPartnerModal] = useState(false);
-  const [stats, setStats] = useState({
-    totalPartners: 0,
-    totalOffers: 0,
-    totalTests: 0,
-    activePartners: 0
+  const [showOfferModal, setShowOfferModal] = useState(false);
+  const [showConnectionModal, setShowConnectionModal] = useState(false);
+  const [editingPartner, setEditingPartner] = useState(null);
+  const [editingOffer, setEditingOffer] = useState(null);
+  const [newPartner, setNewPartner] = useState({
+    name: '',
+    description: '',
+    website: '',
+    logo_url: '',
+    contact_email: '',
+    status: 'active'
+  });
+  const [newOffer, setNewOffer] = useState({
+    title: '',
+    description: '',
+    offer_type: 'job',
+    url: '',
+    is_active: true
   });
 
   // Vérifier que l'utilisateur est admin
@@ -38,11 +51,10 @@ const AdminPartnersPage = () => {
   const loadPartners = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/admin/partners/stats');
+      const response = await api.get('/api/admin/partners');
       
       if (response.data.success) {
-        setPartners(response.data.stats);
-        calculateStats(response.data.stats);
+        setPartners(response.data.partners);
       } else {
         setError(response.data.error || 'Erreur lors du chargement des partenaires');
       }
@@ -54,27 +66,120 @@ const AdminPartnersPage = () => {
     }
   };
 
-  const calculateStats = (partnersList) => {
-    const totalPartners = partnersList.length;
-    const totalOffers = partnersList.reduce((sum, p) => sum + Object.keys(p.offers || {}).length, 0);
-    const totalTests = partnersList.reduce((sum, p) => sum + (p.total_tests || 0), 0);
-    const activePartners = partnersList.filter(p => p.total_tests > 0).length;
-
-    setStats({
-      totalPartners,
-      totalOffers,
-      totalTests,
-      activePartners
-    });
+  const loadPartnerOffers = async (partnerId) => {
+    try {
+      const response = await api.get(`/api/admin/partners/${partnerId}/offers`);
+      if (response.data.success) {
+        return response.data.offers;
+      }
+    } catch (err) {
+      console.error('Erreur chargement offres:', err);
+    }
+    return [];
   };
 
-  const openPartnerModal = (partner) => {
+  const createPartner = async () => {
+    try {
+      const response = await api.post('/api/admin/partners', newPartner);
+      if (response.data.success) {
+        setNewPartner({
+          name: '',
+          description: '',
+          website: '',
+          logo_url: '',
+          contact_email: '',
+          status: 'active'
+        });
+        loadPartners();
+      }
+    } catch (err) {
+      console.error('Erreur création partenaire:', err);
+    }
+  };
+
+  const updatePartner = async () => {
+    try {
+      const response = await api.put('/api/admin/partners', editingPartner);
+      if (response.data.success) {
+        setEditingPartner(null);
+        loadPartners();
+      }
+    } catch (err) {
+      console.error('Erreur mise à jour partenaire:', err);
+    }
+  };
+
+  const deletePartner = async (partnerId) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce partenaire ?')) {
+      try {
+        const response = await api.delete('/api/admin/partners', { data: { id: partnerId } });
+        if (response.data.success) {
+          loadPartners();
+        }
+      } catch (err) {
+        console.error('Erreur suppression partenaire:', err);
+      }
+    }
+  };
+
+  const createOffer = async () => {
+    try {
+      const response = await api.post(`/api/admin/partners/${selectedPartner.id}/offers`, newOffer);
+      if (response.data.success) {
+        setNewOffer({
+          title: '',
+          description: '',
+          offer_type: 'job',
+          url: '',
+          is_active: true
+        });
+        setShowOfferModal(false);
+        loadPartners();
+      }
+    } catch (err) {
+      console.error('Erreur création offre:', err);
+    }
+  };
+
+  const openPartnerModal = async (partner) => {
     setSelectedPartner(partner);
     setShowPartnerModal(true);
+    // Charger les offres du partenaire
+    const offers = await loadPartnerOffers(partner.id);
+    setSelectedPartner({ ...partner, offers });
   };
 
   const closePartnerModal = () => {
     setShowPartnerModal(false);
+    setSelectedPartner(null);
+  };
+
+  const openOfferModal = (partner) => {
+    setSelectedPartner(partner);
+    setShowOfferModal(true);
+  };
+
+  const closeOfferModal = () => {
+    setShowOfferModal(false);
+    setSelectedPartner(null);
+  };
+
+  const openConnectionModal = async (partner) => {
+    setSelectedPartner(partner);
+    setShowConnectionModal(true);
+    // Charger les statistiques de connexions du partenaire
+    try {
+      const response = await api.get(`/api/admin/partners/${partner.id}/connections`);
+      if (response.data.success) {
+        setSelectedPartner({ ...partner, connectionStats: response.data.stats });
+      }
+    } catch (err) {
+      console.error('Erreur chargement connexions:', err);
+    }
+  };
+
+  const closeConnectionModal = () => {
+    setShowConnectionModal(false);
     setSelectedPartner(null);
   };
 
@@ -93,20 +198,10 @@ const AdminPartnersPage = () => {
     }
   };
 
-  const formatDuration = (seconds) => {
-    if (!seconds) return '0s';
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    if (minutes > 0) {
-      return `${minutes}m ${remainingSeconds}s`;
-    }
-    return `${remainingSeconds}s`;
-  };
-
   if (!user?.isAdmin) {
     return (
       <div className="admin-partners-page">
-        <div className="access-denied">
+        <div className="admin-header">
           <h1>🚫 Accès Refusé</h1>
           <p>Vous devez être administrateur pour accéder à cette page.</p>
         </div>
@@ -117,9 +212,8 @@ const AdminPartnersPage = () => {
   if (loading) {
     return (
       <div className="admin-partners-page">
-        <div className="loading">
-          <h2>Chargement des partenaires...</h2>
-          <div className="spinner"></div>
+        <div className="admin-header">
+          <h1>⏳ Chargement...</h1>
         </div>
       </div>
     );
@@ -128,12 +222,9 @@ const AdminPartnersPage = () => {
   if (error) {
     return (
       <div className="admin-partners-page">
-        <div className="error">
-          <h2>❌ Erreur</h2>
+        <div className="admin-header">
+          <h1>❌ Erreur</h1>
           <p>{error}</p>
-          <button onClick={loadPartners} className="retry-btn">
-            Réessayer
-          </button>
         </div>
       </div>
     );
@@ -142,8 +233,8 @@ const AdminPartnersPage = () => {
   return (
     <div className="admin-partners-page">
       <div className="admin-header">
-        <h1>🤝 Administration des Partenaires</h1>
-        <p>Suivez l'engagement des utilisateurs sur vos offres partenaires</p>
+        <h1>🏢 Administration des Partenaires</h1>
+        <p>Gérez vos partenaires, leurs offres et suivez les connexions des utilisateurs</p>
       </div>
 
       {/* Statistiques */}
@@ -151,89 +242,142 @@ const AdminPartnersPage = () => {
         <div className="stat-card">
           <div className="stat-icon">🏢</div>
           <div className="stat-content">
-            <h3>Total Partenaires</h3>
-            <p className="stat-number">{stats.totalPartners}</p>
+            <h3>Partenaires</h3>
+            <p className="stat-number">{partners.length}</p>
           </div>
         </div>
-        
         <div className="stat-card">
           <div className="stat-icon">📋</div>
           <div className="stat-content">
-            <h3>Total Offres</h3>
-            <p className="stat-number">{stats.totalOffers}</p>
+            <h3>Offres Actives</h3>
+            <p className="stat-number">
+              {partners.reduce((sum, p) => sum + (p.offers?.length || 0), 0)}
+            </p>
           </div>
         </div>
-        
         <div className="stat-card">
-          <div className="stat-icon">🧪</div>
+          <div className="stat-icon">👥</div>
           <div className="stat-content">
-            <h3>Total Tests</h3>
-            <p className="stat-number">{stats.totalTests}</p>
+            <h3>Connexions</h3>
+            <p className="stat-number">
+              {partners.reduce((sum, p) => sum + (p.total_connections || 0), 0)}
+            </p>
           </div>
         </div>
-        
         <div className="stat-card">
           <div className="stat-icon">✅</div>
           <div className="stat-content">
             <h3>Partenaires Actifs</h3>
-            <p className="stat-number">{stats.activePartners}</p>
+            <p className="stat-number">
+              {partners.filter(p => p.status === 'active').length}
+            </p>
           </div>
+        </div>
+      </div>
+
+      {/* Création de partenaire */}
+      <div className="partners-section">
+        <h2>➕ Créer un nouveau partenaire</h2>
+        <div className="partner-form">
+          <div className="form-row">
+            <input
+              type="text"
+              placeholder="Nom du partenaire"
+              value={newPartner.name}
+              onChange={(e) => setNewPartner({...newPartner, name: e.target.value})}
+            />
+            <input
+              type="email"
+              placeholder="Email de contact"
+              value={newPartner.contact_email}
+              onChange={(e) => setNewPartner({...newPartner, contact_email: e.target.value})}
+            />
+          </div>
+          <div className="form-row">
+            <input
+              type="url"
+              placeholder="Site web"
+              value={newPartner.website}
+              onChange={(e) => setNewPartner({...newPartner, website: e.target.value})}
+            />
+            <input
+              type="url"
+              placeholder="URL du logo"
+              value={newPartner.logo_url}
+              onChange={(e) => setNewPartner({...newPartner, logo_url: e.target.value})}
+            />
+          </div>
+          <textarea
+            placeholder="Description du partenaire"
+            value={newPartner.description}
+            onChange={(e) => setNewPartner({...newPartner, description: e.target.value})}
+          />
+          <button onClick={createPartner} className="create-btn">
+            Créer le partenaire
+          </button>
         </div>
       </div>
 
       {/* Liste des partenaires */}
       <div className="partners-section">
-        <h2>📊 Statistiques des Partenaires</h2>
-        
+        <h2>📋 Liste des partenaires</h2>
         {partners.length === 0 ? (
           <div className="no-partners">
-            <p>Aucun partenaire trouvé</p>
+            <p>Aucun partenaire trouvé. Créez votre premier partenaire !</p>
           </div>
         ) : (
           <div className="partners-grid">
             {partners.map((partner) => (
-              <div key={partner.partner_id} className="partner-card">
+              <div key={partner.id} className="partner-card">
                 <div className="partner-header">
-                  <h3>🏢 Partenaire #{partner.partner_id}</h3>
+                  <h3>{partner.name}</h3>
+                  <div className="partner-actions">
+                    <button 
+                      onClick={() => openPartnerModal(partner)}
+                      className="view-btn"
+                    >
+                      👁️ Voir
+                    </button>
+                    <button 
+                      onClick={() => setEditingPartner(partner)}
+                      className="edit-btn"
+                    >
+                      ✏️ Modifier
+                    </button>
+                    <button 
+                      onClick={() => deletePartner(partner.id)}
+                      className="delete-btn"
+                    >
+                      🗑️ Supprimer
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="partner-info">
+                  <p><strong>Email:</strong> {partner.contact_email}</p>
+                  <p><strong>Site:</strong> {partner.website || 'Non spécifié'}</p>
+                  <p><strong>Statut:</strong> 
+                    <span className={`status ${partner.status}`}>
+                      {partner.status === 'active' ? '✅ Actif' : '❌ Inactif'}
+                    </span>
+                  </p>
+                  <p><strong>Créé le:</strong> {formatDate(partner.created_at)}</p>
+                </div>
+
+                <div className="partner-actions-bottom">
                   <button 
-                    onClick={() => openPartnerModal(partner)}
-                    className="view-btn"
-                    title="Voir les détails"
+                    onClick={() => openOfferModal(partner)}
+                    className="offer-btn"
                   >
-                    👁️
+                    📋 Gérer les offres
+                  </button>
+                  <button 
+                    onClick={() => openConnectionModal(partner)}
+                    className="connection-btn"
+                  >
+                    👥 Voir les connexions
                   </button>
                 </div>
-                
-                <div className="partner-stats">
-                  <div className="stat-row">
-                    <span>Tests totaux:</span>
-                    <strong>{partner.total_tests}</strong>
-                  </div>
-                  <div className="stat-row">
-                    <span>Utilisateurs uniques:</span>
-                    <strong>{partner.unique_users}</strong>
-                  </div>
-                  <div className="stat-row">
-                    <span>Tests complétés:</span>
-                    <strong>{partner.completed_tests}</strong>
-                  </div>
-                  <div className="stat-row">
-                    <span>Période:</span>
-                    <strong>{partner.period_days} jours</strong>
-                  </div>
-                </div>
-                
-                {Object.keys(partner.offers || {}).length > 0 && (
-                  <div className="offers-summary">
-                    <h4>📋 Offres ({Object.keys(partner.offers).length})</h4>
-                    {Object.entries(partner.offers).map(([offerId, offer]) => (
-                      <div key={offerId} className="offer-summary">
-                        <span className="offer-title">{offer.title}</span>
-                        <span className="offer-tests">{offer.total_tests} tests</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             ))}
           </div>
@@ -245,86 +389,209 @@ const AdminPartnersPage = () => {
         <div className="modal-overlay" onClick={closePartnerModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>🏢 Partenaire #{selectedPartner.partner_id}</h2>
+              <h3>🏢 {selectedPartner.name}</h3>
               <button onClick={closePartnerModal} className="close-btn">×</button>
             </div>
-            
             <div className="modal-body">
               <div className="partner-details">
-                <div className="detail-section">
-                  <h3>📊 Statistiques Générales</h3>
-                  <div className="detail-grid">
-                    <div className="detail-item">
-                      <label>Tests totaux:</label>
-                      <span>{selectedPartner.total_tests}</span>
+                <p><strong>Description:</strong> {selectedPartner.description || 'Aucune description'}</p>
+                <p><strong>Email:</strong> {selectedPartner.contact_email}</p>
+                <p><strong>Site web:</strong> {selectedPartner.website || 'Non spécifié'}</p>
+                <p><strong>Statut:</strong> {selectedPartner.status}</p>
+                <p><strong>Créé le:</strong> {formatDate(selectedPartner.created_at)}</p>
+              </div>
+              
+              {selectedPartner.offers && selectedPartner.offers.length > 0 && (
+                <div className="offers-list">
+                  <h4>📋 Offres ({selectedPartner.offers.length})</h4>
+                  {selectedPartner.offers.map((offer) => (
+                    <div key={offer.id} className="offer-item">
+                      <h5>{offer.title}</h5>
+                      <p>{offer.description}</p>
+                      <span className="offer-type">{offer.offer_type}</span>
+                      <span className="offer-status">
+                        {offer.is_active ? '✅ Actif' : '❌ Inactif'}
+                      </span>
                     </div>
-                    <div className="detail-item">
-                      <label>Utilisateurs uniques:</label>
-                      <span>{selectedPartner.unique_users}</span>
-                    </div>
-                    <div className="detail-item">
-                      <label>Tests complétés:</label>
-                      <span>{selectedPartner.completed_tests}</span>
-                    </div>
-                    <div className="detail-item">
-                      <label>Période analysée:</label>
-                      <span>{selectedPartner.period_days} jours</span>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-                
-                {Object.keys(selectedPartner.offers || {}).length > 0 && (
-                  <div className="detail-section">
-                    <h3>📋 Détail des Offres</h3>
-                    {Object.entries(selectedPartner.offers).map(([offerId, offer]) => (
-                      <div key={offerId} className="offer-detail">
-                        <h4>{offer.title}</h4>
-                        <div className="offer-stats">
-                          <div className="stat-item">
-                            <span>Tests:</span>
-                            <strong>{offer.total_tests}</strong>
-                          </div>
-                          <div className="stat-item">
-                            <span>Utilisateurs uniques:</span>
-                            <strong>{offer.unique_users}</strong>
-                          </div>
-                          <div className="stat-item">
-                            <span>Complétés:</span>
-                            <strong>{offer.completed_tests}</strong>
-                          </div>
-                          <div className="stat-item">
-                            <span>Durée moyenne:</span>
-                            <strong>{formatDuration(offer.avg_duration)}</strong>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                {Object.keys(selectedPartner.daily_breakdown || {}).length > 0 && (
-                  <div className="detail-section">
-                    <h3>📅 Répartition Quotidienne</h3>
-                    <div className="daily-breakdown">
-                      {Object.entries(selectedPartner.daily_breakdown)
-                        .sort(([a], [b]) => b.localeCompare(a))
-                        .slice(0, 7)
-                        .map(([date, count]) => (
-                          <div key={date} className="daily-item">
-                            <span className="date">{formatDate(date)}</span>
-                            <span className="count">{count} tests</span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                )}
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal création/modification d'offre */}
+      {showOfferModal && selectedPartner && (
+        <div className="modal-overlay" onClick={closeOfferModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>📋 Gérer les offres - {selectedPartner.name}</h3>
+              <button onClick={closeOfferModal} className="close-btn">×</button>
+            </div>
+            <div className="modal-body">
+              <div className="offer-form">
+                <input
+                  type="text"
+                  placeholder="Titre de l'offre"
+                  value={newOffer.title}
+                  onChange={(e) => setNewOffer({...newOffer, title: e.target.value})}
+                />
+                <textarea
+                  placeholder="Description de l'offre"
+                  value={newOffer.description}
+                  onChange={(e) => setNewOffer({...newOffer, description: e.target.value})}
+                />
+                <select
+                  value={newOffer.offer_type}
+                  onChange={(e) => setNewOffer({...newOffer, offer_type: e.target.value})}
+                >
+                  <option value="job">Emploi</option>
+                  <option value="formation">Formation</option>
+                  <option value="service">Service</option>
+                  <option value="stage">Stage</option>
+                </select>
+                <input
+                  type="url"
+                  placeholder="URL de l'offre"
+                  value={newOffer.url}
+                  onChange={(e) => setNewOffer({...newOffer, url: e.target.value})}
+                />
+                <button onClick={createOffer} className="create-btn">
+                  Créer l'offre
+                </button>
               </div>
             </div>
-            
-            <div className="modal-footer">
-              <button onClick={closePartnerModal} className="close-btn">
-                Fermer
-              </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal connexions */}
+      {showConnectionModal && selectedPartner && (
+        <div className="modal-overlay" onClick={closeConnectionModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>👥 Connexions - {selectedPartner.name}</h3>
+              <button onClick={closeConnectionModal} className="close-btn">×</button>
+            </div>
+            <div className="modal-body">
+              {selectedPartner.connectionStats ? (
+                <div className="connections-stats">
+                  <div className="stats-overview">
+                    <div className="stat-item">
+                      <span className="stat-label">Total Connexions:</span>
+                      <span className="stat-value">{selectedPartner.connectionStats.total_connections}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Utilisateurs Uniques:</span>
+                      <span className="stat-value">{selectedPartner.connectionStats.unique_users}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Total Vues:</span>
+                      <span className="stat-value">{selectedPartner.connectionStats.total_views}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Période:</span>
+                      <span className="stat-value">{selectedPartner.connectionStats.period_days} jours</span>
+                    </div>
+                  </div>
+                  
+                  {Object.keys(selectedPartner.connectionStats.offers || {}).length > 0 && (
+                    <div className="offers-connections">
+                      <h4>📋 Connexions par offre</h4>
+                      {Object.entries(selectedPartner.connectionStats.offers).map(([offerId, offer]) => (
+                        <div key={offerId} className="offer-connection-item">
+                          <div className="offer-connection-header">
+                            <span className="offer-id">Offre #{offerId}</span>
+                            <span className="offer-connections">{offer.total_connections} connexions</span>
+                          </div>
+                          <div className="offer-connection-details">
+                            <span>Utilisateurs uniques: {offer.unique_users}</span>
+                            <span>Total vues: {offer.total_views}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {Object.keys(selectedPartner.connectionStats.daily_breakdown || {}).length > 0 && (
+                    <div className="daily-breakdown">
+                      <h4>📅 Répartition quotidienne</h4>
+                      <div className="daily-chart">
+                        {Object.entries(selectedPartner.connectionStats.daily_breakdown)
+                          .sort(([a], [b]) => b.localeCompare(a))
+                          .slice(0, 7)
+                          .map(([date, count]) => (
+                            <div key={date} className="daily-bar">
+                              <span className="daily-date">{formatDate(date)}</span>
+                              <div className="daily-bar-fill" style={{height: `${Math.max(20, count * 10)}px`}}></div>
+                              <span className="daily-count">{count}</span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="connections-info">
+                  <p>Chargement des statistiques de connexions...</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal édition partenaire */}
+      {editingPartner && (
+        <div className="modal-overlay" onClick={() => setEditingPartner(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>✏️ Modifier {editingPartner.name}</h3>
+              <button onClick={() => setEditingPartner(null)} className="close-btn">×</button>
+            </div>
+            <div className="modal-body">
+              <div className="partner-form">
+                <input
+                  type="text"
+                  placeholder="Nom du partenaire"
+                  value={editingPartner.name}
+                  onChange={(e) => setEditingPartner({...editingPartner, name: e.target.value})}
+                />
+                <input
+                  type="email"
+                  placeholder="Email de contact"
+                  value={editingPartner.contact_email}
+                  onChange={(e) => setEditingPartner({...editingPartner, contact_email: e.target.value})}
+                />
+                <input
+                  type="url"
+                  placeholder="Site web"
+                  value={editingPartner.website}
+                  onChange={(e) => setEditingPartner({...editingPartner, website: e.target.value})}
+                />
+                <input
+                  type="url"
+                  placeholder="URL du logo"
+                  value={editingPartner.logo_url}
+                  onChange={(e) => setEditingPartner({...editingPartner, logo_url: e.target.value})}
+                />
+                <textarea
+                  placeholder="Description du partenaire"
+                  value={editingPartner.description}
+                  onChange={(e) => setEditingPartner({...editingPartner, description: e.target.value})}
+                />
+                <select
+                  value={editingPartner.status}
+                  onChange={(e) => setEditingPartner({...editingPartner, status: e.target.value})}
+                >
+                  <option value="active">Actif</option>
+                  <option value="inactive">Inactif</option>
+                </select>
+                <button onClick={updatePartner} className="update-btn">
+                  Mettre à jour
+                </button>
+              </div>
             </div>
           </div>
         </div>
