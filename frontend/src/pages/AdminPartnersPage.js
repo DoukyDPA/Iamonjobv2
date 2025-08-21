@@ -126,14 +126,19 @@ const AdminPartnersPage = () => {
   };
 
   const deletePartner = async (partnerId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce partenaire ?')) {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce partenaire ? Cette action supprimera également tous ses métiers associés.')) {
       try {
-        const response = await api.delete('/api/admin/partners', { data: { id: partnerId } });
+        const response = await api.delete(`/api/admin/partners/${partnerId}`);
         if (response.data.success) {
+          console.log('✅ Partenaire supprimé avec succès');
           loadPartners();
+        } else {
+          console.error('❌ Échec suppression partenaire:', response.data.error);
+          alert(`Erreur lors de la suppression: ${response.data.error}`);
         }
       } catch (err) {
-        console.error('Erreur suppression partenaire:', err);
+        console.error('❌ Erreur suppression partenaire:', err);
+        alert(`Erreur lors de la suppression: ${err.message}`);
       }
     }
   };
@@ -209,24 +214,6 @@ const AdminPartnersPage = () => {
   const closeConnectionModal = () => {
     setShowConnectionModal(false);
     setSelectedPartner(null);
-  };
-
-  const testCompatibility = (offer, partner) => {
-    // Rediriger vers la page de test de compatibilité avec le métier
-    console.log('🧪 Test de compatibilité pour:', offer, 'du partenaire:', partner);
-    
-    // Stocker les informations du métier dans localStorage pour la page de test
-    localStorage.setItem('test_offer', JSON.stringify({
-      id: offer.id,
-      title: offer.title,
-      description: offer.description,
-      offer_type: offer.offer_type,
-      partner_id: partner.id,
-      partner_name: partner.name
-    }));
-    
-    // Rediriger vers la page de test de compatibilité
-    window.location.href = '/compatibility-test';
   };
 
   const formatDate = (dateString) => {
@@ -416,17 +403,21 @@ const AdminPartnersPage = () => {
                     <h4>🎯 Métiers ({partner.offers.length})</h4>
                     {partner.offers.map((offer) => (
                       <div key={offer.id} className="offer-summary">
-                        <div className="offer-info">
-                          <span className="offer-title">{offer.title}</span>
+                        <div className="offer-content">
+                          <h5>{offer.title}</h5>
+                          <p>{offer.description}</p>
                           <span className="offer-type">{offer.offer_type}</span>
+                          <span className="offer-status">
+                            {offer.is_active ? '✅ Actif' : '❌ Inactif'}
+                          </span>
                         </div>
                         <div className="offer-actions">
                           <button 
-                            onClick={() => testCompatibility(offer, partner)}
-                            className="test-btn"
-                            title="Tester la compatibilité avec votre CV"
+                            onClick={() => openOfferModal(partner)}
+                            className="edit-btn"
+                            title="Modifier ce métier"
                           >
-                            🧪 Tester
+                            ✏️ Modifier
                           </button>
                         </div>
                       </div>
