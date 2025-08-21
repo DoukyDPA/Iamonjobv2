@@ -103,11 +103,12 @@ def _compute_user_token_usage(user_email: str) -> dict:
         if not supabase.is_available():
             raise RuntimeError("Supabase indisponible")
 
+        print(f"🔍 Calcul tokens pour {user_email}...")
+
         # Récupérer tous les tokens utilisés pour cet utilisateur
-        token_resp = supabase.client.table('token_usage') \
-            .select('tokens_used,created_at') \
-            .eq('user_email', user_email) \
-            .execute()
+        token_resp = supabase.client.table('token_usage').select('*').eq('user_email', user_email).execute()
+        
+        print(f"📊 Réponse token_usage: {len(token_resp.data or [])} enregistrements")
 
         used_monthly = 0
         used_daily = 0
@@ -119,9 +120,13 @@ def _compute_user_token_usage(user_email: str) -> dict:
             today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
             month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             
+            print(f"📅 Périodes: aujourd'hui depuis {today_start}, mois depuis {month_start}")
+            
             for row in token_resp.data:
                 tokens = int(row.get('tokens_used') or 0)
                 created_at_str = row.get('created_at')
+                
+                print(f"   📝 Ligne: {tokens} tokens, créé le {created_at_str}")
                 
                 if created_at_str:
                     try:
@@ -137,21 +142,22 @@ def _compute_user_token_usage(user_email: str) -> dict:
                         # Vérifier si c'est aujourd'hui
                         if created_at >= today_start:
                             used_daily += tokens
+                            print(f"      ✅ Ajouté au quotidien: {tokens} tokens")
                         
                         # Vérifier si c'est ce mois
                         if created_at >= month_start:
                             used_monthly += tokens
+                            print(f"      ✅ Ajouté au mensuel: {tokens} tokens")
                             
                     except Exception as parse_error:
                         logging.warning(f"Erreur parsing date pour {user_email}: {parse_error}")
                         # En cas d'erreur, ajouter quand même au total
                         total_used += tokens
 
+        print(f"📊 Totaux calculés: quotidien={used_daily}, mensuel={used_monthly}, total={total_used}")
+
         # Récupérer les limites depuis user_token_limits
-        limits_resp = supabase.client.table('user_token_limits') \
-            .select('daily_limit,monthly_limit') \
-            .eq('user_email', user_email) \
-            .execute()
+        limits_resp = supabase.client.table('user_token_limits').select('*').eq('user_email', user_email).execute()
         
         daily_limit = 1000  # Valeur par défaut
         monthly_limit = 10000  # Valeur par défaut
@@ -160,8 +166,11 @@ def _compute_user_token_usage(user_email: str) -> dict:
             limits = limits_resp.data[0]
             daily_limit = int(limits.get('daily_limit') or 1000)
             monthly_limit = int(limits.get('monthly_limit') or 10000)
+            print(f"📋 Limites trouvées: quotidienne={daily_limit}, mensuelle={monthly_limit}")
+        else:
+            print(f"📋 Aucune limite trouvée, utilisation des valeurs par défaut")
 
-        return {
+        result = {
             'daily_tokens': daily_limit,
             'monthly_tokens': monthly_limit,
             'used_daily': used_daily,
@@ -170,8 +179,12 @@ def _compute_user_token_usage(user_email: str) -> dict:
             'last_reset': None,
         }
         
+        print(f"🎯 Résultat final: {result}")
+        return result
+        
     except Exception as e:
         logging.warning(f"Token usage indisponible pour {user_email}: {e}")
+        print(f"❌ Erreur calcul tokens pour {user_email}: {e}")
         return {
             'daily_tokens': 1000,
             'monthly_tokens': 10000,
