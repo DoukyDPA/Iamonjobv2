@@ -54,7 +54,23 @@ const AdminPartnersPage = () => {
       const response = await api.get('/api/admin/partners');
       
       if (response.data.success) {
-        setPartners(response.data.partners);
+        const partnersWithOffers = await Promise.all(
+          response.data.partners.map(async (partner) => {
+            try {
+              // Charger les métiers de chaque partenaire
+              const offersResponse = await api.get(`/api/admin/partners/${partner.id}/offers`);
+              if (offersResponse.data.success) {
+                return { ...partner, offers: offersResponse.data.offers };
+              }
+            } catch (err) {
+              console.warn(`Impossible de charger les métiers pour ${partner.name}:`, err);
+            }
+            return { ...partner, offers: [] };
+          })
+        );
+        
+        console.log('📋 Partenaires chargés avec métiers:', partnersWithOffers);
+        setPartners(partnersWithOffers);
       } else {
         setError(response.data.error || 'Erreur lors du chargement des partenaires');
       }
@@ -193,6 +209,24 @@ const AdminPartnersPage = () => {
   const closeConnectionModal = () => {
     setShowConnectionModal(false);
     setSelectedPartner(null);
+  };
+
+  const testCompatibility = (offer, partner) => {
+    // Rediriger vers la page de test de compatibilité avec le métier
+    console.log('🧪 Test de compatibilité pour:', offer, 'du partenaire:', partner);
+    
+    // Stocker les informations du métier dans localStorage pour la page de test
+    localStorage.setItem('test_offer', JSON.stringify({
+      id: offer.id,
+      title: offer.title,
+      description: offer.description,
+      offer_type: offer.offer_type,
+      partner_id: partner.id,
+      partner_name: partner.name
+    }));
+    
+    // Rediriger vers la page de test de compatibilité
+    window.location.href = '/compatibility-test';
   };
 
   const formatDate = (dateString) => {
@@ -375,6 +409,30 @@ const AdminPartnersPage = () => {
                   </p>
                   <p><strong>Créé le:</strong> {formatDate(partner.created_at)}</p>
                 </div>
+
+                {/* Affichage des métiers dans le pavé */}
+                {partner.offers && partner.offers.length > 0 && (
+                  <div className="offers-summary">
+                    <h4>🎯 Métiers ({partner.offers.length})</h4>
+                    {partner.offers.map((offer) => (
+                      <div key={offer.id} className="offer-summary">
+                        <div className="offer-info">
+                          <span className="offer-title">{offer.title}</span>
+                          <span className="offer-type">{offer.offer_type}</span>
+                        </div>
+                        <div className="offer-actions">
+                          <button 
+                            onClick={() => testCompatibility(offer, partner)}
+                            className="test-btn"
+                            title="Tester la compatibilité avec votre CV"
+                          >
+                            🧪 Tester
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <div className="partner-actions-bottom">
                   <button 
