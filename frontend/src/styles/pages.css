@@ -1744,10 +1744,7 @@
 .revolutionary-section-title {
   font-size: 3rem !important;
   font-weight: 800 !important;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  background-clip: text !important;
+  color: white !important;
   margin-bottom: 20px !important;
   animation: revolutionaryTitleReveal 1s ease !important;
 }
@@ -2173,6 +2170,7 @@
   /* Titre responsive */
   .revolutionary-section-title {
     font-size: 1.8rem !important;
+    color: white !important;
   }
   
   .revolutionary-section-description {
@@ -2204,6 +2202,7 @@
   
   .revolutionary-section-title {
     font-size: 1.6rem !important;
+    color: white !important;
   }
 }
 
@@ -2220,11 +2219,11 @@
   margin-bottom: 45px !important; /* Réduit de 60px */
 }
 
-  .revolutionary-dashboard-content {
-    max-width: 1600px !important; /* Augmenté pour 4 colonnes */
-    margin: 0 auto;
-    padding: 0 20px;
-  }
+.revolutionary-dashboard-content {
+  max-width: 1600px !important; /* Augmenté pour 4 colonnes */
+  margin: 0 auto;
+  padding: 0 20px;
+}
 
 /* Grid layout for dashboard documents */
 .document-grid {
