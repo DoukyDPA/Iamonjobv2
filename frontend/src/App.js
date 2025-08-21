@@ -32,7 +32,6 @@ import ServiceRouteWrapper from './components/Common/ServiceRouteWrapper';
 import AdminServicesPage from './pages/AdminServicesPage';
 import AdminPartnersPage from './pages/AdminPartnersPage';
 import AdminUsersPage from './pages/AdminUsersPage';
-import CompatibilityTestPage from './pages/CompatibilityTestPage';
 
 // Pages légales
 import LegalNotice from './pages/LegalNotice';
@@ -93,15 +92,6 @@ function App() {
                     <PrivateRoute>
                       <Layout>
                         <ServicesGrid />
-                      </Layout>
-                    </PrivateRoute>
-                  } />
-                  
-                  {/* Route pour le test de compatibilité des métiers partenaires */}
-                  <Route path="/compatibility-test" element={
-                    <PrivateRoute>
-                      <Layout>
-                        <CompatibilityTestPage />
                       </Layout>
                     </PrivateRoute>
                   } />
