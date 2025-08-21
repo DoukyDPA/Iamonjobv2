@@ -1,665 +1,608 @@
-// FICHIER : frontend/src/pages/AdminPartnersPage.js
-// Interface d'administration complète pour gérer les partenaires, offres et connexions
+"""
+Routes API pour l'administration
+"""
+from flask import Blueprint, request, jsonify, send_from_directory
+import logging
+import os
+import jwt
+from functools import wraps
+from datetime import datetime, date
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
-import './AdminPartnersPage.css';
+admin_api = Blueprint('admin_api', __name__)
 
-const AdminPartnersPage = () => {
-  const { user } = useAuth();
-  const [partners, setPartners] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedPartner, setSelectedPartner] = useState(null);
-  const [showPartnerModal, setShowPartnerModal] = useState(false);
-  const [showOfferModal, setShowOfferModal] = useState(false);
-  const [showConnectionModal, setShowConnectionModal] = useState(false);
-  const [editingPartner, setEditingPartner] = useState(null);
-  const [editingOffer, setEditingOffer] = useState(null);
-  const [newPartner, setNewPartner] = useState({
-    name: '',
-    description: '',
-    website: '',
-    logo_url: '',
-    contact_email: '',
-    status: 'active'
-  });
-  const [newOffer, setNewOffer] = useState({
-    title: '',
-    description: '',
-    offer_type: 'metier',
-    url: '',
-    is_active: true
-  });
+def verify_jwt_token(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        try:
+            auth_header = request.headers.get('Authorization')
+            if not auth_header:
+                return jsonify({"error": "Token d'authentification manquant"}), 401
+            if auth_header.startswith('Bearer '):
+                token = auth_header[7:]
+            else:
+                token = auth_header
+            if not token:
+                return jsonify({"error": "Token invalide"}), 401
+            secret_key = os.environ.get('FLASK_SECRET_KEY') or 'dev_secret_key'
+            payload = jwt.decode(token, secret_key, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            if not user_id:
+                return jsonify({"error": "Token invalide - ID utilisateur manquant"}), 401
+            from models.user import User
+            user = User.get(user_id)
+            if not user:
+                return jsonify({"error": "Utilisateur non trouvé"}), 401
+            if not user.is_admin:
+                return jsonify({"error": "Droits administrateur requis"}), 403
+            request.current_user = user
+            return f(*args, **kwargs)
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token expiré"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Token invalide"}), 401
+        except Exception as e:
+            logging.error(f"Erreur lors de la vérification du token: {e}")
+            return jsonify({"error": "Erreur d'authentification"}), 500
+    return decorated_function
 
-  // Vérifier que l'utilisateur est admin
-  useEffect(() => {
-    if (user && !user.isAdmin) {
-      setError("Accès refusé. Droits administrateur requis.");
-      setLoading(false);
-    }
-  }, [user]);
-
-  // Charger les partenaires
-  useEffect(() => {
-    if (user?.isAdmin) {
-      loadPartners();
-    }
-  }, [user]);
-
-  const loadPartners = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get('/api/admin/partners');
-      
-      if (response.data.success) {
-        const partnersWithOffers = await Promise.all(
-          response.data.partners.map(async (partner) => {
-            try {
-              // Charger les métiers de chaque partenaire
-              const offersResponse = await api.get(`/api/admin/partners/${partner.id}/offers`);
-              if (offersResponse.data.success) {
-                return { ...partner, offers: offersResponse.data.offers };
-              }
-            } catch (err) {
-              console.warn(`Impossible de charger les métiers pour ${partner.name}:`, err);
-            }
-            return { ...partner, offers: [] };
-          })
-        );
+@admin_api.route('/status', methods=['GET'])
+@verify_jwt_token
+def admin_status():
+    """Statut basique de l'administration"""
+    try:
+        return jsonify({
+            "success": True,
+            "message": "Interface admin disponible",
+            "user": request.current_user.email
+        }), 200
         
-        console.log('📋 Partenaires chargés avec métiers:', partnersWithOffers);
-        setPartners(partnersWithOffers);
-      } else {
-        setError(response.data.error || 'Erreur lors du chargement des partenaires');
-      }
-    } catch (err) {
-      setError('Erreur de connexion au serveur');
-      console.error('Erreur chargement partenaires:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    except Exception as e:
+        logging.error(f"Erreur admin status: {e}")
+        return jsonify({"error": f"Erreur: {str(e)}"}), 500
 
-  const loadPartnerOffers = async (partnerId) => {
-    try {
-      const response = await api.get(`/api/admin/partners/${partnerId}/offers`);
-      if (response.data.success) {
-        return response.data.offers;
-      }
-    } catch (err) {
-      console.error('Erreur chargement offres:', err);
-    }
-    return [];
-  };
+@admin_api.route('/health', methods=['GET'])
+def admin_health():
+    """Vérification de santé pour l'admin"""
+    return jsonify({
+        "status": "healthy",
+        "service": "admin_api"
+    }), 200
 
-  const createPartner = async () => {
-    try {
-      const response = await api.post('/api/admin/partners', newPartner);
-      if (response.data.success) {
-        setNewPartner({
-          name: '',
-          description: '',
-          website: '',
-          logo_url: '',
-          contact_email: '',
-          status: 'active'
-        });
-        loadPartners();
-      }
-    } catch (err) {
-      console.error('Erreur création partenaire:', err);
-    }
-  };
+@admin_api.route('/interface', methods=['GET'])
+def admin_interface():
+    """Sert l'interface d'administration HTML"""
+    try:
+        # Chemin vers le fichier HTML
+        html_file = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'simple_admin_interface.html')
+        
+        if os.path.exists(html_file):
+            with open(html_file, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+            
+            return html_content, 200, {'Content-Type': 'text/html'}
+        else:
+            return jsonify({
+                "error": "Interface admin non trouvée"
+            }), 404
+            
+    except Exception as e:
+        logging.error(f"Erreur lors du chargement de l'interface admin: {e}")
+        return jsonify({
+            "error": "Erreur serveur"
+        }), 500
 
-  const updatePartner = async () => {
-    try {
-      const response = await api.put('/api/admin/partners', editingPartner);
-      if (response.data.success) {
-        setEditingPartner(null);
-        loadPartners();
-      }
-    } catch (err) {
-      console.error('Erreur mise à jour partenaire:', err);
-    }
-  };
 
-  const deletePartner = async (partnerId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce partenaire ? Cette action supprimera également tous ses métiers associés.')) {
-      try {
-        const response = await api.delete(`/api/admin/partners/${partnerId}`);
-        if (response.data.success) {
-          console.log('✅ Partenaire supprimé avec succès');
-          loadPartners();
-        } else {
-          console.error('❌ Échec suppression partenaire:', response.data.error);
-          alert(`Erreur lors de la suppression: ${response.data.error}`);
-        }
-      } catch (err) {
-        console.error('❌ Erreur suppression partenaire:', err);
-        alert(`Erreur lors de la suppression: ${err.message}`);
-      }
-    }
-  };
+def _compute_user_token_usage(user_email: str) -> dict:
+    """Calcule l'usage quotidien et mensuel des tokens pour un utilisateur via la table token_usage.
+    
+    Utilise les colonnes: user_email (TEXT), created_at (TIMESTAMPTZ), tokens_used (INT)
+    """
+    try:
+        from services.supabase_storage import SupabaseStorage
+        supabase = SupabaseStorage()
+        if not supabase.is_available():
+            raise RuntimeError("Supabase indisponible")
 
-  const createOffer = async () => {
-    try {
-      console.log('🎯 Tentative création métier:', {
-        partnerId: selectedPartner.id,
-        offerData: newOffer
-      });
-      
-      const response = await api.post(`/api/admin/partners/${selectedPartner.id}/offers`, newOffer);
-      console.log('📡 Réponse API création métier:', response);
-      
-      if (response.data.success) {
-        console.log('✅ Métier créé avec succès');
-        setNewOffer({
-          title: '',
-          description: '',
-          offer_type: 'metier',
-          url: '',
-          is_active: true
-        });
-        setShowOfferModal(false);
-        loadPartners();
-      } else {
-        console.error('❌ Échec création métier:', response.data.error);
-        alert(`Erreur création métier: ${response.data.error}`);
-      }
-    } catch (err) {
-      console.error('❌ Erreur création métier:', err);
-      alert(`Erreur création métier: ${err.message}`);
-    }
-  };
+        print(f"🔍 Calcul tokens pour {user_email}...")
 
-  const openPartnerModal = async (partner) => {
-    setSelectedPartner(partner);
-    setShowPartnerModal(true);
-    // Charger les offres du partenaire
-    const offers = await loadPartnerOffers(partner.id);
-    setSelectedPartner({ ...partner, offers });
-  };
+        # Récupérer tous les tokens utilisés pour cet utilisateur
+        token_resp = supabase.client.table('token_usage').select('*').eq('user_email', user_email).execute()
+        
+        print(f"📊 Réponse token_usage: {len(token_resp.data or [])} enregistrements")
 
-  const closePartnerModal = () => {
-    setShowPartnerModal(false);
-    setSelectedPartner(null);
-  };
-
-  const openOfferModal = (partner) => {
-    setSelectedPartner(partner);
-    setShowOfferModal(true);
-  };
-
-  const closeOfferModal = () => {
-    setShowOfferModal(false);
-    setSelectedPartner(null);
-  };
-
-  const openConnectionModal = async (partner) => {
-    setSelectedPartner(partner);
-    setShowConnectionModal(true);
-    // Charger les statistiques de connexions du partenaire
-    try {
-      const response = await api.get(`/api/admin/partners/${partner.id}/connections`);
-      if (response.data.success) {
-        setSelectedPartner({ ...partner, connectionStats: response.data.stats });
-      }
-    } catch (err) {
-      console.error('Erreur chargement connexions:', err);
-    }
-  };
-
-  const closeConnectionModal = () => {
-    setShowConnectionModal(false);
-    setSelectedPartner(null);
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Jamais';
-    try {
-      return new Date(dateString).toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return 'Date invalide';
-    }
-  };
-
-  if (!user?.isAdmin) {
-    return (
-      <div className="admin-partners-page">
-        <div className="admin-header">
-          <h1>🚫 Accès Refusé</h1>
-          <p>Vous devez être administrateur pour accéder à cette page.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="admin-partners-page">
-        <div className="admin-header">
-          <h1>⏳ Chargement...</h1>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="admin-partners-page">
-        <div className="admin-header">
-          <h1>❌ Erreur</h1>
-          <p>{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="admin-partners-page">
-      <div className="admin-header">
-        <h1>🏢 Administration des Partenaires</h1>
-        <p>Gérez vos partenaires, leurs offres et suivez les connexions des utilisateurs</p>
-      </div>
-
-      {/* Statistiques */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon">🏢</div>
-          <div className="stat-content">
-            <h3>Partenaires</h3>
-            <p className="stat-number">{partners.length}</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">🎯</div>
-          <div className="stat-content">
-            <h3>Métiers Actifs</h3>
-            <p className="stat-number">
-              {partners.reduce((sum, p) => sum + (p.offers?.length || 0), 0)}
-            </p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">👥</div>
-          <div className="stat-content">
-            <h3>Connexions</h3>
-            <p className="stat-number">
-              {partners.reduce((sum, p) => sum + (p.total_connections || 0), 0)}
-            </p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">✅</div>
-          <div className="stat-content">
-            <h3>Partenaires Actifs</h3>
-            <p className="stat-number">
-              {partners.filter(p => p.status === 'active').length}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Création de partenaire */}
-      <div className="partners-section">
-        <h2>➕ Créer un nouveau partenaire</h2>
-        <div className="partner-form">
-          <div className="form-row">
-            <input
-              type="text"
-              placeholder="Nom du partenaire"
-              value={newPartner.name}
-              onChange={(e) => setNewPartner({...newPartner, name: e.target.value})}
-            />
-            <input
-              type="email"
-              placeholder="Email de contact"
-              value={newPartner.contact_email}
-              onChange={(e) => setNewPartner({...newPartner, contact_email: e.target.value})}
-            />
-          </div>
-          <div className="form-row">
-            <input
-              type="url"
-              placeholder="Site web"
-              value={newPartner.website}
-              onChange={(e) => setNewPartner({...newPartner, website: e.target.value})}
-            />
-            <input
-              type="url"
-              placeholder="URL du logo"
-              value={newPartner.logo_url}
-              onChange={(e) => setNewPartner({...newPartner, logo_url: e.target.value})}
-            />
-          </div>
-          <textarea
-            placeholder="Description du partenaire"
-            value={newPartner.description}
-            onChange={(e) => setNewPartner({...newPartner, description: e.target.value})}
-          />
-          <button onClick={createPartner} className="create-btn">
-            Créer le partenaire
-          </button>
-        </div>
-      </div>
-
-      {/* Liste des partenaires */}
-      <div className="partners-section">
-        <h2>📋 Liste des partenaires</h2>
-        {partners.length === 0 ? (
-          <div className="no-partners">
-            <p>Aucun partenaire trouvé. Créez votre premier partenaire !</p>
-          </div>
-        ) : (
-          <div className="partners-grid">
-            {partners.map((partner) => (
-              <div key={partner.id} className="partner-card">
-                <div className="partner-header">
-                  <h3>{partner.name}</h3>
-                  <div className="partner-actions">
-                    <button 
-                      onClick={() => openPartnerModal(partner)}
-                      className="view-btn"
-                    >
-                      👁️ Voir
-                    </button>
-                    <button 
-                      onClick={() => setEditingPartner(partner)}
-                      className="edit-btn"
-                    >
-                      ✏️ Modifier
-                    </button>
-                    <button 
-                      onClick={() => deletePartner(partner.id)}
-                      className="delete-btn"
-                    >
-                      🗑️ Supprimer
-                    </button>
-                  </div>
-                </div>
+        used_monthly = 0
+        used_daily = 0
+        total_used = 0
+        
+        if token_resp.data:
+            from datetime import datetime, timezone
+            now = datetime.now(timezone.utc)
+            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            
+            print(f"📅 Périodes: aujourd'hui depuis {today_start}, mois depuis {month_start}")
+            
+            for row in token_resp.data:
+                tokens = int(row.get('tokens_used') or 0)
+                created_at_str = row.get('created_at')
                 
-                <div className="partner-info">
-                  <p><strong>Email:</strong> {partner.contact_email}</p>
-                  <p><strong>Site:</strong> {partner.website || 'Non spécifié'}</p>
-                  <p><strong>Statut:</strong> 
-                    <span className={`status ${partner.status}`}>
-                      {partner.status === 'active' ? '✅ Actif' : '❌ Inactif'}
-                    </span>
-                  </p>
-                  <p><strong>Créé le:</strong> {formatDate(partner.created_at)}</p>
-                </div>
+                print(f"   📝 Ligne: {tokens} tokens, créé le {created_at_str}")
+                
+                if created_at_str:
+                    try:
+                        # Parser la date de création
+                        if isinstance(created_at_str, str):
+                            created_at = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
+                        else:
+                            created_at = created_at_str
+                        
+                        # Ajouter au total
+                        total_used += tokens
+                        
+                        # Vérifier si c'est aujourd'hui
+                        if created_at >= today_start:
+                            used_daily += tokens
+                            print(f"      ✅ Ajouté au quotidien: {tokens} tokens")
+                        
+                        # Vérifier si c'est ce mois
+                        if created_at >= month_start:
+                            used_monthly += tokens
+                            print(f"      ✅ Ajouté au mensuel: {tokens} tokens")
+                            
+                    except Exception as parse_error:
+                        logging.warning(f"Erreur parsing date pour {user_email}: {parse_error}")
+                        # En cas d'erreur, ajouter quand même au total
+                        total_used += tokens
 
-                {/* Affichage des métiers dans le pavé */}
-                {partner.offers && partner.offers.length > 0 && (
-                  <div className="offers-summary">
-                    <h4>🎯 Métiers ({partner.offers.length})</h4>
-                    {partner.offers.map((offer) => (
-                      <div key={offer.id} className="offer-summary">
-                        <div className="offer-content">
-                          <h5>{offer.title}</h5>
-                          <p>{offer.description}</p>
-                          <span className="offer-type">{offer.offer_type}</span>
-                          <span className="offer-status">
-                            {offer.is_active ? '✅ Actif' : '❌ Inactif'}
-                          </span>
-                        </div>
-                        <div className="offer-actions">
-                          <button 
-                            onClick={() => openOfferModal(partner)}
-                            className="edit-btn"
-                            title="Modifier ce métier"
-                          >
-                            ✏️ Modifier
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+        print(f"📊 Totaux calculés: quotidien={used_daily}, mensuel={used_monthly}, total={total_used}")
 
-                <div className="partner-actions-bottom">
-                  <button 
-                    onClick={() => openOfferModal(partner)}
-                    className="offer-btn"
-                  >
-                    🎯 Gérer les métiers
-                  </button>
-                  <button 
-                    onClick={() => openConnectionModal(partner)}
-                    className="connection-btn"
-                  >
-                    👥 Voir les connexions
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        # Récupérer les limites depuis user_token_limits
+        limits_resp = supabase.client.table('user_token_limits').select('*').eq('user_email', user_email).execute()
+        
+        daily_limit = 1000  # Valeur par défaut
+        monthly_limit = 10000  # Valeur par défaut
+        
+        if limits_resp.data:
+            limits = limits_resp.data[0]
+            daily_limit = int(limits.get('daily_limit') or 1000)
+            monthly_limit = int(limits.get('monthly_limit') or 10000)
+            print(f"📋 Limites trouvées: quotidienne={daily_limit}, mensuelle={monthly_limit}")
+        else:
+            print(f"📋 Aucune limite trouvée, utilisation des valeurs par défaut")
 
-      {/* Modal détail partenaire */}
-      {showPartnerModal && selectedPartner && (
-        <div className="modal-overlay" onClick={closePartnerModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>🏢 {selectedPartner.name}</h3>
-              <button onClick={closePartnerModal} className="close-btn">×</button>
-            </div>
-            <div className="modal-body">
-              <div className="partner-details">
-                <p><strong>Description:</strong> {selectedPartner.description || 'Aucune description'}</p>
-                <p><strong>Email:</strong> {selectedPartner.contact_email}</p>
-                <p><strong>Site web:</strong> {selectedPartner.website || 'Non spécifié'}</p>
-                <p><strong>Statut:</strong> {selectedPartner.status}</p>
-                <p><strong>Créé le:</strong> {formatDate(selectedPartner.created_at)}</p>
-              </div>
-              
-                             {selectedPartner.offers && selectedPartner.offers.length > 0 && (
-                 <div className="offers-list">
-                   <h4>🎯 Métiers ({selectedPartner.offers.length})</h4>
-                   {selectedPartner.offers.map((offer) => (
-                     <div key={offer.id} className="offer-item">
-                       <h5>{offer.title}</h5>
-                       <p>{offer.description}</p>
-                       <span className="offer-type">{offer.offer_type}</span>
-                       <span className="offer-status">
-                         {offer.is_active ? '✅ Actif' : '❌ Inactif'}
-                       </span>
-                     </div>
-                   ))}
-                 </div>
-               )}
-            </div>
-          </div>
-        </div>
-      )}
+        result = {
+            'daily_tokens': daily_limit,
+            'monthly_tokens': monthly_limit,
+            'used_daily': used_daily,
+            'used_monthly': used_monthly,
+            'total_used': total_used,
+            'last_reset': None,
+        }
+        
+        print(f"🎯 Résultat final: {result}")
+        return result
+        
+    except Exception as e:
+        logging.warning(f"Token usage indisponible pour {user_email}: {e}")
+        print(f"❌ Erreur calcul tokens pour {user_email}: {e}")
+        return {
+            'daily_tokens': 1000,
+            'monthly_tokens': 10000,
+            'used_daily': 0,
+            'used_monthly': 0,
+            'total_used': 0,
+            'last_reset': None,
+        }
 
-      {/* Modal création/modification d'offre */}
-      {showOfferModal && selectedPartner && (
-        <div className="modal-overlay" onClick={closeOfferModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>🎯 Gérer les métiers - {selectedPartner.name}</h3>
-              <button onClick={closeOfferModal} className="close-btn">×</button>
-            </div>
-            <div className="modal-body">
-              <div className="offer-form">
-                <input
-                  type="text"
-                  placeholder="Titre du métier"
-                  value={newOffer.title}
-                  onChange={(e) => setNewOffer({...newOffer, title: e.target.value})}
-                />
-                <textarea
-                  placeholder="Description du métier"
-                  value={newOffer.description}
-                  onChange={(e) => setNewOffer({...newOffer, description: e.target.value})}
-                />
-                <select
-                  value={newOffer.offer_type}
-                  onChange={(e) => setNewOffer({...newOffer, offer_type: e.target.value})}
-                >
-                  <option value="metier">Métier</option>
-                  <option value="formation">Formation</option>
-                  <option value="service">Service</option>
-                  <option value="stage">Stage</option>
-                  <option value="emploi">Emploi</option>
-                </select>
-                <input
-                  type="url"
-                  placeholder="URL du métier (optionnel)"
-                  value={newOffer.url}
-                  onChange={(e) => setNewOffer({...newOffer, url: e.target.value})}
-                />
-                <button onClick={createOffer} className="create-btn">
-                  Créer le métier
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+@admin_api.route('/users', methods=['GET'])
+@verify_jwt_token
+def list_users():
+    """Liste tous les utilisateurs et leur consommation de tokens (agrégée)"""
+    try:
+        from models.user import User
+        
+        # Récupérer tous les utilisateurs
+        all_users = User.list_all()
+        logging.info(f"Nombre d'utilisateurs trouvés: {len(all_users)}")
+        
+        users_info = []
+        for user in all_users:
+            users_info.append({
+                "id": user.id,
+                "email": user.email,
+                "is_admin": user.is_admin,
+                "tokens": _compute_user_token_usage(user.email)
+            })
 
-      {/* Modal connexions */}
-      {showConnectionModal && selectedPartner && (
-        <div className="modal-overlay" onClick={closeConnectionModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>👥 Connexions - {selectedPartner.name}</h3>
-              <button onClick={closeConnectionModal} className="close-btn">×</button>
-            </div>
-            <div className="modal-body">
-              {selectedPartner.connectionStats ? (
-                <div className="connections-stats">
-                  <div className="stats-overview">
-                    <div className="stat-item">
-                      <span className="stat-label">Total Connexions:</span>
-                      <span className="stat-value">{selectedPartner.connectionStats.total_connections}</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-label">Utilisateurs Uniques:</span>
-                      <span className="stat-value">{selectedPartner.connectionStats.unique_users}</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-label">Total Vues:</span>
-                      <span className="stat-value">{selectedPartner.connectionStats.total_views}</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-label">Période:</span>
-                      <span className="stat-value">{selectedPartner.connectionStats.period_days} jours</span>
-                    </div>
-                  </div>
-                  
-                  {Object.keys(selectedPartner.connectionStats.offers || {}).length > 0 && (
-                    <div className="offers-connections">
-                      <h4>📋 Connexions par offre</h4>
-                      {Object.entries(selectedPartner.connectionStats.offers).map(([offerId, offer]) => (
-                        <div key={offerId} className="offer-connection-item">
-                          <div className="offer-connection-header">
-                            <span className="offer-id">Offre #{offerId}</span>
-                            <span className="offer-connections">{offer.total_connections} connexions</span>
-                          </div>
-                          <div className="offer-connection-details">
-                            <span>Utilisateurs uniques: {offer.unique_users}</span>
-                            <span>Total vues: {offer.total_views}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {Object.keys(selectedPartner.connectionStats.daily_breakdown || {}).length > 0 && (
-                    <div className="daily-breakdown">
-                      <h4>📅 Répartition quotidienne</h4>
-                      <div className="daily-chart">
-                        {Object.entries(selectedPartner.connectionStats.daily_breakdown)
-                          .sort(([a], [b]) => b.localeCompare(a))
-                          .slice(0, 7)
-                          .map(([date, count]) => (
-                            <div key={date} className="daily-bar">
-                              <span className="daily-date">{formatDate(date)}</span>
-                              <div className="daily-bar-fill" style={{height: `${Math.max(20, count * 10)}px`}}></div>
-                              <span className="daily-count">{count}</span>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="connections-info">
-                  <p>Chargement des statistiques de connexions...</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+        logging.info(f"Utilisateurs traités: {len(users_info)}")
+        return jsonify({"success": True, "users": users_info}), 200
+    except Exception as e:
+        logging.error(f"Erreur liste utilisateurs: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
-      {/* Modal édition partenaire */}
-      {editingPartner && (
-        <div className="modal-overlay" onClick={() => setEditingPartner(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>✏️ Modifier {editingPartner.name}</h3>
-              <button onClick={() => setEditingPartner(null)} className="close-btn">×</button>
-            </div>
-            <div className="modal-body">
-              <div className="partner-form">
-                <input
-                  type="text"
-                  placeholder="Nom du partenaire"
-                  value={editingPartner.name}
-                  onChange={(e) => setEditingPartner({...editingPartner, name: e.target.value})}
-                />
-                <input
-                  type="email"
-                  placeholder="Email de contact"
-                  value={editingPartner.contact_email}
-                  onChange={(e) => setEditingPartner({...editingPartner, contact_email: e.target.value})}
-                />
-                <input
-                  type="url"
-                  placeholder="Site web"
-                  value={editingPartner.website}
-                  onChange={(e) => setEditingPartner({...editingPartner, website: e.target.value})}
-                />
-                <input
-                  type="url"
-                  placeholder="URL du logo"
-                  value={editingPartner.logo_url}
-                  onChange={(e) => setEditingPartner({...editingPartner, logo_url: e.target.value})}
-                />
-                <textarea
-                  placeholder="Description du partenaire"
-                  value={editingPartner.description}
-                  onChange={(e) => setEditingPartner({...editingPartner, description: e.target.value})}
-                />
-                <select
-                  value={editingPartner.status}
-                  onChange={(e) => setEditingPartner({...editingPartner, status: e.target.value})}
-                >
-                  <option value="active">Actif</option>
-                  <option value="inactive">Inactif</option>
-                </select>
-                <button onClick={updatePartner} className="update-btn">
-                  Mettre à jour
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
-export default AdminPartnersPage;
+@admin_api.route('/users/<user_id>/admin', methods=['POST'])
+@verify_jwt_token
+def set_user_admin(user_id):
+    """Met à jour le statut administrateur d'un utilisateur"""
+    try:
+        data = request.get_json() or {}
+        is_admin = bool(data.get('is_admin', True))
+        from models.user import User
+        if User.set_admin_status(user_id, is_admin):
+            return jsonify({"success": True, "user_id": user_id, "is_admin": is_admin})
+        return jsonify({"success": False, "error": "Utilisateur inconnu"}), 404
+    except Exception as e:
+        logging.error(f"Erreur mise à jour admin: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@admin_api.route('/users/<user_id>/tokens', methods=['GET'])
+@verify_jwt_token
+def get_user_tokens(user_id):
+    """Récupère l'utilisation de tokens d'un utilisateur"""
+    try:
+        from models.user import User
+        user = User.get(user_id)
+        if not user:
+            return jsonify({"success": False, "error": "Utilisateur non trouvé"}), 404
+        tokens = _compute_user_token_usage(user.email)
+        return jsonify({"success": True, "tokens": tokens}), 200
+    except Exception as e:
+        logging.error(f"Erreur récupération tokens: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@admin_api.route('/users/<user_id>/tokens/reset', methods=['POST'])
+@verify_jwt_token
+def reset_user_tokens_api(user_id):
+    """Réinitialise les compteurs de tokens d'un utilisateur"""
+    try:
+        from models.user import User
+        from services.supabase_storage import SupabaseStorage
+        user = User.get(user_id)
+        if not user:
+            return jsonify({"success": False, "error": "Utilisateur non trouvé"}), 404
+
+        supabase = SupabaseStorage()
+        if not supabase.is_available():
+            return jsonify({"success": False, "error": "Supabase indisponible"}), 503
+
+        month_start_str = date.today().replace(day=1).isoformat()
+        today_str = date.today().isoformat()
+
+        # Supprimer les lignes d'usage pour le mois courant afin de repartir à zéro
+        try:
+            supabase.client.table('token_usage') \
+                .delete() \
+                .eq('user_email', user.email) \
+                .gte('date', month_start_str) \
+                .lte('date', today_str) \
+                .execute()
+        except Exception as e:
+            logging.warning(f"Reset tokens - suppression échouée pour {user.email}: {e}")
+
+        return jsonify({
+            "success": True,
+            "message": "Tokens réinitialisés",
+            "daily_limit": 1000,
+            "monthly_limit": 10000
+        }), 200
+    except Exception as e:
+        logging.error(f"Erreur reset tokens: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@admin_api.route('/users/<user_id>', methods=['DELETE'])
+@verify_jwt_token
+def delete_user(user_id):
+    """Supprime un utilisateur"""
+    try:
+        from models.user import User
+        
+        # Vérifier que l'utilisateur existe
+        user = User.get(user_id)
+        if not user:
+            return jsonify({"success": False, "error": "Utilisateur non trouvé"}), 404
+        
+        # Supprimer l'utilisateur
+        if User.delete(user_id):
+            logging.info(f"Utilisateur {user_id} supprimé avec succès")
+            return jsonify({"success": True, "message": "Utilisateur supprimé"})
+        else:
+            return jsonify({"success": False, "error": "Erreur lors de la suppression"}), 500
+            
+    except Exception as e:
+        logging.error(f"Erreur suppression utilisateur: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@admin_api.route('/partners/stats', methods=['GET'])
+@verify_jwt_token
+def get_partners_stats():
+    """Récupère les statistiques de tous les partenaires"""
+    try:
+        from services.partner_offer_service import partner_offer_service
+        
+        days = request.args.get('days', 30, type=int)
+        stats = partner_offer_service.get_all_partners_stats(days)
+        
+        return jsonify({
+            "success": True,
+            "stats": stats,
+            "period_days": days
+        }), 200
+        
+    except Exception as e:
+        logging.error(f"Erreur récupération stats partenaires: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@admin_api.route('/partners/<int:partner_id>/stats', methods=['GET'])
+@verify_jwt_token
+def get_partner_stats(partner_id):
+    """Récupère les statistiques d'un partenaire spécifique"""
+    try:
+        from services.partner_offer_service import partner_offer_service
+        
+        days = request.args.get('days', 30, type=int)
+        stats = partner_offer_service.get_partner_offer_stats(partner_id, days)
+        
+        if not stats['partner_id']:
+            return jsonify({"success": False, "error": "Partenaire non trouvé"}), 404
+        
+        return jsonify({
+            "success": True,
+            "stats": stats
+        }), 200
+        
+    except Exception as e:
+        logging.error(f"Erreur récupération stats partenaire: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@admin_api.route('/partners/<partner_id>/offers', methods=['GET'])
+@verify_jwt_token
+def get_partner_offers(partner_id):
+    """Récupère les métiers d'un partenaire"""
+    try:
+        from services.supabase_storage import SupabaseStorage
+        
+        supabase = SupabaseStorage()
+        if not supabase.is_available():
+            return jsonify({"success": False, "error": "Supabase indisponible"}), 503
+        
+        response = supabase.client.table('partner_offers') \
+            .select('*') \
+            .eq('partner_id', partner_id) \
+            .eq('is_active', True) \
+            .execute()
+        
+        offers = response.data if response.data else []
+        
+        return jsonify({
+            "success": True,
+            "partner_id": partner_id,
+            "offers": offers
+        }), 200
+        
+    except Exception as e:
+        logging.error(f"Erreur récupération métiers partenaire: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@admin_api.route('/partners/<partner_id>/offers', methods=['POST'])
+@verify_jwt_token
+def create_partner_offer(partner_id):
+    """Crée un nouveau métier pour un partenaire"""
+    try:
+        data = request.get_json() or {}
+        
+        required_fields = ['title', 'description', 'offer_type']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({"success": False, "error": f"Champ requis: {field}"}), 400
+        
+        from services.supabase_storage import SupabaseStorage
+        
+        supabase = SupabaseStorage()
+        if not supabase.is_available():
+            return jsonify({"success": False, "error": "Supabase indisponible"}), 503
+        
+        offer_data = {
+            'partner_id': partner_id,
+            'title': data['title'],
+            'description': data['description'],
+            'offer_type': data['offer_type'],
+            'url': data.get('url'),
+            'is_active': True
+        }
+        
+        logging.info(f"Tentative création métier: {offer_data}")
+        
+        response = supabase.client.table('partner_offers').insert(offer_data).execute()
+        
+        if response.data:
+            logging.info(f"✅ Métier créé avec succès: {response.data[0]}")
+            return jsonify({
+                "success": True,
+                "offer": response.data[0]
+            }), 201
+        else:
+            logging.error(f"❌ Échec création métier: pas de données retournées")
+            return jsonify({"success": False, "error": "Erreur lors de la création"}), 500
+        
+    except Exception as e:
+        logging.error(f"❌ Erreur création métier partenaire: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@admin_api.route('/partners/<partner_id>/connections', methods=['GET'])
+@verify_jwt_token
+def get_partner_connections(partner_id):
+    """Récupère les statistiques de connexions d'un partenaire"""
+    try:
+        from services.partner_connection_service import get_partner_stats
+        
+        days = request.args.get('days', 30, type=int)
+        stats = get_partner_stats(partner_id, days)
+        
+        if 'error' in stats:
+            return jsonify({"success": False, "error": stats['error']}), 500
+        
+        return jsonify({
+            "success": True,
+            "stats": stats
+        }), 200
+        
+    except Exception as e:
+        logging.error(f"Erreur récupération connexions partenaire: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@admin_api.route('/partners/<partner_id>', methods=['DELETE'])
+@verify_jwt_token
+def delete_partner(partner_id):
+    """Supprimer un partenaire et tous ses métiers associés"""
+    try:
+        from services.supabase_storage import SupabaseStorage
+        
+        supabase = SupabaseStorage()
+        if not supabase.is_available():
+            return jsonify({"success": False, "error": "Supabase indisponible"}), 503
+        
+        # Vérifier que le partenaire existe
+        partner_response = supabase.client.table('partners').select('*').eq('id', partner_id).execute()
+        if not partner_response.data:
+            return jsonify({"success": False, "error": "Partenaire non trouvé"}), 404
+        
+        partner = partner_response.data[0]
+        
+        # Supprimer d'abord tous les métiers associés
+        offers_response = supabase.client.table('partner_offers').delete().eq('partner_id', partner_id).execute()
+        print(f"🗑️ Métiers supprimés pour le partenaire {partner_id}: {len(offers_response.data or [])}")
+        
+        # Supprimer les connexions associées
+        connections_response = supabase.client.table('partner_offer_tests').delete().eq('partner_id', partner_id).execute()
+        print(f"🗑️ Connexions supprimées pour le partenaire {partner_id}: {len(connections_response.data or [])}")
+        
+        # Supprimer le partenaire
+        partner_response = supabase.client.table('partners').delete().eq('id', partner_id).execute()
+        
+        if partner_response.data:
+            return jsonify({
+                "success": True,
+                "message": "Partenaire et métiers associés supprimés avec succès",
+                "deleted_partner": partner_response.data[0]
+            }), 200
+        else:
+            return jsonify({"success": False, "error": "Erreur lors de la suppression du partenaire"}), 500
+            
+    except Exception as e:
+        logging.error(f"Erreur suppression partenaire {partner_id}: {e}")
+        return jsonify({"success": False, "error": f"Erreur serveur: {str(e)}"}), 500
+
+# ====================================
+# GESTION COMPLÈTE DES PARTENAIRES (CRUD)
+# ====================================
+
+@admin_api.route('/partners', methods=['GET', 'POST', 'PUT', 'DELETE'])
+@verify_jwt_token
+def admin_partners():
+    """Administration des partenaires - CRUD complet"""
+    try:
+        from services.supabase_storage import SupabaseStorage
+        
+        supabase = SupabaseStorage()
+        if not supabase.is_available():
+            return jsonify({"success": False, "error": "Supabase indisponible"}), 503
+        
+        if request.method == 'GET':
+            # Récupérer tous les partenaires
+            response = supabase.client.table('partners').select('*').execute()
+            return jsonify({
+                "success": True,
+                "partners": response.data if response.data else []
+            }), 200
+        
+        elif request.method == 'POST':
+            # Créer un nouveau partenaire
+            data = request.get_json()
+            if not data:
+                return jsonify({"success": False, "error": "Données manquantes"}), 400
+            
+            required_fields = ['name', 'contact_email']
+            for field in required_fields:
+                if not data.get(field):
+                    return jsonify({"success": False, "error": f"Champ requis: {field}"}), 400
+            
+            partner_data = {
+                'name': data.get('name'),
+                'description': data.get('description'),
+                'website': data.get('website'),
+                'logo_url': data.get('logo_url'),
+                'contact_email': data.get('contact_email'),
+                'status': data.get('status', 'active')
+            }
+            
+            response = supabase.client.table('partners').insert(partner_data).execute()
+            
+            if response.data:
+                return jsonify({
+                    "success": True,
+                    "message": "Partenaire créé avec succès",
+                    "partner": response.data[0]
+                }), 201
+            else:
+                return jsonify({"success": False, "error": "Erreur lors de la création"}), 500
+        
+        elif request.method == 'PUT':
+            # Mettre à jour un partenaire existant
+            data = request.get_json()
+            if not data or not data.get('id'):
+                return jsonify({"success": False, "error": "ID et données manquants"}), 400
+            
+            partner_id = data['id']
+            update_data = {
+                'name': data.get('name'),
+                'description': data.get('description'),
+                'website': data.get('website'),
+                'logo_url': data.get('logo_url'),
+                'contact_email': data.get('contact_email'),
+                'status': data.get('status')
+            }
+            
+            # Supprimer les champs vides
+            update_data = {k: v for k, v in update_data.items() if v is not None}
+            
+            response = supabase.client.table('partners').update(update_data).eq('id', partner_id).execute()
+            
+            if response.data:
+                return jsonify({
+                    "success": True,
+                    "message": "Partenaire mis à jour avec succès",
+                    "partner": response.data[0]
+                }), 200
+            else:
+                return jsonify({"success": False, "error": "Erreur lors de la mise à jour"}), 500
+        
+        elif request.method == 'DELETE':
+            # Supprimer un partenaire
+            data = request.get_json()
+            if not data or not data.get('id'):
+                return jsonify({"success": False, "error": "ID manquant"}), 400
+            
+            partner_id = data['id']
+            response = supabase.client.table('partners').delete().eq('id', partner_id).execute()
+            
+            if response.data:
+                return jsonify({
+                    "success": True,
+                    "message": "Partenaire supprimé avec succès",
+                    "deleted_partner": response.data[0]
+                }), 200
+            else:
+                return jsonify({"success": False, "error": "Erreur lors de la suppression"}), 500
+                
+    except Exception as e:
+        logging.error(f"Erreur administration partenaires: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
