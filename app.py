@@ -433,6 +433,8 @@ except Exception as e:
     print(f"❌ Erreur routes génériques: {e}")
     print("⚠️ Fonctionnement en mode dégradé")
 
+
+
 # ====================================
 # ENREGISTREMENT DES ROUTES STATIQUES (EN DERNIER)
 # ====================================
