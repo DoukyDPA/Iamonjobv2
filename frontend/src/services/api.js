@@ -49,11 +49,18 @@ const api = {
         body: JSON.stringify(data),
       });
       
+      // Récupérer le corps de la réponse même en cas d'erreur
+      const responseData = await response.json();
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Créer une erreur avec le message du serveur
+        const errorMessage = responseData.error || `HTTP error! status: ${response.status}`;
+        const error = new Error(errorMessage);
+        error.status = response.status;
+        error.responseData = responseData;
+        throw error;
       }
       
-      const responseData = await response.json();
       return { data: responseData };
     } catch (error) {
       console.error('API POST error:', error);
