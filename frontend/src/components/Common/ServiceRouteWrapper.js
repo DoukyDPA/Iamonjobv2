@@ -1,13 +1,15 @@
 import { useParams } from 'react-router-dom';
-import { getServiceConfig, SERVICES_CONFIG } from '../../services/servicesConfig';
+import { getServiceConfig, SERVICES_CONFIG, URL_TO_SERVICE_MAPPING } from '../../services/servicesConfig';
 import GenericDocumentProcessor from './GenericDocumentProcessor';
 
 const ServiceRouteWrapper = () => {
   console.log('🚀 ServiceRouteWrapper monté !');
   
   const { serviceId } = useParams();
-  // Remet les - en _ pour matcher l'id de config
-  const convertedServiceId = serviceId.replace(/-/g, '_');
+  
+  // Utiliser le mapping pour convertir l'URL en ID de service
+  const mappedServiceId = URL_TO_SERVICE_MAPPING[serviceId];
+  const convertedServiceId = mappedServiceId || serviceId.replace(/-/g, '_');
   
   // Debug de l'import
   console.log('🔍 Import Debug:');
@@ -26,6 +28,7 @@ const ServiceRouteWrapper = () => {
   
   console.log('🔍 ServiceRouteWrapper Debug:');
   console.log('  - URL serviceId:', serviceId);
+  console.log('  - Mapped serviceId:', mappedServiceId);
   console.log('  - Converted serviceId:', convertedServiceId);
   console.log('  - Config trouvée:', !!config);
   console.log('  - Config ID:', config?.id);
