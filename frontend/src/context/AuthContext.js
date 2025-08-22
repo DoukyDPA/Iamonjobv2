@@ -231,9 +231,22 @@ export const AuthProvider = ({ children }) => {
           }
         } catch (forceError) {
           console.log('❌ Force register échoué:', forceError);
+          
+          // Solution temporaire : proposer une alternative
+          const alternativeEmail = email.replace('@', '+cleanup@');
+          message = `Cette adresse email est bloquée par l'ancienne base Redis. 
+          
+Solutions :
+1. Utilisez une autre adresse email
+2. Utilisez : ${alternativeEmail}
+3. Contactez l'administrateur pour nettoyer la base
+
+Le problème vient de la migration Redis → Supabase.`;
         }
         
-        message = 'Cette adresse email est déjà utilisée. Veuillez vous connecter ou utiliser une autre adresse.';
+        if (message === 'Erreur lors de l\'inscription') {
+          message = 'Cette adresse email est déjà utilisée. Veuillez vous connecter ou utiliser une autre adresse.';
+        }
       } else if (error.status === 400) {
         message = error.message || 'Données invalides. Veuillez vérifier vos informations.';
       } else if (error.status === 500) {
