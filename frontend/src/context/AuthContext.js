@@ -73,22 +73,35 @@ export const AuthProvider = ({ children }) => {
       }
 
       // Appel API de connexion
+      console.log('🔍 Tentative de connexion pour:', email);
       const response = await api.post('/api/auth/login', { email, password });
+      
+      console.log('📡 Réponse API complète:', response);
+      console.log('📡 Response.data:', response.data);
+      console.log('📡 Response.data.success:', response.data.success);
+      console.log('📡 Response.data.token:', response.data.token);
 
       if (response.data.success) {
         const userToken = response.data.token;
+        console.log('🎫 Token reçu:', userToken);
+        
         const userData = {
           id: response.data.user?.id || response.data.user_id || 'new',
           email: email, // Utiliser l'email fourni
           isAdmin: response.data.user?.is_admin || false
         };
         
+        console.log('👤 UserData:', userData);
+        
         // Sauvegarder dans localStorage
         try {
+          console.log('💾 Tentative de sauvegarde dans localStorage...');
           localStorage.setItem('token', userToken);
           localStorage.setItem('user_email', email);
+          console.log('✅ Token sauvegardé dans localStorage');
+          console.log('🔍 Vérification localStorage.getItem("token"):', localStorage.getItem('token'));
         } catch (e) {
-          console.warn('LocalStorage non disponible');
+          console.warn('❌ LocalStorage non disponible:', e);
         }
         
         setToken(userToken);
@@ -128,26 +141,39 @@ export const AuthProvider = ({ children }) => {
       }
       
       // Appel API d'inscription
+      console.log('🔍 Tentative d\'inscription pour:', email);
       const response = await api.post('/api/auth/register', { 
         email, 
         password, 
         confirm_password: confirmPassword,
         data_consent: true 
       });
+      
+      console.log('📡 Réponse API inscription complète:', response);
+      console.log('📡 Response.data inscription:', response.data);
+      console.log('📡 Response.data.success inscription:', response.data.success);
+      console.log('📡 Response.data.token inscription:', response.data.token);
 
       if (response.data.success) {
         const userToken = response.data.token;
+        console.log('🎫 Token inscription reçu:', userToken);
+        
         const userData = {
           id: response.data.user?.id || response.data.user_id || 'new',
           email: email,
           isAdmin: false
         };
         
+        console.log('👤 UserData inscription:', userData);
+        
         try {
+          console.log('💾 Tentative de sauvegarde inscription dans localStorage...');
           localStorage.setItem('token', userToken);
           localStorage.setItem('user_email', email);
+          console.log('✅ Token inscription sauvegardé dans localStorage');
+          console.log('🔍 Vérification localStorage.getItem("token"):', localStorage.getItem('token'));
         } catch (e) {
-          console.warn('LocalStorage non disponible');
+          console.warn('❌ LocalStorage non disponible inscription:', e);
         }
         
         setToken(userToken);
@@ -161,7 +187,21 @@ export const AuthProvider = ({ children }) => {
         throw new Error(errorMessage);
       }
     } catch (error) {
-      const message = error.message || 'Erreur lors de l\'inscription';
+      console.error('❌ Erreur inscription détaillée:', error);
+      
+      // Gérer les erreurs spécifiques
+      let message = 'Erreur lors de l\'inscription';
+      
+      if (error.status === 409) {
+        message = 'Cette adresse email est déjà utilisée. Veuillez vous connecter ou utiliser une autre adresse.';
+      } else if (error.status === 400) {
+        message = error.message || 'Données invalides. Veuillez vérifier vos informations.';
+      } else if (error.status === 500) {
+        message = 'Erreur serveur. Veuillez réessayer plus tard.';
+      } else if (error.message) {
+        message = error.message;
+      }
+      
       toast.error(message);
       return { success: false, error: message };
     } finally {
