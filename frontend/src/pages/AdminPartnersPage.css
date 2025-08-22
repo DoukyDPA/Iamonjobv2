@@ -396,10 +396,39 @@
   font-size: 1rem;
 }
 
-.offer-item p {
-  margin: 0 0 0.75rem 0;
+.offer-item .offer-description {
+  margin-bottom: 0.75rem;
+}
+
+.offer-item .offer-description p {
+  margin: 0 0 0.5rem 0;
   color: #64748b;
   font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.offer-item .offer-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.offer-item .read-more-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 0.25rem;
+}
+
+.offer-item .read-more-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .offer-type,
@@ -620,4 +649,128 @@
     margin: 1rem;
     max-height: calc(100vh - 2rem);
   }
+}
+
+/* Styles pour l'affichage des métiers dans les pavés */
+.offers-summary {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 1rem;
+}
+
+.offers-summary h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.offer-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  background: #f8fafc;
+}
+
+.offer-summary:last-child {
+  margin-bottom: 0;
+}
+
+.offer-content {
+  flex: 1;
+  margin-right: 1rem;
+}
+
+.offer-content h5 {
+  margin: 0 0 0.5rem 0;
+  color: #1e293b;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.offer-description {
+  margin-bottom: 0.75rem;
+}
+
+.offer-description p {
+  margin: 0 0 0.5rem 0;
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.offer-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.offer-type,
+.offer-status {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.offer-type {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.offer-status {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* Bouton "Lire la suite" */
+.read-more-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 0.25rem;
+}
+
+.read-more-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.offer-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.test-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.test-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
