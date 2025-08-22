@@ -418,8 +418,8 @@ const Dashboard = () => {
   const tabs = [
     { id: 'documents', label: 'Mes documents', mobileLabel: 'Docs', icon: <FiFileText /> },
     { id: 'improve', label: 'Améliorer mon CV', mobileLabel: 'CV', icon: <FiTrendingUp /> },
-    { id: 'apply', label: 'Candidatez', mobileLabel: 'Candidature', icon: <FiMail /> },
-    { id: 'interview', label: "Préparez l'entretien", mobileLabel: 'Entretien', icon: <FiMic /> },
+    { id: 'apply', label: 'Candidater', mobileLabel: 'Candidature', icon: <FiMail /> },
+    { id: 'interview', label: "Préparer l'entretien", mobileLabel: 'Entretien', icon: <FiMic /> },
     { id: 'change', label: 'Tout changer', mobileLabel: 'Reconversion', icon: <FiRefreshCw /> }
   ];
 
@@ -601,16 +601,16 @@ const Dashboard = () => {
                 </h4>
                 <ul className="tips-list">
                   <li>
-                    <strong>Votre CV est prioritaire :</strong> Il débloque toutes les analyses IA de l'application
+                    <strong>Votre CV est prioritaire :</strong> Il débloque toutes les analyses IA de l'application. Pensez à l'anonymiser en retirant nom, email et téléphone pour ne pas laisser trainer vos coordonnées personnelles en ligne.
                   </li>
                   <li>
-                    <strong>Ajoutez une offre d'emploi :</strong> Pour l'analyse de compatibilité avec graphiques détaillés
+                    <strong>Ajoutez une offre d'emploi :</strong> Iamonjob vous dira si ce poste est fait pour vous.
                   </li>
                   <li>
-                    <strong>Le questionnaire enrichit vos analyses :</strong> L'IA comprendra mieux vos aspirations personnelles
+                    <strong>Le questionnaire enrichit vos analyses :</strong> L'IA comprendra mieux vos aspirations personnelles et vous donnera des réponses plus personnalisées.
                   </li>
                   <li>
-                    <strong>Explorez la reconversion :</strong> Testez de nouveaux métiers en toute sécurité
+                    <strong>Explorez la reconversion :</strong> Et si vous changiez complètement de voie professionnelle ?
                   </li>
                   <li>
                     <strong>Formats acceptés :</strong> PDF, DOC, DOCX ou copier/coller directement dans l'interface
@@ -649,7 +649,7 @@ const Dashboard = () => {
               🤝 Testez votre compatibilité avec les métiers de nos partenaires
             </h2>
             <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
-            Sélectionnez un des métiers que recrutent nos partenaires pour l'importer et le tester comme votre offre d'emploi et utiliser tous nos services IA (compatibilité CV, lettre de motivation, etc.).
+            Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
             </p>
             <PartnerJobs />
           </div>
@@ -685,7 +685,7 @@ const Dashboard = () => {
                 🤝 Testez votre compatibilité avec les métiers de nos partenaires
               </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
-              Sélectionnez un des métiers que recrutent nos partenaires pour l'importer et le tester comme votre offre d'emploi et utiliser tous nos services IA (compatibilité CV, lettre de motivation, etc.).
+              Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
               </p>
               <PartnerJobs />
             </div>
@@ -724,7 +724,7 @@ const Dashboard = () => {
                 🤝 Testez votre compatibilité avec les métiers de nos partenaires
               </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
-              Sélectionnez un des métiers que recrutent nos partenaires pour l'importer et le tester comme votre offre d'emploi et utiliser tous nos services IA (compatibilité CV, lettre de motivation, etc.).
+              Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
               </p>
               <PartnerJobs />
             </div>
@@ -763,7 +763,7 @@ const Dashboard = () => {
                 🤝 Testez votre compatibilité avec les métiers de nos partenaires
               </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
-              Sélectionnez un des métiers que recrutent nos partenaires pour l'importer et le tester comme votre offre d'emploi et utiliser tous nos services IA (compatibilité CV, lettre de motivation, etc.).
+              Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
               </p>
               <PartnerJobs />
             </div>
@@ -803,7 +803,7 @@ const Dashboard = () => {
                 🤝 Testez votre compatibilité avec les métiers de nos partenaires
               </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
-              Sélectionnez un des métiers que recrutent nos partenaires pour l'importer et le tester comme votre offre d'emploi et utiliser tous nos services IA (compatibilité CV, lettre de motivation, etc.).
+              Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
               </p>
               <PartnerJobs />
             </div>
