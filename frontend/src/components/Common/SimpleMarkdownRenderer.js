@@ -29,6 +29,9 @@ const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
       .replace(/Bien cordialement.*$/gm, '')
       .replace(/Sincèrement.*$/gm, '')
       
+      // Nettoyer les mots "markdown" littéraux qui traînent
+      .replace(/\bmarkdown\b/gi, '')
+      
       // Nettoyer les titres Markdown avec numérotation (ex: *1. Titre**)
       .replace(/^\*?([0-9]+)\.\s*(.*?)\*+\s*$/gm, (match, number, title) => {
         return `\n[[H1]]${number}. ${title.trim()}`;
@@ -43,6 +46,26 @@ const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
       // Nettoyer les listes mal formatées
       .replace(/^[ \t]*[-•*]\s*/gm, '• ')
       .replace(/^[ \t]*[0-9]+\.\s*/gm, (match) => match.trim())
+      
+      // Nettoyer les astérisques orphelins et mal formatés
+      .replace(/\*{1,3}([^*\n]+?)\*{1,3}/g, (match, content) => {
+        // Si c'est un titre ou une section importante, le traiter comme tel
+        if (content.trim().match(/^[0-9]+\./)) {
+          return content.trim();
+        }
+        // Sinon, appliquer le formatage gras
+        return `**${content.trim()}**`;
+      })
+      
+      // Nettoyer les astérisques simples orphelins
+      .replace(/\*([^*\n]+?)\*/g, (match, content) => {
+        // Éviter de traiter les numéros de section
+        if (content.trim().match(/^[0-9]+\./)) {
+          return content.trim();
+        }
+        // Appliquer le formatage italique
+        return `*${content.trim()}*`;
+      })
       
       // Nettoyer les espaces multiples et lignes vides
       .replace(/\n{3,}/g, '\n\n')
@@ -215,11 +238,26 @@ const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
   const renderInlineFormatting = (text) => {
     if (!text || typeof text !== 'string') return text;
     
-    // Debug optionnel - commenté pour la production
-    // console.log('🔗 Debug - Traitement du texte:', text);
+    // Nettoyer le texte avant traitement pour éviter les bouts de code
+    let cleanText = text
+      // Supprimer les mots "markdown" littéraux
+      .replace(/\bmarkdown\b/gi, '')
+      // Nettoyer les astérisques mal formatés
+      .replace(/\*{1,3}([^*\n]+?)\*{1,3}/g, (match, content) => {
+        if (content.trim().match(/^[0-9]+\./)) {
+          return content.trim();
+        }
+        return `**${content.trim()}**`;
+      })
+      .replace(/\*([^*\n]+?)\*/g, (match, content) => {
+        if (content.trim().match(/^[0-9]+\./)) {
+          return content.trim();
+        }
+        return `*${content.trim()}*`;
+      });
     
     const parts = [];
-    let remaining = text;
+    let remaining = cleanText;
     let key = 0;
     let hasLinks = false;
     
@@ -236,8 +274,6 @@ const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
         }
         const linkText = remaining.substring(start + 1, endBracket);
         const linkUrl = remaining.substring(startUrl + 1, endUrl);
-        
-        // console.log('🔗 Debug - Lien trouvé:', { linkText, linkUrl });
         
         // Vérifier que c'est bien un lien valide
         if (linkUrl && linkUrl.trim() && linkText && linkText.trim()) {
@@ -382,11 +418,9 @@ const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
     
     // Si on a trouvé des éléments formatés, retourner les parties, sinon retourner le texte original
     if (hasLinks || parts.length > 1) {
-      // console.log('🔗 Debug - Parties trouvées avec formatage:', parts);
       return parts;
     } else {
-      // console.log('🔗 Debug - Aucun formatage trouvé, retour du texte original');
-      return text;
+      return cleanText;
     }
   };
 
