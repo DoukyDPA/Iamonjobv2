@@ -157,6 +157,37 @@ const api = {
       console.error('API POST Admin error:', error);
       throw error;
     }
+  },
+
+  // Fonction spéciale pour nettoyer un email bloqué
+  cleanupEmail: async (email) => {
+    const fullUrl = `${API_BASE_URL}/api/auth/cleanup-email`;
+    console.log('🧹 API CLEANUP EMAIL:', fullUrl, { email });
+    
+    try {
+      const response = await fetch(fullUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMessage = errorData.error || `HTTP error! status: ${response.status}`;
+        const error = new Error(errorMessage);
+        error.status = response.status;
+        error.responseData = errorData;
+        throw error;
+      }
+      
+      const responseData = await response.json();
+      return { data: responseData };
+    } catch (error) {
+      console.error('API CLEANUP EMAIL error:', error);
+      throw error;
+    }
   }
 };
 
