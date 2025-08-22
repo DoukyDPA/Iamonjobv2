@@ -320,7 +320,7 @@ def delete_user(user_id):
 @admin_api.route('/partners/stats', methods=['GET'])
 @verify_jwt_token
 def get_partners_stats():
-    """Récupère les statistiques de tous les partenaires"""
+    """Récupère les statistiques de tous les partenaires (admin seulement)"""
     try:
         from services.partner_offer_service import partner_offer_service
         
@@ -341,7 +341,7 @@ def get_partners_stats():
 @admin_api.route('/partners/<int:partner_id>/stats', methods=['GET'])
 @verify_jwt_token
 def get_partner_stats(partner_id):
-    """Récupère les statistiques d'un partenaire spécifique"""
+    """Récupère les statistiques d'un partenaire spécifique (admin seulement)"""
     try:
         from services.partner_offer_service import partner_offer_service
         
@@ -362,9 +362,8 @@ def get_partner_stats(partner_id):
 
 
 @admin_api.route('/partners/<partner_id>/offers', methods=['GET'])
-@verify_jwt_token
 def get_partner_offers(partner_id):
-    """Récupère les métiers d'un partenaire"""
+    """Récupère les métiers d'un partenaire (accès public)"""
     try:
         from services.supabase_storage import SupabaseStorage
         
@@ -394,7 +393,7 @@ def get_partner_offers(partner_id):
 @admin_api.route('/partners/<partner_id>/offers', methods=['POST'])
 @verify_jwt_token
 def create_partner_offer(partner_id):
-    """Crée un nouveau métier pour un partenaire"""
+    """Crée un nouveau métier pour un partenaire (admin seulement)"""
     try:
         data = request.get_json() or {}
         
@@ -439,7 +438,7 @@ def create_partner_offer(partner_id):
 @admin_api.route('/partners/<partner_id>/offers/<offer_id>', methods=['PUT'])
 @verify_jwt_token
 def update_partner_offer(partner_id, offer_id):
-    """Met à jour un métier existant d'un partenaire"""
+    """Met à jour un métier existant d'un partenaire (admin seulement)"""
     try:
         data = request.get_json() or {}
         
@@ -490,7 +489,7 @@ def update_partner_offer(partner_id, offer_id):
 @admin_api.route('/partners/<partner_id>/offers/<offer_id>', methods=['DELETE'])
 @verify_jwt_token
 def delete_partner_offer(partner_id, offer_id):
-    """Supprime un métier spécifique d'un partenaire"""
+    """Supprime un métier spécifique d'un partenaire (admin seulement)"""
     try:
         from services.supabase_storage import SupabaseStorage
         
@@ -528,7 +527,7 @@ def delete_partner_offer(partner_id, offer_id):
 @admin_api.route('/partners/<partner_id>/connections', methods=['GET'])
 @verify_jwt_token
 def get_partner_connections(partner_id):
-    """Récupère les statistiques de connexions d'un partenaire"""
+    """Récupère les statistiques de connexions d'un partenaire (admin seulement)"""
     try:
         from services.partner_connection_service import get_partner_stats
         
@@ -594,7 +593,6 @@ def delete_partner(partner_id):
 # ====================================
 
 @admin_api.route('/partners', methods=['GET', 'POST', 'PUT', 'DELETE'])
-@verify_jwt_token
 def admin_partners():
     """Administration des partenaires - CRUD complet"""
     try:
@@ -605,7 +603,7 @@ def admin_partners():
             return jsonify({"success": False, "error": "Supabase indisponible"}), 503
         
         if request.method == 'GET':
-            # Récupérer tous les partenaires
+            # Récupérer tous les partenaires (accès public)
             response = supabase.client.table('partners').select('*').execute()
             return jsonify({
                 "success": True,
@@ -696,38 +694,5 @@ def admin_partners():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-# ====================================
-# ROUTE PUBLIQUE POUR LES PARTENAIRES (ACCÈS PUBLIC)
-# ====================================
 
-@admin_api.route('/partners/public', methods=['GET'])
-def public_partners():
-    """Route publique pour récupérer les partenaires et offres (sans authentification admin)"""
-    try:
-        from services.supabase_storage import SupabaseStorage
-        
-        supabase = SupabaseStorage()
-        if not supabase.is_available():
-            return jsonify({"success": False, "error": "Supabase indisponible"}), 503
-        
-        # Récupérer tous les partenaires
-        partners_response = supabase.client.table('partners').select('*').execute()
-        partners = partners_response.data if partners_response.data else []
-        
-        # Récupérer toutes les offres
-        offers_response = supabase.client.table('partner_offers').select('*').execute()
-        offers = offers_response.data if offers_response.data else []
-        
-        return jsonify({
-            "success": True,
-            "partners": partners,
-            "offers": offers
-        }), 200
-        
-    except Exception as e:
-        logging.error(f"Erreur récupération partenaires publics: {e}")
-        return jsonify({
-            "success": False, 
-            "error": "Erreur lors de la récupération des partenaires"
-        }), 500
 
