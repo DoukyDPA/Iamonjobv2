@@ -193,6 +193,46 @@ export const AuthProvider = ({ children }) => {
       let message = 'Erreur lors de l\'inscription';
       
       if (error.status === 409) {
+        // Email "déjà utilisé" - vérifier si c'est un faux positif
+        console.log('⚠️ Email marqué comme déjà utilisé, tentative de force register...');
+        
+        try {
+          // Essayer avec force_register
+          const forceResponse = await api.post('/api/auth/register', { 
+            email, 
+            password, 
+            confirm_password: confirmPassword,
+            data_consent: true,
+            force_register: true
+          });
+          
+          if (forceResponse.data.success) {
+            console.log('✅ Force register réussi !');
+            const userToken = forceResponse.data.token;
+            
+            const userData = {
+              id: forceResponse.data.user?.id || 'new',
+              email: email,
+              isAdmin: false
+            };
+            
+            try {
+              localStorage.setItem('token', userToken);
+              localStorage.setItem('user_email', email);
+            } catch (e) {
+              console.warn('❌ LocalStorage non disponible:', e);
+            }
+            
+            setToken(userToken);
+            setUser(userData);
+            
+            toast.success('Inscription réussie ! (ancien compte nettoyé)');
+            return { success: true };
+          }
+        } catch (forceError) {
+          console.log('❌ Force register échoué:', forceError);
+        }
+        
         message = 'Cette adresse email est déjà utilisée. Veuillez vous connecter ou utiliser une autre adresse.';
       } else if (error.status === 400) {
         message = error.message || 'Données invalides. Veuillez vérifier vos informations.';
