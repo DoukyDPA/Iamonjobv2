@@ -172,6 +172,7 @@ def register():
         password = data.get('password')
         confirm_password = data.get('confirm_password')
         data_consent = data.get('data_consent', False)
+        force_register = data.get('force_register', False)  # Option temporaire
         
         if not email or not password or not confirm_password:
             return jsonify({"error": "Tous les champs sont requis"}), 400
@@ -182,10 +183,51 @@ def register():
         if not data_consent:
             return jsonify({"error": "Vous devez accepter les conditions de traitement des données"}), 400
 
+        # Vérifier si l'email existe déjà avant de tenter la création
+        print(f"🔍 DEBUG: Vérification email existant: {email}")
+        existing_user = User.get_by_email(email)
+        print(f"🔍 DEBUG: Résultat get_by_email: {existing_user}")
+        
+        if existing_user and not force_register:
+            print(f"❌ DEBUG: Email déjà utilisé - ID: {existing_user.id}, Email: {existing_user.email}")
+            # Vérifier directement dans la base pour confirmation
+            from services.supabase_storage import SupabaseStorage
+            supabase = SupabaseStorage()
+            try:
+                direct_check = supabase.client.table('users').select('*').eq('email', email).execute()
+                print(f"🔍 DEBUG: Vérification directe Supabase: {direct_check.data}")
+            except Exception as e:
+                print(f"⚠️ DEBUG: Erreur vérification directe: {e}")
+            
+            return jsonify({
+                "error": "Cette adresse email est déjà utilisée",
+                "details": f"Un compte existe déjà avec cette adresse email (ID: {existing_user.id}). Veuillez vous connecter ou utiliser une autre adresse.",
+                "force_register_available": True
+            }), 409
+
+        # Si force_register est activé, supprimer l'utilisateur existant
+        if existing_user and force_register:
+            print(f"⚠️ DEBUG: Force register activé, suppression de l'utilisateur existant: {existing_user.id}")
+            try:
+                from services.supabase_storage import SupabaseStorage
+                supabase = SupabaseStorage()
+                
+                # Supprimer l'utilisateur existant
+                delete_response = supabase.client.table('users').delete().eq('id', existing_user.id).execute()
+                print(f"🔧 DEBUG: Suppression utilisateur existant: {delete_response.data}")
+                
+                # Supprimer les sessions associées
+                session_delete = supabase.client.table('sessions').delete().eq('user_email', email).execute()
+                print(f"🔧 DEBUG: Suppression sessions: {session_delete.data}")
+                
+            except Exception as e:
+                print(f"❌ DEBUG: Erreur lors de la suppression: {e}")
+
         # Créer l'utilisateur avec debug
-        print(f"DEBUG: Creating user with email={email}, password type={type(password)}")
+        print(f"✅ DEBUG: Email disponible, création de l'utilisateur: {email}")
         user = User.create(email, password)
-        print(f"DEBUG: User created: {user}, type={type(user)}")
+        print(f"✅ DEBUG: Utilisateur créé: {user}, type={type(user)}")
+        
         if user:
             # Créer une session persistante dans Supabase
             user_id = str(user.id)
@@ -217,7 +259,7 @@ def register():
             
             return jsonify({
                 "success": True,
-                "message": "Inscription réussie",
+                "message": "Inscription réussie" + (" (utilisateur existant remplacé)" if force_register else ""),
                 "token": token,
                 "user": {
                     "id": user.id,
@@ -226,10 +268,18 @@ def register():
                 "session_created": True
             }), 201
         else:
-            return jsonify({"error": "Cette adresse email est déjà utilisée"}), 409
+            # Ce cas ne devrait plus arriver grâce à la vérification préalable
+            return jsonify({
+                "error": "Erreur lors de la création de l'utilisateur",
+                "details": "Une erreur inattendue s'est produite. Veuillez réessayer."
+            }), 500
 
     except Exception as e:
-        return jsonify({"error": f"Erreur lors de l'inscription: {str(e)}"}), 500
+        logging.error(f"Erreur lors de l'inscription: {str(e)}")
+        return jsonify({
+            "error": "Erreur serveur lors de l'inscription",
+            "details": "Une erreur inattendue s'est produite. Veuillez réessayer plus tard."
+        }), 500
 
 @auth_api.route('/login', methods=['GET'])
 def login_form():
@@ -539,3 +589,82 @@ def get_user_data():
     except Exception as e:
         logging.error(f"Erreur lors de la récupération des données: {e}")
         return jsonify({"error": f"Erreur lors de la récupération: {str(e)}"}), 500
+
+@auth_api.route('/debug/users', methods=['GET'])
+def debug_users():
+    """Endpoint de debug pour vérifier les utilisateurs dans la base"""
+    try:
+        from services.supabase_storage import SupabaseStorage
+        supabase = SupabaseStorage()
+        
+        # Récupérer tous les utilisateurs
+        response = supabase.client.table('users').select('*').execute()
+        
+        if response.data:
+            users_info = []
+            for user in response.data:
+                users_info.append({
+                    'id': user.get('id'),
+                    'email': user.get('email'),
+                    'is_admin': user.get('is_admin', False),
+                    'created_at': user.get('created_at')
+                })
+            
+            return jsonify({
+                "success": True,
+                "total_users": len(users_info),
+                "users": users_info
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "error": "Aucun utilisateur trouvé"
+            }), 404
+            
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Erreur lors de la récupération des utilisateurs: {str(e)}"
+        }), 500
+
+@auth_api.route('/debug/check-email/<email>', methods=['GET'])
+def debug_check_email(email):
+    """Endpoint de debug pour vérifier un email spécifique"""
+    try:
+        from services.supabase_storage import SupabaseStorage
+        supabase = SupabaseStorage()
+        
+        print(f"🔍 DEBUG: Vérification email: {email}")
+        
+        # Vérifier l'email directement
+        response = supabase.client.table('users').select('*').eq('email', email).execute()
+        print(f"🔍 DEBUG: Réponse Supabase brute: {response}")
+        print(f"🔍 DEBUG: Données: {response.data}")
+        
+        if response.data and len(response.data) > 0:
+            user_data = response.data[0]
+            print(f"✅ DEBUG: Utilisateur trouvé: {user_data}")
+            return jsonify({
+                "success": True,
+                "email_exists": True,
+                "user": {
+                    'id': user_data.get('id'),
+                    'email': user_data.get('email'),
+                    'is_admin': user_data.get('is_admin', False),
+                    'created_at': user_data.get('created_at')
+                }
+            }), 200
+        else:
+            print(f"❌ DEBUG: Aucun utilisateur trouvé pour {email}")
+            return jsonify({
+                "success": True,
+                "email_exists": False,
+                "message": f"L'email {email} n'existe pas dans la base"
+            }), 200
+            
+    except Exception as e:
+        print(f"❌ DEBUG: Erreur: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Erreur lors de la vérification de l'email: {str(e)}"
+        }), 500
