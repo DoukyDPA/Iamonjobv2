@@ -1,6 +1,24 @@
 // FICHIER : frontend/src/services/servicesConfig.js
 // Configuration centrale de tous les services avec nouveaux conseils
 
+// Mapping des URLs vers les IDs de service
+export const URL_TO_SERVICE_MAPPING = {
+  'followup-generate': 'follow_up_email',
+  'follow-up-email': 'follow_up_email',
+  'cover-letter-generate': 'cover_letter_generate',
+  'cover-letter-advice': 'cover_letter_advice',
+  'interview-prep': 'interview_prep',
+  'professional-pitch': 'professional_pitch',
+  'presentation-slides': 'presentation_slides',
+  'salary-prepare': 'salary_negotiation',
+  'reconversion-analyze': 'reconversion_analysis',
+  'career-orientation': 'career_transition',
+  'industry-orientation': 'industry_orientation',
+  'cv-ats-optimize': 'cv_ats_optimization',
+  'matching-cv-offre': 'matching_cv_offre',
+  'analyze-cv': 'analyze_cv'
+};
+
 export const SERVICES_CONFIG = {
   analyze_cv: {
     id: 'analyze_cv',
