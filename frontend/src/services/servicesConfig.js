@@ -121,7 +121,7 @@ export const SERVICES_CONFIG = {
     outputType: 'email',
     storageKey: 'iamonjob_follow_up',
     actionType: 'follow_up_email_response',
-    apiEndpoint: '/api/follow-up/email',
+    apiEndpoint: '/api/followup/generate',
     tabs: [
       { id: 'email', label: 'Email', icon: '📧' },
       { id: 'timing', label: 'Timing', icon: '⏰' },
