@@ -140,8 +140,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Le mot de passe doit contenir au moins 6 caractères');
       }
       
-      // Appel API d'inscription
-      console.log('🔍 Tentative d\'inscription pour:', email);
+      // Appel API d'inscription simple
       const response = await api.post('/api/auth/register', { 
         email, 
         password, 
@@ -149,31 +148,19 @@ export const AuthProvider = ({ children }) => {
         data_consent: true 
       });
       
-      console.log('📡 Réponse API inscription complète:', response);
-      console.log('📡 Response.data inscription:', response.data);
-      console.log('📡 Response.data.success inscription:', response.data.success);
-      console.log('📡 Response.data.token inscription:', response.data.token);
-
       if (response.data.success) {
         const userToken = response.data.token;
-        console.log('🎫 Token inscription reçu:', userToken);
-        
         const userData = {
           id: response.data.user?.id || response.data.user_id || 'new',
           email: email,
           isAdmin: false
         };
         
-        console.log('👤 UserData inscription:', userData);
-        
         try {
-          console.log('💾 Tentative de sauvegarde inscription dans localStorage...');
           localStorage.setItem('token', userToken);
           localStorage.setItem('user_email', email);
-          console.log('✅ Token inscription sauvegardé dans localStorage');
-          console.log('🔍 Vérification localStorage.getItem("token"):', localStorage.getItem('token'));
         } catch (e) {
-          console.warn('❌ LocalStorage non disponible inscription:', e);
+          console.warn('❌ LocalStorage non disponible:', e);
         }
         
         setToken(userToken);
@@ -182,71 +169,16 @@ export const AuthProvider = ({ children }) => {
         toast.success('Inscription réussie !');
         return { success: true };
       } else {
-        // Gérer les erreurs spécifiques
         const errorMessage = response.data.error || 'Erreur lors de l\'inscription';
         throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error('❌ Erreur inscription détaillée:', error);
+      console.error('❌ Erreur inscription:', error);
       
-      // Gérer les erreurs spécifiques
       let message = 'Erreur lors de l\'inscription';
       
       if (error.status === 409) {
-        // Email "déjà utilisé" - vérifier si c'est un faux positif
-        console.log('⚠️ Email marqué comme déjà utilisé, tentative de force register...');
-        
-        try {
-          // Essayer avec force_register
-          const forceResponse = await api.post('/api/auth/register', { 
-            email, 
-            password, 
-            confirm_password: confirmPassword,
-            data_consent: true,
-            force_register: true
-          });
-          
-          if (forceResponse.data.success) {
-            console.log('✅ Force register réussi !');
-            const userToken = forceResponse.data.token;
-            
-            const userData = {
-              id: forceResponse.data.user?.id || 'new',
-              email: email,
-              isAdmin: false
-            };
-            
-            try {
-              localStorage.setItem('token', userToken);
-              localStorage.setItem('user_email', email);
-            } catch (e) {
-              console.warn('❌ LocalStorage non disponible:', e);
-            }
-            
-            setToken(userToken);
-            setUser(userData);
-            
-            toast.success('Inscription réussie ! (ancien compte nettoyé)');
-            return { success: true };
-          }
-        } catch (forceError) {
-          console.log('❌ Force register échoué:', forceError);
-          
-          // Solution temporaire : proposer une alternative
-          const alternativeEmail = email.replace('@', '+cleanup@');
-          message = `Cette adresse email est bloquée par l'ancienne base Redis. 
-          
-Solutions :
-1. Utilisez une autre adresse email
-2. Utilisez : ${alternativeEmail}
-3. Contactez l'administrateur pour nettoyer la base
-
-Le problème vient de la migration Redis → Supabase.`;
-        }
-        
-        if (message === 'Erreur lors de l\'inscription') {
-          message = 'Cette adresse email est déjà utilisée. Veuillez vous connecter ou utiliser une autre adresse.';
-        }
+        message = 'Cette adresse email est déjà utilisée. Veuillez vous connecter ou utiliser une autre adresse.';
       } else if (error.status === 400) {
         message = error.message || 'Données invalides. Veuillez vérifier vos informations.';
       } else if (error.status === 500) {
