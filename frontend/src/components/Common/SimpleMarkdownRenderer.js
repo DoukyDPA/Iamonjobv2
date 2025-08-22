@@ -29,7 +29,12 @@ const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
       .replace(/Bien cordialement.*$/gm, '')
       .replace(/Sincèrement.*$/gm, '')
       
-      // Nettoyer les titres Markdown
+      // Nettoyer les titres Markdown avec numérotation (ex: *1. Titre**)
+      .replace(/^\*?([0-9]+)\.\s*(.*?)\*+\s*$/gm, (match, number, title) => {
+        return `\n[[H1]]${number}. ${title.trim()}`;
+      })
+      
+      // Nettoyer les titres Markdown standards
       .replace(/^[ \t]*(#+)\s*(.*)$/gm, (match, hashes, title) => {
         const level = Math.min(hashes.length, 3);
         return `\n[[H${level}]]${title.trim()}`;
@@ -100,9 +105,38 @@ const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
           const level = parseInt(hMatch[1], 10);
           const title = hMatch[2].trim();
           const style = {
-            1: { fontSize: '2.2rem', fontWeight: '800', color: 'var(--primary-color)', marginTop: '2.2rem', marginBottom: '1.2rem', lineHeight: '1.15', border: 'none', padding: 0 },
-            2: { fontSize: '1.5rem', fontWeight: '700', color: 'var(--primary-color)', marginTop: '1.7rem', marginBottom: '1rem', lineHeight: '1.18', border: 'none', padding: 0 },
-            3: { fontSize: '1.15rem', fontWeight: '700', color: 'var(--primary-color)', marginTop: '1.2rem', marginBottom: '0.7rem', lineHeight: '1.2', border: 'none', padding: 0 }
+            1: { 
+              fontSize: '2rem', 
+              fontWeight: '800', 
+              color: 'var(--primary-color)', 
+              marginTop: '2rem', 
+              marginBottom: '1rem', 
+              lineHeight: '1.2', 
+              border: 'none', 
+              padding: 0,
+              borderBottom: '2px solid var(--primary-color)',
+              paddingBottom: '0.5rem'
+            },
+            2: { 
+              fontSize: '1.4rem', 
+              fontWeight: '700', 
+              color: 'var(--primary-color)', 
+              marginTop: '1.5rem', 
+              marginBottom: '0.8rem', 
+              lineHeight: '1.25', 
+              border: 'none', 
+              padding: 0 
+            },
+            3: { 
+              fontSize: '1.1rem', 
+              fontWeight: '700', 
+              color: 'var(--primary-color)', 
+              marginTop: '1.1rem', 
+              marginBottom: '0.6rem', 
+              lineHeight: '1.3', 
+              border: 'none', 
+              padding: 0 
+            }
           }[level];
           const Tag = `h${level}`;
           elements.push(
@@ -119,8 +153,8 @@ const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
             <div key={`li-${index}`} style={{
               display: 'flex',
               alignItems: 'flex-start',
-              marginBottom: '0.75rem',
-              paddingLeft: '1.5rem',
+              marginBottom: '0.4rem', // Espacement réduit pour une meilleure lisibilité
+              paddingLeft: '1.2rem',
               background: 'none',
               border: 'none',
               borderRadius: 0
@@ -128,14 +162,15 @@ const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
               <span style={{
                 color: 'var(--primary-color)',
                 fontWeight: 'bold',
-                marginRight: '0.75rem',
-                minWidth: '1.2rem',
-                fontSize: '1.1rem'
+                marginRight: '0.6rem',
+                minWidth: '1rem',
+                fontSize: '1rem'
               }}>•</span>
               <span style={{ 
                 flex: 1, 
-                lineHeight: '1.6',
-                color: '#374151'
+                lineHeight: '1.5', // Ligne plus compacte
+                color: '#374151',
+                fontSize: '0.95rem'
               }}>
                 {renderInlineFormatting(listText)}
               </span>
@@ -167,10 +202,11 @@ const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
 
   const renderParagraph = (text, key) => (
     <p key={key} style={{
-      marginBottom: '1rem',
-      lineHeight: '1.7',
+      marginBottom: '0.8rem', // Espacement réduit
+      lineHeight: '1.6', // Ligne plus compacte
       color: '#374151',
-      textAlign: 'justify'
+      textAlign: 'justify',
+      fontSize: '0.95rem'
     }}>
       {renderInlineFormatting(text)}
     </p>
@@ -317,21 +353,24 @@ const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
     }
     
     // Traiter les listes numérotées et à puces qui n'ont pas été traitées
-    if (remaining.match(/^[0-9]+\.\s/) || remaining.match(/^[-•*]\s/)) {
+    // Éviter de traiter les titres numérotés qui ont déjà été gérés
+    if ((remaining.match(/^[0-9]+\.\s/) || remaining.match(/^[-•*]\s/)) && 
+        !remaining.match(/^\*?[0-9]+\.\s.*\*+$/)) {
       const listText = remaining.replace(/^[0-9]+\.\s|^[-•*]\s/, '');
       parts.push(
         <span key={`list-${key++}`} style={{
           display: 'inline-flex',
           alignItems: 'flex-start',
-          marginBottom: '0.5rem'
+          marginBottom: '0.3rem' // Espacement encore plus réduit
         }}>
           <span style={{
             color: 'var(--primary-color)',
             fontWeight: 'bold',
-            marginRight: '0.5rem',
-            minWidth: '1rem'
+            marginRight: '0.4rem',
+            minWidth: '0.8rem',
+            fontSize: '0.9rem'
           }}>•</span>
-          <span>{listText}</span>
+          <span style={{ fontSize: '0.9rem' }}>{listText}</span>
         </span>
       );
       remaining = '';
