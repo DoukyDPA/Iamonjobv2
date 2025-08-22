@@ -695,3 +695,39 @@ def admin_partners():
         logging.error(f"Erreur administration partenaires: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+
+# ====================================
+# ROUTE PUBLIQUE POUR LES PARTENAIRES (ACCÈS PUBLIC)
+# ====================================
+
+@admin_api.route('/partners/public', methods=['GET'])
+def public_partners():
+    """Route publique pour récupérer les partenaires et offres (sans authentification admin)"""
+    try:
+        from services.supabase_storage import SupabaseStorage
+        
+        supabase = SupabaseStorage()
+        if not supabase.is_available():
+            return jsonify({"success": False, "error": "Supabase indisponible"}), 503
+        
+        # Récupérer tous les partenaires
+        partners_response = supabase.client.table('partners').select('*').execute()
+        partners = partners_response.data if partners_response.data else []
+        
+        # Récupérer toutes les offres
+        offers_response = supabase.client.table('partner_offers').select('*').execute()
+        offers = offers_response.data if offers_response.data else []
+        
+        return jsonify({
+            "success": True,
+            "partners": partners,
+            "offers": offers
+        }), 200
+        
+    except Exception as e:
+        logging.error(f"Erreur récupération partenaires publics: {e}")
+        return jsonify({
+            "success": False, 
+            "error": "Erreur lors de la récupération des partenaires"
+        }), 500
+
