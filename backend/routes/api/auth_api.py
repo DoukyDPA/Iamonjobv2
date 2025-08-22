@@ -183,47 +183,45 @@ def register():
         if not data_consent:
             return jsonify({"error": "Vous devez accepter les conditions de traitement des données"}), 400
 
-        # Vérifier si l'email existe déjà avant de tenter la création
-        print(f"🔍 DEBUG: Vérification email existant: {email}")
-        existing_user = User.get_by_email(email)
-        print(f"🔍 DEBUG: Résultat get_by_email: {existing_user}")
+        # 🔧 SOLUTION DÉFINITIVE : Vérifier UNIQUEMENT dans Supabase
+        print(f"🔍 DEBUG: Vérification email UNIQUEMENT dans Supabase: {email}")
         
-        if existing_user and not force_register:
-            print(f"❌ DEBUG: Email déjà utilisé - ID: {existing_user.id}, Email: {existing_user.email}")
-            # Vérifier directement dans la base pour confirmation
-            from services.supabase_storage import SupabaseStorage
-            supabase = SupabaseStorage()
-            try:
-                direct_check = supabase.client.table('users').select('*').eq('email', email).execute()
-                print(f"🔍 DEBUG: Vérification directe Supabase: {direct_check.data}")
-            except Exception as e:
-                print(f"⚠️ DEBUG: Erreur vérification directe: {e}")
+        from services.supabase_storage import SupabaseStorage
+        supabase = SupabaseStorage()
+        
+        try:
+            # Vérification directe dans Supabase uniquement
+            direct_check = supabase.client.table('users').select('*').eq('email', email).execute()
+            print(f"🔍 DEBUG: Vérification directe Supabase: {direct_check.data}")
             
-            return jsonify({
-                "error": "Cette adresse email est déjà utilisée",
-                "details": f"Un compte existe déjà avec cette adresse email (ID: {existing_user.id}). Veuillez vous connecter ou utiliser une autre adresse.",
-                "force_register_available": True
-            }), 409
+            if direct_check.data and len(direct_check.data) > 0:
+                existing_user_data = direct_check.data[0]
+                print(f"❌ DEBUG: Email trouvé dans Supabase - ID: {existing_user_data.get('id')}")
+                
+                if not force_register:
+                    return jsonify({
+                        "error": "Cette adresse email est déjà utilisée",
+                        "details": f"Un compte existe déjà dans Supabase avec cette adresse email (ID: {existing_user_data.get('id')}). Veuillez vous connecter ou utiliser une autre adresse.",
+                        "force_register_available": True,
+                        "existing_user_id": existing_user_data.get('id')
+                    }), 409
+                else:
+                    # Force register : supprimer l'utilisateur existant
+                    print(f"⚠️ DEBUG: Force register activé, suppression de l'utilisateur existant: {existing_user_data.get('id')}")
+                    
+                    # Supprimer l'utilisateur existant
+                    delete_response = supabase.client.table('users').delete().eq('id', existing_user_data.get('id')).execute()
+                    print(f"🔧 DEBUG: Suppression utilisateur existant: {delete_response.data}")
+                    
+                    # Supprimer les sessions associées
+                    session_delete = supabase.client.table('sessions').delete().eq('user_email', email).execute()
+                    print(f"🔧 DEBUG: Suppression sessions: {session_delete.data}")
+                    
+        except Exception as e:
+            print(f"⚠️ DEBUG: Erreur vérification Supabase: {e}")
+            # En cas d'erreur, on continue quand même pour éviter de bloquer l'inscription
 
-        # Si force_register est activé, supprimer l'utilisateur existant
-        if existing_user and force_register:
-            print(f"⚠️ DEBUG: Force register activé, suppression de l'utilisateur existant: {existing_user.id}")
-            try:
-                from services.supabase_storage import SupabaseStorage
-                supabase = SupabaseStorage()
-                
-                # Supprimer l'utilisateur existant
-                delete_response = supabase.client.table('users').delete().eq('id', existing_user.id).execute()
-                print(f"🔧 DEBUG: Suppression utilisateur existant: {delete_response.data}")
-                
-                # Supprimer les sessions associées
-                session_delete = supabase.client.table('sessions').delete().eq('user_email', email).execute()
-                print(f"🔧 DEBUG: Suppression sessions: {session_delete.data}")
-                
-            except Exception as e:
-                print(f"❌ DEBUG: Erreur lors de la suppression: {e}")
-
-        # Créer l'utilisateur avec debug
+        # ✅ Email disponible, création de l'utilisateur
         print(f"✅ DEBUG: Email disponible, création de l'utilisateur: {email}")
         print(f"🔧 DEBUG: Appel User.create({email}, {type(password)})")
         
@@ -245,9 +243,6 @@ def register():
             user_id = str(user.id)
             
             # Créer une session dans la table sessions (sans user_id, seulement user_email)
-            from services.supabase_storage import SupabaseStorage
-            supabase = SupabaseStorage()
-            
             session_data = {
                 'user_email': email,
                 'chat_history': [],
