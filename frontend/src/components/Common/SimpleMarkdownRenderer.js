@@ -1,573 +1,164 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
+import './SimpleMarkdownRenderer.css';
 
-const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
-  // TOUS les hooks doivent être appelés AVANT tout return
-  const [expanded, setExpanded] = useState(false);
-  const contentRef = useRef(null);
-  const [showReadMore, setShowReadMore] = useState(false);
+const SimpleMarkdownRenderer = ({ content }) => {
+  if (!content) return null;
 
-  // Styles selon le type de service
-  const getServiceStyles = () => {
-    const styles = {
-      matching_cv_offre: { background: '#f0f9ff', borderColor: '#0ea5e9' },
-      cover_letter: { background: '#fffbeb', borderColor: '#f59e0b' },
-      interview_prep: { background: '#f0fdf4', borderColor: '#10b981' },
-      default: { background: '#f8fafc', borderColor: '#e5e7eb' }
-    };
-    return styles[serviceType] || styles.default;
-  };
-
-  // Nettoyage et balisage des titres
-  const preprocessContent = (text) => {
-    if (!text || typeof text !== 'string') return '';
-    return text
-      // Supprimer les formules de politesse
-      .replace(/^Bonjour,?\n*/gm, '')
-      .replace(/Cordialement,?\n*\[.*\].*$/gm, '')
-      .replace(/Expert en.*$/gm, '')
-      .replace(/Merci.*$/gm, '')
-      .replace(/Bien cordialement.*$/gm, '')
-      .replace(/Sincèrement.*$/gm, '')
-      
-      // Nettoyer les mots "markdown" littéraux qui traînent
-      .replace(/\bmarkdown\b/gi, '')
-      
-      // Nettoyer les titres Markdown avec numérotation (ex: *1. Titre**)
-      .replace(/^\*?([0-9]+)\.\s*(.*?)\*+\s*$/gm, (match, number, title) => {
-        return `\n[[H1]]${number}. ${title.trim()}`;
-      })
-      
-      // Nettoyer les titres Markdown standards
-      .replace(/^[ \t]*(#+)\s*(.*)$/gm, (match, hashes, title) => {
-        const level = Math.min(hashes.length, 3);
-        return `\n[[H${level}]]${title.trim()}`;
-      })
-      
-      // Nettoyer les listes mal formatées
-      .replace(/^[ \t]*[-•*]\s*/gm, '• ')
-      .replace(/^[ \t]*[0-9]+\.\s*/gm, (match) => match.trim())
-      
-      // Nettoyer les astérisques orphelins et mal formatés
-      .replace(/\*{1,3}([^*\n]+?)\*{1,3}/g, (match, content) => {
-        // Si c'est un titre ou une section importante, le traiter comme tel
-        if (content.trim().match(/^[0-9]+\./)) {
-          return content.trim();
-        }
-        // Sinon, appliquer le formatage gras
-        return `**${content.trim()}**`;
-      })
-      
-      // Nettoyer les astérisques simples orphelins
-      .replace(/\*([^*\n]+?)\*/g, (match, content) => {
-        // Éviter de traiter les numéros de section
-        if (content.trim().match(/^[0-9]+\./)) {
-          return content.trim();
-        }
-        // Appliquer le formatage italique
-        return `*${content.trim()}*`;
-      })
-      
-      // Nettoyer les espaces multiples et lignes vides
-      .replace(/\n{3,}/g, '\n\n')
-      .replace(/[ \t]+/g, ' ')
-      .trim();
-  };
-
-  // Rendu JSX
-  const renderContent = (text) => {
-    const processedText = preprocessContent(text);
-    if (!processedText) return null;
-    const lines = processedText.split(/\n/);
-    const elements = [];
-    let currentSection = [];
-    let inTable = false;
-    let tableLines = [];
-    
-    lines.forEach((line, index) => {
-      const trimmedLine = line.trim();
-      
-      // Détection de début de tableau
-      if (trimmedLine.startsWith('|') && trimmedLine.endsWith('|')) {
-        if (!inTable) {
-          // Fermer la section précédente
-          if (currentSection.length > 0) {
-            elements.push(renderParagraph(currentSection.join(' '), `p-${index}`));
-            currentSection = [];
-          }
-          inTable = true;
-          tableLines = [];
-        }
-        tableLines.push(trimmedLine);
-        return;
-      }
-      
-      // Détection de fin de tableau (ligne vide ou autre contenu)
-      if (inTable && !trimmedLine.startsWith('|')) {
-        if (tableLines.length > 0) {
-          elements.push(renderTable(tableLines, `table-${index}`));
-          tableLines = [];
-        }
-        inTable = false;
-      }
-      
-      if (!inTable) {
-        if (!trimmedLine) {
-          if (currentSection.length > 0) {
-            elements.push(renderParagraph(currentSection.join(' '), `p-${index}`));
-            currentSection = [];
-          }
-          return;
-        }
-        
-        const hMatch = trimmedLine.match(/^\[\[H([123])\]\](.*)$/);
-        if (hMatch) {
-          if (currentSection.length > 0) {
-            elements.push(renderParagraph(currentSection.join(' '), `p-${index}`));
-            currentSection = [];
-          }
-          const level = parseInt(hMatch[1], 10);
-          const title = hMatch[2].trim();
-          const style = {
-            1: { 
-              fontSize: '2rem', 
-              fontWeight: '800', 
-              color: 'var(--primary-color)', 
-              marginTop: '2rem', 
-              marginBottom: '1rem', 
-              lineHeight: '1.2', 
-              border: 'none', 
-              padding: 0,
-              borderBottom: '2px solid var(--primary-color)',
-              paddingBottom: '0.5rem'
-            },
-            2: { 
-              fontSize: '1.4rem', 
-              fontWeight: '700', 
-              color: 'var(--primary-color)', 
-              marginTop: '1.5rem', 
-              marginBottom: '0.8rem', 
-              lineHeight: '1.25', 
-              border: 'none', 
-              padding: 0 
-            },
-            3: { 
-              fontSize: '1.1rem', 
-              fontWeight: '700', 
-              color: 'var(--primary-color)', 
-              marginTop: '1.1rem', 
-              marginBottom: '0.6rem', 
-              lineHeight: '1.3', 
-              border: 'none', 
-              padding: 0 
-            }
-          }[level];
-          const Tag = `h${level}`;
-          elements.push(
-            <Tag key={`h${level}-${index}`} style={style}>{title}</Tag>
-          );
-        }
-        else if (/^[0-9]+\.\s/.test(trimmedLine) || /^[-•*]\s/.test(trimmedLine)) {
-          if (currentSection.length > 0) {
-            elements.push(renderParagraph(currentSection.join(' '), `p-${index}`));
-            currentSection = [];
-          }
-          const listText = trimmedLine.replace(/^[0-9]+\.\s|^[-•*]\s/, '');
-          elements.push(
-            <div key={`li-${index}`} style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              marginBottom: '0.4rem', // Espacement réduit pour une meilleure lisibilité
-              paddingLeft: '1.2rem',
-              background: 'none',
-              border: 'none',
-              borderRadius: 0
-            }}>
-              <span style={{
-                color: 'var(--primary-color)',
-                fontWeight: 'bold',
-                marginRight: '0.6rem',
-                minWidth: '1rem',
-                fontSize: '1rem'
-              }}>•</span>
-              <span style={{ 
-                flex: 1, 
-                lineHeight: '1.5', // Ligne plus compacte
-                color: '#374151',
-                fontSize: '0.95rem'
-              }}>
-                {renderInlineFormatting(listText)}
-              </span>
-            </div>
-          );
-        }
-        else if (trimmedLine === '---' || trimmedLine === '***') {
-          if (currentSection.length > 0) {
-            elements.push(renderParagraph(currentSection.join(' '), `p-${index}`));
-            currentSection = [];
-          }
-        }
-        else {
-          currentSection.push(trimmedLine);
-        }
-      }
-    });
-    
-    // Fermer le tableau si on est encore dedans
-    if (inTable && tableLines.length > 0) {
-      elements.push(renderTable(tableLines, 'table-final'));
-    }
-    
-    if (currentSection.length > 0) {
-      elements.push(renderParagraph(currentSection.join(' '), 'final-p'));
-    }
-    return elements;
-  };
-
-  const renderParagraph = (text, key) => (
-    <p key={key} style={{
-      marginBottom: '0.8rem', // Espacement réduit
-      lineHeight: '1.6', // Ligne plus compacte
-      color: '#374151',
-      textAlign: 'justify',
-      fontSize: '0.95rem'
-    }}>
-      {renderInlineFormatting(text)}
-    </p>
-  );
-
-  const renderInlineFormatting = (text) => {
-    if (!text || typeof text !== 'string') return text;
-    
-    // Nettoyer le texte avant traitement pour éviter les bouts de code
-    let cleanText = text
-      // Supprimer les mots "markdown" littéraux
-      .replace(/\bmarkdown\b/gi, '')
-      // Nettoyer les astérisques mal formatés
-      .replace(/\*{1,3}([^*\n]+?)\*{1,3}/g, (match, content) => {
-        if (content.trim().match(/^[0-9]+\./)) {
-          return content.trim();
-        }
-        return `**${content.trim()}**`;
-      })
-      .replace(/\*([^*\n]+?)\*/g, (match, content) => {
-        if (content.trim().match(/^[0-9]+\./)) {
-          return content.trim();
-        }
-        return `*${content.trim()}*`;
-      });
-    
-    const parts = [];
-    let remaining = cleanText;
-    let key = 0;
-    let hasLinks = false;
-    
-    // Traiter tous les liens Markdown [texte](url) de manière récursive
-    while (remaining.includes('[') && remaining.includes('](') && remaining.includes(')')) {
-      const start = remaining.indexOf('[');
-      const endBracket = remaining.indexOf(']', start);
-      const startUrl = remaining.indexOf('(', endBracket);
-      const endUrl = remaining.indexOf(')', startUrl);
-      
-      if (start !== -1 && endBracket !== -1 && startUrl !== -1 && endUrl !== -1) {
-        if (start > 0) {
-          parts.push(remaining.substring(0, start));
-        }
-        const linkText = remaining.substring(start + 1, endBracket);
-        const linkUrl = remaining.substring(startUrl + 1, endUrl);
-        
-        // Vérifier que c'est bien un lien valide
-        if (linkUrl && linkUrl.trim() && linkText && linkText.trim()) {
-          hasLinks = true;
-          parts.push(
-            <a key={`link-${key++}`} href={linkUrl} target="_blank" rel="noopener noreferrer" style={{
-              color: '#0a6b79',
-              textDecoration: 'none',
-              fontWeight: '500',
-              borderBottom: '1px solid transparent',
-              transition: 'border-bottom-color 0.2s'
-            }} onMouseEnter={(e) => e.target.style.borderBottomColor = '#0a6b79'} onMouseLeave={(e) => e.target.style.borderBottomColor = 'transparent'}>
-              {linkText}
-            </a>
-          );
-        } else {
-          // Si ce n'est pas un lien valide, garder le texte original
-          parts.push(remaining.substring(start, endUrl + 1));
-        }
-        remaining = remaining.substring(endUrl + 1);
-      } else {
-        break;
-      }
-    }
-    
-    // Traiter le texte en gras **texte** et __texte__
-    while (remaining.includes('**') || remaining.includes('__')) {
-      let start, end, marker;
-      
-      if (remaining.includes('**')) {
-        start = remaining.indexOf('**');
-        end = remaining.indexOf('**', start + 2);
-        marker = '**';
-      } else {
-        start = remaining.indexOf('__');
-        end = remaining.indexOf('__', start + 2);
-        marker = '__';
-      }
-      
-      if (end !== -1) {
-        if (start > 0) {
-          parts.push(remaining.substring(0, start));
-        }
-        const boldText = remaining.substring(start + marker.length, end);
-        parts.push(
-          <strong key={`bold-${key++}`} style={{
-            fontWeight: '700',
-            color: '#1f2937'
-          }}>{boldText}</strong>
-        );
-        remaining = remaining.substring(end + marker.length);
-      } else {
-        break;
-      }
-    }
-    
-    // Traiter le texte en italique *texte* et _texte_
-    while (remaining.includes('*') || remaining.includes('_')) {
-      let start, end, marker;
-      
-      if (remaining.includes('*') && !remaining.startsWith('*')) {
-        start = remaining.indexOf('*');
-        end = remaining.indexOf('*', start + 1);
-        marker = '*';
-      } else if (remaining.includes('_') && !remaining.startsWith('_')) {
-        start = remaining.indexOf('_');
-        end = remaining.indexOf('_', start + 1);
-        marker = '_';
-      } else {
-        break;
-      }
-      
-      if (end !== -1 && start < end) {
-        if (start > 0) {
-          parts.push(remaining.substring(0, start));
-        }
-        const italicText = remaining.substring(start + 1, end);
-        parts.push(
-          <em key={`italic-${key++}`} style={{
-            fontStyle: 'italic',
-            color: '#4b5563'
-          }}>{italicText}</em>
-        );
-        remaining = remaining.substring(end + 1);
-      } else {
-        break;
-      }
-    }
-    
-    // Traiter le code inline `code`
-    while (remaining.includes('`')) {
-      const start = remaining.indexOf('`');
-      const end = remaining.indexOf('`', start + 1);
-      if (end !== -1) {
-        if (start > 0) {
-          parts.push(remaining.substring(0, start));
-        }
-        const codeText = remaining.substring(start + 1, end);
-        parts.push(
-          <code key={`code-${key++}`} style={{
-            backgroundColor: '#f3f4f6',
-            padding: '0.125rem 0.25rem',
-            borderRadius: '3px',
-            fontFamily: 'monospace',
-            fontSize: '0.875em',
-            color: '#1f2937'
-          }}>{codeText}</code>
-        );
-        remaining = remaining.substring(end + 1);
-      } else {
-        break;
-      }
-    }
-    
-    // Traiter les listes numérotées et à puces qui n'ont pas été traitées
-    // Éviter de traiter les titres numérotés qui ont déjà été gérés
-    if ((remaining.match(/^[0-9]+\.\s/) || remaining.match(/^[-•*]\s/)) && 
-        !remaining.match(/^\*?[0-9]+\.\s.*\*+$/)) {
-      const listText = remaining.replace(/^[0-9]+\.\s|^[-•*]\s/, '');
-      parts.push(
-        <span key={`list-${key++}`} style={{
-          display: 'inline-flex',
-          alignItems: 'flex-start',
-          marginBottom: '0.3rem' // Espacement encore plus réduit
-        }}>
-          <span style={{
-            color: 'var(--primary-color)',
-            fontWeight: 'bold',
-            marginRight: '0.4rem',
-            minWidth: '0.8rem',
-            fontSize: '0.9rem'
-          }}>•</span>
-          <span style={{ fontSize: '0.9rem' }}>{listText}</span>
-        </span>
-      );
-      remaining = '';
-    }
-    
-    if (remaining) {
-      parts.push(remaining);
-    }
-    
-    // Si on a trouvé des éléments formatés, retourner les parties, sinon retourner le texte original
-    if (hasLinks || parts.length > 1) {
-      return parts;
-    } else {
-      return cleanText;
-    }
-  };
-
-  const renderTable = (tableLines, key) => {
-    if (tableLines.length < 2) return null;
-    
-    // console.log('🔍 Debug - Lignes du tableau reçues:', tableLines);
-    
-    const rows = tableLines.map(line => {
-      // Enlever les | au début et à la fin
-      const cleanLine = line.replace(/^\||\|$/g, '');
-      // Diviser par les | et nettoyer chaque cellule
-      return cleanLine.split('|').map(cell => cell.trim());
-    });
-    
-    if (rows.length < 2) return null;
-    
-    const headers = rows[0];
-    const dataRows = rows.slice(1);
-    
-    // Debug optionnel - commenté pour la production
-    // console.log('🔍 Debug tableau - Headers:', headers);
-    // console.log('🔍 Debug tableau - DataRows:', dataRows);
-    
-    return (
-      <div key={key} style={{
-        margin: '2rem 0',
-        overflowX: 'auto',
-        borderRadius: '8px',
-        border: '1px solid #e5e7eb',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-      }}>
-        <table style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          fontSize: '0.9rem'
-        }}>
-          <thead>
-            <tr style={{
-              backgroundColor: '#f9fafb',
-              borderBottom: '2px solid #e5e7eb'
-            }}>
-              {headers.map((header, index) => (
-                <th key={index} style={{
-                  padding: '0.75rem',
-                  textAlign: 'left',
-                  fontWeight: '600',
-                  color: '#374151',
-                  borderBottom: '1px solid #e5e7eb'
-                }}>
-                  {renderInlineFormatting(header)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {dataRows.map((row, rowIndex) => (
-              <tr key={rowIndex} style={{
-                backgroundColor: rowIndex % 2 === 0 ? '#ffffff' : '#f9fafb',
-                borderBottom: '1px solid #f3f4f6'
-              }}>
-                {row.map((cell, cellIndex) => {
-                  // console.log(`🔍 Debug cellule [${rowIndex}][${cellIndex}]:`, cell);
-                  return (
-                    <td key={cellIndex} style={{
-                      padding: '0.75rem',
-                      borderBottom: '1px solid #f3f4f6',
-                      verticalAlign: 'top',
-                      lineHeight: '1.5'
-                    }}>
-                      {renderInlineFormatting(cell)}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  };
-
-  const serviceStyles = getServiceStyles();
-  const containerStyle = {
-    background: serviceStyles.background,
-    border: `1px solid ${serviceStyles.borderColor}`,
-    borderRadius: '12px',
-    padding: '2rem',
-    fontFamily: 'system-ui, -apple-system, sans-serif',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-    maxHeight: expanded ? 'none' : '400px',
-    overflow: expanded ? 'visible' : 'hidden',
-    position: 'relative',
-    transition: 'max-height 0.3s'
-  };
-
-  useEffect(() => {
-    if (!expanded && contentRef.current && typeof contentRef.current.scrollHeight === 'number') {
-      setShowReadMore(contentRef.current.scrollHeight > 400);
-    } else {
-      setShowReadMore(false);
-    }
-  }, [expanded, content]);
-
-  // Le return doit venir APRES tous les hooks
-  if (!content || typeof content !== 'string' || content.trim() === '') {
-    return <div>Aucun contenu à afficher</div>;
-  }
-
+  // Nettoyage intelligent du contenu
+  const cleanContent = preprocessContent(content);
+  
+  // Parsing intelligent basé sur la structure
+  const parsedContent = parseStructuredContent(cleanContent);
+  
   return (
-    <div style={containerStyle} ref={contentRef}>
-      {renderContent(content)}
-      {!expanded && showReadMore && (
-        <div style={{
-          position: 'absolute',
-          left: 0, right: 0, bottom: 0,
-          height: '80px',
-          background: 'linear-gradient(to top, rgba(248,248,248,0.95) 60%, transparent)',
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'center',
-          pointerEvents: 'none'
-        }} />
-      )}
-      {!expanded && showReadMore && (
-        <button
-          style={{
-            position: 'absolute',
-            left: 0, right: 0, bottom: '10px',
-            margin: '0 auto',
-            zIndex: 2,
-            background: 'var(--primary-color)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '20px',
-            padding: '0.5rem 1.5rem',
-            fontWeight: 600,
-            fontSize: '1rem',
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-            pointerEvents: 'auto'
-          }}
-          onClick={() => setExpanded(true)}
-        >Lire la suite</button>
-      )}
+    <div className="markdown-renderer">
+      {parsedContent}
     </div>
   );
 };
+
+// Nettoyage intelligent du contenu
+const preprocessContent = (content) => {
+  let cleaned = content;
+  
+  // Supprimer les artefacts de markdown
+  cleaned = cleaned.replace(/```[\s\S]*?```/g, ''); // Blocs de code
+  cleaned = cleaned.replace(/`([^`]+)`/g, '$1'); // Code inline
+  cleaned = cleaned.replace(/\*\*([^*]+)\*\*/g, '$1'); // Bold
+  cleaned = cleaned.replace(/\*([^*]+)\*/g, '$1'); // Italic
+  
+  // Nettoyer les espaces multiples
+  cleaned = cleaned.replace(/\n\s*\n\s*\n/g, '\n\n'); // Max 2 sauts de ligne
+  cleaned = cleaned.replace(/[ \t]+/g, ' '); // Espaces multiples
+  
+  // Nettoyer les caractères spéciaux
+  cleaned = cleaned.replace(/[^\w\s.,!?;:()[\]{}"'\-–—…]/g, '');
+  
+  return cleaned.trim();
+};
+
+// Parsing intelligent basé sur la structure
+const parseStructuredContent = (content) => {
+  const lines = content.split('\n').filter(line => line.trim());
+  const elements = [];
+  
+  let currentSection = null;
+  let currentList = null;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    // Détection des titres de section
+    if (isSectionHeader(line)) {
+      if (currentList) {
+        elements.push(renderList(currentList));
+        currentList = null;
+      }
+      currentSection = createSectionHeader(line);
+      elements.push(currentSection);
+      continue;
+    }
+    
+    // Détection des listes
+    if (isListItem(line)) {
+      if (!currentList) {
+        currentList = [];
+      }
+      currentList.push(extractListItem(line));
+      continue;
+    }
+    
+    // Détection des exemples
+    if (isExample(line)) {
+      if (currentList) {
+        elements.push(renderList(currentList));
+        currentList = null;
+      }
+      elements.push(createExample(line));
+      continue;
+    }
+    
+    // Détection des instructions
+    if (isInstruction(line)) {
+      if (currentList) {
+        elements.push(renderList(currentList));
+        currentList = null;
+      }
+      elements.push(createInstruction(line));
+      continue;
+    }
+    
+    // Texte normal
+    if (currentList) {
+      elements.push(renderList(currentList));
+      currentList = null;
+    }
+    elements.push(createParagraph(line));
+  }
+  
+  // Fermer la liste en cours
+  if (currentList) {
+    elements.push(renderList(currentList));
+  }
+  
+  return elements;
+};
+
+// Détection intelligente des éléments
+const isSectionHeader = (line) => {
+  return /^\d+\.\s+[A-Z]/.test(line) || /^[A-Z][^.!?]*:$/.test(line);
+};
+
+const isListItem = (line) => {
+  return /^[•·▪▫◦‣⁃]\s/.test(line) || /^[a-z]\)\s/.test(line) || /^-\s/.test(line);
+};
+
+const isExample = (line) => {
+  return /^Exemple\s*:/.test(line) || /^[A-Z][^.!?]*\s*:/.test(line);
+};
+
+const isInstruction = (line) => {
+  return /^Ajoutez\s/.test(line) || /^Rédigez\s/.test(line) || /^Préparez\s/.test(line);
+};
+
+// Extraction des éléments
+const extractListItem = (line) => {
+  return line.replace(/^[•·▪▫◦‣⁃]\s/, '').replace(/^[a-z]\)\s/, '').replace(/^-\s/, '');
+};
+
+// Création des éléments de rendu
+const createSectionHeader = (line) => (
+  <h3 key={`header-${line}`} className="markdown-section-header">
+    {line}
+  </h3>
+);
+
+const createExample = (line) => (
+  <div key={`example-${line}`} className="markdown-example">
+    <strong>{line}</strong>
+  </div>
+);
+
+const createInstruction = (line) => (
+  <div key={`instruction-${line}`} className="markdown-instruction">
+    {line}
+  </div>
+);
+
+const createParagraph = (line) => (
+  <p key={`para-${line}`} className="markdown-paragraph">
+    {line}
+  </p>
+);
+
+const renderList = (items) => (
+  <ul key={`list-${items.join('')}`} className="markdown-list">
+    {items.map((item, index) => (
+      <li key={index} className="markdown-list-item">
+        {item}
+      </li>
+    ))}
+  </ul>
+);
 
 export default SimpleMarkdownRenderer;
