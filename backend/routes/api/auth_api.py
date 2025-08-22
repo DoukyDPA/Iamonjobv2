@@ -225,7 +225,19 @@ def register():
 
         # Créer l'utilisateur avec debug
         print(f"✅ DEBUG: Email disponible, création de l'utilisateur: {email}")
-        user = User.create(email, password)
+        print(f"🔧 DEBUG: Appel User.create({email}, {type(password)})")
+        
+        try:
+            user = User.create(email, password)
+            print(f"✅ DEBUG: User.create() retourne: {user}")
+            print(f"✅ DEBUG: Type de retour: {type(user)}")
+        except Exception as create_error:
+            print(f"❌ DEBUG: Exception dans User.create(): {create_error}")
+            print(f"❌ DEBUG: Type d'exception: {type(create_error)}")
+            import traceback
+            print(f"❌ DEBUG: Stack trace: {traceback.format_exc()}")
+            user = None
+        
         print(f"✅ DEBUG: Utilisateur créé: {user}, type={type(user)}")
         
         if user:
@@ -589,6 +601,54 @@ def get_user_data():
     except Exception as e:
         logging.error(f"Erreur lors de la récupération des données: {e}")
         return jsonify({"error": f"Erreur lors de la récupération: {str(e)}"}), 500
+
+@auth_api.route('/debug/supabase-test', methods=['GET'])
+def debug_supabase_test():
+    """Endpoint de debug pour tester la connexion Supabase"""
+    try:
+        from services.supabase_storage import SupabaseStorage
+        supabase = SupabaseStorage()
+        
+        print(f"🔍 DEBUG: Test connexion Supabase")
+        print(f"🔍 DEBUG: Client Supabase: {supabase.client}")
+        
+        if not supabase.client:
+            return jsonify({
+                "success": False,
+                "error": "Client Supabase non disponible",
+                "details": "Vérifiez les variables d'environnement SUPABASE_URL et SUPABASE_ANON_KEY"
+            }), 500
+        
+        # Tester la connexion
+        try:
+            response = supabase.client.table('users').select('count').limit(1).execute()
+            print(f"🔍 DEBUG: Test table users: {response}")
+            
+            return jsonify({
+                "success": True,
+                "message": "Connexion Supabase OK",
+                "test_response": str(response),
+                "client_info": {
+                    "url": str(supabase.client.supabase_url) if hasattr(supabase.client, 'supabase_url') else 'N/A',
+                    "key_length": len(str(supabase.client.supabase_key)) if hasattr(supabase.client, 'supabase_key') else 'N/A'
+                }
+            }), 200
+            
+        except Exception as table_error:
+            print(f"❌ DEBUG: Erreur test table: {table_error}")
+            return jsonify({
+                "success": False,
+                "error": "Erreur lors du test de la table users",
+                "details": str(table_error),
+                "client_available": True
+            }), 500
+            
+    except Exception as e:
+        print(f"❌ DEBUG: Erreur générale: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Erreur lors du test Supabase: {str(e)}"
+        }), 500
 
 @auth_api.route('/debug/users', methods=['GET'])
 def debug_users():
