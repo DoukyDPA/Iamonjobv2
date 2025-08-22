@@ -106,12 +106,10 @@ class User(UserMixin):
                 logging.error("Client Supabase non disponible")
                 return None
                 
-            # Vérifier si l'email existe déjà
-            existing_user = User.get_by_email(email)
-            if existing_user:
-                logging.warning(f"User.create: Email {email} déjà utilisé")
-                return None
-
+            # Note: La vérification d'email est maintenant faite dans l'API
+            # pour éviter les doubles vérifications et les problèmes de race condition
+            print(f"🔧 DEBUG User.create: Création utilisateur pour email: {email}")
+            
             # Générer un nouvel ID unique
             user_id = str(uuid.uuid4())
             password_hash = generate_password_hash(password)
@@ -124,7 +122,9 @@ class User(UserMixin):
                 'is_admin': is_admin
             }
             
+            print(f"🔧 DEBUG User.create: Données utilisateur à insérer: {user_data}")
             response = supabase_client.table('users').insert(user_data).execute()
+            print(f"🔧 DEBUG User.create: Réponse Supabase: {response.data}")
             
             if response.data and len(response.data) > 0:
                 logging.info(f"User.create: Utilisateur créé avec succès - ID: {user_id}, Email: {email}")
