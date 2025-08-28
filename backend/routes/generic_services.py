@@ -4,7 +4,6 @@
 from flask import Blueprint, request, jsonify, session
 from datetime import datetime
 from services.stateless_manager import StatelessDataManager
-from backend.routes.api.auth_api import verify_jwt_token
 
 # Import sécurisé avec fallback
 try:
@@ -12,7 +11,7 @@ try:
     HAS_AI_SERVICE = True
 except ImportError:
     HAS_AI_SERVICE = False
-    def execute_ai_service(*args, **kwargs):
+    def execute_ai_service_fallback(*args, **kwargs):
         return "Service IA temporairement indisponible"
 
 # Configuration des services (équivalent JS en Python)
@@ -378,17 +377,19 @@ generic_services_bp = Blueprint('generic_services', __name__)
 
 # === NOUVELLES ROUTES SANS CONFLIT ===
 @generic_services_bp.route('/api/actions/analyze-cv', methods=['POST'])
-@verify_jwt_token
 def analyze_cv_unified():
     """Route unifiée pour l'analyse CV via le système générique"""
-    return handle_generic_service('analyze_cv', request)
+    # Import lazy pour éviter les problèmes de déploiement
+    from backend.routes.api.auth_api import verify_jwt_token
+    return verify_jwt_token(handle_generic_service)('analyze_cv', request)
 
 
 @generic_services_bp.route("/api/cv/ats-optimize", methods=["POST"])
-@verify_jwt_token
 def cv_ats_optimization_unified():
     """Route unifiée pour l'optimisation ATS"""
-    return handle_generic_service("cv_ats_optimization", request)
+    # Import lazy pour éviter les problèmes de déploiement
+    from backend.routes.api.auth_api import verify_jwt_token
+    return verify_jwt_token(handle_generic_service)("cv_ats_optimization", request)
 
 
 # === ÉVITER LES ROUTES EN CONFLIT ===
