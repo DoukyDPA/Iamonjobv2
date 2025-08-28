@@ -514,4 +514,8 @@ def get_services_config():
 
 def register_services_routes(app):
     """Enregistre les routes de services dans l'application Flask"""
-    app.register_blueprint(services_bp) 
+    app.register_blueprint(services_bp)
+    
+    # === ROUTES MANQUANTES ===
+    # Note: Les routes des services IA sont gérées par generic_services.py
+    # Pas besoin de les redéfinir ici pour éviter les conflits 
