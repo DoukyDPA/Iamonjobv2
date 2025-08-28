@@ -7,6 +7,7 @@ from flask import Blueprint, request, jsonify, session
 from datetime import datetime
 import os
 from services.stateless_manager import StatelessDataManager
+from backend.routes.api.auth_api import verify_jwt_token
 
 services_bp = Blueprint('services', __name__)
 
