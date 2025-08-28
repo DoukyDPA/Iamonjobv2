@@ -109,10 +109,14 @@ def call_mistral_api(prompt: str, context: Optional[str] = None) -> str:
             return ai_response
         else:
             print(f"❌ Erreur API Mistral: {response.status_code}")
+            print(f"📋 Réponse complète: {response.text}")
             return _fallback_response(prompt)
             
     except Exception as e:
         print(f"❌ Erreur appel Mistral: {e}")
+        print(f"🔍 Type d'erreur: {type(e).__name__}")
+        import traceback
+        traceback.print_exc()
         return _fallback_response(prompt)
 
 def _build_prompt(prompt: str, context: Optional[str] = None) -> str:
@@ -134,18 +138,9 @@ def _fallback_response(prompt: str) -> str:
     
     prompt_lower = prompt.lower()
     
-    if "cv" in prompt_lower or "curriculum" in prompt_lower:
-        return """📄 **Analyse de CV** (Service temporairement indisponible)
-
-L'analyse de votre CV nécessite une configuration API.
-
-💡 **Pour obtenir une analyse complète :**
-- Contactez l'administrateur pour configurer l'API Mistral
-- Votre CV a été enregistré et sera analysé dès que le service sera disponible
-
-*Fonctionnalité temporairement désactivée.*"""
-
-    elif "compatibilit" in prompt_lower or "offre" in prompt_lower:
+    # Priorité 1 : Services de compatibilité/matching (plus spécifique)
+    if ("compatibilit" in prompt_lower or "matching" in prompt_lower or 
+        ("offre" in prompt_lower and "emploi" in prompt_lower)):
         return """🎯 **Analyse de compatibilité** (Service temporairement indisponible)
 
 L'analyse de compatibilité nécessite une configuration API.
@@ -153,6 +148,42 @@ L'analyse de compatibilité nécessite une configuration API.
 💡 **Pour obtenir une analyse complète :**
 - Contactez l'administrateur pour configurer l'API Mistral
 - Vos documents ont été enregistrés et seront analysés dès que le service sera disponible
+
+*Fonctionnalité temporairement désactivée.*"""
+
+    # Priorité 2 : Services de lettre de motivation
+    elif ("lettre" in prompt_lower or "motivation" in prompt_lower):
+        return """✉️ **Génération de lettre de motivation** (Service temporairement indisponible)
+
+La génération de lettre de motivation nécessite une configuration API.
+
+💡 **Pour obtenir une lettre complète :**
+- Contactez l'administrateur pour configurer l'API Mistral
+- Vos documents ont été enregistrés et seront utilisés dès que le service sera disponible
+
+*Fonctionnalité temporairement désactivée.*"""
+
+    # Priorité 3 : Services d'entretien
+    elif ("entretien" in prompt_lower or "interview" in prompt_lower):
+        return """🎤 **Préparation à l'entretien** (Service temporairement indisponible)
+
+La préparation à l'entretien nécessite une configuration API.
+
+💡 **Pour obtenir une préparation complète :**
+- Contactez l'administrateur pour configurer l'API Mistral
+- Vos documents ont été enregistrés et seront utilisés dès que le service sera disponible
+
+*Fonctionnalité temporairement désactivée.*"""
+
+    # Priorité 4 : Services de CV (moins spécifique)
+    elif "cv" in prompt_lower or "curriculum" in prompt_lower:
+        return """📄 **Analyse de CV** (Service temporairement indisponible)
+
+L'analyse de votre CV nécessite une configuration API.
+
+💡 **Pour obtenir une analyse complète :**
+- Contactez l'administrateur pour configurer l'API Mistral
+- Votre CV a été enregistré et sera analysé dès que le service sera disponible
 
 *Fonctionnalité temporairement désactivée.*"""
 
