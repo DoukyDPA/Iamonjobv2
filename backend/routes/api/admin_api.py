@@ -589,6 +589,100 @@ def delete_partner(partner_id):
         return jsonify({"success": False, "error": f"Erreur serveur: {str(e)}"}), 500
 
 # ====================================
+# GESTION DES PROMPTS IA
+# ====================================
+
+@admin_api.route('/prompts', methods=['GET'])
+@verify_jwt_token
+def get_all_prompts():
+    """Récupère tous les prompts pour l'administration"""
+    try:
+        from services.ai_service_prompts import get_all_prompts
+        
+        prompts = get_all_prompts()
+        
+        if prompts:
+            return jsonify({
+                "success": True,
+                "prompts": prompts
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "error": "Aucun prompt trouvé"
+            }), 404
+            
+    except Exception as e:
+        logging.error(f"Erreur lors de la récupération des prompts: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Erreur serveur: {str(e)}"
+        }), 500
+
+@admin_api.route('/prompts/<service_id>', methods=['GET'])
+@verify_jwt_token
+def get_prompt(service_id):
+    """Récupère un prompt spécifique"""
+    try:
+        from services.ai_service_prompts import get_prompt
+        
+        prompt = get_prompt(service_id)
+        
+        if prompt:
+            return jsonify({
+                "success": True,
+                "prompt": prompt
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "error": f"Prompt non trouvé pour le service: {service_id}"
+            }), 404
+            
+    except Exception as e:
+        logging.error(f"Erreur lors de la récupération du prompt {service_id}: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Erreur serveur: {str(e)}"
+        }), 500
+
+@admin_api.route('/prompts/<service_id>', methods=['PUT'])
+@verify_jwt_token
+def update_prompt(service_id):
+    """Met à jour un prompt"""
+    try:
+        data = request.get_json()
+        if not data or 'prompt' not in data:
+            return jsonify({
+                "success": False,
+                "error": "Contenu du prompt manquant"
+            }), 400
+        
+        new_prompt = data['prompt']
+        
+        from services.ai_service_prompts import update_prompt
+        
+        success = update_prompt(service_id, new_prompt)
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "message": f"Prompt mis à jour avec succès pour {service_id}"
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "error": f"Impossible de mettre à jour le prompt pour {service_id}"
+            }), 500
+            
+    except Exception as e:
+        logging.error(f"Erreur lors de la mise à jour du prompt {service_id}: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Erreur serveur: {str(e)}"
+        }), 500
+
+# ====================================
 # GESTION COMPLÈTE DES PARTENAIRES (CRUD)
 # ====================================
 
