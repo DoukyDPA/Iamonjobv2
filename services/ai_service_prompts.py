@@ -4,6 +4,22 @@
 # Dictionnaire vide qui sera rempli depuis la base de données ou le JSON
 AI_PROMPTS = {}
 
+# Initialisation automatique au chargement du module
+print("🔄 Initialisation automatique des prompts...")
+try:
+    # Charger directement depuis le JSON pour éviter l'import circulaire
+    import json
+    import os
+    
+    prompts_file = os.path.join(os.path.dirname(__file__), 'ai_service_prompts.json')
+    if os.path.exists(prompts_file):
+        with open(prompts_file, 'r', encoding='utf-8') as f:
+            prompts = json.load(f)
+            AI_PROMPTS.update(prompts)
+            print(f"✅ {len(prompts)} prompts chargés automatiquement")
+except Exception as e:
+    print(f"⚠️ Erreur lors de l'initialisation automatique: {e}")
+
 def execute_ai_service(service_id, cv_content, job_content="", questionnaire_content="", user_notes=""):
     """Fonction générique pour exécuter un service IA selon l'identifiant"""
     try:
