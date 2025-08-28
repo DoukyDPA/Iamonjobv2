@@ -1,200 +1,173 @@
-/* MARKDOWN RENDERER - RENDU PROFESSIONNEL ET ÉLÉGANT */
+// FICHIER : frontend/src/utils/textFormatter.js
+// UTILITAIRE - Formatage professionnel des textes générés par l'IA
 
-.markdown-renderer {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.6;
-  color: #1f2937;
-  max-width: 100%;
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e5e7eb;
-}
-
-/* === TITRES DE SECTION === */
-.markdown-section-header {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #0a6b79;
-  margin: 2rem 0 1rem 0;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #0a6b79;
-  line-height: 1.3;
-}
-
-.markdown-section-header:first-child {
-  margin-top: 0;
-}
-
-/* === EXEMPLES === */
-.markdown-example {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border: 1px solid #0ea5e9;
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
-  margin: 1rem 0;
-  font-weight: 600;
-  color: #0369a1;
-  box-shadow: 0 2px 4px rgba(14, 165, 233, 0.1);
-}
-
-/* === INSTRUCTIONS === */
-.markdown-instruction {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border: 1px solid #f59e0b;
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
-  margin: 1rem 0;
-  font-weight: 600;
-  color: #92400e;
-  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.1);
-}
-
-/* === PARAGRAPHES === */
-.markdown-paragraph {
-  margin: 1rem 0;
-  line-height: 1.7;
-  color: #374151;
-  font-size: 0.95rem;
-  text-align: justify;
-}
-
-.markdown-paragraph:first-child {
-  margin-top: 0;
-}
-
-/* === LISTES === */
-.markdown-list {
-  margin: 1rem 0;
-  padding-left: 0;
-  list-style: none;
-  background: #f8fafc;
-  border-radius: 8px;
-  border-left: 4px solid #0a6b79;
-  padding: 1rem 1.5rem;
-}
-
-.markdown-list-item {
-  position: relative;
-  margin: 0.5rem 0;
-  padding: 0.5rem 0 0.5rem 1.5rem;
-  background: transparent;
-  border-radius: 0;
-  border-left: none;
-  transition: all 0.2s ease;
-  line-height: 1.5;
-  color: #374151;
-  font-size: 0.9rem;
-}
-
-.markdown-list-item:hover {
-  background: #f1f5f9;
-  border-left-color: #0891b2;
-  transform: translateX(2px);
-  box-shadow: 0 2px 8px rgba(10, 107, 121, 0.1);
-}
-
-.markdown-list-item::before {
-  content: '•';
-  position: absolute;
-  left: 0;
-  top: 0.5rem;
-  color: #0a6b79;
-  font-weight: bold;
-  font-size: 1.1rem;
-  line-height: 1;
-}
-
-/* === RESPONSIVE === */
-@media (max-width: 768px) {
-  .markdown-renderer {
-    padding: 1.5rem;
-    border-radius: 8px;
-  }
+/**
+ * Formate un texte généré par l'IA en HTML professionnel
+ * @param {string} text - Texte brut avec markdown de l'IA
+ * @returns {string} - HTML formaté et stylé
+ */
+export const formatAIText = (text) => {
+  if (!text) return '';
   
-  .markdown-section-header {
-    font-size: 1.1rem;
-    margin: 1.5rem 0 0.75rem 0;
-  }
+  return text
+    // Nettoyer les artefacts de code markdown
+    .replace(/```[\w]*\n/g, '')
+    .replace(/```/g, '')
+    .replace(/^\s*\n/gm, '')
+    
+    // Titres avec styles professionnels
+    .replace(/^### (.+)$/gm, '<h3 class="formatted-h3">$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2 class="formatted-h2">$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1 class="formatted-h1">$1</h1>')
+    
+    // Formatage du texte en gras et italique
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="formatted-strong">$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em class="formatted-em">$1</em>')
+    
+    // Formatage des listes avec puces personnalisées - CORRIGÉ
+    .replace(/^[\s]*[-*+] (.+)$/gm, '<li class="formatted-li">$1</li>')
+    // Regrouper tous les <li> consécutifs dans une seule <ul>
+    .replace(/(<li[^>]*>.*?<\/li>)(?:\s*(<li[^>]*>.*?<\/li>))*/gs, (match) => {
+      // Extraire tous les <li> de la correspondance
+      const liElements = match.match(/<li[^>]*>.*?<\/li>/g) || [];
+      if (liElements.length > 0) {
+        return `<ul class="formatted-ul">${liElements.join('')}</ul>`;
+      }
+      return match;
+    })
+    // SUPPRIMÉ : .replace(/<li/g, '<li class="formatted-li-bullet"><span class="formatted-li-dot">•</span>')
+    
+    // Formatage des listes numérotées - CORRIGÉ
+    .replace(/^[\s]*(\d+)\. (.+)$/gm, '<li class="formatted-li">$2</li>')
+    // Regrouper tous les <li> consécutifs dans une seule <ol> (pour les listes numérotées)
+    .replace(/(<li[^>]*>.*?<\/li>)(?:\s*(<li[^>]*>.*?<\/li>))*/gs, (match) => {
+      // Vérifier si c'est déjà dans une liste à puces
+      if (match.includes('formatted-ul')) return match;
+      
+      // Extraire tous les <li> de la correspondance
+      const liElements = match.match(/<li[^>]*>.*?<\/li>/g) || [];
+      if (liElements.length > 0) {
+        return `<ol class="formatted-ol">${liElements.join('')}</ol>`;
+      }
+      return match;
+    })
+    
+    // Formatage des citations et blocs
+    .replace(/^> (.+)$/gm, '<blockquote class="formatted-blockquote">$1</blockquote>')
+    
+    // Formatage des codes inline
+    .replace(/`([^`]+)`/g, '<code class="formatted-code">$1</code>')
+    
+    // Formatage des paragraphes et espacement
+    .replace(/\n\n+/g, '</p><p class="formatted-paragraph">')
+    .replace(/\n/g, '<br/>')
+    
+    // Ajouter le wrapper de paragraphe initial
+    .replace(/^/, '<p class="formatted-paragraph">')
+    
+    // Fermer le dernier paragraphe
+    .replace(/$/, '</p>')
+    
+    // Nettoyer les paragraphes vides
+    .replace(/<p[^>]*><\/p>/g, '')
+    
+    // Formatage spécial pour les conseils et recommandations
+    .replace(/✅|☑️|✔️/g, '<span class="formatted-success">✅</span>')
+    .replace(/❌|❎|✖️/g, '<span class="formatted-error">❌</span>')
+    .replace(/⚠️|⚡|💡/g, '<span class="formatted-warning">⚠️</span>')
+    .replace(/🎯|🔥|⭐/g, '<span class="formatted-accent">🎯</span>')
+    
+    // Formatage des scores et pourcentages
+    .replace(/(\d+%)/g, '<span class="formatted-score">$1</span>')
+    .replace(/(\d+\/\d+)/g, '<span class="formatted-score-green">$1</span>');
+};
+
+/**
+ * Formate spécifiquement une lettre de motivation
+ * @param {string} letterText - Texte de la lettre
+ * @returns {string} - HTML formaté pour lettre
+ */
+export const formatCoverLetter = (letterText) => {
+  if (!letterText) return '';
   
-  .markdown-example,
-  .markdown-instruction {
-    padding: 0.75rem 1rem;
-    margin: 0.75rem 0;
-  }
+  return letterText
+    // Nettoyer les artefacts
+    .replace(/```[\w]*\n/g, '')
+    .replace(/```/g, '')
+    
+    // Formatage spécial pour les en-têtes de lettre
+    .replace(/^\[([^\]]+)\]/gm, '<div class="formatted-letter-header">$1</div>')
+    
+    // Formatage de l'objet
+    .replace(/^(OBJET\s*:.*$)/gm, '<div class="formatted-letter-objet">$1</div>')
+    
+    // Formatage des paragraphes de lettre
+    .replace(/^§(\d+)\s*-\s*(.+)$/gm, '<h3 class="formatted-letter-section">§$1 - $2</h3>')
+    
+    // Puis appliquer le formatage général
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color: #1f2937; font-weight: 600;">$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em style="color: #4b5563; font-style: italic;">$1</em>')
+    
+    // Formatage des paragraphes avec espacement lettre
+    .replace(/\n\n+/g, '</p><p style="margin: 1.25rem 0; line-height: 1.8; color: #374151; text-align: justify; font-family: Georgia, serif;">')
+    .replace(/\n/g, '<br/>')
+    
+    // Wrapper initial
+    .replace(/^/, '<div class="formatted-letter"><p class="formatted-letter-paragraph">')
+    .replace(/$/, '</p></div>')
+    
+    // Nettoyer
+    .replace(/<p[^>]*><\/p>/g, '');
+};
+
+/**
+ * Formate un texte d'analyse ou de conseils
+ * @param {string} analysisText - Texte d'analyse
+ * @returns {string} - HTML formaté pour analyse
+ */
+export const formatAnalysisText = (analysisText) => {
+  if (!analysisText) return '';
   
-  .markdown-list {
-    padding: 0.75rem 1rem;
-    margin: 0.75rem 0;
-  }
-  
-  .markdown-list-item {
-    padding: 0.4rem 0 0.4rem 1.25rem;
-    margin: 0.4rem 0;
-  }
-  
-  .markdown-list-item::before {
-    left: 0;
-    top: 0.4rem;
-  }
-}
+  return formatAIText(analysisText)
+    // Formatage spécial pour les sections d'analyse
+    .replace(/^(ANALYSE|RECOMMANDATIONS|CONSEILS|CONCLUSION)\s*:/gmi, '<div class="formatted-analysis-section">$1</div>')
+    
+    // Formatage des sections numérotées
+    .replace(/^(\d+)\.\s*\*\*(.+?)\*\*/gm, '<div class="formatted-analysis-item">$1. $2</div>')
+    
+    // Formatage des points forts/faibles
+    .replace(/(Points? forts?|Atouts?|Forces?)/gi, '<span class="formatted-success">$1</span>')
+    .replace(/(Points? faibles?|Faiblesses?|Améliorations?)/gi, '<span class="formatted-warning">$1</span>')
+    .replace(/(Recommandations?|Conseils?)/gi, '<span class="formatted-accent">$1</span>');
+};
 
-/* === ANIMATIONS === */
-.markdown-renderer {
-  animation: fadeInUp 0.3s ease-out;
-}
+/**
+ * Composant React pour afficher du texte formaté
+ * @param {Object} props - Props du composant
+ * @param {string} props.text - Texte à formater
+ * @param {string} props.type - Type de formatage (general, letter, analysis)
+ * @param {Object} props.style - Styles additionnels
+ * @returns {JSX.Element} - Composant avec texte formaté
+ */
+export const FormattedText = ({ text, type = 'general', style = {} }) => {
+  const formatText = () => {
+    switch (type) {
+      case 'letter':
+        return formatCoverLetter(text);
+      case 'analysis':
+        return formatAnalysisText(text);
+      default:
+        return formatAIText(text);
+    }
+  };
 
-.markdown-list-item {
-  animation: slideInLeft 0.2s ease-out;
-  animation-fill-mode: both;
-}
+  return (
+    <div
+      className={`formatted-root${type === 'letter' ? ' formatted-letter-root' : ''}`}
+      style={style}
+      dangerouslySetInnerHTML={{ __html: formatText() }}
+    />
+  );
+};
 
-.markdown-list-item:nth-child(1) { animation-delay: 0.1s; }
-.markdown-list-item:nth-child(2) { animation-delay: 0.15s; }
-.markdown-list-item:nth-child(3) { animation-delay: 0.2s; }
-.markdown-list-item:nth-child(4) { animation-delay: 0.25s; }
-.markdown-list-item:nth-child(5) { animation-delay: 0.3s; }
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* === THÈMES DE COULEUR === */
-.markdown-renderer.theme-matching {
-  border-color: #0ea5e9;
-  box-shadow: 0 4px 6px rgba(14, 165, 233, 0.1);
-}
-
-.markdown-renderer.theme-cover-letter {
-  border-color: #f59e0b;
-  box-shadow: 0 4px 6px rgba(245, 158, 11, 0.1);
-}
-
-.markdown-renderer.theme-interview {
-  border-color: #10b981;
-  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.1);
-}
-
-.markdown-renderer.theme-reconversion {
-  border-color: #8b5cf6;
-  box-shadow: 0 4px 6px rgba(139, 92, 246, 0.1);
-}
+export default FormattedText;
