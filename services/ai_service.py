@@ -29,7 +29,7 @@ def chat_avec_ia(message: str, context: Optional[str] = None) -> str:
             
             "entretien": "🎤 **Préparation d'entretien**\n\n**Questions probables :**\n- Parlez-moi de vous\n- Pourquoi ce poste vous intéresse ?\n- Quelles sont vos forces/faiblesses ?\n- Où vous voyez-vous dans 5 ans ?\n\n**Technique STAR :**\nPour répondre aux questions comportementales :\n- **S**ituation\n- **T**âche\n- **A**ction\n- **R**ésultat\n\n**Questions à poser :**\n- Quels sont les défis du poste ?\n- Comment mesurez-vous le succès ?\n- Quelle est la culture d'équipe ?",
             
-            "pitch": "🎯 **Votre pitch professionnel**\n\n**Structure en 30 secondes :**\n1. Qui vous êtes (fonction actuelle)\n2. Votre expertise clé\n3. Votre valeur ajoutée\n4. Votre objectif\n\n**Exemple :**\n*'Je suis [fonction] avec [X années] d'expérience en [domaine]. Ma force ? [compétence clé qui différencie]. J'ai notamment [résultat concret]. Je cherche maintenant à [objectif] dans une entreprise comme la vôtre.'*\n\n**Conseils :**\n- Adaptez selon votre interlocuteur\n- Pratiquez pour être naturel\n- Préparez 3 versions : 30s, 1min, 2min",
+            # Prompt pitch supprimé - maintenant géré par ai_service_prompts.json
             
             # Service ATS supprimé - maintenant géré par ai_service_prompts.json
             # Service compatibilité gardé - logique métier spéciale avec graphiques
