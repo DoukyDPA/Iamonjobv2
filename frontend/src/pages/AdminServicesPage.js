@@ -32,7 +32,7 @@ const AdminServicesPage = () => {
   const loadServicesData = async () => {
     try {
       // Récupérer le token d'authentification
-      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       
       if (!token) {
         toast.error('Token d\'authentification manquant');
@@ -67,10 +67,21 @@ const AdminServicesPage = () => {
   // Changer la visibilité d'un service
   const toggleVisibility = async (serviceId) => {
     try {
+      // Récupérer le token d'authentification
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Token d\'authentification manquant');
+        return;
+      }
+      
       const currentVisibility = services[serviceId].visible;
       const response = await fetch(`/api/admin/services/${serviceId}/visibility`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ visible: !currentVisibility })
       });
 
@@ -90,12 +101,23 @@ const AdminServicesPage = () => {
   // Mettre un service en avant
   const setFeatured = async (serviceId) => {
     try {
+      // Récupérer le token d'authentification
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Token d\'authentification manquant');
+        return;
+      }
+      
       const featuredTitle = prompt('Titre personnalisé pour la mise en avant:');
       if (!featuredTitle) return;
 
       const response = await fetch(`/api/admin/services/${serviceId}/feature`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ 
           featured_title: featuredTitle,
           duration_days: 30 
@@ -116,8 +138,20 @@ const AdminServicesPage = () => {
   // Supprimer la mise en avant
   const clearFeatured = async () => {
     try {
+      // Récupérer le token d'authentification
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Token d\'authentification manquant');
+        return;
+      }
+      
       const response = await fetch('/api/admin/services/featured', {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (response.ok) {
@@ -134,9 +168,20 @@ const AdminServicesPage = () => {
   // Ajouter un nouveau service
   const addService = async () => {
     try {
+      // Récupérer le token d'authentification
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Token d\'authentification manquant');
+        return;
+      }
+      
       const response = await fetch('/api/admin/services', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(newService)
       });
 
@@ -161,7 +206,7 @@ const AdminServicesPage = () => {
     setEditingService(serviceId);
     try {
       // Récupérer le token d'authentification
-      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       
       if (!token) {
         toast.error('Token d\'authentification manquant');
@@ -191,7 +236,7 @@ const AdminServicesPage = () => {
   const savePrompt = async () => {
     try {
       // Récupérer le token d'authentification
-      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       
       if (!token) {
         toast.error('Token d\'authentification manquant');
@@ -210,6 +255,7 @@ const AdminServicesPage = () => {
       const data = await res.json();
       if (res.ok && data.success) {
         toast.success(data.message || 'Prompt mis à jour');
+        setEditingPrompt('');
         setEditingService(null);
       } else {
         toast.error(data.error || 'Erreur lors de la sauvegarde');
