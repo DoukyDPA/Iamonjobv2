@@ -6,12 +6,15 @@ from datetime import datetime
 from services.stateless_manager import StatelessDataManager
 
 # Import sécurisé avec fallback
-try:
-    from services.ai_service_prompts import execute_ai_service
-    HAS_AI_SERVICE = True
-except ImportError:
-    HAS_AI_SERVICE = False
-    def execute_ai_service_fallback(*args, **kwargs):
+HAS_AI_SERVICE = True  # Toujours True, import différé
+
+def execute_ai_service(*args, **kwargs):
+    """Import différé pour éviter le circular import"""
+    try:
+        from services.ai_service_prompts import execute_ai_service as real_execute_ai_service
+        return real_execute_ai_service(*args, **kwargs)
+    except ImportError as e:
+        print(f"❌ Erreur import execute_ai_service: {e}")
         return "Service IA temporairement indisponible"
 
 # Configuration des services (équivalent JS en Python)
