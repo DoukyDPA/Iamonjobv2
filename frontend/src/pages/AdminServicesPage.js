@@ -31,13 +31,30 @@ const AdminServicesPage = () => {
 
   const loadServicesData = async () => {
     try {
-      const response = await fetch('/api/admin/services');
+      // Récupérer le token d'authentification
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      
+      if (!token) {
+        toast.error('Token d\'authentification manquant');
+        setLoading(false);
+        return;
+      }
+      
+      const response = await fetch('/api/admin/services', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
       const data = await response.json();
       
       if (data.success) {
         setServices(data.services);
         setThemes(data.themes);
         setFeaturedService(data.featured);
+      } else {
+        toast.error(data.error || 'Erreur lors du chargement des services');
       }
     } catch (error) {
       console.error('Erreur chargement services:', error);
@@ -143,13 +160,27 @@ const AdminServicesPage = () => {
   const editPrompt = async (serviceId) => {
     setEditingService(serviceId);
     try {
-      const res = await fetch(`/api/admin/prompts/${serviceId}`);
+      // Récupérer le token d'authentification
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      
+      if (!token) {
+        toast.error('Token d\'authentification manquant');
+        return;
+      }
+      
+      const res = await fetch(`/api/admin/prompts/${serviceId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
       const data = await res.json();
       if (data.success) {
         setEditingPrompt(data.prompt);
       } else {
         setEditingPrompt('');
-        toast.error('Erreur lors du chargement du prompt');
+        toast.error(data.error || 'Erreur lors du chargement du prompt');
       }
     } catch (err) {
       console.error('Erreur chargement prompt:', err);
@@ -159,16 +190,29 @@ const AdminServicesPage = () => {
 
   const savePrompt = async () => {
     try {
+      // Récupérer le token d'authentification
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      
+      if (!token) {
+        toast.error('Token d\'authentification manquant');
+        return;
+      }
+      
       const res = await fetch(`/api/admin/prompts/${editingService}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ prompt: editingPrompt })
       });
-      if (res.ok) {
-        toast.success('Prompt mis à jour');
+      
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(data.message || 'Prompt mis à jour');
         setEditingService(null);
       } else {
-        toast.error('Erreur lors de la sauvegarde');
+        toast.error(data.error || 'Erreur lors de la sauvegarde');
       }
     } catch (err) {
       console.error('Erreur sauvegarde prompt:', err);
