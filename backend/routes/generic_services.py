@@ -155,11 +155,33 @@ def handle_generic_service(service_id, request):
         config = SERVICES_CONFIG[service_id]
         print(f"🔍 === DEBUG {config['title'].upper()} ===")
         
-        # Récupérer les données utilisateur
-        user_data = StatelessDataManager.get_user_data()
+        # ✅ CORRIGÉ : Récupérer les données utilisateur avec individualisation
+        user_email = None
+        try:
+            # Récupérer l'email de l'utilisateur connecté depuis le token JWT
+            auth_header = request.headers.get('Authorization')
+            if auth_header and auth_header.startswith('Bearer '):
+                token = auth_header.split(' ')[1]
+                # Décoder le token pour récupérer l'email
+                import jwt
+                from config.app_config import JWT_SECRET_KEY
+                payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=['HS256'])
+                user_email = payload.get('email')
+        except Exception as e:
+            print(f"⚠️ Erreur récupération email utilisateur: {e}")
+        
+        # Utiliser StatelessDataManager avec individualisation si possible
+        if user_email:
+            user_data = StatelessDataManager.get_user_data_by_email(user_email)
+            print(f"👤 Individualisation: Service {service_id} pour {user_email}")
+        else:
+            user_data = StatelessDataManager.get_user_data()
+            print(f"⚠️ Pas d'individualisation pour {service_id}")
+        
         documents = user_data.get('documents', {})
         
         print(f"Documents disponibles: {list(documents.keys())}")
+        print(f"Documents détaillés: {documents}")
         
         # Récupérer les documents selon la configuration
         cv_data = documents.get('cv', {}) if config['requires_cv'] else {}
