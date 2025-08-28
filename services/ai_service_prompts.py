@@ -4,21 +4,8 @@
 # Dictionnaire vide qui sera rempli depuis la base de données ou le JSON
 AI_PROMPTS = {}
 
-# Initialisation automatique au chargement du module
-print("🔄 Initialisation automatique des prompts...")
-try:
-    # Charger directement depuis le JSON pour éviter l'import circulaire
-    import json
-    import os
-    
-    prompts_file = os.path.join(os.path.dirname(__file__), 'ai_service_prompts.json')
-    if os.path.exists(prompts_file):
-        with open(prompts_file, 'r', encoding='utf-8') as f:
-            prompts = json.load(f)
-            AI_PROMPTS.update(prompts)
-            print(f"✅ {len(prompts)} prompts chargés automatiquement")
-except Exception as e:
-    print(f"⚠️ Erreur lors de l'initialisation automatique: {e}")
+# Dictionnaire vide qui sera rempli depuis la base de données ou le JSON
+AI_PROMPTS = {}
 
 def execute_ai_service(service_id, cv_content, job_content="", questionnaire_content="", user_notes=""):
     """Fonction générique pour exécuter un service IA selon l'identifiant"""
@@ -45,11 +32,11 @@ def execute_ai_service(service_id, cv_content, job_content="", questionnaire_con
                 f"\n\nCONTEXTE PERSONNEL:\n{questionnaire_content}" if questionnaire_content else "")
             
             # Appeler l'API avec le prompt personnalisé (sans contexte séparé)
-            return call_mistral_api(prompt)
+            return call_mistral_api(prompt, service_id=service_id)
         else:
             # Fallback pour les services non configurés
             prompt = f"SERVICE: {service_id}\nCV:\n{cv_content}\n\nOFFRE:\n{job_content}\n\nQUESTIONNAIRE:\n{questionnaire_content}\n\nNOTES:\n{user_notes}"
-            return call_mistral_api(prompt)
+            return call_mistral_api(prompt, service_id=service_id)
             
     except ImportError:
         return f"Service IA temporairement indisponible pour {service_id}"
