@@ -138,8 +138,20 @@ def _fallback_response(prompt: str) -> str:
     
     prompt_lower = prompt.lower()
     
-    # Priorité 1 : Services de compatibilité/matching (plus spécifique)
-    if ("compatibilit" in prompt_lower or "matching" in prompt_lower or 
+    # Priorité 1 : Services ATS (très spécifique - AVANT CV générique)
+    if ("ats" in prompt_lower or "optimisation" in prompt_lower) and ("cv" in prompt_lower or "curriculum" in prompt_lower):
+        return """🎯 **Optimisation ATS** (Service temporairement indisponible)
+
+L'optimisation ATS de votre CV nécessite une configuration API.
+
+💡 **Pour obtenir une optimisation complète :**
+- Contactez l'administrateur pour configurer l'API Mistral
+- Votre CV a été enregistré et sera optimisé dès que le service sera disponible
+
+*Fonctionnalité temporairement désactivée.*"""
+
+    # Priorité 2 : Services de compatibilité/matching
+    elif ("compatibilit" in prompt_lower or "matching" in prompt_lower or 
         ("offre" in prompt_lower and "emploi" in prompt_lower)):
         return """🎯 **Analyse de compatibilité** (Service temporairement indisponible)
 
@@ -151,7 +163,7 @@ L'analyse de compatibilité nécessite une configuration API.
 
 *Fonctionnalité temporairement désactivée.*"""
 
-    # Priorité 2 : Services de lettre de motivation
+    # Priorité 3 : Services de lettre de motivation
     elif ("lettre" in prompt_lower or "motivation" in prompt_lower):
         return """✉️ **Génération de lettre de motivation** (Service temporairement indisponible)
 
@@ -163,7 +175,7 @@ La génération de lettre de motivation nécessite une configuration API.
 
 *Fonctionnalité temporairement désactivée.*"""
 
-    # Priorité 3 : Services d'entretien
+    # Priorité 4 : Services d'entretien
     elif ("entretien" in prompt_lower or "interview" in prompt_lower):
         return """🎤 **Préparation à l'entretien** (Service temporairement indisponible)
 
@@ -175,7 +187,7 @@ La préparation à l'entretien nécessite une configuration API.
 
 *Fonctionnalité temporairement désactivée.*"""
 
-    # Priorité 4 : Services de CV (moins spécifique)
+    # Priorité 5 : Services de CV génériques (moins spécifique)
     elif "cv" in prompt_lower or "curriculum" in prompt_lower:
         return """📄 **Analyse de CV** (Service temporairement indisponible)
 
