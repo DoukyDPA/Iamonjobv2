@@ -666,19 +666,6 @@ def execute_ai_service(service_id, cv_content, job_content="", questionnaire_con
             service_config = AI_PROMPTS[service_id]
             prompt_template = service_config["prompt"]
             
-            # Préparer le contexte
-            context_parts = []
-            if cv_content:
-                context_parts.append(f"=== CV DU CANDIDAT ===\n{cv_content}")
-            if job_content:
-                context_parts.append(f"=== OFFRE D'EMPLOI ===\n{job_content}")
-            if questionnaire_content:
-                context_parts.append(f"=== PROFIL PERSONNEL ===\n{questionnaire_content}")
-            if user_notes:
-                context_parts.append(f"=== NOTES SPÉCIFIQUES ===\n{user_notes}")
-            
-            context = "\n\n".join(context_parts)
-            
             # Remplacer les variables de contexte dans le prompt
             prompt = prompt_template.replace("{cv_content}", cv_content or "CV non disponible")
             prompt = prompt.replace("{job_content}", job_content or "Offre d'emploi non disponible")
@@ -693,8 +680,8 @@ def execute_ai_service(service_id, cv_content, job_content="", questionnaire_con
             prompt = prompt.replace("{questionnaire_context}", 
                 f"\n\nCONTEXTE PERSONNEL:\n{questionnaire_content}" if questionnaire_content else "")
             
-            # Appeler l'API avec le prompt personnalisé
-            return call_mistral_api(prompt, context)
+            # Appeler l'API avec le prompt personnalisé (sans contexte séparé)
+            return call_mistral_api(prompt)
         else:
             # Fallback pour les services non configurés
             prompt = f"SERVICE: {service_id}\nCV:\n{cv_content}\n\nOFFRE:\n{job_content}\n\nQUESTIONNAIRE:\n{questionnaire_content}\n\nNOTES:\n{user_notes}"
