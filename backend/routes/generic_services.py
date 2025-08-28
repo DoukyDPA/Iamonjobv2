@@ -188,6 +188,15 @@ def handle_generic_service(service_id, request):
         job_data = documents.get('offre_emploi', {}) if config['requires_job'] else {}
         questionnaire_data = documents.get('questionnaire', {}) if config['requires_questionnaire'] else {}
         
+        # Debug détaillé des données récupérées
+        print(f"🔍 Debug des données récupérées:")
+        print(f"   CV data: {cv_data}")
+        print(f"   Job data: {job_data}")
+        print(f"   Questionnaire data: {questionnaire_data}")
+        print(f"   CV content: '{cv_data.get('content', '')[:100] if cv_data.get('content') else 'VIDE'}...'")
+        print(f"   Job content: '{job_data.get('content', '')[:100] if job_data.get('content') else 'VIDE'}...'")
+        print(f"   Questionnaire content: '{questionnaire_data.get('content', '')[:100] if questionnaire_data.get('content') else 'VIDE'}...'")
+        
         # Vérifications des documents obligatoires
         if config['requires_cv'] and not cv_data.get('content'):
             return jsonify({
