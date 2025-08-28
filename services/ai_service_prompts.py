@@ -679,8 +679,14 @@ def execute_ai_service(service_id, cv_content, job_content="", questionnaire_con
             
             context = "\n\n".join(context_parts)
             
+            # Remplacer les variables de contexte dans le prompt
+            prompt = prompt_template.replace("{cv_content}", cv_content or "CV non disponible")
+            prompt = prompt.replace("{job_content}", job_content or "Offre d'emploi non disponible")
+            prompt = prompt.replace("{questionnaire_content}", questionnaire_content or "Questionnaire non disponible")
+            prompt = prompt.replace("{user_notes}", user_notes or "")
+            
             # Remplacer les placeholders dans le prompt
-            prompt = prompt_template.replace("{questionnaire_instruction}", 
+            prompt = prompt.replace("{questionnaire_instruction}", 
                 "Analysez le profil personnel fourni pour personnaliser l'analyse." if questionnaire_content else 
                 "Analysez le CV et l'offre d'emploi fournis.")
             
