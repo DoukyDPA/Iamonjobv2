@@ -9,7 +9,7 @@ from typing import Optional
 # (aucun import global de execute_ai_service ou AI_PROMPTS)
 # Si besoin, fais l'import local dans la fonction concernée.
 
-def call_mistral_api(prompt: str, context: Optional[str] = None) -> str:
+def call_mistral_api(prompt: str, context: Optional[str] = None, service_id: str = None) -> str:
     """
     Appelle l'API Mistral pour obtenir une réponse IA avec tracking des tokens
     
@@ -24,7 +24,7 @@ def call_mistral_api(prompt: str, context: Optional[str] = None) -> str:
         mistral_api_key = os.environ.get("MISTRAL_API_KEY")
         
         if not mistral_api_key:
-            return _fallback_response(prompt)
+            return _fallback_response(prompt, service_id=service_id)
         
         # Construction du prompt complet
         full_prompt = _build_prompt(prompt, context)
@@ -133,14 +133,30 @@ Analyse le contexte fourni et réponds de manière détaillée et structurée.""
     else:
         return prompt
 
-def _fallback_response(prompt: str) -> str:
+def _fallback_response(prompt: str, service_id: str = None) -> str:
     """Réponse de fallback si l'API Mistral n'est pas disponible"""
     
     prompt_lower = prompt.lower()
     
-    # Priorité 1 : Services ATS (très spécifique - AVANT CV générique)
-    if ("ats" in prompt_lower or "optimisation" in prompt_lower) and ("cv" in prompt_lower or "curriculum" in prompt_lower):
-        return """🎯 **Optimisation ATS** (Service temporairement indisponible)
+    # Priorité 0 : Services identifiés par leur ID (plus spécifique)
+    if service_id:
+        service_id_lower = service_id.lower()
+        
+        # Services de lettre de motivation
+        if "cover_letter" in service_id_lower or "letter" in service_id_lower:
+            return """✉️ **Génération de lettre de motivation** (Service temporairement indisponible)
+
+La génération de lettre de motivation nécessite une configuration API.
+
+💡 **Pour obtenir une lettre complète :**
+- Contactez l'administrateur pour configurer l'API Mistral
+- Vos documents ont été enregistrés et seront utilisés dès que le service sera disponible
+
+*Fonctionnalité temporairement désactivée.*"""
+        
+        # Services ATS
+        elif "ats" in service_id_lower:
+            return """🎯 **Optimisation ATS** (Service temporairement indisponible)
 
 L'optimisation ATS de votre CV nécessite une configuration API.
 
@@ -149,9 +165,9 @@ L'optimisation ATS de votre CV nécessite une configuration API.
 - Votre CV a été enregistré et sera optimisé dès que le service sera disponible
 
 *Fonctionnalité temporairement désactivée.*"""
-
-    # Priorité 2 : Services de compatibilité/matching
-    elif ("compatibilit" in prompt_lower or "matching" in prompt_lower or 
+    
+    # Priorité 1 : Services de compatibilité/matching (plus spécifique)
+    if ("compatibilit" in prompt_lower or "matching" in prompt_lower or 
         ("offre" in prompt_lower and "emploi" in prompt_lower)):
         return """🎯 **Analyse de compatibilité** (Service temporairement indisponible)
 
@@ -163,8 +179,8 @@ L'analyse de compatibilité nécessite une configuration API.
 
 *Fonctionnalité temporairement désactivée.*"""
 
-    # Priorité 3 : Services de lettre de motivation
-    elif ("lettre" in prompt_lower or "motivation" in prompt_lower):
+    # Priorité 2 : Services de lettre de motivation (AVANT CV générique)
+    elif ("lettre" in prompt_lower or "motivation" in prompt_lower) or "cover_letter" in prompt_lower:
         return """✉️ **Génération de lettre de motivation** (Service temporairement indisponible)
 
 La génération de lettre de motivation nécessite une configuration API.
@@ -175,7 +191,7 @@ La génération de lettre de motivation nécessite une configuration API.
 
 *Fonctionnalité temporairement désactivée.*"""
 
-    # Priorité 4 : Services d'entretien
+    # Priorité 3 : Services d'entretien
     elif ("entretien" in prompt_lower or "interview" in prompt_lower):
         return """🎤 **Préparation à l'entretien** (Service temporairement indisponible)
 
@@ -187,7 +203,7 @@ La préparation à l'entretien nécessite une configuration API.
 
 *Fonctionnalité temporairement désactivée.*"""
 
-    # Priorité 5 : Services de CV génériques (moins spécifique)
+    # Priorité 4 : Services de CV (moins spécifique)
     elif "cv" in prompt_lower or "curriculum" in prompt_lower:
         return """📄 **Analyse de CV** (Service temporairement indisponible)
 
