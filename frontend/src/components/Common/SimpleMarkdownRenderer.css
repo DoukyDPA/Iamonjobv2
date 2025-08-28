@@ -69,15 +69,19 @@
   margin: 1rem 0;
   padding-left: 0;
   list-style: none;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 4px solid #0a6b79;
+  padding: 1rem 1.5rem;
 }
 
 .markdown-list-item {
   position: relative;
   margin: 0.5rem 0;
-  padding: 0.75rem 1rem 0.75rem 2.5rem;
-  background: #f8fafc;
-  border-radius: 8px;
-  border-left: 3px solid #0a6b79;
+  padding: 0.5rem 0 0.5rem 1.5rem;
+  background: transparent;
+  border-radius: 0;
+  border-left: none;
   transition: all 0.2s ease;
   line-height: 1.5;
   color: #374151;
@@ -94,11 +98,11 @@
 .markdown-list-item::before {
   content: '•';
   position: absolute;
-  left: 1rem;
-  top: 0.75rem;
+  left: 0;
+  top: 0.5rem;
   color: #0a6b79;
   font-weight: bold;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   line-height: 1;
 }
 
@@ -120,14 +124,19 @@
     margin: 0.75rem 0;
   }
   
+  .markdown-list {
+    padding: 0.75rem 1rem;
+    margin: 0.75rem 0;
+  }
+  
   .markdown-list-item {
-    padding: 0.5rem 0.75rem 0.5rem 2rem;
+    padding: 0.4rem 0 0.4rem 1.25rem;
     margin: 0.4rem 0;
   }
   
   .markdown-list-item::before {
-    left: 0.75rem;
-    top: 0.5rem;
+    left: 0;
+    top: 0.4rem;
   }
 }
 
