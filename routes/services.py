@@ -208,41 +208,49 @@ def cover_letter_generate():
     return action_cover_letter_generate()
 
 @services_bp.route('/api/interview/prepare', methods=['POST'])
+@verify_jwt_token
 def interview_prepare():
     """Préparation entretien"""
     return handle_service_request('interview_prep')
 
 @services_bp.route('/api/pitch/generate', methods=['POST'])
+@verify_jwt_token
 def pitch_generate():
     """Génération pitch professionnel"""
     return handle_service_request('professional_pitch')
 
 @services_bp.route('/api/presentation/generate', methods=['POST'])
+@verify_jwt_token
 def presentation_generate():
     """Génération slides présentation"""
     return handle_service_request('presentation_slides')
 
 @services_bp.route('/api/reconversion/analyze', methods=['POST'])
+@verify_jwt_token
 def reconversion_analyze():
     """Analyse reconversion"""
     return handle_service_request('reconversion_analysis')
 
 @services_bp.route('/api/career/orientation', methods=['POST'])
+@verify_jwt_token
 def career_orientation():
     """Orientation métier"""
     return handle_service_request('career_transition')
 
 @services_bp.route('/api/industry/orientation', methods=['POST'])
+@verify_jwt_token
 def industry_orientation():
     """Orientation industrie"""
     return handle_service_request('industry_orientation')
 
 @services_bp.route('/api/followup/generate', methods=['POST'])
+@verify_jwt_token
 def followup_generate():
     """Génération email de relance"""
     return handle_service_request('follow_up_email')
 
 @services_bp.route('/api/salary/prepare', methods=['POST'])
+@verify_jwt_token
 def salary_prepare():
     """Préparation négociation salaire"""
     return handle_service_request('salary_negotiation')
@@ -254,32 +262,12 @@ def handle_service_request(service_id):
         user_notes = data.get('notes', '')
         
         # ✅ CORRIGÉ : Utiliser l'utilisateur connecté pour l'individualisation
-        from backend.routes.api.auth_api import verify_jwt_token
-        from functools import wraps
+        # Maintenant que toutes les routes ont @verify_jwt_token, on a accès à request.current_user
+        user_email = request.current_user.email
+        print(f"👤 Individualisation: Service {service_id} pour {user_email}")
         
-        # Récupérer l'email de l'utilisateur connecté
-        user_email = None
-        try:
-            # Vérifier le token JWT pour récupérer l'utilisateur
-            from flask import request
-            auth_header = request.headers.get('Authorization')
-            if auth_header and auth_header.startswith('Bearer '):
-                token = auth_header.split(' ')[1]
-                # Décoder le token pour récupérer l'email
-                import jwt
-                from config.app_config import JWT_SECRET_KEY
-                payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=['HS256'])
-                user_email = payload.get('email')
-        except Exception as e:
-            print(f"⚠️ Erreur récupération email utilisateur: {e}")
-        
-        # Utiliser StatelessDataManager avec individualisation si possible
-        if user_email:
-            user_data = StatelessDataManager.get_user_data_by_email(user_email)
-            print(f"👤 Individualisation: Service {service_id} pour {user_email}")
-        else:
-            user_data = StatelessDataManager.get_user_data()
-            print(f"⚠️ Pas d'individualisation pour {service_id}")
+        # Utiliser StatelessDataManager avec individualisation
+        user_data = StatelessDataManager.get_user_data_by_email(user_email)
         
         documents = user_data.get('documents', {})
         
