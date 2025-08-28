@@ -372,8 +372,9 @@ except ImportError as e:
 # ====================================
 
 try:
-    from routes.services import services_bp
+    from routes.services import services_bp, register_services_routes
     app.register_blueprint(services_bp)
+    register_services_routes(app)  # Enregistre les routes manquantes (ATS, etc.)
     print("✅ Routes de services enregistrées")
 except ImportError as e:
     print(f"❌ Erreur import services_bp: {e}")
