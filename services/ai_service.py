@@ -20,14 +20,10 @@ def chat_avec_ia(message: str, context: Optional[str] = None) -> str:
         # Pour l'instant, retourner une réponse par défaut
         # TODO: Intégrer OpenAI ou Mistral API quand les clés seront configurées
         
+        # Tous les prompts codés en dur supprimés SAUF compatibilite (logique spéciale avec graphiques)
         response_templates = {
-            "analyser_cv": "✅ **Analyse de votre CV**\n\n**Points forts :**\n- Expérience diversifiée\n- Compétences techniques solides\n\n**Suggestions d'amélioration :**\n- Ajouter des chiffres et résultats concrets\n- Harmoniser la mise en forme\n- Mettre en avant les soft skills",
-            
-            "compatibilite": "🎯 **Analyse de compatibilité**\n\n**Score global : 78%**\n\n**Correspondances :**\n- ✅ Compétences techniques : 85%\n- ✅ Expérience requise : 75%\n- ⚠️ Formation : 70%\n\n**Recommandations :**\n- Mettez en avant votre expérience en gestion de projet\n- Ajoutez une certification dans le domaine\n- Préparez des exemples concrets pour l'entretien",
-            
-            "lettre_motivation": "📝 **Aide à la rédaction**\n\n**Structure recommandée :**\n\n1. **Accroche** : Référence à l'offre et votre motivation\n2. **Vous** : Vos compétences clés en lien avec le poste\n3. **Nous** : Ce que vous apportez à l'entreprise\n4. **Nous ensemble** : Votre projet commun\n\n**Conseils :**\n- Personnalisez selon l'entreprise\n- Utilisez des mots-clés de l'offre\n- Restez authentique et enthousiaste",
-            
-            "entretien": "🎤 **Préparation d'entretien**\n\n**Questions probables :**\n- Parlez-moi de vous\n- Pourquoi ce poste vous intéresse ?\n- Quelles sont vos forces/faiblesses ?\n- Où vous voyez-vous dans 5 ans ?\n\n**Technique STAR :**\nPour répondre aux questions comportementales :\n- **S**ituation\n- **T**âche\n- **A**ction\n- **R**ésultat\n\n**Questions à poser :**\n- Quels sont les défis du poste ?\n- Comment mesurez-vous le succès ?\n- Quelle est la culture d'équipe ?",
+            "compatibilite": "🎯 **Analyse de compatibilité**\n\n**Score global : 78%**\n\n**Correspondances :**\n- ✅ Compétences techniques : 85%\n- ✅ Expérience requise : 75%\n- ⚠️ Formation : 70%\n\n**Recommandations :**\n- Mettez en avant votre expérience en gestion de projet\n- Ajoutez une certification dans le domaine\n- Préparez des exemples concrets pour l'entretien"
+        }
             
             # Prompt pitch supprimé - maintenant géré par ai_service_prompts.json
             
