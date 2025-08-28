@@ -345,91 +345,32 @@ class ServicesManager:
 # Instance globale
 services_manager = ServicesManager()
 
-# === API ROUTES POUR L'ADMINISTRATION ===
+# === MÉTHODES UTILITAIRES POUR L'ADMIN ===
 
-def register_admin_routes(app):
-    """Enregistre les routes d'administration des services"""
-    from flask import jsonify, request
+def get_services_for_admin():
+    """Retourne la configuration des services pour l'admin"""
+    return {
+        "success": True,
+        "services": services_manager.services_config,
+        "themes": services_manager.get_services_by_theme(),
+        "featured": services_manager.get_featured_service()
+    }
 
-    @app.route('/api/admin/services', methods=['GET'])
-    def get_services_config():
-        """Liste tous les services avec leur configuration"""
-        return jsonify({
-            "success": True,
-            "services": services_manager.services_config,
-            "themes": services_manager.get_services_by_theme(),
-            "featured": services_manager.get_featured_service()
-        })
+def toggle_service_visibility_admin(service_id: str, visible: bool):
+    """Active/désactive un service (pour l'admin)"""
+    return services_manager.set_service_visibility(service_id, visible)
 
-    @app.route('/api/admin/services/<service_id>/visibility', methods=['POST'])
-    def toggle_service_visibility(service_id):
-        """Active/désactive un service"""
-        data = request.get_json()
-        visible = data.get('visible', True)
-        success = services_manager.set_service_visibility(service_id, visible)
-        return jsonify({"success": success, "service_id": service_id, "visible": visible})
+def set_featured_service_admin(service_id: str, featured_title: str = None, duration_days: int = 30):
+    """Met un service en avant (pour l'admin)"""
+    return services_manager.set_featured_service(service_id, featured_title, duration_days)
 
-    @app.route('/api/admin/services/<service_id>/feature', methods=['POST'])
-    def set_featured_service(service_id):
-        """Met un service en avant"""
-        data = request.get_json()
-        featured_title = data.get('featured_title')
-        duration_days = data.get('duration_days', 30)
-        success = services_manager.set_featured_service(service_id, featured_title, duration_days)
-        return jsonify({"success": success, "service_id": service_id, "featured": True})
+def clear_featured_service_admin():
+    """Retire la mise en avant (pour l'admin)"""
+    return services_manager.clear_featured_service()
 
-    @app.route('/api/admin/services/featured', methods=['DELETE'])
-    def clear_featured_service():
-        """Retire la mise en avant"""
-        success = services_manager.clear_featured_service()
-        return jsonify({"success": success, "featured": None})
-
-    @app.route('/api/admin/services', methods=['POST'])
-    def add_new_service():
-        """Ajoute un nouveau service"""
-        data = request.get_json()
-        success = services_manager.add_new_service(data)
-        return jsonify({"success": success, "service": data if success else None})
-
-    # === Gestion des prompts ===
-    from services.ai_service_prompts import AI_PROMPTS, get_prompt, update_prompt, reload_prompts_from_file
-
-    @app.route('/api/admin/prompts', methods=['GET'])
-    def list_prompts():
-        """Liste tous les prompts disponibles"""
-        return jsonify({"success": True, "prompts": AI_PROMPTS})
-
-    @app.route('/api/admin/prompts/<service_id>', methods=['GET', 'PUT'])
-    def handle_prompt(service_id):
-        """Récupère ou met à jour le prompt d'un service"""
-        if request.method == 'GET':
-            prompt_entry = get_prompt(service_id)
-            if prompt_entry:
-                # Retourner le texte du prompt, pas l'objet complet
-                prompt_text = prompt_entry.get("prompt", "")
-                return jsonify({"success": True, "prompt": prompt_text})
-            return jsonify({"success": False, "error": "Service inconnu"}), 404
-
-        data = request.get_json() or {}
-        new_prompt = data.get('prompt')
-        if new_prompt is None:
-            return jsonify({"success": False, "error": "Champ 'prompt' manquant"}), 400
-        
-        # Mettre à jour le prompt
-        if update_prompt(service_id, new_prompt):
-            return jsonify({
-                "success": True, 
-                "service_id": service_id, 
-                "prompt": new_prompt,
-                "message": "Prompt mis à jour et sauvegardé avec succès"
-            })
-        return jsonify({"success": False, "error": "Service inconnu"}), 404
-
-    @app.route('/api/admin/prompts/reload', methods=['POST'])
-    def reload_prompts():
-        """Recharge les prompts depuis le fichier"""
-        success = reload_prompts_from_file()
-        return jsonify({"success": success, "message": "Prompts rechargés" if success else "Erreur lors du rechargement"})
+def add_new_service_admin(service_config: dict):
+    """Ajoute un nouveau service (pour l'admin)"""
+    return services_manager.add_new_service(service_config)
 
 # Export de l'instance pour utilisation dans l'app
-__all__ = ['services_manager', 'register_admin_routes']
+__all__ = ['services_manager', 'get_services_for_admin', 'toggle_service_visibility_admin', 'set_featured_service_admin', 'clear_featured_service_admin', 'add_new_service_admin']
