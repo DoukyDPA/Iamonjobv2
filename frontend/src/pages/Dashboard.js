@@ -293,6 +293,11 @@ const Dashboard = () => {
           console.log('📊 État documentStatus.cv:', documentStatus.cv);
           console.log('📊 documentStatus.cv?.uploaded:', documentStatus.cv?.uploaded);
           console.log('📊 Type de docType:', docType);
+          
+          // ✅ CORRIGÉ : Attendre un délai pour éviter la race condition
+          console.log('⏳ Attente de 1 seconde pour synchronisation...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
           setCvAnalysisLoading(true);
           setCvAnalysisError(null);
           try {
@@ -322,6 +327,10 @@ const Dashboard = () => {
 
         // Déclencher l'analyse de compatibilité si une offre est chargée
         if (docType === 'offre_emploi' && documentStatus.cv?.uploaded) {
+          // ✅ CORRIGÉ : Attendre un délai pour éviter la race condition
+          console.log('⏳ Attente de 1 seconde pour synchronisation compatibilité...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
           setCompatLoading(true);
           setCompatError(null);
           try {
