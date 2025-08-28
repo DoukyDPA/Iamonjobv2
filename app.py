@@ -372,9 +372,8 @@ except ImportError as e:
 # ====================================
 
 try:
-    from routes.services import services_bp, register_services_routes
+    from routes.services import services_bp
     app.register_blueprint(services_bp)
-    register_services_routes(app)  # Enregistre les routes manquantes (ATS, etc.)
     print("✅ Routes de services enregistrées")
 except ImportError as e:
     print(f"❌ Erreur import services_bp: {e}")
@@ -487,6 +486,20 @@ def test_supabase_fix():
     Teste à la fois les partenaires (qui marchent) et les données utilisateur
     """
     from services.supabase_storage import SupabaseStorage
+    
+    try:
+        # Test de base
+        return jsonify({
+            "status": "success",
+            "message": "Test Supabase fix endpoint accessible",
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"Erreur lors du test: {str(e)}",
+            "timestamp": datetime.now().isoformat()
+        }), 500
 
 # Fonctions de compatibilité
 def get_session_data():
