@@ -1,0 +1,47 @@
+{
+  "analyze_cv": {
+    "id": "analyze_cv",
+    "title": "Analyse de CV",
+    "description": "Analyse approfondie du CV avec recommandations d'amélioration",
+    "prompt": "Vous êtes un expert en recrutement et en ressources humaines. Analysez ce CV de manière professionnelle et détaillée.\n\n=== INSTRUCTIONS ===\n1. Évaluez la structure et la présentation\n2. Identifiez les points forts et les axes d'amélioration\n3. Donnez des conseils concrets et actionnables\n4. Suggérez des améliorations spécifiques\n5. Évaluez l'adéquation avec le marché du travail actuel\n\n=== CV À ANALYSER ===\n{cv_content}\n\n=== ANALYSE DÉTAILLÉE ===\n",
+    "requires_cv": true,
+    "requires_job_offer": false,
+    "requires_questionnaire": false
+  },
+  "matching_cv_offre": {
+    "id": "matching_cv_offre",
+    "title": "Matching CV/Offre",
+    "description": "Évaluation de la compatibilité entre un CV et une offre d'emploi",
+    "prompt": "Vous êtes un expert en recrutement spécialisé dans l'évaluation de la compatibilité entre candidats et postes.\n\n=== INSTRUCTIONS ===\n1. Analysez la correspondance entre le profil et le poste\n2. Identifiez les points d'adéquation et les écarts\n3. Évaluez le niveau de compatibilité (pourcentage)\n4. Donnez des conseils pour améliorer la candidature\n5. Suggérez des éléments à mettre en avant\n\n=== CV ===\n{cv_content}\n\n=== OFFRE D'EMPLOI ===\n{job_content}\n\n=== ANALYSE DE COMPATIBILITÉ ===\n",
+    "requires_cv": true,
+    "requires_job_offer": true,
+    "requires_questionnaire": false
+  },
+  "cover_letter_generate": {
+    "id": "cover_letter_generate",
+    "title": "Génération de lettre de motivation",
+    "description": "Création d'une lettre de motivation personnalisée",
+    "prompt": "Vous êtes un expert en rédaction de lettres de motivation. Créez une lettre percutante et personnalisée.\n\n=== INSTRUCTIONS ===\n1. Structurez la lettre de manière professionnelle\n2. Personnalisez le contenu selon le CV et l'offre\n3. Mettez en avant les compétences pertinentes\n4. Adaptez le ton à l'entreprise et au poste\n5. Incluez des exemples concrets et des réalisations\n\n=== CV ===\n{cv_content}\n\n=== OFFRE D'EMPLOI ===\n{job_content}\n\n=== QUESTIONNAIRE ===\n{questionnaire_content}\n\n=== NOTES SPÉCIFIQUES ===\n{user_notes}\n\n=== LETTRE DE MOTIVATION ===\n",
+    "requires_cv": true,
+    "requires_job_offer": true,
+    "requires_questionnaire": true
+  },
+  "interview_prep": {
+    "id": "interview_prep",
+    "title": "Préparation à l'entretien",
+    "description": "Préparation complète pour un entretien d'embauche",
+    "prompt": "Vous êtes un coach en carrière spécialisé dans la préparation aux entretiens d'embauche.\n\n=== INSTRUCTIONS ===\n1. Analysez le profil et le poste pour identifier les points clés\n2. Préparez des réponses aux questions fréquentes\n3. Suggérez des questions à poser à l'employeur\n4. Donnez des conseils sur la présentation et l'attitude\n5. Identifiez les points d'amélioration potentiels\n\n=== CV ===\n{cv_content}\n\n=== OFFRE D'EMPLOI ===\n{job_content}\n\n=== PRÉPARATION À L'ENTRETIEN ===\n",
+    "requires_cv": true,
+    "requires_job_offer": true,
+    "requires_questionnaire": false
+  },
+  "professional_pitch": {
+    "id": "professional_pitch",
+    "title": "Pitch professionnel",
+    "description": "Création d'un pitch professionnel percutant",
+    "prompt": "Vous êtes un expert en communication professionnelle. Créez un pitch percutant et mémorable.\n\n=== INSTRUCTIONS ===\n1. Créez un pitch de 30 secondes maximum\n2. Mettez en avant la valeur ajoutée unique\n3. Adaptez le message à l'audience cible\n4. Incluez un appel à l'action clair\n5. Rendez le pitch mémorable et engageant\n\n=== CV ===\n{cv_content}\n\n=== QUESTIONNAIRE ===\n{questionnaire_content}\n\n=== NOTES SPÉCIFIQUES ===\n{user_notes}\n\n=== PITCH PROFESSIONNEL ===\n",
+    "requires_cv": true,
+    "requires_job_offer": false,
+    "requires_questionnaire": true
+  }
+}
