@@ -4,6 +4,7 @@
 from flask import Blueprint, request, jsonify, session
 from datetime import datetime
 from services.stateless_manager import StatelessDataManager
+from backend.routes.api.auth_api import verify_jwt_token
 
 # Import sécurisé avec fallback
 try:
@@ -377,12 +378,14 @@ generic_services_bp = Blueprint('generic_services', __name__)
 
 # === NOUVELLES ROUTES SANS CONFLIT ===
 @generic_services_bp.route('/api/actions/analyze-cv', methods=['POST'])
+@verify_jwt_token
 def analyze_cv_unified():
     """Route unifiée pour l'analyse CV via le système générique"""
     return handle_generic_service('analyze_cv', request)
 
 
 @generic_services_bp.route("/api/cv/ats-optimize", methods=["POST"])
+@verify_jwt_token
 def cv_ats_optimization_unified():
     """Route unifiée pour l'optimisation ATS"""
     return handle_generic_service("cv_ats_optimization", request)
