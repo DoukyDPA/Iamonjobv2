@@ -731,8 +731,15 @@ def reload_prompts_from_file():
         if os.path.exists(prompts_file):
             with open(prompts_file, 'r', encoding='utf-8') as f:
                 saved_prompts = json.load(f)
-                AI_PROMPTS.update(saved_prompts)
+                # Mettre à jour AI_PROMPTS avec les prompts sauvegardés
+                for service_id, prompt_data in saved_prompts.items():
+                    if service_id in AI_PROMPTS:
+                        AI_PROMPTS[service_id].update(prompt_data)
+                    else:
+                        AI_PROMPTS[service_id] = prompt_data
+                
                 print(f"✅ Prompts rechargés depuis le fichier: {len(saved_prompts)} services")
+                print(f"📁 Fichier source: {prompts_file}")
                 return True
         else:
             print("⚠️ Fichier de prompts non trouvé, utilisation des prompts par défaut")
@@ -745,30 +752,46 @@ def reload_prompts_from_file():
 
 def update_prompt(service_id, new_prompt):
     """Met à jour le contenu du prompt pour un service."""
-    if service_id in AI_PROMPTS:
-        AI_PROMPTS[service_id]["prompt"] = new_prompt
+    try:
+        import json
+        import os
         
-        # Sauvegarder sur le disque pour persistance
-        try:
-            import json
-            import os
+        # Chemin vers le fichier des prompts
+        prompts_file = os.path.join(os.path.dirname(__file__), 'ai_service_prompts.json')
+        
+        # Charger les prompts existants depuis le fichier
+        if os.path.exists(prompts_file):
+            with open(prompts_file, 'r', encoding='utf-8') as f:
+                saved_prompts = json.load(f)
+        else:
+            saved_prompts = {}
+        
+        # Mettre à jour le prompt
+        if service_id in AI_PROMPTS:
+            # Mettre à jour en mémoire
+            AI_PROMPTS[service_id]["prompt"] = new_prompt
             
-            # Chemin vers le fichier des prompts
-            prompts_file = os.path.join(os.path.dirname(__file__), 'ai_service_prompts.json')
+            # Mettre à jour dans le fichier
+            saved_prompts[service_id] = AI_PROMPTS[service_id]
             
             # Sauvegarder la configuration mise à jour
             with open(prompts_file, 'w', encoding='utf-8') as f:
-                json.dump(AI_PROMPTS, f, ensure_ascii=False, indent=2)
+                json.dump(saved_prompts, f, ensure_ascii=False, indent=2)
             
             print(f"✅ Prompt mis à jour et sauvegardé pour {service_id}")
+            print(f"📁 Sauvegardé dans: {prompts_file}")
             return True
+        else:
+            print(f"❌ Service {service_id} non trouvé dans AI_PROMPTS")
+            return False
             
-        except Exception as e:
-            print(f"⚠️ Erreur lors de la sauvegarde du prompt: {e}")
-            # Retourner True car la modification en mémoire a réussi
-            return True
-            
-    return False
+    except Exception as e:
+        print(f"❌ Erreur lors de la mise à jour du prompt: {e}")
+        return False
 
 print("✅ Prompts manquants ajoutés à AI_PROMPTS")
 print("✅ Fonctions de compatibilité créées")
+
+# Charger les prompts depuis le fichier au démarrage
+print("🔄 Chargement des prompts depuis le fichier...")
+reload_prompts_from_file()
