@@ -405,7 +405,9 @@ def register_admin_routes(app):
         if request.method == 'GET':
             prompt_entry = get_prompt(service_id)
             if prompt_entry:
-                return jsonify({"success": True, "prompt": prompt_entry.get("prompt", "")})
+                # Retourner le texte du prompt, pas l'objet complet
+                prompt_text = prompt_entry.get("prompt", "")
+                return jsonify({"success": True, "prompt": prompt_text})
             return jsonify({"success": False, "error": "Service inconnu"}), 404
 
         data = request.get_json() or {}
