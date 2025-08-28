@@ -31,7 +31,8 @@ def chat_avec_ia(message: str, context: Optional[str] = None) -> str:
             
             "pitch": "🎯 **Votre pitch professionnel**\n\n**Structure en 30 secondes :**\n1. Qui vous êtes (fonction actuelle)\n2. Votre expertise clé\n3. Votre valeur ajoutée\n4. Votre objectif\n\n**Exemple :**\n*'Je suis [fonction] avec [X années] d'expérience en [domaine]. Ma force ? [compétence clé qui différencie]. J'ai notamment [résultat concret]. Je cherche maintenant à [objectif] dans une entreprise comme la vôtre.'*\n\n**Conseils :**\n- Adaptez selon votre interlocuteur\n- Pratiquez pour être naturel\n- Préparez 3 versions : 30s, 1min, 2min",
             
-            "cv_ats_optimization": "🤖 **Optimisation de votre CV pour les ATS**\n\n1. **Identifier les mots-clés essentiels de l'offre** : compétences techniques, qualifications et terminologie sectorielle.\n2. **Évaluer la compatibilité ATS de votre CV** : structure, placement des mots-clés et format lisible par machine.\n3. **Proposer des améliorations concrètes** : reformulations adaptées, suggestions de structure et liste des mots-clés manquants."
+            # Service ATS supprimé - maintenant géré par ai_service_prompts.json
+            # Service compatibilité gardé - logique métier spéciale avec graphiques
         }
         
         # Détecter le type de demande
