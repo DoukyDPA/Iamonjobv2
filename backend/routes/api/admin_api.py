@@ -127,7 +127,25 @@ def update_service_theme(service_id):
                 logging.error(f"Erreur fallback ancien manager: {fallback_error}")
                 return jsonify({"error": "Aucun gestionnaire disponible"}), 500
         
-        return jsonify({"success": success, "service_id": service_id, "theme": theme})
+        if success:
+            # Récupérer les données mises à jour
+            try:
+                from backend.admin.supabase_services_manager import supabase_services_manager
+                updated_service = supabase_services_manager.get_all_services().get(service_id)
+                if updated_service:
+                    return jsonify({
+                        "success": True, 
+                        "service_id": service_id, 
+                        "theme": theme,
+                        "updated_service": updated_service
+                    })
+                else:
+                    return jsonify({"success": True, "service_id": service_id, "theme": theme})
+            except Exception as e:
+                logging.warning(f"Impossible de récupérer le service mis à jour: {e}")
+                return jsonify({"success": True, "service_id": service_id, "theme": theme})
+        else:
+            return jsonify({"success": False, "error": "Service non trouvé ou erreur de mise à jour"})
     except Exception as e:
         logging.error(f"Erreur lors du changement de thème: {e}")
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
@@ -166,7 +184,25 @@ def update_service_requirements(service_id):
                 logging.error(f"Erreur fallback ancien manager: {fallback_error}")
                 return jsonify({"error": "Aucun gestionnaire disponible"}), 500
         
-        return jsonify({"success": success, "service_id": service_id, "requirements": requirements})
+        if success:
+            # Récupérer les données mises à jour
+            try:
+                from backend.admin.supabase_services_manager import supabase_services_manager
+                updated_service = supabase_services_manager.get_all_services().get(service_id)
+                if updated_service:
+                    return jsonify({
+                        "success": True, 
+                        "service_id": service_id, 
+                        "requirements": requirements,
+                        "updated_service": updated_service
+                    })
+                else:
+                    return jsonify({"success": True, "service_id": service_id, "requirements": requirements})
+            except Exception as e:
+                logging.warning(f"Impossible de récupérer le service mis à jour: {e}")
+                return jsonify({"success": True, "service_id": service_id, "requirements": requirements})
+        else:
+            return jsonify({"success": False, "error": "Service non trouvé ou erreur de mise à jour"})
     except Exception as e:
         logging.error(f"Erreur lors de la mise à jour des exigences: {e}")
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
