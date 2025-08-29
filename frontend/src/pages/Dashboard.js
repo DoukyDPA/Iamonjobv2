@@ -35,6 +35,7 @@ import PartnerJobs from '../components/Partners/PartnerJobs';
 import SimpleMarkdownRenderer from '../components/Common/SimpleMarkdownRenderer';
 import MatchingAnalysis from '../components/Analysis/MatchingAnalysis';
 import ActionTile from '../components/Common/ActionTile';
+import ServicesGrid from '../components/Services/ServicesGrid';
 
 const ServiceCard = ({ title, description, icon, route, color = '#0a6b79', disabled = false, requiredDocs = [], documentStatus }) => {
   const navigate = useNavigate();
@@ -672,22 +673,7 @@ const Dashboard = () => {
         {activeTab === 'improve' && (
           <div className="revolutionary-tab-content">
             <h2 className="revolutionary-section-title">📈 Améliorer son CV</h2>
-            <div className="revolutionary-services-grid">
-              <ActionTile
-                title="Analyse de CV"
-                description="Obtenez une analyse complète de votre CV avec des recommandations précises pour l'optimiser et le rendre plus attractif."
-                icon={<FiTrendingUp />}
-                route="/analyze-cv"
-                color="#0a6b79"
-              />
-              <ActionTile
-                title="Optimiser pour les ATS"
-                description="Adaptez votre CV pour qu'il soit parfaitement interprété par les systèmes de suivi des candidatures."
-                icon={<FiCpu />}
-                route="/cv-ats-optimization"
-                color="#8b5cf6"
-              />
-            </div>
+            <ServicesGrid />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
               <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
@@ -704,29 +690,7 @@ const Dashboard = () => {
         {activeTab === 'apply' && (
           <div className="revolutionary-tab-content">
             <h2 className="revolutionary-section-title">📧 Candidater</h2>
-            <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
-              <ActionTile
-                title="Conseils lettre de motivation"
-                description="Recevez des conseils personnalisés pour structurer et rédiger une lettre de motivation percutante."
-                icon={<FiMail />}
-                route="/cover-letter-advice"
-                color="#0a6b79"
-              />
-              <ActionTile
-                title="Générer lettre de motivation"
-                description="Créez une lettre de motivation complète et personnalisée, prête à être envoyée avec votre candidature."
-                icon={<FiEdit3 />}
-                route="/cover-letter-generate"
-                color="#22c55e"
-              />
-              <ActionTile
-                title="Emails de relance"
-                description="Rédigez des emails de suivi professionnels pour relancer vos candidatures de manière efficace."
-                icon={<FiSend />}
-                route="/followup-generate"
-                color="#f59e0b"
-              />
-            </div>
+            <ServicesGrid />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
               <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
@@ -743,29 +707,7 @@ const Dashboard = () => {
         {activeTab === 'interview' && (
           <div className="revolutionary-tab-content">
             <h2 className="revolutionary-section-title">🎤 Préparer l'entretien</h2>
-            <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
-              <ActionTile
-                title="Pitch professionnel"
-                description="Développez un pitch percutant pour vous présenter efficacement en entretien ou en networking."
-                icon={<FiUsers />}
-                route="/professional-pitch"
-                color="#8b5cf6"
-              />
-              <ActionTile
-                title="Préparation entretien"
-                description="Préparez-vous aux questions d'entretien avec des réponses personnalisées et des conseils pratiques."
-                icon={<FiMic />}
-                route="/interview-prep"
-                color="#0a6b79"
-              />
-              <ActionTile
-                title="Négociation salariale"
-                description="Développez une stratégie de négociation salariale avec des arguments solides et des fourchettes de marché."
-                icon={<FiDollarSign />}
-                route="/salary-negotiation"
-                color="#22c55e"
-              />
-            </div>
+            <ServicesGrid />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
               <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
