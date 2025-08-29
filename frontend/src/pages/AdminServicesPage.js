@@ -365,6 +365,7 @@ const AdminServicesPage = () => {
     'evaluate_offer': '🎯 Évaluer une offre',
     'improve_cv': '📄 Améliorer mon CV', 
     'apply_jobs': '✉️ Candidater',
+    'interview_prep': '🎤 Préparer l\'entretien',
     'career_project': '🔄 Tout changer'
   };
 
