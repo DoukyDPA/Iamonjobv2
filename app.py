@@ -361,11 +361,10 @@ register_blueprints()
 
 # Enregistrer les routes admin des services
 try:
-    from backend.admin.services_manager import register_admin_routes
-    register_admin_routes(app)
-    print("✅ Routes admin des services enregistrées")
-except ImportError as e:
-    print(f"❌ Erreur import admin routes: {e}")
+    # Les routes admin sont déjà enregistrées via admin_api
+    print("✅ Routes admin déjà enregistrées via admin_api")
+except Exception as e:
+    print(f"❌ Erreur routes admin: {e}")
 
 # ====================================
 # ENREGISTREMENT DES ROUTES DE SERVICES
