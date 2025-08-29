@@ -206,6 +206,23 @@ class ServicesManager:
                 "slug": "career-transition"
             },
 
+            "salary_negotiation": {
+                "id": "salary_negotiation",
+                "title": "Négociation salariale",
+                "coach_advice": "Préparez-vous à négocier votre salaire avec des arguments concrets et une stratégie gagnante.",
+                "theme": "career_project",
+                "visible": True,
+                "featured": False,
+                "featured_until": None,
+                "featured_title": None,
+                "requires_cv": True,
+                "requires_job_offer": True,
+                "requires_questionnaire": True,
+                "difficulty": "intermediate",
+                "duration_minutes": 10,
+                "slug": "salary-negotiation"
+            },
+
             "industry_orientation": {
                 "id": "industry_orientation",
                 "title": "Et pourquoi pas un métier dans l'industrie ?",
