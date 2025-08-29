@@ -1,164 +1,200 @@
-import React from 'react';
-import './SimpleMarkdownRenderer.css';
+/* MARKDOWN RENDERER - RENDU PROFESSIONNEL ET ÉLÉGANT */
 
-const SimpleMarkdownRenderer = ({ content }) => {
-  if (!content) return null;
+.markdown-renderer {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.4;
+  color: #1f2937;
+  max-width: 100%;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+}
 
-  // Nettoyage intelligent du contenu
-  const cleanContent = preprocessContent(content);
-  
-  // Parsing intelligent basé sur la structure
-  const parsedContent = parseStructuredContent(cleanContent);
-  
-  return (
-    <div className="markdown-renderer">
-      {parsedContent}
-    </div>
-  );
-};
+/* === TITRES DE SECTION === */
+.markdown-section-header {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0a6b79;
+  margin: 2rem 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #0a6b79;
+  line-height: 1.3;
+}
 
-// Nettoyage intelligent du contenu
-const preprocessContent = (content) => {
-  let cleaned = content;
-  
-  // Supprimer les artefacts de markdown
-  cleaned = cleaned.replace(/```[\s\S]*?```/g, ''); // Blocs de code
-  cleaned = cleaned.replace(/`([^`]+)`/g, '$1'); // Code inline
-  cleaned = cleaned.replace(/\*\*([^*]+)\*\*/g, '$1'); // Bold
-  cleaned = cleaned.replace(/\*([^*]+)\*/g, '$1'); // Italic
-  
-  // Nettoyer les espaces multiples
-  cleaned = cleaned.replace(/\n\s*\n\s*\n/g, '\n\n'); // Max 2 sauts de ligne
-  cleaned = cleaned.replace(/[ \t]+/g, ' '); // Espaces multiples
-  
-  // Nettoyer les caractères spéciaux (GARDER les accents français !)
-  cleaned = cleaned.replace(/[^\w\s.,!?;:()[\]{}"'\-–—…àáâäãåāăąçćčđďèéêëēėęěğǵḧîïíīįìłḿńňñòóôöõøōőṕŕřśšşșťțùúûüũūűůųẃẍÿýžźżÀÁÂÄÃÅĀĂĄÇĆČĐĎÈÉÊËĒĖĘĚĞǴḦÎÏÍĪĮÌŁḾŃŇÑÒÓÔÖÕØŌŐṔŔŘŚŠŞȘŢȚÙÚÛÜŨŪŰŮŲẂẌŸÝŽŹŻ]/g, '');
-  
-  return cleaned.trim();
-};
+.markdown-section-header:first-child {
+  margin-top: 0;
+}
 
-// Parsing intelligent basé sur la structure
-const parseStructuredContent = (content) => {
-  const lines = content.split('\n').filter(line => line.trim());
-  const elements = [];
-  
-  let currentSection = null;
-  let currentList = null;
-  
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    
-    // Détection des titres de section
-    if (isSectionHeader(line)) {
-      if (currentList) {
-        elements.push(renderList(currentList));
-        currentList = null;
-      }
-      currentSection = createSectionHeader(line);
-      elements.push(currentSection);
-      continue;
-    }
-    
-    // Détection des listes
-    if (isListItem(line)) {
-      if (!currentList) {
-        currentList = [];
-      }
-      currentList.push(extractListItem(line));
-      continue;
-    }
-    
-    // Détection des exemples
-    if (isExample(line)) {
-      if (currentList) {
-        elements.push(renderList(currentList));
-        currentList = null;
-      }
-      elements.push(createExample(line));
-      continue;
-    }
-    
-    // Détection des instructions
-    if (isInstruction(line)) {
-      if (currentList) {
-        elements.push(renderList(currentList));
-        currentList = null;
-      }
-      elements.push(createInstruction(line));
-      continue;
-    }
-    
-    // Texte normal
-    if (currentList) {
-      elements.push(renderList(currentList));
-      currentList = null;
-    }
-    elements.push(createParagraph(line));
+/* === EXEMPLES === */
+.markdown-example {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #0ea5e9;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  font-weight: 600;
+  color: #0369a1;
+  box-shadow: 0 2px 4px rgba(14, 165, 233, 0.1);
+}
+
+/* === INSTRUCTIONS === */
+.markdown-instruction {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  font-weight: 600;
+  color: #92400e;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.1);
+}
+
+/* === PARAGRAPHES === */
+.markdown-paragraph {
+  margin: 0.75rem 0;
+  line-height: 1.4;
+  color: #374151;
+  font-size: 0.95rem;
+  text-align: justify;
+}
+
+.markdown-paragraph:first-child {
+  margin-top: 0;
+}
+
+/* === LISTES === */
+.markdown-list {
+  margin: 1rem 0;
+  padding-left: 0;
+  list-style: none;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 4px solid #0a6b79;
+  padding: 1rem 1.5rem;
+}
+
+.markdown-list-item {
+  position: relative;
+  margin: 0.25rem 0;
+  padding: 0.25rem 0 0.25rem 1.5rem;
+  background: transparent;
+  border-radius: 0;
+  border-left: none;
+  transition: all 0.2s ease;
+  line-height: 1.3;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.markdown-list-item:hover {
+  background: #f1f5f9;
+  border-left-color: #0891b2;
+  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgba(10, 107, 121, 0.1);
+}
+
+.markdown-list-item::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  top: 0.5rem;
+  color: #0a6b79;
+  font-weight: bold;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .markdown-renderer {
+    padding: 1.5rem;
+    border-radius: 8px;
   }
   
-  // Fermer la liste en cours
-  if (currentList) {
-    elements.push(renderList(currentList));
+  .markdown-section-header {
+    font-size: 1.1rem;
+    margin: 1.5rem 0 0.75rem 0;
   }
   
-  return elements;
-};
+  .markdown-example,
+  .markdown-instruction {
+    padding: 0.75rem 1rem;
+    margin: 0.75rem 0;
+  }
+  
+  .markdown-list {
+    padding: 0.75rem 1rem;
+    margin: 0.75rem 0;
+  }
+  
+  .markdown-list-item {
+    padding: 0.4rem 0 0.4rem 1.25rem;
+    margin: 0.4rem 0;
+  }
+  
+  .markdown-list-item::before {
+    left: 0;
+    top: 0.4rem;
+  }
+}
 
-// Détection intelligente des éléments
-const isSectionHeader = (line) => {
-  return /^\d+\.\s+[A-Z]/.test(line) || /^[A-Z][^.!?]*:$/.test(line);
-};
+/* === ANIMATIONS === */
+.markdown-renderer {
+  animation: fadeInUp 0.3s ease-out;
+}
 
-const isListItem = (line) => {
-  return /^[•·▪▫◦‣⁃]\s/.test(line) || /^[a-z]\)\s/.test(line) || /^-\s/.test(line);
-};
+.markdown-list-item {
+  animation: slideInLeft 0.2s ease-out;
+  animation-fill-mode: both;
+}
 
-const isExample = (line) => {
-  return /^Exemple\s*:/.test(line) || /^[A-Z][^.!?]*\s*:/.test(line);
-};
+.markdown-list-item:nth-child(1) { animation-delay: 0.1s; }
+.markdown-list-item:nth-child(2) { animation-delay: 0.15s; }
+.markdown-list-item:nth-child(3) { animation-delay: 0.2s; }
+.markdown-list-item:nth-child(4) { animation-delay: 0.25s; }
+.markdown-list-item:nth-child(5) { animation-delay: 0.3s; }
 
-const isInstruction = (line) => {
-  return /^Ajoutez\s/.test(line) || /^Rédigez\s/.test(line) || /^Préparez\s/.test(line);
-};
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-// Extraction des éléments
-const extractListItem = (line) => {
-  return line.replace(/^[•·▪▫◦‣⁃]\s/, '').replace(/^[a-z]\)\s/, '').replace(/^-\s/, '');
-};
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
 
-// Création des éléments de rendu
-const createSectionHeader = (line) => (
-  <h3 key={`header-${line}`} className="markdown-section-header">
-    {line}
-  </h3>
-);
+/* === THÈMES DE COULEUR === */
+.markdown-renderer.theme-matching {
+  border-color: #0ea5e9;
+  box-shadow: 0 4px 6px rgba(14, 165, 233, 0.1);
+}
 
-const createExample = (line) => (
-  <div key={`example-${line}`} className="markdown-example">
-    <strong>{line}</strong>
-  </div>
-);
+.markdown-renderer.theme-cover-letter {
+  border-color: #f59e0b;
+  box-shadow: 0 4px 6px rgba(245, 158, 11, 0.1);
+}
 
-const createInstruction = (line) => (
-  <div key={`instruction-${line}`} className="markdown-instruction">
-    {line}
-  </div>
-);
+.markdown-renderer.theme-interview {
+  border-color: #10b981;
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.1);
+}
 
-const createParagraph = (line) => (
-  <p key={`para-${line}`} className="markdown-paragraph">
-    {line}
-  </p>
-);
-
-const renderList = (items) => (
-  <ul key={`list-${items.join('')}`} className="markdown-list">
-    {items.map((item, index) => (
-      <li key={index} className="markdown-list-item">
-        {item}
-      </li>
-    ))}
-  </ul>
-);
-
-export default SimpleMarkdownRenderer;
+.markdown-renderer.theme-reconversion {
+  border-color: #8b5cf6;
+  box-shadow: 0 4px 6px rgba(139, 92, 246, 0.1);
+}
