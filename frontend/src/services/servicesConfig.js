@@ -309,8 +309,9 @@ export const getServicesByCategory = () => {
   const categories = {
     evaluate_offer: ['matching_cv_offre'],
     improve_cv: ['analyze_cv', 'cv_ats_optimization'],
-    apply_jobs: ['cover_letter_advice', 'cover_letter_generate', 'professional_pitch', 'interview_prep', 'follow_up_email'],
-    career_project: ['skills_analysis', 'reconversion_analysis', 'career_transition', 'salary_negotiation', 'industry_orientation']
+    apply_jobs: ['cover_letter_advice', 'cover_letter_generate', 'follow_up_email'],
+    interview_prep: ['professional_pitch', 'interview_prep', 'salary_negotiation'],
+    career_project: ['skills_analysis', 'reconversion_analysis', 'career_transition', 'industry_orientation']
   };
   
   const result = {};
