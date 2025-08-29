@@ -673,7 +673,7 @@ const Dashboard = () => {
         {activeTab === 'improve' && (
           <div className="revolutionary-tab-content">
             <h2 className="revolutionary-section-title">📈 Améliorer son CV</h2>
-            <ServicesGrid />
+            <ServicesGrid filterTheme="improve_cv" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
               <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
@@ -690,7 +690,7 @@ const Dashboard = () => {
         {activeTab === 'apply' && (
           <div className="revolutionary-tab-content">
             <h2 className="revolutionary-section-title">📧 Candidater</h2>
-            <ServicesGrid />
+            <ServicesGrid filterTheme="apply_jobs" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
               <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
@@ -707,7 +707,7 @@ const Dashboard = () => {
         {activeTab === 'interview' && (
           <div className="revolutionary-tab-content">
             <h2 className="revolutionary-section-title">🎤 Préparer l'entretien</h2>
-            <ServicesGrid />
+            <ServicesGrid filterTheme="interview_prep" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
               <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
@@ -725,29 +725,7 @@ const Dashboard = () => {
           <div className="revolutionary-tab-content">
             <h2 className="revolutionary-section-title">🔄 Tout changer</h2>
             <p className="revolutionary-section-description">Explorez de nouvelles opportunités de carrière</p>
-            <div className="revolutionary-services-grid">
-              <ActionTile
-                title="Analyse de reconversion"
-                description="Explorez une reconversion professionnelle avec une analyse détaillée de votre projet et un plan d'action personnalisé."
-                icon={<FiRefreshCw />}
-                route="/reconversion-analysis"
-                color="#8b5cf6"
-              />
-              <ActionTile
-                title="Vers quel métier aller ?"
-                description="Obtenez des suggestions de métiers adaptés à vos compétences et envies."
-                icon={<FiRefreshCw />}
-                route="/career-transition"
-                color="#f59e0b"
-              />
-              <ActionTile
-                title="Et pourquoi pas un métier dans l'industrie ?"
-                description="Découvrez les débouchés industriels correspondant à votre profil."
-                icon={<FiRefreshCw />}
-                route="/industry-orientation"
-                color="#0ea5e9"
-              />
-            </div>
+            <ServicesGrid filterTheme="career_project" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
               <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
