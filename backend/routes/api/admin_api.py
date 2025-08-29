@@ -105,20 +105,27 @@ def update_service_theme(service_id):
         if not theme:
             return jsonify({"error": "Thème manquant"}), 400
         
-        # Utiliser directement l'ancien manager (plus stable)
+        # Essayer d'abord le nouveau manager Supabase
         try:
-            from backend.admin.services_manager import services_manager
-            # Mettre à jour le thème dans l'ancien manager
-            if service_id in services_manager.services_config:
-                services_manager.services_config[service_id]['theme'] = theme
-                success = True
-                logging.info(f"Service {service_id} déplacé vers le thème {theme}")
+            from backend.admin.supabase_services_manager import update_service_theme_admin
+            success = update_service_theme_admin(service_id, theme)
+            if success:
+                logging.info(f"Service {service_id} déplacé vers le thème {theme} (Supabase)")
             else:
-                success = False
-                logging.warning(f"Service {service_id} non trouvé dans la configuration")
-        except Exception as e:
-            logging.error(f"Erreur mise à jour thème: {e}")
-            return jsonify({"error": f"Erreur: {str(e)}"}), 500
+                logging.warning(f"Service {service_id} non trouvé ou erreur Supabase")
+        except ImportError:
+            # Fallback vers l'ancien manager
+            try:
+                from backend.admin.services_manager import services_manager
+                if service_id in services_manager.services_config:
+                    services_manager.services_config[service_id]['theme'] = theme
+                    success = True
+                    logging.info(f"Service {service_id} déplacé vers le thème {theme} (ancien manager)")
+                else:
+                    success = False
+            except Exception as fallback_error:
+                logging.error(f"Erreur fallback ancien manager: {fallback_error}")
+                return jsonify({"error": "Aucun gestionnaire disponible"}), 500
         
         return jsonify({"success": success, "service_id": service_id, "theme": theme})
     except Exception as e:
@@ -137,20 +144,27 @@ def update_service_requirements(service_id):
             'requires_questionnaire': data.get('requires_questionnaire', False)
         }
         
-        # Utiliser directement l'ancien manager (plus stable)
+        # Essayer d'abord le nouveau manager Supabase
         try:
-            from backend.admin.services_manager import services_manager
-            # Mettre à jour les exigences dans l'ancien manager
-            if service_id in services_manager.services_config:
-                services_manager.services_config[service_id].update(requirements)
-                success = True
-                logging.info(f"Exigences du service {service_id} mises à jour")
+            from backend.admin.supabase_services_manager import update_service_requirements_admin
+            success = update_service_requirements_admin(service_id, requirements)
+            if success:
+                logging.info(f"Exigences du service {service_id} mises à jour (Supabase)")
             else:
-                success = False
-                logging.warning(f"Service {service_id} non trouvé dans la configuration")
-        except Exception as e:
-            logging.error(f"Erreur mise à jour exigences: {e}")
-            return jsonify({"error": f"Erreur: {str(e)}"}), 500
+                logging.warning(f"Service {service_id} non trouvé ou erreur Supabase")
+        except ImportError:
+            # Fallback vers l'ancien manager
+            try:
+                from backend.admin.services_manager import services_manager
+                if service_id in services_manager.services_config:
+                    services_manager.services_config[service_id].update(requirements)
+                    success = True
+                    logging.info(f"Exigences du service {service_id} mises à jour (ancien manager)")
+                else:
+                    success = False
+            except Exception as fallback_error:
+                logging.error(f"Erreur fallback ancien manager: {fallback_error}")
+                return jsonify({"error": "Aucun gestionnaire disponible"}), 500
         
         return jsonify({"success": success, "service_id": service_id, "requirements": requirements})
     except Exception as e:
