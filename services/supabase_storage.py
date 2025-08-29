@@ -13,8 +13,35 @@ class SupabaseStorage:
     """
     
     def __init__(self):
-        url = os.getenv('SUPABASE_URL')
-        key = os.getenv('SUPABASE_ANON_KEY')
+        # Essayer d'abord config.py, puis os.environ
+        try:
+            import sys
+            import os
+            
+            # Importer config.py depuis le répertoire racine
+            current_dir = os.path.dirname(__file__)
+            root_dir = os.path.dirname(current_dir)
+            config_path = os.path.join(root_dir, 'config.py')
+            
+            if os.path.exists(config_path):
+                import importlib.util
+                spec = importlib.util.spec_from_file_location("config", config_path)
+                config_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(config_module)
+                
+                url = config_module.MIGRATION_CONFIG.get('SUPABASE_URL')
+                key = config_module.MIGRATION_CONFIG.get('SUPABASE_ANON_KEY')
+                logging.info("✅ Configuration chargée depuis config.py")
+            else:
+                # Fallback vers os.environ
+                url = os.getenv('SUPABASE_URL')
+                key = os.getenv('SUPABASE_ANON_KEY')
+                logging.info("✅ Configuration chargée depuis os.environ")
+        except Exception as e:
+            # Fallback vers os.environ en cas d'erreur
+            url = os.getenv('SUPABASE_URL')
+            key = os.getenv('SUPABASE_ANON_KEY')
+            logging.warning(f"⚠️ Erreur chargement config.py, fallback os.environ: {e}")
         
         logging.info(f"🔧 Initialisation Supabase - URL: {url[:50] if url else 'None'}...")
         logging.info(f"🔑 Clé: {key[:20] if key else 'None'}...")
