@@ -107,7 +107,7 @@ class ServicesManager:
                 "id": "professional_pitch",
                 "title": "Pitch professionnel",
                 "coach_advice": "Développez un pitch percutant pour vous présenter efficacement en entretien ou en networking.",
-                "theme": "apply_jobs",
+                "theme": "interview_prep",
                 "visible": True,
                 "featured": False,
                 "featured_until": None,
@@ -124,7 +124,7 @@ class ServicesManager:
                 "id": "interview_prep",
                 "title": "Préparation entretien",
                 "coach_advice": "Préparez-vous méthodiquement à votre entretien avec des questions types et des stratégies de réponse.",
-                "theme": "apply_jobs",
+                "theme": "interview_prep",
                 "visible": True,
                 "featured": False,
                 "featured_until": None,
@@ -253,6 +253,7 @@ class ServicesManager:
             "evaluate_offer": {"title": "🎯 Évaluer une offre d'emploi", "services": []},
             "improve_cv": {"title": "📄 Améliorer mon CV", "services": []},
             "apply_jobs": {"title": "✉️ Candidater", "services": []},
+            "interview_prep": {"title": "🎤 Préparer l'entretien", "services": []},
             "career_project": {"title": "🚀 Reconstruire mon projet professionnel", "services": []}
         }
         
