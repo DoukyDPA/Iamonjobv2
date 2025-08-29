@@ -1,7 +1,7 @@
 // FICHIER : frontend/src/components/Services/ServicesGrid.js
 // NOUVEAU FICHIER - Vue d'ensemble de tous les services
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { getServicesByCategory, canExecuteService } from '../../services/servicesConfig';
 import { useApp } from '../../context/AppContext';
@@ -9,48 +9,13 @@ import { ServiceIcon } from '../icons/ModernIcons';
 
 const ServicesGrid = () => {
   const { documentStatus } = useApp();
-  const [servicesByCategory, setServicesByCategory] = useState({});
-  const [loading, setLoading] = useState(true);
-
-  // Charger les services depuis l'API admin
-  useEffect(() => {
-    const loadServices = async () => {
-      try {
-        setLoading(true);
-        const services = await getServicesByCategory();
-        setServicesByCategory(services);
-      } catch (error) {
-        console.error('Erreur chargement services:', error);
-        // Fallback vers la config par défaut
-        const defaultServices = getServicesByCategory();
-        setServicesByCategory(defaultServices);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadServices();
-  }, []);
+  const servicesByCategory = getServicesByCategory();
   
   // ✅ FONCTION DE CONVERSION ID -> URL
   const convertServiceIdToUrl = (serviceId) => {
     return serviceId.replace(/_/g, '-');  // Remplace _ par -
   };
   
-  // Indicateur de chargement
-  if (loading) {
-    return (
-      <div style={{
-        textAlign: 'center',
-        padding: '2rem',
-        color: '#6b7280'
-      }}>
-        <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
-        Chargement des services...
-      </div>
-    );
-  }
-
   const renderServiceCard = (service) => {
     const canExecute = canExecuteService(service.id, documentStatus);
     
