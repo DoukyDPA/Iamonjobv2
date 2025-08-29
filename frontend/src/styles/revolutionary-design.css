@@ -8,6 +8,10 @@
   padding: 18px 28px;
   font-size: 1.1rem;
   min-width: 140px;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
 }
 
 .revolutionary-tabs-container .revolutionary-tab-icon {
