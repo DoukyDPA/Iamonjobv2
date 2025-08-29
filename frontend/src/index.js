@@ -8,6 +8,7 @@ import './styles/documents.css';
 import './styles/markdown.css';
 import './styles/actions.css';
 import './styles/revolutionary-design.css';
+
 import App from './App';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
