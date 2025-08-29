@@ -31,8 +31,8 @@ const preprocessContent = (content) => {
   cleaned = cleaned.replace(/\n\s*\n\s*\n/g, '\n\n'); // Max 2 sauts de ligne
   cleaned = cleaned.replace(/[ \t]+/g, ' '); // Espaces multiples
   
-  // Nettoyer les caractères spéciaux (GARDER les accents français !)
-  cleaned = cleaned.replace(/[^\w\s.,!?;:()[\]{}"'\-–—…àáâäãåāăąçćčđďèéêëēėęěğǵḧîïíīįìłḿńňñòóôöõøōőṕŕřśšşșťțùúûüũūűůųẃẍÿýžźżÀÁÂÄÃÅĀĂĄÇĆČĐĎÈÉÊËĒĖĘĚĞǴḦÎÏÍĪĮÌŁḾŃŇÑÒÓÔÖÕØŌŐṔŔŘŚŠŞȘŢȚÙÚÛÜŨŪŰŮŲẂẌŸÝŽŹŻ]/g, '');
+  // Nettoyer les caractères spéciaux (GARDER les accents français et caractères utiles !)
+  cleaned = cleaned.replace(/[^\w\s.,!?;:()[\]{}"'\-–—…àáâäãåāăąçćčđďèéêëēėęěğǵḧîïíīįìłḿńňñòóôöõøōőṕŕřśšşșťțùúûüũūűůųẃẍÿýžźżÀÁÂÄÃÅĀĂĄÇĆČĐĎÈÉÊËĒĖĘĚĞǴḦÎÏÍĪĮÌŁḾŃŇÑÒÓÔÖÕØŌŐṔŔŘŚŠŞȘŢȚÙÚÛÜŨŪŰŮŲẂẌŸÝŽŹŻ\/]/g, '');
   
   return cleaned.trim();
 };
