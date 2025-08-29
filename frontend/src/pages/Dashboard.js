@@ -27,7 +27,8 @@ import {
   FiUsers,
   FiDollarSign,
   FiHandHeart,
-  FiInfo
+  FiInfo,
+  FiTarget
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -427,6 +428,7 @@ const Dashboard = () => {
 
   const tabs = [
     { id: 'documents', label: 'Mes documents', mobileLabel: 'Docs', icon: <FiFileText /> },
+    { id: 'evaluate', label: 'Évaluer une offre', mobileLabel: 'Offre', icon: <FiTarget /> },
     { id: 'improve', label: 'Améliorer mon CV', mobileLabel: 'CV', icon: <FiTrendingUp /> },
     { id: 'apply', label: 'Candidater', mobileLabel: 'Candidature', icon: <FiMail /> },
     { id: 'interview', label: "Préparer l'entretien", mobileLabel: 'Entretien', icon: <FiMic /> },
@@ -669,6 +671,23 @@ const Dashboard = () => {
       {/* Contenu des onglets */}
       <div>
 
+
+        {activeTab === 'evaluate' && (
+          <div className="revolutionary-tab-content">
+            <h2 className="revolutionary-section-title">🎯 Évaluer une offre</h2>
+            <ServicesGrid filterTheme="evaluate_offer" />
+            {/* Section partenaires */}
+            <div style={{ margin: '2.5rem 0' }}>
+              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
+                🤝 Testez votre compatibilité avec les métiers de nos partenaires
+              </h2>
+              <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
+              Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
+              </p>
+              <PartnerJobs />
+            </div>
+          </div>
+        )}
 
         {activeTab === 'improve' && (
           <div className="revolutionary-tab-content">
