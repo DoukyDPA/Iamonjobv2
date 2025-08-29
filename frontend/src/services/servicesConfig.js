@@ -1,5 +1,5 @@
 // FICHIER : frontend/src/services/servicesConfig.js
-// Configuration stable des services (version compatible production)
+// Configuration unifiée avec l'admin (version stable)
 
 // Mapping des URLs vers les IDs de service
 export const URL_TO_SERVICE_MAPPING = {
@@ -19,11 +19,35 @@ export const URL_TO_SERVICE_MAPPING = {
   'analyze-cv': 'analyze_cv'
 };
 
-// Configuration stable des services
+// Configuration des services basée sur l'admin
 export const SERVICES_CONFIG = {
+  // === THÈME : ÉVALUER UNE OFFRE ===
+  matching_cv_offre: {
+    id: 'matching_cv_offre',
+    title: 'Matching CV/Offre',
+    shortTitle: 'Compatibilité',
+    icon: '🎯',
+    coachAdvice: "Ce score de compatibilité est votre point de départ. Si <60% : ne perdez pas de temps. Si 60-80% : comblez les écarts avec des formations courtes. Si >80% : foncez et personnalisez votre candidature sur les points de match identifiés.",
+    requiresCV: true,
+    requiresJobOffer: true,
+    requiresQuestionnaire: false,
+    allowsNotes: true,
+    outputType: 'matching',
+    storageKey: 'iamonjob_matching',
+    actionType: 'matching_response',
+    apiEndpoint: '/api/actions/compatibility',
+    tabs: [
+      { id: 'score', label: 'Score global', icon: '📊' },
+      { id: 'details', label: 'Analyse détaillée', icon: '🔍' },
+      { id: 'charts', label: 'Graphiques', icon: '📈' },
+      { id: 'recommendations', label: 'Recommandations', icon: '💡' }
+    ]
+  },
+
+  // === THÈME : AMÉLIORER MON CV ===
   analyze_cv: {
     id: 'analyze_cv',
-    title: 'Analysez votre CV',
+    title: 'Évaluer mon CV',
     shortTitle: 'Analyse CV',
     icon: '📄',
     coachAdvice: "L'IA va identifier vos points forts et axes d'amélioration. Utilisez cette analyse comme base de travail : notez 3 réalisations concrètes pour chaque compétence identifiée. Les recruteurs veulent des exemples chiffrés de VOS succès, pas des phrases génériques.",
@@ -44,7 +68,7 @@ export const SERVICES_CONFIG = {
 
   cv_ats_optimization: {
     id: 'cv_ats_optimization',
-    title: 'Optimisez votre CV pour les ATS',
+    title: 'Optimiser pour les ATS',
     shortTitle: 'Optimisation ATS',
     icon: '🤖',
     coachAdvice: "L'IA détecte les mots-clés manquants pour passer les filtres robots. Intégrez-les naturellement dans VOS expériences réelles. Astuce : reprenez l'intitulé exact du poste visé et les compétences de l'annonce dans votre CV, mais toujours avec vos vraies expériences.",
@@ -63,31 +87,10 @@ export const SERVICES_CONFIG = {
     ]
   },
 
-  matching_cv_offre: {
-    id: 'matching_cv_offre',
-    title: 'Vérifiez si vous correspondez aux offres d\'emploi',
-    shortTitle: 'Compatibilité',
-    icon: '🎯',
-    coachAdvice: "Ce score de compatibilité est votre point de départ. Si <60% : ne perdez pas de temps. Si 60-80% : comblez les écarts avec des formations courtes. Si >80% : foncez et personnalisez votre candidature sur les points de match identifiés.",
-    requiresCV: true,
-    requiresJobOffer: true,
-    requiresQuestionnaire: false,
-    allowsNotes: true,
-    outputType: 'matching',
-    storageKey: 'iamonjob_matching',
-    actionType: 'matching_response',
-    apiEndpoint: '/api/actions/compatibility',
-    tabs: [
-      { id: 'score', label: 'Score global', icon: '📊' },
-      { id: 'details', label: 'Analyse détaillée', icon: '🔍' },
-      { id: 'charts', label: 'Graphiques', icon: '📈' },
-      { id: 'recommendations', label: 'Recommandations', icon: '💡' }
-    ]
-  },
-
+  // === THÈME : CANDIDATER ===
   cover_letter_advice: {
     id: 'cover_letter_advice',
-    title: 'Apprenez à rédiger votre lettre de motivation',
+    title: 'Conseils lettre de motivation',
     shortTitle: 'Conseils lettre',
     icon: '💡',
     coachAdvice: "L'IA vous donne la structure gagnante en 3 parties. Votre mission : remplir avec VOS exemples concrets. Paragraphe 1 : pourquoi cette entreprise (citez un projet récent). Paragraphe 2 : une réussite similaire de votre parcours. Paragraphe 3 : votre vision du poste.",
@@ -108,7 +111,7 @@ export const SERVICES_CONFIG = {
 
   cover_letter_generate: {
     id: 'cover_letter_generate',
-    title: 'Générez votre lettre de motivation',
+    title: 'Générer lettre de motivation',
     shortTitle: 'Générer lettre',
     icon: '✉️',
     coachAdvice: "L'IA crée une lettre personnalisée. Votre mission : personnalisez chaque phrase avec VOS exemples concrets. Remplacez les formulations génériques par vos vraies expériences. Une lettre générique = candidature ignorée. Une lettre personnalisée = entretien garanti.",
@@ -129,7 +132,7 @@ export const SERVICES_CONFIG = {
 
   professional_pitch: {
     id: 'professional_pitch',
-    title: 'Préparez votre pitch professionnel',
+    title: 'Pitch professionnel',
     shortTitle: 'Pitch pro',
     icon: '🎤',
     coachAdvice: "L'IA crée un pitch de 30 secondes. Votre mission : mémorisez-le et testez-le sur 3 personnes différentes. Un pitch efficace doit être : court, clair, mémorable. Adaptez le ton selon votre interlocuteur : formel pour un recruteur, décontracté pour un réseau.",
@@ -150,7 +153,7 @@ export const SERVICES_CONFIG = {
 
   interview_prep: {
     id: 'interview_prep',
-    title: 'Préparez-vous à votre entretien',
+    title: 'Préparation entretien',
     shortTitle: 'Préparation entretien',
     icon: '🎯',
     coachAdvice: "L'IA identifie les questions probables. Votre mission : préparez 3 réponses concrètes pour chaque question. Utilisez la méthode STAR : Situation, Tâche, Action, Résultat. Entraînez-vous à haute voix : une réponse non pratiquée = hésitation = doute du recruteur.",
@@ -171,7 +174,7 @@ export const SERVICES_CONFIG = {
 
   follow_up_email: {
     id: 'follow_up_email',
-    title: 'Rédigez votre email de relance',
+    title: 'Email de relance',
     shortTitle: 'Email relance',
     icon: '📧',
     coachAdvice: "L'IA crée un email de relance professionnel. Votre mission : personnalisez-le avec des éléments de suivi concrets. Mentionnez un point de l'entretien, une actualité de l'entreprise, ou une nouvelle compétence acquise. Un email générique = ignoré. Un email personnalisé = réponse garantie.",
@@ -190,9 +193,32 @@ export const SERVICES_CONFIG = {
     ]
   },
 
+  // === THÈME : PROJET PROFESSIONNEL ===
+  skills_analysis: {
+    id: 'skills_analysis',
+    title: 'Analyser mes compétences',
+    shortTitle: 'Analyse compétences',
+    icon: '🔍',
+    coachAdvice: "L'IA identifie vos compétences transférables et découvre de nouveaux domaines d'application. Votre mission : pour chaque compétence identifiée, trouvez 3 exemples concrets de votre parcours. Les compétences sont transférables si vous pouvez les prouver avec des réalisations.",
+    requiresCV: true,
+    requiresJobOffer: false,
+    requiresQuestionnaire: true,
+    allowsNotes: true,
+    outputType: 'skills_analysis',
+    storageKey: 'iamonjob_skills_analysis',
+    actionType: 'skills_analysis_response',
+    apiEndpoint: '/api/skills/analyze',
+    tabs: [
+      { id: 'summary', label: 'Synthèse', icon: '📊' },
+      { id: 'skills', label: 'Compétences', icon: '🎯' },
+      { id: 'transferability', label: 'Transférabilité', icon: '🔄' },
+      { id: 'opportunities', label: 'Opportunités', icon: '🌟' }
+    ]
+  },
+
   reconversion_analysis: {
     id: 'reconversion_analysis',
-    title: 'Évaluez votre projet de reconversion',
+    title: 'Évaluer une reconversion',
     shortTitle: 'Reconversion',
     icon: '🔄',
     coachAdvice: "L'IA objective votre projet de reconversion. Listez ensuite vos contraintes réelles (finances, famille, mobilité). Pour chaque compétence manquante identifiée, trouvez une formation courte ou une expérience bénévole. Testez le métier : stage d'observation, freelance, bénévolat avant de vous lancer.",
@@ -232,29 +258,9 @@ export const SERVICES_CONFIG = {
     ]
   },
 
-  industry_orientation: {
-    id: 'industry_orientation',
-    title: "Et pourquoi pas un métier dans l'industrie ?",
-    shortTitle: 'Métier industrie',
-    icon: '🏭',
-    coachAdvice: "L'IA identifie vos passerelles vers l'industrie. Action immédiate : visitez les sites des entreprises industrielles locales, repérez les postes ouverts sans diplôme industriel requis. Valorisez vos soft skills : rigueur, travail d'équipe, respect des process. L'industrie forme en interne si motivation prouvée.",
-    requiresCV: true,
-    requiresJobOffer: false,
-    requiresQuestionnaire: true,
-    allowsNotes: true,
-    outputType: 'industry_orientation',
-    storageKey: 'iamonjob_industry_orientation',
-    actionType: 'industry_orientation_response',
-    apiEndpoint: '/api/industry/orientation',
-    tabs: [
-      { id: 'summary', label: 'Synthèse', icon: '📊' },
-      { id: 'table', label: 'Tableau comparatif', icon: '📋' }
-    ]
-  },
-
   salary_negotiation: {
     id: 'salary_negotiation',
-    title: 'Préparez votre négociation salariale',
+    title: 'Négociation salariale',
     shortTitle: 'Négociation salaire',
     icon: '💰',
     coachAdvice: "L'IA identifie vos arguments de négociation. Votre mission : préparez 3 exemples concrets de vos réussites avec des chiffres. Ne négociez jamais sans alternatives (autres offres, freelance, formation). Un salaire négocié = +15% en moyenne. Un salaire accepté tel quel = opportunité perdue.",
@@ -273,25 +279,23 @@ export const SERVICES_CONFIG = {
     ]
   },
 
-  skills_analysis: {
-    id: 'skills_analysis',
-    title: 'Analyser mes compétences',
-    shortTitle: 'Analyse compétences',
-    icon: '🔍',
-    coachAdvice: "L'IA identifie vos compétences transférables et découvre de nouveaux domaines d'application. Votre mission : pour chaque compétence identifiée, trouvez 3 exemples concrets de votre parcours. Les compétences sont transférables si vous pouvez les prouver avec des réalisations.",
+  industry_orientation: {
+    id: 'industry_orientation',
+    title: "Et pourquoi pas un métier dans l'industrie ?",
+    shortTitle: 'Métier industrie',
+    icon: '🏭',
+    coachAdvice: "L'IA identifie vos passerelles vers l'industrie. Action immédiate : visitez les sites des entreprises industrielles locales, repérez les postes ouverts sans diplôme industriel requis. Valorisez vos soft skills : rigueur, travail d'équipe, respect des process. L'industrie forme en interne si motivation prouvée.",
     requiresCV: true,
     requiresJobOffer: false,
     requiresQuestionnaire: true,
     allowsNotes: true,
-    outputType: 'skills_analysis',
-    storageKey: 'iamonjob_skills_analysis',
-    actionType: 'skills_analysis_response',
-    apiEndpoint: '/api/skills/analyze',
+    outputType: 'industry_orientation',
+    storageKey: 'iamonjob_industry_orientation',
+    actionType: 'industry_orientation_response',
+    apiEndpoint: '/api/industry/orientation',
     tabs: [
       { id: 'summary', label: 'Synthèse', icon: '📊' },
-      { id: 'skills', label: 'Compétences', icon: '🎯' },
-      { id: 'transferability', label: 'Transférabilité', icon: '🔄' },
-      { id: 'opportunities', label: 'Opportunités', icon: '🌟' }
+      { id: 'table', label: 'Tableau comparatif', icon: '📋' }
     ]
   }
 };
@@ -303,10 +307,10 @@ export const getServiceConfig = (serviceId) => {
 
 export const getServicesByCategory = () => {
   const categories = {
+    evaluate_offer: ['matching_cv_offre'],
     improve_cv: ['analyze_cv', 'cv_ats_optimization'],
-    apply_jobs: ['cover_letter_advice', 'cover_letter_generate', 'follow_up_email'],
-    interview_prep: ['interview_prep', 'professional_pitch', 'presentation_slides', 'salary_negotiation'],
-    career_project: ['career_transition', 'reconversion_analysis', 'industry_orientation', 'skills_analysis']
+    apply_jobs: ['cover_letter_advice', 'cover_letter_generate', 'professional_pitch', 'interview_prep', 'follow_up_email'],
+    career_project: ['skills_analysis', 'reconversion_analysis', 'career_transition', 'salary_negotiation', 'industry_orientation']
   };
   
   const result = {};
