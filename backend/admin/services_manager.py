@@ -90,26 +90,41 @@ class ServicesManager:
                 logging.error("Client Supabase non disponible")
                 return False
             
-            # Assurer que service_id est dans les données
+            # NE PAS inclure 'id' dans les données - laisser Postgres le générer
+            # Assurer que service_id est correct
             service_data['service_id'] = service_id
-            service_data['updated_at'] = datetime.now().isoformat()
             
-            # IMPORTANT: Utiliser upsert avec on_conflict sur service_id
-            # car c'est notre clé primaire, pas 'id'
-            service_data['created_at'] = datetime.now().isoformat()
+            # Retirer 'id' s'il existe dans les données (éviter la confusion)
+            if 'id' in service_data:
+                del service_data['id']
             
-            response = client.table(self.TABLE_NAME).upsert(
-                service_data,
-                on_conflict='service_id'  # Spécifier la colonne de conflit
+            # Vérifier si le service existe déjà
+            existing = client.table(self.TABLE_NAME).select('id').eq(
+                'service_id', service_id
             ).execute()
             
-            if response.data:
-                logging.info(f"✅ Service {service_id} sauvegardé dans Supabase")
-                return True
-            else:
-                logging.error(f"❌ Échec sauvegarde service {service_id}")
-                return False
+            if existing.data and len(existing.data) > 0:
+                # UPDATE - utiliser l'ID existant
+                record_id = existing.data[0]['id']
+                response = client.table(self.TABLE_NAME).update(
+                    service_data
+                ).eq('id', record_id).execute()
                 
+                if response.data:
+                    logging.info(f"✅ Service {service_id} mis à jour")
+                    return True
+            else:
+                # INSERT - laisser Postgres générer l'UUID
+                response = client.table(self.TABLE_NAME).insert(
+                    service_data
+                ).execute()
+                
+                if response.data:
+                    logging.info(f"✅ Service {service_id} créé")
+                    return True
+            
+            return False
+            
         except Exception as e:
             logging.error(f"❌ Erreur sauvegarde service {service_id}: {e}")
             return False
@@ -293,7 +308,7 @@ class ServicesManager:
             
             success = self._save_service(service_id, self.services_config[service_id])
             if success:
-                logging.info(f"Service {service_id} mis en avant jusqu'au {featured_until}")
+                logging.info(f"Service {service_id} mis à jour jusqu'au {featured_until}")
             return success
         return False
     
