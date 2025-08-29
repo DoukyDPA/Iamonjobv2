@@ -1,57 +1,66 @@
 #!/usr/bin/env python3
 """
 Gestionnaire de services avec persistance dans Supabase
+Utilise directement la table sessions avec une clé spéciale pour l'admin
 """
 
 import json
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
-from services.supabase_storage import SupabaseStorage
 
 class ServicesManager:
     """Gestionnaire centralisé des services avec persistance Supabase"""
     
     def __init__(self):
-        # Initialiser la connexion Supabase
-        self.supabase = SupabaseStorage()
-        
-        # Clé pour stocker les services dans Supabase
-        self.SERVICES_KEY = 'admin_services_config'
+        # Clé spéciale pour stocker la config admin dans sessions
+        self.ADMIN_KEY = 'admin_services_config'
         
         # Charger la configuration depuis Supabase ou initialiser
         self.services_config = self._load_config()
         
         # Sauvegarder pour s'assurer que la config existe dans Supabase
-        if not self._config_exists_in_supabase():
+        if not self.services_config:
+            self.services_config = self._get_default_config()
             self._save_config()
         
-        logging.info(f"ServicesManager initialisé avec {len(self.services_config)} services depuis Supabase")
+        logging.info(f"ServicesManager initialisé avec {len(self.services_config)} services")
     
-    def _config_exists_in_supabase(self) -> bool:
-        """Vérifie si la configuration existe dans Supabase"""
+    def _get_supabase_client(self):
+        """Obtient le client Supabase"""
         try:
-            data = self.supabase.get(self.SERVICES_KEY)
-            return data is not None
-        except:
-            return False
+            from services.supabase_storage import SupabaseStorage
+            supabase = SupabaseStorage()
+            return supabase.client
+        except Exception as e:
+            logging.error(f"Erreur connexion Supabase: {e}")
+            return None
     
     def _load_config(self) -> Dict:
         """Charge la configuration depuis Supabase"""
         try:
-            # Récupérer la configuration depuis Supabase
-            data = self.supabase.get(self.SERVICES_KEY)
+            client = self._get_supabase_client()
+            if not client:
+                return self._get_default_config()
             
-            if data:
-                if isinstance(data, str):
-                    config = json.loads(data)
+            # Récupérer la configuration depuis la table sessions
+            response = client.table('sessions').select('*').eq(
+                'user_email', self.ADMIN_KEY
+            ).execute()
+            
+            if response.data and len(response.data) > 0:
+                session_data = response.data[0]
+                # La config est stockée dans le champ 'documents'
+                config_data = session_data.get('documents', {})
+                
+                if config_data and 'services' in config_data:
+                    logging.info(f"Configuration chargée depuis Supabase: {len(config_data['services'])} services")
+                    return config_data['services']
                 else:
-                    config = data
-                    
-                logging.info(f"Configuration chargée depuis Supabase: {len(config)} services")
-                return config
+                    logging.info("Aucune configuration de services trouvée, utilisation config par défaut")
+                    return self._get_default_config()
             else:
-                logging.info("Aucune configuration trouvée dans Supabase, utilisation de la config par défaut")
+                logging.info("Aucune entrée admin trouvée dans Supabase, création...")
                 return self._get_default_config()
                 
         except Exception as e:
@@ -61,18 +70,38 @@ class ServicesManager:
     def _save_config(self) -> bool:
         """Sauvegarde la configuration dans Supabase"""
         try:
-            # Sauvegarder dans Supabase
-            success = self.supabase.set(self.SERVICES_KEY, self.services_config)
+            client = self._get_supabase_client()
+            if not client:
+                logging.error("Client Supabase non disponible")
+                return False
             
-            if success:
-                logging.info(f"Configuration sauvegardée dans Supabase: {len(self.services_config)} services")
+            # Préparer les données pour Supabase
+            data_to_save = {
+                'user_email': self.ADMIN_KEY,
+                'chat_history': [],
+                'documents': {
+                    'services': self.services_config,
+                    'updated_at': datetime.now().isoformat()
+                },
+                'analyses': {},
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            # Upsert dans la table sessions
+            response = client.table('sessions').upsert(
+                data_to_save,
+                on_conflict='user_email'
+            ).execute()
+            
+            if response.data:
+                logging.info(f"✅ Configuration sauvegardée dans Supabase: {len(self.services_config)} services")
+                return True
             else:
-                logging.error("Échec de la sauvegarde dans Supabase")
+                logging.error("❌ Échec de la sauvegarde dans Supabase - pas de données retournées")
+                return False
                 
-            return success
-            
         except Exception as e:
-            logging.error(f"Erreur lors de la sauvegarde dans Supabase: {e}")
+            logging.error(f"❌ Erreur lors de la sauvegarde dans Supabase: {e}")
             return False
     
     def _get_default_config(self) -> Dict:
@@ -292,6 +321,9 @@ class ServicesManager:
         success = self._save_config()
         if success:
             logging.info(f"✅ Nouveau service ajouté et sauvegardé dans Supabase: {service_id}")
+            # Log pour debug
+            logging.info(f"Config actuelle: {len(self.services_config)} services")
+            logging.info(f"Services: {list(self.services_config.keys())}")
         else:
             # En cas d'échec, retirer le service de la mémoire
             del self.services_config[service_id]
@@ -384,6 +416,7 @@ def delete_service_admin(service_id: str):
 __all__ = [
     'services_manager', 
     'get_services_for_admin', 
+    'get_visible_services', 
     'toggle_service_visibility_admin', 
     'set_featured_service_admin', 
     'clear_featured_service_admin', 
