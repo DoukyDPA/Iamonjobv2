@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
 Gestionnaire de services avec persistance dans Supabase
-Utilise directement la table sessions avec une clé spéciale pour l'admin
+Utilise la table admin_services_config créée spécifiquement pour les services
 """
 
 import json
 import logging
-import uuid
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
@@ -14,18 +13,13 @@ class ServicesManager:
     """Gestionnaire centralisé des services avec persistance Supabase"""
     
     def __init__(self):
-        # Clé spéciale pour stocker la config admin dans sessions
-        self.ADMIN_KEY = 'admin_services_config'
+        # Table dédiée dans Supabase pour la configuration des services
+        self.TABLE_NAME = 'admin_services_config'
         
-        # Charger la configuration depuis Supabase ou initialiser
+        # Charger la configuration depuis Supabase
         self.services_config = self._load_config()
         
-        # Sauvegarder pour s'assurer que la config existe dans Supabase
-        if not self.services_config:
-            self.services_config = self._get_default_config()
-            self._save_config()
-        
-        logging.info(f"ServicesManager initialisé avec {len(self.services_config)} services")
+        logging.info(f"ServicesManager initialisé avec {len(self.services_config)} services depuis Supabase")
     
     def _get_supabase_client(self):
         """Obtient le client Supabase"""
@@ -38,91 +32,118 @@ class ServicesManager:
             return None
     
     def _load_config(self) -> Dict:
-        """Charge la configuration depuis Supabase"""
+        """Charge la configuration depuis la table admin_services_config de Supabase"""
         try:
             client = self._get_supabase_client()
             if not client:
                 return self._get_default_config()
             
-            # Récupérer la configuration depuis la table sessions
-            response = client.table('sessions').select('*').eq(
-                'user_email', self.ADMIN_KEY
-            ).execute()
+            # Récupérer tous les services depuis la table dédiée
+            response = client.table(self.TABLE_NAME).select('*').execute()
             
-            if response.data and len(response.data) > 0:
-                session_data = response.data[0]
-                # La config est stockée dans le champ 'documents'
-                config_data = session_data.get('documents', {})
+            if response.data:
+                # Convertir la liste de services en dictionnaire
+                services = {}
+                for service in response.data:
+                    service_id = service.get('service_id')
+                    if service_id:
+                        services[service_id] = service
                 
-                if config_data and 'services' in config_data:
-                    logging.info(f"Configuration chargée depuis Supabase: {len(config_data['services'])} services")
-                    return config_data['services']
-                else:
-                    logging.info("Aucune configuration de services trouvée, utilisation config par défaut")
-                    return self._get_default_config()
+                logging.info(f"✅ Configuration chargée depuis Supabase: {len(services)} services")
+                return services
             else:
-                logging.info("Aucune entrée admin trouvée dans Supabase, création...")
-                return self._get_default_config()
+                logging.info("Aucun service trouvé dans Supabase, utilisation config par défaut")
+                # Initialiser avec la config par défaut
+                default_config = self._get_default_config()
+                self._init_default_services(default_config)
+                return default_config
                 
         except Exception as e:
             logging.error(f"Erreur lors du chargement depuis Supabase: {e}")
             return self._get_default_config()
     
-    def _save_config(self) -> bool:
-        """Sauvegarde la configuration dans Supabase"""
+    def _init_default_services(self, default_config: Dict) -> bool:
+        """Initialise la table avec les services par défaut"""
+        try:
+            client = self._get_supabase_client()
+            if not client:
+                return False
+            
+            # Insérer chaque service par défaut
+            for service_id, service_data in default_config.items():
+                try:
+                    client.table(self.TABLE_NAME).insert(service_data).execute()
+                    logging.info(f"Service par défaut ajouté: {service_id}")
+                except Exception as e:
+                    logging.warning(f"Service {service_id} existe peut-être déjà: {e}")
+            
+            return True
+        except Exception as e:
+            logging.error(f"Erreur lors de l'initialisation des services par défaut: {e}")
+            return False
+    
+    def _save_service(self, service_id: str, service_data: Dict) -> bool:
+        """Sauvegarde ou met à jour un service dans Supabase"""
         try:
             client = self._get_supabase_client()
             if not client:
                 logging.error("Client Supabase non disponible")
                 return False
             
-            # D'abord, vérifier si l'entrée existe déjà
-            existing = client.table('sessions').select('id').eq(
-                'user_email', self.ADMIN_KEY
+            # Assurer que service_id est dans les données
+            service_data['service_id'] = service_id
+            service_data['updated_at'] = datetime.now().isoformat()
+            
+            # Vérifier si le service existe
+            existing = client.table(self.TABLE_NAME).select('service_id').eq(
+                'service_id', service_id
             ).execute()
             
-            # Préparer les données pour Supabase
-            data_to_save = {
-                'user_email': self.ADMIN_KEY,
-                'chat_history': [],
-                'documents': {
-                    'services': self.services_config,
-                    'updated_at': datetime.now().isoformat()
-                },
-                'analyses': {},
-                'updated_at': datetime.now().isoformat()
-            }
-            
-            if existing.data and len(existing.data) > 0:
-                # Update si existe déjà
-                record_id = existing.data[0]['id']
-                response = client.table('sessions').update(
-                    data_to_save
-                ).eq('id', record_id).execute()
+            if existing.data:
+                # UPDATE si existe
+                response = client.table(self.TABLE_NAME).update(
+                    service_data
+                ).eq('service_id', service_id).execute()
             else:
-                # Insert si n'existe pas
-                import uuid
-                data_to_save['id'] = str(uuid.uuid4())
-                response = client.table('sessions').insert(
-                    data_to_save
+                # INSERT si n'existe pas
+                service_data['created_at'] = datetime.now().isoformat()
+                response = client.table(self.TABLE_NAME).insert(
+                    service_data
                 ).execute()
             
             if response.data:
-                logging.info(f"✅ Configuration sauvegardée dans Supabase: {len(self.services_config)} services")
+                logging.info(f"✅ Service {service_id} sauvegardé dans Supabase")
                 return True
             else:
-                logging.error("❌ Échec de la sauvegarde dans Supabase - pas de données retournées")
+                logging.error(f"❌ Échec sauvegarde service {service_id}")
                 return False
                 
         except Exception as e:
-            logging.error(f"❌ Erreur lors de la sauvegarde dans Supabase: {e}")
+            logging.error(f"❌ Erreur sauvegarde service {service_id}: {e}")
+            return False
+    
+    def _delete_service_from_db(self, service_id: str) -> bool:
+        """Supprime un service de Supabase"""
+        try:
+            client = self._get_supabase_client()
+            if not client:
+                return False
+            
+            response = client.table(self.TABLE_NAME).delete().eq(
+                'service_id', service_id
+            ).execute()
+            
+            return response.data is not None
+            
+        except Exception as e:
+            logging.error(f"Erreur suppression service {service_id}: {e}")
             return False
     
     def _get_default_config(self) -> Dict:
         """Configuration par défaut des services"""
         return {
             'analyze_cv': {
-                'id': 'analyze_cv',
+                'service_id': 'analyze_cv',
                 'title': 'Analyse de CV',
                 'coach_advice': 'Laissez notre IA analyser votre CV et obtenir des recommandations personnalisées',
                 'theme': 'optimize_profile',
@@ -135,7 +156,7 @@ class ServicesManager:
                 'duration_minutes': 5
             },
             'cv_offer_compatibility': {
-                'id': 'cv_offer_compatibility',
+                'service_id': 'cv_offer_compatibility',
                 'title': 'Compatibilité CV-Offre',
                 'coach_advice': 'Découvrez votre taux de compatibilité avec une offre d\'emploi',
                 'theme': 'evaluate_offer',
@@ -148,7 +169,7 @@ class ServicesManager:
                 'duration_minutes': 7
             },
             'generate_cover_letter': {
-                'id': 'generate_cover_letter',
+                'service_id': 'generate_cover_letter',
                 'title': 'Lettre de motivation',
                 'coach_advice': 'Générez une lettre de motivation personnalisée et percutante',
                 'theme': 'apply_jobs',
@@ -161,7 +182,7 @@ class ServicesManager:
                 'duration_minutes': 10
             },
             'prepare_interview': {
-                'id': 'prepare_interview',
+                'service_id': 'prepare_interview',
                 'title': 'Préparation entretien',
                 'coach_advice': 'Préparez-vous avec des questions personnalisées et des conseils ciblés',
                 'theme': 'interview_tips',
@@ -174,7 +195,7 @@ class ServicesManager:
                 'duration_minutes': 15
             },
             'linkedin_optimization': {
-                'id': 'linkedin_optimization',
+                'service_id': 'linkedin_optimization',
                 'title': 'Optimisation LinkedIn',
                 'coach_advice': 'Optimisez votre profil LinkedIn pour maximiser votre visibilité',
                 'theme': 'networking',
@@ -187,7 +208,7 @@ class ServicesManager:
                 'duration_minutes': 10
             },
             'salary_negotiation': {
-                'id': 'salary_negotiation',
+                'service_id': 'salary_negotiation',
                 'title': 'Négociation salariale',
                 'coach_advice': 'Apprenez les techniques pour négocier votre salaire efficacement',
                 'theme': 'interview_tips',
@@ -202,14 +223,12 @@ class ServicesManager:
         }
     
     def get_all_services(self) -> Dict:
-        """Retourne tous les services"""
-        # Recharger depuis Supabase pour avoir les dernières données
+        """Retourne tous les services (recharge depuis Supabase)"""
         self.services_config = self._load_config()
         return self.services_config
     
     def get_visible_services(self) -> Dict:
         """Retourne uniquement les services visibles"""
-        # Recharger depuis Supabase
         self.services_config = self._load_config()
         return {
             sid: service for sid, service in self.services_config.items()
@@ -237,11 +256,16 @@ class ServicesManager:
                 # Vérifier si la mise en avant n'a pas expiré
                 featured_until = service.get('featured_until')
                 if featured_until:
-                    if datetime.fromisoformat(featured_until) < datetime.now():
-                        service['featured'] = False
-                        service['featured_until'] = None
-                        self._save_config()
-                        continue
+                    try:
+                        # Parser la date ISO
+                        until_date = datetime.fromisoformat(featured_until.replace('Z', '+00:00'))
+                        if until_date < datetime.now(until_date.tzinfo):
+                            service['featured'] = False
+                            service['featured_until'] = None
+                            self._save_service(service['service_id'], service)
+                            continue
+                    except:
+                        pass
                 return service
         return None
     
@@ -249,7 +273,7 @@ class ServicesManager:
         """Active ou désactive un service"""
         if service_id in self.services_config:
             self.services_config[service_id]['visible'] = visible
-            success = self._save_config()
+            success = self._save_service(service_id, self.services_config[service_id])
             if success:
                 logging.info(f"Service {service_id} {'activé' if visible else 'désactivé'}")
             return success
@@ -258,10 +282,12 @@ class ServicesManager:
     def set_featured_service(self, service_id: str, featured_title: str = None, duration_days: int = 30) -> bool:
         """Met un service en avant"""
         # D'abord retirer toute mise en avant existante
-        for service in self.services_config.values():
-            service['featured'] = False
-            service['featured_until'] = None
-            service['featured_title'] = None
+        for sid, service in self.services_config.items():
+            if service.get('featured', False):
+                service['featured'] = False
+                service['featured_until'] = None
+                service['featured_title'] = None
+                self._save_service(sid, service)
         
         # Mettre en avant le nouveau service
         if service_id in self.services_config:
@@ -273,7 +299,7 @@ class ServicesManager:
                 'featured_title': featured_title or self.services_config[service_id]['title']
             })
             
-            success = self._save_config()
+            success = self._save_service(service_id, self.services_config[service_id])
             if success:
                 logging.info(f"Service {service_id} mis en avant jusqu'au {featured_until}")
             return success
@@ -282,28 +308,26 @@ class ServicesManager:
     def clear_featured_service(self) -> bool:
         """Retire la mise en avant"""
         changed = False
-        for service in self.services_config.values():
+        for sid, service in self.services_config.items():
             if service.get('featured', False):
                 service['featured'] = False
                 service['featured_until'] = None 
                 service['featured_title'] = None
+                self._save_service(sid, service)
                 changed = True
         
         if changed:
-            success = self._save_config()
-            if success:
-                logging.info("Mise en avant supprimée")
-            return success
-        return False
+            logging.info("Mise en avant supprimée")
+        return changed
     
     def add_new_service(self, service_config: Dict) -> bool:
-        """Ajoute un nouveau service avec persistance dans Supabase"""
+        """Ajoute un nouveau service"""
         service_id = service_config.get('id')
         if not service_id:
             logging.error("ID du service manquant")
             return False
         
-        # Recharger la config pour éviter les conflits
+        # Recharger pour éviter les conflits
         self.services_config = self._load_config()
         
         # Vérifier si le service existe déjà
@@ -313,7 +337,8 @@ class ServicesManager:
             
         # Configuration par défaut
         default_config = {
-            'visible': False,  # Nouveau service invisible par défaut
+            'service_id': service_id,  # Important: utiliser service_id pour la DB
+            'visible': False,
             'featured': False,
             'featured_until': None,
             'featured_title': None,
@@ -322,69 +347,57 @@ class ServicesManager:
             'requires_questionnaire': False,
             'difficulty': 'beginner',
             'duration_minutes': 5,
-            'theme': 'apply_jobs',
-            'created_at': datetime.now().isoformat(),
-            'updated_at': datetime.now().isoformat()
+            'theme': 'apply_jobs'
         }
         
         # Fusionner avec la config fournie
         final_config = {**default_config, **service_config}
-        self.services_config[service_id] = final_config
+        final_config['service_id'] = service_id  # Assurer que service_id est correct
         
-        # Sauvegarder immédiatement dans Supabase
-        success = self._save_config()
+        # Sauvegarder dans Supabase
+        success = self._save_service(service_id, final_config)
+        
         if success:
-            logging.info(f"✅ Nouveau service ajouté et sauvegardé dans Supabase: {service_id}")
-            # Log pour debug
-            logging.info(f"Config actuelle: {len(self.services_config)} services")
-            logging.info(f"Services: {list(self.services_config.keys())}")
+            self.services_config[service_id] = final_config
+            logging.info(f"✅ Nouveau service ajouté: {service_id}")
         else:
-            # En cas d'échec, retirer le service de la mémoire
-            del self.services_config[service_id]
-            logging.error(f"❌ Échec de la sauvegarde du service {service_id} dans Supabase")
+            logging.error(f"❌ Échec ajout service {service_id}")
         
         return success
     
     def update_service(self, service_id: str, updates: Dict) -> bool:
         """Met à jour un service existant"""
-        # Recharger la config pour avoir les dernières données
         self.services_config = self._load_config()
         
         if service_id not in self.services_config:
             logging.error(f"Service {service_id} introuvable")
             return False
         
-        # Mettre à jour les champs
+        # Mettre à jour
         self.services_config[service_id].update(updates)
-        self.services_config[service_id]['updated_at'] = datetime.now().isoformat()
         
-        # Sauvegarder dans Supabase
-        success = self._save_config()
+        # Sauvegarder
+        success = self._save_service(service_id, self.services_config[service_id])
         if success:
-            logging.info(f"Service {service_id} mis à jour dans Supabase")
+            logging.info(f"Service {service_id} mis à jour")
         return success
     
     def delete_service(self, service_id: str) -> bool:
         """Supprime un service"""
-        # Recharger la config
         self.services_config = self._load_config()
         
         if service_id not in self.services_config:
             logging.error(f"Service {service_id} introuvable")
             return False
         
-        del self.services_config[service_id]
+        # Supprimer de Supabase
+        success = self._delete_service_from_db(service_id)
         
-        # Sauvegarder dans Supabase
-        success = self._save_config()
         if success:
-            logging.info(f"Service {service_id} supprimé de Supabase")
+            del self.services_config[service_id]
+            logging.info(f"Service {service_id} supprimé")
+        
         return success
-    
-    def refresh_from_supabase(self):
-        """Force le rechargement depuis Supabase"""
-        self.services_config = self._load_config()
-        logging.info("Configuration rechargée depuis Supabase")
 
 # Instance globale
 services_manager = ServicesManager()
@@ -393,11 +406,9 @@ services_manager = ServicesManager()
 
 def get_services_for_admin():
     """Retourne la configuration des services pour l'admin"""
-    # Toujours recharger depuis Supabase pour avoir les dernières données
-    services_manager.refresh_from_supabase()
     return {
         "success": True,
-        "services": services_manager.services_config,
+        "services": services_manager.get_all_services(),
         "themes": services_manager.get_services_by_theme(),
         "featured": services_manager.get_featured_service()
     }
@@ -426,7 +437,7 @@ def delete_service_admin(service_id: str):
     """Supprime un service (pour l'admin)"""
     return services_manager.delete_service(service_id)
 
-# Export de l'instance pour utilisation dans l'app
+# Export
 __all__ = [
     'services_manager', 
     'get_services_for_admin', 
