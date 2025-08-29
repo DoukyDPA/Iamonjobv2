@@ -105,12 +105,20 @@ def update_service_theme(service_id):
         if not theme:
             return jsonify({"error": "Thème manquant"}), 400
         
-        # Essayer d'abord le nouveau manager Supabase
+        # Utiliser directement l'ancien manager (plus stable)
         try:
-            from backend.admin.supabase_services_manager import update_service_theme_admin
-            success = update_service_theme_admin(service_id, theme)
-        except ImportError:
-            return jsonify({"error": "Gestionnaire Supabase non disponible"}), 500
+            from backend.admin.services_manager import services_manager
+            # Mettre à jour le thème dans l'ancien manager
+            if service_id in services_manager.services_config:
+                services_manager.services_config[service_id]['theme'] = theme
+                success = True
+                logging.info(f"Service {service_id} déplacé vers le thème {theme}")
+            else:
+                success = False
+                logging.warning(f"Service {service_id} non trouvé dans la configuration")
+        except Exception as e:
+            logging.error(f"Erreur mise à jour thème: {e}")
+            return jsonify({"error": f"Erreur: {str(e)}"}), 500
         
         return jsonify({"success": success, "service_id": service_id, "theme": theme})
     except Exception as e:
@@ -129,12 +137,20 @@ def update_service_requirements(service_id):
             'requires_questionnaire': data.get('requires_questionnaire', False)
         }
         
-        # Essayer d'abord le nouveau manager Supabase
+        # Utiliser directement l'ancien manager (plus stable)
         try:
-            from backend.admin.supabase_services_manager import update_service_requirements_admin
-            success = update_service_requirements_admin(service_id, requirements)
-        except ImportError:
-            return jsonify({"error": "Gestionnaire Supabase non disponible"}), 500
+            from backend.admin.services_manager import services_manager
+            # Mettre à jour les exigences dans l'ancien manager
+            if service_id in services_manager.services_config:
+                services_manager.services_config[service_id].update(requirements)
+                success = True
+                logging.info(f"Exigences du service {service_id} mises à jour")
+            else:
+                success = False
+                logging.warning(f"Service {service_id} non trouvé dans la configuration")
+        except Exception as e:
+            logging.error(f"Erreur mise à jour exigences: {e}")
+            return jsonify({"error": f"Erreur: {str(e)}"}), 500
         
         return jsonify({"success": success, "service_id": service_id, "requirements": requirements})
     except Exception as e:
