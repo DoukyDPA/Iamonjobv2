@@ -66,8 +66,37 @@ def admin_status():
 def get_services_config():
     """Liste tous les services avec leur configuration"""
     try:
-        from backend.admin.services_manager import get_services_for_admin
-        return get_services_for_admin()
+        # Essayer d'abord le nouveau manager Supabase
+        try:
+            from backend.admin.supabase_services_manager import supabase_services_manager
+            services = supabase_services_manager.get_all_services()
+            
+            # Récupérer les thèmes disponibles
+            themes = {}
+            for service in services.values():
+                theme = service.get('theme')
+                if theme not in themes:
+                    themes[theme] = {
+                        "title": f"Thème {theme}",
+                        "services": []
+                    }
+                themes[theme]['services'].append(service)
+            
+            # Récupérer le service mis en avant
+            featured = supabase_services_manager.get_featured_service()
+            
+            return jsonify({
+                "success": True,
+                "services": services,
+                "themes": themes,
+                "featured": featured
+            })
+            
+        except ImportError:
+            # Fallback vers l'ancien manager
+            from backend.admin.services_manager import get_services_for_admin
+            return get_services_for_admin()
+            
     except Exception as e:
         logging.error(f"Erreur lors de la récupération des services: {e}")
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
