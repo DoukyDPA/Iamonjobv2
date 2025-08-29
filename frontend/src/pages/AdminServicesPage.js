@@ -17,6 +17,7 @@ const AdminServicesPage = () => {
   const [loading, setLoading] = useState(true);
   const [editingService, setEditingService] = useState(null); // service id en édition
   const [editingPrompt, setEditingPrompt] = useState('');
+  const [editingRequirements, setEditingRequirements] = useState(null); // service id pour les exigences
   const [showAddModal, setShowAddModal] = useState(false);
   const [newService, setNewService] = useState({
     id: '', title: '', coach_advice: '', theme: 'evaluate_offer',
@@ -86,15 +87,109 @@ const AdminServicesPage = () => {
       });
 
       if (response.ok) {
-        setServices(prev => ({
-          ...prev,
-          [serviceId]: { ...prev[serviceId], visible: !currentVisibility }
-        }));
-        toast.success(`Service ${!currentVisibility ? 'activé' : 'désactivé'}`);
+        const data = await response.json();
+        if (data.success) {
+          setServices(prev => ({
+            ...prev,
+            [serviceId]: { ...prev[serviceId], visible: !currentVisibility }
+          }));
+          toast.success(`Service ${!currentVisibility ? 'activé' : 'désactivé'}`);
+          // Recharger les services pour synchroniser
+          loadServicesData();
+        } else {
+          toast.error(data.error || 'Erreur lors de la modification');
+        }
+      } else {
+        toast.error('Erreur lors de la modification');
       }
     } catch (error) {
       console.error('Erreur toggle visibilité:', error);
       toast.error('Erreur lors de la modification');
+    }
+  };
+
+  // Changer le thème d'un service
+  const changeServiceTheme = async (serviceId, newTheme) => {
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Token d\'authentification manquant');
+        return;
+      }
+      
+      const response = await fetch(`/api/admin/services/${serviceId}/theme`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ theme: newTheme })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setServices(prev => ({
+            ...prev,
+            [serviceId]: { ...prev[serviceId], theme: newTheme }
+          }));
+          toast.success(`Service déplacé vers ${themeLabels[newTheme]}`);
+          // Recharger les services pour synchroniser
+          loadServicesData();
+        } else {
+          toast.error(data.error || 'Erreur lors du déplacement');
+        }
+      } else {
+        toast.error('Erreur lors du déplacement');
+      }
+    } catch (error) {
+      console.error('Erreur changement thème:', error);
+      toast.error('Erreur lors du déplacement');
+    }
+  };
+
+  // Mettre à jour les documents requis
+  const updateServiceRequirements = async (serviceId, requirements) => {
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Token d\'authentification manquant');
+        return;
+      }
+      
+      const response = await fetch(`/api/admin/services/${serviceId}/requirements`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requirements)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setServices(prev => ({
+            ...prev,
+            [serviceId]: { 
+              ...prev[serviceId], 
+              ...requirements 
+            }
+          }));
+          toast.success('Documents requis mis à jour');
+          // Recharger les services pour synchroniser
+          loadServicesData();
+        } else {
+          toast.error(data.error || 'Erreur lors de la mise à jour');
+        }
+      } else {
+        toast.error('Erreur lors de la mise à jour');
+      }
+    } catch (error) {
+      console.error('Erreur mise à jour exigences:', error);
+      toast.error('Erreur lors de la mise à jour');
     }
   };
 
@@ -613,6 +708,45 @@ const AdminServicesPage = () => {
                     >
                       <FiEdit3 size={14} /> Modifier le prompt
                     </button>
+
+                    {/* Sélecteur de thème */}
+                    <select
+                      value={service.theme}
+                      onChange={(e) => changeServiceTheme(service.id, e.target.value)}
+                      style={{
+                        padding: '0.5rem',
+                        borderRadius: '6px',
+                        border: '1px solid #d1d5db',
+                        fontSize: '0.8rem',
+                        background: 'white',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {Object.entries(themeLabels).map(([themeKey, themeLabel]) => (
+                        <option key={themeKey} value={themeKey}>
+                          {themeLabel}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Bouton Documents requis */}
+                    <button
+                      onClick={() => setEditingRequirements(service.id)}
+                      style={{
+                        background: '#8b5cf6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '0.5rem 1rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        fontSize: '0.8rem'
+                      }}
+                    >
+                      📄 Documents
+                    </button>
                   </div>
                 </div>
               ))}
@@ -864,6 +998,113 @@ const AdminServicesPage = () => {
                 }}
               >
                 <FiX size={16} /> Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal édition des documents requis */}
+      {editingRequirements && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '2rem',
+            maxWidth: '500px',
+            width: '90%',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            <h3 style={{ margin: '0 0 1.5rem 0' }}>
+              Documents requis pour {services[editingRequirements]?.title}
+            </h3>
+            
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                <input
+                  type="checkbox"
+                  checked={services[editingRequirements]?.requires_cv || false}
+                  onChange={(e) => {
+                    const service = services[editingRequirements];
+                    if (service) {
+                      updateServiceRequirements(editingRequirements, {
+                        ...service,
+                        requires_cv: e.target.checked
+                      });
+                    }
+                  }}
+                  style={{ marginRight: '0.5rem' }}
+                />
+                📄 CV requis
+              </label>
+              
+              <label style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                <input
+                  type="checkbox"
+                  checked={services[editingRequirements]?.requires_job_offer || false}
+                  onChange={(e) => {
+                    const service = services[editingRequirements];
+                    if (service) {
+                      updateServiceRequirements(editingRequirements, {
+                        ...service,
+                        requires_job_offer: e.target.checked
+                      });
+                    }
+                  }}
+                  style={{ marginRight: '0.5rem' }}
+                />
+                🎯 Offre d'emploi requise
+              </label>
+              
+              <label style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                <input
+                  type="checkbox"
+                  checked={services[editingRequirements]?.requires_questionnaire || false}
+                  onChange={(e) => {
+                    const service = services[editingRequirements];
+                    if (service) {
+                      updateServiceRequirements(editingRequirements, {
+                        ...service,
+                        requires_questionnaire: e.target.checked
+                      });
+                    }
+                  }}
+                  style={{ marginRight: '0.5rem' }}
+                />
+                📝 Questionnaire requis
+              </label>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button
+                onClick={() => setEditingRequirements(null)}
+                style={{
+                  flex: 1,
+                  background: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.75rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                <FiX size={16} /> Fermer
               </button>
             </div>
           </div>
