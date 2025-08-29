@@ -1,311 +1,226 @@
-# NOUVEAU FICHIER : backend/admin/services_manager.py
-# Gestionnaire admin pour configurer les services
+#!/usr/bin/env python3
+"""
+Gestionnaire de services avec persistance dans Supabase
+"""
 
 import json
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
+from services.supabase_storage import SupabaseStorage
 
 class ServicesManager:
-    """Gestionnaire des services avec configuration flexible"""
+    """Gestionnaire centralisé des services avec persistance Supabase"""
     
     def __init__(self):
-        self.services_config = self._load_default_config()
+        # Initialiser la connexion Supabase
+        self.supabase = SupabaseStorage()
+        
+        # Clé pour stocker les services dans Supabase
+        self.SERVICES_KEY = 'admin_services_config'
+        
+        # Charger la configuration depuis Supabase ou initialiser
+        self.services_config = self._load_config()
+        
+        # Sauvegarder pour s'assurer que la config existe dans Supabase
+        if not self._config_exists_in_supabase():
+            self._save_config()
+        
+        logging.info(f"ServicesManager initialisé avec {len(self.services_config)} services depuis Supabase")
     
-    def _load_default_config(self) -> Dict:
+    def _config_exists_in_supabase(self) -> bool:
+        """Vérifie si la configuration existe dans Supabase"""
+        try:
+            data = self.supabase.get(self.SERVICES_KEY)
+            return data is not None
+        except:
+            return False
+    
+    def _load_config(self) -> Dict:
+        """Charge la configuration depuis Supabase"""
+        try:
+            # Récupérer la configuration depuis Supabase
+            data = self.supabase.get(self.SERVICES_KEY)
+            
+            if data:
+                if isinstance(data, str):
+                    config = json.loads(data)
+                else:
+                    config = data
+                    
+                logging.info(f"Configuration chargée depuis Supabase: {len(config)} services")
+                return config
+            else:
+                logging.info("Aucune configuration trouvée dans Supabase, utilisation de la config par défaut")
+                return self._get_default_config()
+                
+        except Exception as e:
+            logging.error(f"Erreur lors du chargement depuis Supabase: {e}")
+            return self._get_default_config()
+    
+    def _save_config(self) -> bool:
+        """Sauvegarde la configuration dans Supabase"""
+        try:
+            # Sauvegarder dans Supabase
+            success = self.supabase.set(self.SERVICES_KEY, self.services_config)
+            
+            if success:
+                logging.info(f"Configuration sauvegardée dans Supabase: {len(self.services_config)} services")
+            else:
+                logging.error("Échec de la sauvegarde dans Supabase")
+                
+            return success
+            
+        except Exception as e:
+            logging.error(f"Erreur lors de la sauvegarde dans Supabase: {e}")
+            return False
+    
+    def _get_default_config(self) -> Dict:
         """Configuration par défaut des services"""
         return {
-            # === THÈME : ÉVALUER UNE OFFRE ===
-            "matching_cv_offre": {
-                "id": "matching_cv_offre",
-                "title": "Matching CV/Offre",
-                "coach_advice": "Découvrez précisément votre adéquation avec cette offre grâce à une analyse IA approfondie avec graphiques détaillés.",
-                "theme": "evaluate_offer",
-                "visible": True,
-                "featured": False,
-                "featured_until": None,
-                "featured_title": None,
-                "requires_cv": True,
-                "requires_job_offer": True,
-                "requires_questionnaire": False,
-                "difficulty": "intermediate",
-                "duration_minutes": 8,
-                "slug": "matching-cv-offre"
+            'analyze_cv': {
+                'id': 'analyze_cv',
+                'title': 'Analyse de CV',
+                'coach_advice': 'Laissez notre IA analyser votre CV et obtenir des recommandations personnalisées',
+                'theme': 'optimize_profile',
+                'requires_cv': True,
+                'requires_job_offer': False,
+                'requires_questionnaire': False,
+                'visible': True,
+                'featured': False,
+                'difficulty': 'beginner',
+                'duration_minutes': 5
             },
-            
-            # === THÈME : AMÉLIORER MON CV ===
-            "analyze_cv": {
-                "id": "analyze_cv", 
-                "title": "Évaluer mon CV",
-                "coach_advice": "Obtenez une évaluation professionnelle de votre CV avec des recommandations concrètes pour l'optimiser.",
-                "theme": "improve_cv",
-                "visible": True,
-                "featured": False,
-                "featured_until": None,
-                "featured_title": None,
-                "requires_cv": True,
-                "requires_job_offer": False,
-                "requires_questionnaire": False,
-                "difficulty": "beginner",
-                "duration_minutes": 5,
-                "slug": "analyze-cv"
+            'cv_offer_compatibility': {
+                'id': 'cv_offer_compatibility',
+                'title': 'Compatibilité CV-Offre',
+                'coach_advice': 'Découvrez votre taux de compatibilité avec une offre d\'emploi',
+                'theme': 'evaluate_offer',
+                'requires_cv': True,
+                'requires_job_offer': True,
+                'requires_questionnaire': False,
+                'visible': True,
+                'featured': False,
+                'difficulty': 'intermediate',
+                'duration_minutes': 7
             },
-            
-            "cv_ats_optimization": {
-                "id": "cv_ats_optimization",
-                "title": "Optimiser pour les ATS", 
-                "coach_advice": "Adaptez votre CV pour qu'il soit parfaitement lisible par les systèmes de tri automatiques des entreprises.",
-                "theme": "improve_cv",
-                "visible": True,
-                "featured": False,
-                "featured_until": None,
-                "featured_title": None,
-                "requires_cv": True,
-                "requires_job_offer": True,
-                "requires_questionnaire": False,
-                "difficulty": "intermediate",
-                "duration_minutes": 7,
-                "slug": "cv-ats-optimization"
+            'generate_cover_letter': {
+                'id': 'generate_cover_letter',
+                'title': 'Lettre de motivation',
+                'coach_advice': 'Générez une lettre de motivation personnalisée et percutante',
+                'theme': 'apply_jobs',
+                'requires_cv': True,
+                'requires_job_offer': True,
+                'requires_questionnaire': False,
+                'visible': True,
+                'featured': False,
+                'difficulty': 'intermediate',
+                'duration_minutes': 10
             },
-            
-            # === THÈME : CANDIDATER ===
-            "cover_letter_advice": {
-                "id": "cover_letter_advice",
-                "title": "Conseils lettre de motivation",
-                "coach_advice": "Recevez des conseils personnalisés pour structurer et rédiger une lettre de motivation percutante.",
-                "theme": "apply_jobs",
-                "visible": True,
-                "featured": False,
-                "featured_until": None,
-                "featured_title": None,
-                "requires_cv": True,
-                "requires_job_offer": True,
-                "requires_questionnaire": False,
-                "difficulty": "beginner",
-                "duration_minutes": 4,
-                "slug": "cover-letter-advice"
+            'prepare_interview': {
+                'id': 'prepare_interview',
+                'title': 'Préparation entretien',
+                'coach_advice': 'Préparez-vous avec des questions personnalisées et des conseils ciblés',
+                'theme': 'interview_tips',
+                'requires_cv': False,
+                'requires_job_offer': True,
+                'requires_questionnaire': False,
+                'visible': True,
+                'featured': False,
+                'difficulty': 'advanced',
+                'duration_minutes': 15
             },
-            
-            "cover_letter_generate": {
-                "id": "cover_letter_generate",
-                "title": "Générer lettre de motivation",
-                "coach_advice": "Créez une lettre de motivation complète et personnalisée prête à être envoyée avec votre candidature.",
-                "theme": "apply_jobs", 
-                "visible": True,
-                "featured": False,
-                "featured_until": None,
-                "featured_title": None,
-                "requires_cv": True,
-                "requires_job_offer": True,
-                "requires_questionnaire": True,
-                "difficulty": "intermediate",
-                "duration_minutes": 10,
-                "slug": "cover-letter-generate"
+            'linkedin_optimization': {
+                'id': 'linkedin_optimization',
+                'title': 'Optimisation LinkedIn',
+                'coach_advice': 'Optimisez votre profil LinkedIn pour maximiser votre visibilité',
+                'theme': 'networking',
+                'requires_cv': True,
+                'requires_job_offer': False,
+                'requires_questionnaire': False,
+                'visible': True,
+                'featured': False,
+                'difficulty': 'intermediate',
+                'duration_minutes': 10
             },
-            
-            "professional_pitch": {
-                "id": "professional_pitch",
-                "title": "Pitch professionnel",
-                "coach_advice": "Développez un pitch percutant pour vous présenter efficacement en entretien ou en networking.",
-                "theme": "interview_prep",
-                "visible": True,
-                "featured": False,
-                "featured_until": None,
-                "featured_title": None,
-                "requires_cv": True,
-                "requires_job_offer": False,
-                "requires_questionnaire": True,
-                "difficulty": "intermediate", 
-                "duration_minutes": 8,
-                "slug": "professional-pitch"
-            },
-            
-            "interview_prep": {
-                "id": "interview_prep",
-                "title": "Préparation entretien",
-                "coach_advice": "Préparez-vous méthodiquement à votre entretien avec des questions types et des stratégies de réponse.",
-                "theme": "interview_prep",
-                "visible": True,
-                "featured": False,
-                "featured_until": None,
-                "featured_title": None,
-                "requires_cv": True,
-                "requires_job_offer": True,
-                "requires_questionnaire": False,
-                "difficulty": "intermediate",
-                "duration_minutes": 12,
-                "slug": "interview-prep"
-            },
-            
-            "follow_up_email": {
-                "id": "follow_up_email",
-                "title": "Email de relance",
-                "coach_advice": "Rédigez un email de relance professionnel pour maintenir le contact après un entretien ou une candidature.",
-                "theme": "apply_jobs",
-                "visible": True,
-                "featured": False,
-                "featured_until": None,
-                "featured_title": None,
-                "requires_cv": False,
-                "requires_job_offer": True,
-                "requires_questionnaire": False,
-                "difficulty": "beginner",
-                "duration_minutes": 4,
-                "slug": "follow-up-email"
-            },
-            
-            # === THÈME : PROJET PROFESSIONNEL ===
-            "skills_analysis": {
-                "id": "skills_analysis", 
-                "title": "Analyser mes compétences",
-                "coach_advice": "Identifiez vos compétences transférables et découvrez de nouveaux domaines d'application pour votre profil.",
-                "theme": "career_project",
-                "visible": True,
-                "featured": False,
-                "featured_until": None,
-                "featured_title": None,
-                "requires_cv": True,
-                "requires_job_offer": False,
-                "requires_questionnaire": True,
-                "difficulty": "intermediate",
-                "duration_minutes": 10,
-                "slug": "skills-analysis"
-            },
-            
-            "reconversion_analysis": {
-                "id": "reconversion_analysis",
-                "title": "Évaluer une reconversion",
-                "coach_advice": "Explorez une reconversion professionnelle avec une analyse détaillée des étapes et opportunités.",
-                "theme": "career_project",
-                "visible": True,
-                "featured": True,  # ⭐ EXEMPLE D'ACTION MISE EN AVANT
-                "featured_until": "2025-08-31",
-                "featured_title": "Tester ma compatibilité avec le métier de chauffeur de bus",
-                "requires_cv": True,
-                "requires_job_offer": False,
-                "requires_questionnaire": True,
-                "difficulty": "advanced",
-                "duration_minutes": 15,
-                "slug": "reconversion-analysis"
-            },
-
-            "career_transition": {
-                "id": "career_transition",
-                "title": "Vers quel métier aller ?",
-                "coach_advice": "Identifiez les métiers compatibles avec vos compétences et vos envies grâce à une analyse personnalisée.",
-                "theme": "career_project",
-                "visible": True,
-                "featured": False,
-                "featured_until": None,
-                "featured_title": None,
-                "requires_cv": True,
-                "requires_job_offer": False,
-                "requires_questionnaire": True,
-                "difficulty": "intermediate",
-                "duration_minutes": 12,
-                "slug": "career-transition"
-            },
-
-            "salary_negotiation": {
-                "id": "salary_negotiation",
-                "title": "Négociation salariale",
-                "coach_advice": "Préparez-vous à négocier votre salaire avec des arguments concrets et une stratégie gagnante.",
-                "theme": "career_project",
-                "visible": True,
-                "featured": False,
-                "featured_until": None,
-                "featured_title": None,
-                "requires_cv": True,
-                "requires_job_offer": True,
-                "requires_questionnaire": True,
-                "difficulty": "intermediate",
-                "duration_minutes": 10,
-                "slug": "salary-negotiation"
-            },
-
-            "industry_orientation": {
-                "id": "industry_orientation",
-                "title": "Et pourquoi pas un métier dans l'industrie ?",
-                "coach_advice": "Analyse personnalisée pour explorer les métiers industriels adaptés à votre profil.",
-                "theme": "career_project",
-                "visible": True,
-                "featured": False,
-                "featured_until": None,
-                "featured_title": None,
-                "requires_cv": True,
-                "requires_job_offer": False,
-                "requires_questionnaire": True,
-                "difficulty": "intermediate",
-                "duration_minutes": 12,
-                "slug": "industry-orientation"
+            'salary_negotiation': {
+                'id': 'salary_negotiation',
+                'title': 'Négociation salariale',
+                'coach_advice': 'Apprenez les techniques pour négocier votre salaire efficacement',
+                'theme': 'interview_tips',
+                'requires_cv': False,
+                'requires_job_offer': True,
+                'requires_questionnaire': True,
+                'visible': True,
+                'featured': False,
+                'difficulty': 'advanced',
+                'duration_minutes': 10
             }
         }
     
-    # === MÉTHODES DE GESTION ===
+    def get_all_services(self) -> Dict:
+        """Retourne tous les services"""
+        # Recharger depuis Supabase pour avoir les dernières données
+        self.services_config = self._load_config()
+        return self.services_config
     
-    def get_visible_services(self) -> List[Dict]:
-        """Retourne tous les services visibles"""
-        return [service for service in self.services_config.values() if service.get('visible', True)]
+    def get_visible_services(self) -> Dict:
+        """Retourne uniquement les services visibles"""
+        # Recharger depuis Supabase
+        self.services_config = self._load_config()
+        return {
+            sid: service for sid, service in self.services_config.items()
+            if service.get('visible', False)
+        }
+    
+    def get_service(self, service_id: str) -> Optional[Dict]:
+        """Retourne un service spécifique"""
+        return self.services_config.get(service_id)
     
     def get_services_by_theme(self) -> Dict[str, List[Dict]]:
         """Retourne les services groupés par thème"""
-        themes = {
-            "evaluate_offer": {"title": "🎯 Évaluer une offre d'emploi", "services": []},
-            "improve_cv": {"title": "📄 Améliorer mon CV", "services": []},
-            "apply_jobs": {"title": "✉️ Candidater", "services": []},
-            "interview_prep": {"title": "🎤 Préparer l'entretien", "services": []},
-            "career_project": {"title": "🚀 Reconstruire mon projet professionnel", "services": []}
-        }
-        
-        for service in self.get_visible_services():
-            theme_id = service.get('theme')
-            if theme_id in themes:
-                themes[theme_id]['services'].append(service)
-        
+        themes = {}
+        for service in self.get_visible_services().values():
+            theme = service.get('theme', 'other')
+            if theme not in themes:
+                themes[theme] = []
+            themes[theme].append(service)
         return themes
     
     def get_featured_service(self) -> Optional[Dict]:
-        """Retourne le service mis en avant (si valide)"""
-        now = datetime.now()
-        
+        """Retourne le service mis en avant s'il existe"""
         for service in self.services_config.values():
-            if not service.get('featured', False):
-                continue
-                
-            if not service.get('visible', True):
-                continue
-                
-            featured_until = service.get('featured_until')
-            if featured_until and datetime.fromisoformat(featured_until) < now:
-                continue
-                
-            return service
-        
+            if service.get('featured', False):
+                # Vérifier si la mise en avant n'a pas expiré
+                featured_until = service.get('featured_until')
+                if featured_until:
+                    if datetime.fromisoformat(featured_until) < datetime.now():
+                        service['featured'] = False
+                        service['featured_until'] = None
+                        self._save_config()
+                        continue
+                return service
         return None
     
-    def get_service_by_slug(self, slug: str) -> Optional[Dict]:
-        """Retourne un service par son slug"""
-        return next((s for s in self.services_config.values() if s.get('slug') == slug), None)
-    
-    # === MÉTHODES D'ADMINISTRATION ===
-    
     def set_service_visibility(self, service_id: str, visible: bool) -> bool:
-        """Active/désactive un service"""
+        """Active ou désactive un service"""
         if service_id in self.services_config:
             self.services_config[service_id]['visible'] = visible
-            logging.info(f"Service {service_id} {'activé' if visible else 'désactivé'}")
-            return True
+            success = self._save_config()
+            if success:
+                logging.info(f"Service {service_id} {'activé' if visible else 'désactivé'}")
+            return success
         return False
     
     def set_featured_service(self, service_id: str, featured_title: str = None, duration_days: int = 30) -> bool:
         """Met un service en avant"""
-        # Désactiver tous les autres services mis en avant
+        # D'abord retirer toute mise en avant existante
         for service in self.services_config.values():
             service['featured'] = False
             service['featured_until'] = None
             service['featured_title'] = None
         
-        # Activer le service choisi
+        # Mettre en avant le nouveau service
         if service_id in self.services_config:
             featured_until = (datetime.now() + timedelta(days=duration_days)).isoformat()
             
@@ -315,8 +230,10 @@ class ServicesManager:
                 'featured_title': featured_title or self.services_config[service_id]['title']
             })
             
-            logging.info(f"Service {service_id} mis en avant jusqu'au {featured_until}")
-            return True
+            success = self._save_config()
+            if success:
+                logging.info(f"Service {service_id} mis en avant jusqu'au {featured_until}")
+            return success
         return False
     
     def clear_featured_service(self) -> bool:
@@ -330,13 +247,25 @@ class ServicesManager:
                 changed = True
         
         if changed:
-            logging.info("Mise en avant supprimée")
-        return changed
+            success = self._save_config()
+            if success:
+                logging.info("Mise en avant supprimée")
+            return success
+        return False
     
     def add_new_service(self, service_config: Dict) -> bool:
-        """Ajoute un nouveau service"""
+        """Ajoute un nouveau service avec persistance dans Supabase"""
         service_id = service_config.get('id')
         if not service_id:
+            logging.error("ID du service manquant")
+            return False
+        
+        # Recharger la config pour éviter les conflits
+        self.services_config = self._load_config()
+        
+        # Vérifier si le service existe déjà
+        if service_id in self.services_config:
+            logging.warning(f"Le service {service_id} existe déjà")
             return False
             
         # Configuration par défaut
@@ -350,15 +279,66 @@ class ServicesManager:
             'requires_questionnaire': False,
             'difficulty': 'beginner',
             'duration_minutes': 5,
-            'theme': 'apply_jobs'
+            'theme': 'apply_jobs',
+            'created_at': datetime.now().isoformat(),
+            'updated_at': datetime.now().isoformat()
         }
         
         # Fusionner avec la config fournie
         final_config = {**default_config, **service_config}
         self.services_config[service_id] = final_config
         
-        logging.info(f"Nouveau service ajouté: {service_id}")
-        return True
+        # Sauvegarder immédiatement dans Supabase
+        success = self._save_config()
+        if success:
+            logging.info(f"✅ Nouveau service ajouté et sauvegardé dans Supabase: {service_id}")
+        else:
+            # En cas d'échec, retirer le service de la mémoire
+            del self.services_config[service_id]
+            logging.error(f"❌ Échec de la sauvegarde du service {service_id} dans Supabase")
+        
+        return success
+    
+    def update_service(self, service_id: str, updates: Dict) -> bool:
+        """Met à jour un service existant"""
+        # Recharger la config pour avoir les dernières données
+        self.services_config = self._load_config()
+        
+        if service_id not in self.services_config:
+            logging.error(f"Service {service_id} introuvable")
+            return False
+        
+        # Mettre à jour les champs
+        self.services_config[service_id].update(updates)
+        self.services_config[service_id]['updated_at'] = datetime.now().isoformat()
+        
+        # Sauvegarder dans Supabase
+        success = self._save_config()
+        if success:
+            logging.info(f"Service {service_id} mis à jour dans Supabase")
+        return success
+    
+    def delete_service(self, service_id: str) -> bool:
+        """Supprime un service"""
+        # Recharger la config
+        self.services_config = self._load_config()
+        
+        if service_id not in self.services_config:
+            logging.error(f"Service {service_id} introuvable")
+            return False
+        
+        del self.services_config[service_id]
+        
+        # Sauvegarder dans Supabase
+        success = self._save_config()
+        if success:
+            logging.info(f"Service {service_id} supprimé de Supabase")
+        return success
+    
+    def refresh_from_supabase(self):
+        """Force le rechargement depuis Supabase"""
+        self.services_config = self._load_config()
+        logging.info("Configuration rechargée depuis Supabase")
 
 # Instance globale
 services_manager = ServicesManager()
@@ -367,6 +347,8 @@ services_manager = ServicesManager()
 
 def get_services_for_admin():
     """Retourne la configuration des services pour l'admin"""
+    # Toujours recharger depuis Supabase pour avoir les dernières données
+    services_manager.refresh_from_supabase()
     return {
         "success": True,
         "services": services_manager.services_config,
@@ -390,5 +372,22 @@ def add_new_service_admin(service_config: dict):
     """Ajoute un nouveau service (pour l'admin)"""
     return services_manager.add_new_service(service_config)
 
+def update_service_admin(service_id: str, updates: dict):
+    """Met à jour un service (pour l'admin)"""
+    return services_manager.update_service(service_id, updates)
+
+def delete_service_admin(service_id: str):
+    """Supprime un service (pour l'admin)"""
+    return services_manager.delete_service(service_id)
+
 # Export de l'instance pour utilisation dans l'app
-__all__ = ['services_manager', 'get_services_for_admin', 'toggle_service_visibility_admin', 'set_featured_service_admin', 'clear_featured_service_admin', 'add_new_service_admin']
+__all__ = [
+    'services_manager', 
+    'get_services_for_admin', 
+    'toggle_service_visibility_admin', 
+    'set_featured_service_admin', 
+    'clear_featured_service_admin', 
+    'add_new_service_admin',
+    'update_service_admin',
+    'delete_service_admin'
+]
