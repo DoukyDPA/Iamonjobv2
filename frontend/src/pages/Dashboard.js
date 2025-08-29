@@ -725,7 +725,7 @@ const Dashboard = () => {
         {activeTab === 'interview' && (
           <div className="revolutionary-tab-content">
             <h2 className="revolutionary-section-title">🎤 Préparer l'entretien</h2>
-            <ServicesGrid filterTheme="apply_jobs" />
+            <ServicesGrid filterTheme="interview_prep" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
               <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
