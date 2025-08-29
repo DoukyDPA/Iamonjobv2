@@ -80,12 +80,65 @@ def toggle_service_visibility(service_id):
         data = request.get_json()
         visible = data.get('visible', True)
         
-        from backend.admin.services_manager import toggle_service_visibility_admin
-        success = toggle_service_visibility_admin(service_id, visible)
+        # Essayer d'abord le nouveau manager Supabase
+        try:
+            from backend.admin.supabase_services_manager import toggle_service_visibility_admin
+            success = toggle_service_visibility_admin(service_id, visible)
+        except ImportError:
+            # Fallback vers l'ancien manager
+            from backend.admin.services_manager import toggle_service_visibility_admin
+            success = toggle_service_visibility_admin(service_id, visible)
         
         return jsonify({"success": success, "service_id": service_id, "visible": visible})
     except Exception as e:
         logging.error(f"Erreur lors du changement de visibilité: {e}")
+        return jsonify({"error": f"Erreur: {str(e)}"}), 500
+
+@admin_api.route('/services/<service_id>/theme', methods=['PUT'])
+@verify_jwt_token
+def update_service_theme(service_id):
+    """Change le thème d'un service"""
+    try:
+        data = request.get_json()
+        theme = data.get('theme')
+        
+        if not theme:
+            return jsonify({"error": "Thème manquant"}), 400
+        
+        # Essayer d'abord le nouveau manager Supabase
+        try:
+            from backend.admin.supabase_services_manager import update_service_theme_admin
+            success = update_service_theme_admin(service_id, theme)
+        except ImportError:
+            return jsonify({"error": "Gestionnaire Supabase non disponible"}), 500
+        
+        return jsonify({"success": success, "service_id": service_id, "theme": theme})
+    except Exception as e:
+        logging.error(f"Erreur lors du changement de thème: {e}")
+        return jsonify({"error": f"Erreur: {str(e)}"}), 500
+
+@admin_api.route('/services/<service_id>/requirements', methods=['PUT'])
+@verify_jwt_token
+def update_service_requirements(service_id):
+    """Met à jour les documents requis d'un service"""
+    try:
+        data = request.get_json()
+        requirements = {
+            'requires_cv': data.get('requires_cv', False),
+            'requires_job_offer': data.get('requires_job_offer', False),
+            'requires_questionnaire': data.get('requires_questionnaire', False)
+        }
+        
+        # Essayer d'abord le nouveau manager Supabase
+        try:
+            from backend.admin.supabase_services_manager import update_service_requirements_admin
+            success = update_service_requirements_admin(service_id, requirements)
+        except ImportError:
+            return jsonify({"error": "Gestionnaire Supabase non disponible"}), 500
+        
+        return jsonify({"success": success, "service_id": service_id, "requirements": requirements})
+    except Exception as e:
+        logging.error(f"Erreur lors de la mise à jour des exigences: {e}")
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
 
 @admin_api.route('/services/<service_id>/feature', methods=['POST'])
