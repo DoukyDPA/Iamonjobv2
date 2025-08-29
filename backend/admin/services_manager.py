@@ -94,22 +94,14 @@ class ServicesManager:
             service_data['service_id'] = service_id
             service_data['updated_at'] = datetime.now().isoformat()
             
-            # Vérifier si le service existe
-            existing = client.table(self.TABLE_NAME).select('service_id').eq(
-                'service_id', service_id
-            ).execute()
+            # IMPORTANT: Utiliser upsert avec on_conflict sur service_id
+            # car c'est notre clé primaire, pas 'id'
+            service_data['created_at'] = datetime.now().isoformat()
             
-            if existing.data:
-                # UPDATE si existe
-                response = client.table(self.TABLE_NAME).update(
-                    service_data
-                ).eq('service_id', service_id).execute()
-            else:
-                # INSERT si n'existe pas
-                service_data['created_at'] = datetime.now().isoformat()
-                response = client.table(self.TABLE_NAME).insert(
-                    service_data
-                ).execute()
+            response = client.table(self.TABLE_NAME).upsert(
+                service_data,
+                on_conflict='service_id'  # Spécifier la colonne de conflit
+            ).execute()
             
             if response.data:
                 logging.info(f"✅ Service {service_id} sauvegardé dans Supabase")
