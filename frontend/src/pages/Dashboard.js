@@ -27,8 +27,7 @@ import {
   FiUsers,
   FiDollarSign,
   FiHandHeart,
-  FiInfo,
-  FiTarget
+  FiInfo
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
