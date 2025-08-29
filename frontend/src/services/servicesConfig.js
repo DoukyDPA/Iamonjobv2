@@ -1,5 +1,5 @@
 // FICHIER : frontend/src/services/servicesConfig.js
-// Configuration centrale de tous les services avec nouveaux conseils
+// Configuration dynamique des services depuis l'API admin
 
 // Mapping des URLs vers les IDs de service
 export const URL_TO_SERVICE_MAPPING = {
@@ -19,7 +19,8 @@ export const URL_TO_SERVICE_MAPPING = {
   'analyze-cv': 'analyze_cv'
 };
 
-export const SERVICES_CONFIG = {
+// Configuration par défaut des services (fallback si API non disponible)
+export const SERVICES_CONFIG_DEFAULT = {
   analyze_cv: {
     id: 'analyze_cv',
     title: 'Analysez votre CV',
@@ -293,32 +294,143 @@ export const SERVICES_CONFIG = {
       { id: 'summary', label: 'Synthèse', icon: '📊' },
       { id: 'table', label: 'Tableau comparatif', icon: '📋' }
     ]
+  },
+
+  skills_analysis: {
+    id: 'skills_analysis',
+    title: 'Analyser mes compétences',
+    shortTitle: 'Analyse compétences',
+    icon: '🔍',
+    coachAdvice: "L'IA identifie vos compétences transférables et découvre de nouveaux domaines d'application. Votre mission : pour chaque compétence identifiée, trouvez 3 exemples concrets de votre parcours. Les compétences sont transférables si vous pouvez les prouver avec des réalisations.",
+    requiresCV: true,
+    requiresJobOffer: false,
+    requiresQuestionnaire: true,
+    allowsNotes: true,
+    outputType: 'skills_analysis',
+    storageKey: 'iamonjob_skills_analysis',
+    actionType: 'skills_analysis_response',
+    apiEndpoint: '/api/skills/analyze',
+    tabs: [
+      { id: 'summary', label: 'Synthèse', icon: '📊' },
+      { id: 'skills', label: 'Compétences', icon: '🎯' },
+      { id: 'transferability', label: 'Transférabilité', icon: '🔄' },
+      { id: 'opportunities', label: 'Opportunités', icon: '🌟' }
+    ]
   }
 };
 
 // Utilitaires pour travailler avec la config
 export const getServiceConfig = (serviceId) => {
-  return SERVICES_CONFIG[serviceId] || null;
+  return SERVICES_CONFIG_DEFAULT[serviceId] || null;
 };
 
-export const getServicesByCategory = () => {
+// Configuration dynamique des services depuis l'API admin
+let SERVICES_CONFIG_CACHE = null;
+let SERVICES_LAST_UPDATE = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Fonction pour charger les services depuis l'API admin
+export const loadServicesFromAdmin = async () => {
+  try {
+    // Vérifier le cache
+    if (SERVICES_CONFIG_CACHE && SERVICES_LAST_UPDATE && 
+        (Date.now() - SERVICES_LAST_UPDATE) < CACHE_DURATION) {
+      return SERVICES_CONFIG_CACHE;
+    }
+
+    // Charger depuis l'API admin
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      console.warn('Token non disponible, utilisation de la config par défaut');
+      return SERVICES_CONFIG_DEFAULT;
+    }
+
+    const response = await fetch('/api/admin/services', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      console.warn('Erreur API admin, utilisation de la config par défaut');
+      return SERVICES_CONFIG_DEFAULT;
+    }
+
+    const data = await response.json();
+    if (!data.success || !data.services) {
+      console.warn('Données API invalides, utilisation de la config par défaut');
+      return SERVICES_CONFIG_DEFAULT;
+    }
+
+    // Fusionner avec la config par défaut
+    const mergedConfig = { ...SERVICES_CONFIG_DEFAULT };
+    
+    Object.entries(data.services).forEach(([serviceId, adminService]) => {
+      if (adminService.visible && mergedConfig[serviceId]) {
+        // Mettre à jour avec les données admin
+        mergedConfig[serviceId] = {
+          ...mergedConfig[serviceId],
+          title: adminService.title,
+          coachAdvice: adminService.coach_advice,
+          requiresCV: adminService.requires_cv,
+          requiresJobOffer: adminService.requires_job_offer,
+          requiresQuestionnaire: adminService.requires_questionnaire,
+          difficulty: adminService.difficulty,
+          durationMinutes: adminService.duration_minutes,
+          featured: adminService.featured,
+          featuredTitle: adminService.featured_title
+        };
+      }
+    });
+
+    // Mettre en cache
+    SERVICES_CONFIG_CACHE = mergedConfig;
+    SERVICES_LAST_UPDATE = Date.now();
+    
+    return mergedConfig;
+  } catch (error) {
+    console.error('Erreur lors du chargement des services:', error);
+    return SERVICES_CONFIG_DEFAULT;
+  }
+};
+
+// Fonction pour obtenir la config actuelle (avec cache)
+export const getServicesConfig = async () => {
+  if (SERVICES_CONFIG_CACHE) {
+    return SERVICES_CONFIG_CACHE;
+  }
+  return await loadServicesFromAdmin();
+};
+
+// Fonction pour forcer le rechargement
+export const refreshServicesConfig = async () => {
+  SERVICES_CONFIG_CACHE = null;
+  SERVICES_LAST_UPDATE = null;
+  return await loadServicesFromAdmin();
+};
+
+export const getServicesByCategory = async () => {
+  const config = await getServicesConfig();
+  
   const categories = {
     improve_cv: ['analyze_cv', 'cv_ats_optimization'],
     apply_jobs: ['cover_letter_advice', 'cover_letter_generate', 'follow_up_email'],
     interview_prep: ['interview_prep', 'professional_pitch', 'presentation_slides', 'salary_negotiation'],
-    career_project: ['career_transition', 'reconversion_analysis', 'industry_orientation']
+    career_project: ['career_transition', 'reconversion_analysis', 'industry_orientation', 'skills_analysis']
   };
   
   const result = {};
   Object.keys(categories).forEach(category => {
-    result[category] = categories[category].map(id => SERVICES_CONFIG[id]).filter(Boolean);
+    result[category] = categories[category].map(id => config[id]).filter(Boolean);
   });
   
   return result;
 };
 
-export const getAllServices = () => {
-  return Object.values(SERVICES_CONFIG);
+export const getAllServices = async () => {
+  const config = await getServicesConfig();
+  return Object.values(config);
 };
 
 export const getRequiredDocuments = (serviceId) => {
