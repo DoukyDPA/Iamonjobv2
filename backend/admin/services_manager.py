@@ -6,6 +6,7 @@ Utilise directement la table sessions avec une clé spéciale pour l'admin
 
 import json
 import logging
+import uuid
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
@@ -75,6 +76,11 @@ class ServicesManager:
                 logging.error("Client Supabase non disponible")
                 return False
             
+            # D'abord, vérifier si l'entrée existe déjà
+            existing = client.table('sessions').select('id').eq(
+                'user_email', self.ADMIN_KEY
+            ).execute()
+            
             # Préparer les données pour Supabase
             data_to_save = {
                 'user_email': self.ADMIN_KEY,
@@ -87,11 +93,19 @@ class ServicesManager:
                 'updated_at': datetime.now().isoformat()
             }
             
-            # Upsert dans la table sessions
-            response = client.table('sessions').upsert(
-                data_to_save,
-                on_conflict='user_email'
-            ).execute()
+            if existing.data and len(existing.data) > 0:
+                # Update si existe déjà
+                record_id = existing.data[0]['id']
+                response = client.table('sessions').update(
+                    data_to_save
+                ).eq('id', record_id).execute()
+            else:
+                # Insert si n'existe pas
+                import uuid
+                data_to_save['id'] = str(uuid.uuid4())
+                response = client.table('sessions').insert(
+                    data_to_save
+                ).execute()
             
             if response.data:
                 logging.info(f"✅ Configuration sauvegardée dans Supabase: {len(self.services_config)} services")
@@ -416,7 +430,6 @@ def delete_service_admin(service_id: str):
 __all__ = [
     'services_manager', 
     'get_services_for_admin', 
-    'get_visible_services', 
     'toggle_service_visibility_admin', 
     'set_featured_service_admin', 
     'clear_featured_service_admin', 
