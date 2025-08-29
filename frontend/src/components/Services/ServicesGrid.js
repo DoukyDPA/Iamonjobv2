@@ -13,99 +13,15 @@ const ServicesGrid = ({ filterTheme = null }) => {
   const [loading, setLoading] = useState(true);
   const [adminServices, setAdminServices] = useState({});
 
-  // Charger les services depuis l'API admin
+    // Charger les services depuis la config par défaut (plus stable)
   useEffect(() => {
-    const loadAdminServices = async () => {
+    const loadServices = () => {
       try {
         setLoading(true);
         
-        // Récupérer le token d'authentification
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-        
-        if (token) {
-          const response = await fetch('/api/admin/services', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            if (data.success && data.services) {
-              setAdminServices(data.services);
-              
-              // Filtrer les services selon la visibilité admin ET le thème
-              const filteredServices = {};
-              Object.entries(data.services).forEach(([serviceId, adminService]) => {
-                if (adminService.visible && SERVICES_CONFIG[serviceId]) {
-                  const category = adminService.theme;
-                  
-                  // Si un filtre de thème est spécifié, ne garder que ce thème
-                  if (filterTheme && category !== filterTheme) {
-                    return;
-                  }
-                  
-                  if (!filteredServices[category]) {
-                    filteredServices[category] = [];
-                  }
-                  filteredServices[category].push(SERVICES_CONFIG[serviceId]);
-                }
-              });
-              
-              setServicesByCategory(filteredServices);
-            } else {
-              // Fallback vers la config par défaut
-              const defaultServices = getServicesByCategory();
-              if (filterTheme) {
-                // Filtrer par thème
-                const filtered = {};
-                Object.entries(defaultServices).forEach(([category, services]) => {
-                  if (category === filterTheme) {
-                    filtered[category] = services;
-                  }
-                });
-                setServicesByCategory(filtered);
-              } else {
-                setServicesByCategory(defaultServices);
-              }
-            }
-          } else {
-            // Fallback vers la config par défaut
-            const defaultServices = getServicesByCategory();
-            if (filterTheme) {
-              // Filtrer par thème
-              const filtered = {};
-              Object.entries(defaultServices).forEach(([category, services]) => {
-                if (category === filterTheme) {
-                  filtered[category] = services;
-                }
-              });
-              setServicesByCategory(filtered);
-            } else {
-              setServicesByCategory(defaultServices);
-            }
-          }
-        } else {
-          // Pas de token, utiliser la config par défaut
-          const defaultServices = getServicesByCategory();
-          if (filterTheme) {
-            // Filtrer par thème
-            const filtered = {};
-            Object.entries(defaultServices).forEach(([category, services]) => {
-              if (category === filterTheme) {
-                filtered[category] = services;
-              }
-            });
-            setServicesByCategory(filtered);
-          } else {
-            setServicesByCategory(defaultServices);
-          }
-        }
-      } catch (error) {
-        console.error('Erreur chargement services admin:', error);
-        // Fallback vers la config par défaut
+        // Utiliser directement la config par défaut
         const defaultServices = getServicesByCategory();
+        
         if (filterTheme) {
           // Filtrer par thème
           const filtered = {};
@@ -118,12 +34,42 @@ const ServicesGrid = ({ filterTheme = null }) => {
         } else {
           setServicesByCategory(defaultServices);
         }
+        
+        // Optionnel : essayer de charger les services admin en arrière-plan
+        const loadAdminServicesBackground = async () => {
+          try {
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            if (token) {
+              const response = await fetch('/api/admin/services', {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+
+              if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.services) {
+                  setAdminServices(data.services);
+                }
+              }
+            }
+          } catch (error) {
+            // Ignorer les erreurs en arrière-plan
+            console.log('Services admin non disponibles (normal pour les utilisateurs non-admin)');
+          }
+        };
+        
+        loadAdminServicesBackground();
+        
+      } catch (error) {
+        console.error('Erreur chargement services:', error);
       } finally {
         setLoading(false);
       }
     };
-
-    loadAdminServices();
+    
+    loadServices();
   }, [filterTheme]);
 
   // ✅ FONCTION DE CONVERSION ID -> URL
