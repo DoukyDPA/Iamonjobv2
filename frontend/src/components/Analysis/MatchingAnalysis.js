@@ -51,47 +51,124 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
     }
   }, [preloadedData]);
 
-  // Extraction des scores depuis la réponse IA
+  // REMPLACER la fonction extractScoresFromResponse dans frontend/src/components/Analysis/MatchingAnalysis.js
+  // Cette fonction extrait les scores depuis la réponse de l'IA
+
+  // Ligne ~55 : Remplacer la fonction extractScoresFromResponse par celle-ci :
+
   const extractScoresFromResponse = (text) => {
     if (!text || typeof text !== 'string') {
       return null;
     }
 
-    // 1. Priorité au JSON final
-    const jsonMatch = text.match(/```json\s*(\{[^`]*\})\s*```/);
-    if (jsonMatch) {
-      try {
-        const parsed = JSON.parse(jsonMatch[1]);
-        if (parsed.compatibilityScore !== undefined) {
-          return parsed;
+    console.log('📊 Extraction des scores depuis la réponse...');
+    
+    // 1. Priorité au JSON final (le prompt se termine toujours par un bloc JSON)
+    // Chercher le dernier bloc JSON dans la réponse
+    const jsonMatches = text.match(/```json\s*(\{[\s\S]*?\})\s*```/g);
+    
+    if (jsonMatches && jsonMatches.length > 0) {
+      // Prendre le dernier bloc JSON (celui avec les scores)
+      const lastJsonBlock = jsonMatches[jsonMatches.length - 1];
+      const jsonContent = lastJsonBlock.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+      
+      if (jsonContent && jsonContent[1]) {
+        try {
+          const parsed = JSON.parse(jsonContent[1]);
+          console.log('✅ Scores extraits du JSON:', parsed);
+          
+          // Vérifier que tous les scores sont présents et valides
+          const requiredScores = ['compatibilityScore', 'technical', 'soft', 'experience', 'education', 'culture'];
+          const hasAllScores = requiredScores.every(key => 
+            key in parsed && 
+            typeof parsed[key] === 'number' && 
+            parsed[key] >= 0 && 
+            parsed[key] <= 100
+          );
+          
+          if (hasAllScores) {
+            // Arrondir les scores pour l'affichage
+            const roundedScores = {};
+            requiredScores.forEach(key => {
+              roundedScores[key] = Math.round(parsed[key]);
+            });
+            return roundedScores;
+          } else {
+            console.warn('⚠️ JSON trouvé mais scores incomplets ou invalides');
+          }
+        } catch (e) {
+          console.warn('⚠️ Erreur parsing JSON:', e);
         }
-      } catch (e) {
-        console.warn('JSON invalide dans la réponse');
       }
     }
 
-    // 2. Extraction des scores SCORE_XXX
-    const scorePatterns = {
-      compatibilityScore: /SCORE_GLOBAL:\s*(\d+)/,
-      technical: /SCORE_TECHNIQUE:\s*(\d+)/,
-      soft: /SCORE_SOFT:\s*(\d+)/,
-      experience: /SCORE_EXPERIENCE:\s*(\d+)/,
-      education: /SCORE_FORMATION:\s*(\d+)/,
-      culture: /SCORE_CULTURE:\s*(\d+)/
+    // 2. Fallback : chercher les scores dans le texte avec des patterns
+    console.log('🔍 Recherche des scores par patterns...');
+    
+    const patterns = {
+      compatibilityScore: /Score\s+(?:Global|global)\s*:\s*(\d+)(?:\s*%)?/i,
+      technical: /(?:Score\s+)?(?:Technique|Technical|TECHNIQUE)\s*:\s*(\d+)(?:\s*%)?/i,
+      soft: /(?:Score\s+)?(?:Soft\s+Skills?|SOFT\s+SKILLS?)\s*:\s*(\d+)(?:\s*%)?/i,
+      experience: /(?:Score\s+)?(?:Expérience|Experience|EXPÉRIENCE)\s*:\s*(\d+)(?:\s*%)?/i,
+      education: /(?:Score\s+)?(?:Formation|Education|FORMATION)\s*:\s*(\d+)(?:\s*%)?/i,
+      culture: /(?:Score\s+)?(?:Culture?l?|CULTURE)\s*:\s*(\d+)(?:\s*%)?/i
     };
-
-    const scores = {};
-    let validScores = 0;
-
-    for (const [key, pattern] of Object.entries(scorePatterns)) {
+    
+    const extractedScores = {};
+    let foundCount = 0;
+    
+    for (const [key, pattern] of Object.entries(patterns)) {
       const match = text.match(pattern);
       if (match) {
-        scores[key] = parseInt(match[1]);
-        validScores++;
+        const score = parseInt(match[1]);
+        if (score >= 0 && score <= 100) {
+          extractedScores[key] = score;
+          foundCount++;
+          console.log(`✓ ${key}: ${score}`);
+        }
       }
     }
-
-    return validScores >= 4 ? scores : null;
+    
+    // Si on a trouvé au moins 4 scores, on les utilise
+    if (foundCount >= 4) {
+      console.log('✅ Scores extraits par patterns:', extractedScores);
+      
+      // Ajouter des valeurs par défaut pour les scores manquants
+      if (!extractedScores.compatibilityScore && foundCount >= 3) {
+        // Calculer le score global s'il manque
+        const weights = { technical: 0.30, soft: 0.20, experience: 0.25, education: 0.15, culture: 0.10 };
+        let globalScore = 0;
+        let totalWeight = 0;
+        
+        for (const [key, weight] of Object.entries(weights)) {
+          if (extractedScores[key]) {
+            globalScore += extractedScores[key] * weight;
+            totalWeight += weight;
+          }
+        }
+        
+        if (totalWeight > 0) {
+          extractedScores.compatibilityScore = Math.round(globalScore / totalWeight);
+        }
+      }
+      
+      // Compléter les scores manquants avec des valeurs moyennes
+      const avgScore = Math.round(
+        Object.values(extractedScores).reduce((a, b) => a + b, 0) / Object.keys(extractedScores).length
+      );
+      
+      const allScores = ['compatibilityScore', 'technical', 'soft', 'experience', 'education', 'culture'];
+      allScores.forEach(key => {
+        if (!(key in extractedScores)) {
+          extractedScores[key] = avgScore;
+        }
+      });
+      
+      return extractedScores;
+    }
+    
+    console.warn('⚠️ Impossible d\'extraire suffisamment de scores, utilisation des valeurs par défaut');
+    return null;
   };
 
   // Vérification des documents requis
