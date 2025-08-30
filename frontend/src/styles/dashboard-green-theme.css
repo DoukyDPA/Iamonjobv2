@@ -1,0 +1,308 @@
+import React, { useState, useEffect } from 'react';
+
+// Composant PartnerJobs simulé
+const PartnerJobs = () => {
+  const jobs = [
+    { id: 1, title: "Développeur Full Stack", company: "TechCorp", location: "Paris" },
+    { id: 2, title: "Chef de Projet Digital", company: "WebAgency", location: "Lyon" },
+    { id: 3, title: "Data Analyst", company: "DataSmart", location: "Remote" }
+  ];
+
+  return (
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+      gap: '1rem'
+    }}>
+      {jobs.map(job => (
+        <div key={job.id} style={{
+          padding: '1rem',
+          borderRadius: '8px',
+          border: '1px solid #e5e7eb',
+          background: '#f9fafb',
+          transition: 'transform 0.2s',
+          cursor: 'pointer'
+        }}
+        onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+        onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          <h4 style={{ fontSize: '0.95rem', fontWeight: '600', color: '#111827', marginBottom: '0.25rem' }}>
+            {job.title}
+          </h4>
+          <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>
+            {job.company}
+          </p>
+          <p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+            📍 {job.location}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const Dashboard = () => {
+  const [documents, setDocuments] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [showQuestionnaireModal, setShowQuestionnaireModal] = useState(false);
+  const [showTextModal, setShowTextModal] = useState(null);
+  const [textContent, setTextContent] = useState('');
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState(['', '', '', '', '']);
+  
+  const questions = [
+    "Quelles sont vos principales compétences professionnelles ?",
+    "Qu'est-ce qui vous motive dans votre recherche d'emploi ?",
+    "Quels sont vos objectifs de carrière à long terme ?",
+    "Quelle est votre expérience la plus pertinente ?",
+    "Qu'est-ce qui vous différencie des autres candidats ?"
+  ];
+
+  useEffect(() => {
+    // Charger les documents depuis localStorage
+    const savedDocs = localStorage.getItem('userDocuments');
+    if (savedDocs) {
+      setDocuments(JSON.parse(savedDocs));
+    }
+  }, []);
+
+  const handleFileUpload = async (type, file) => {
+    if (!file) return;
+    setLoading(true);
+    // Simulation d'upload
+    setTimeout(() => {
+      const newDocs = {
+        ...documents,
+        [type]: {
+          name: file.name,
+          uploadDate: new Date().toISOString(),
+          size: file.size
+        }
+      };
+      setDocuments(newDocs);
+      localStorage.setItem('userDocuments', JSON.stringify(newDocs));
+      setLoading(false);
+    }, 1500);
+  };
+
+  const handleTextUpload = () => {
+    setLoading(true);
+    setTimeout(() => {
+      const newDocs = {
+        ...documents,
+        [showTextModal]: {
+          name: `${showTextModal}_text.txt`,
+          uploadDate: new Date().toISOString(),
+          content: textContent
+        }
+      };
+      setDocuments(newDocs);
+      localStorage.setItem('userDocuments', JSON.stringify(newDocs));
+      setShowTextModal(null);
+      setTextContent('');
+      setLoading(false);
+    }, 1000);
+  };
+
+  const handleQuestionnaireSubmit = () => {
+    setLoading(true);
+    setTimeout(() => {
+      const newDocs = {
+        ...documents,
+        questionnaire: {
+          name: 'Questionnaire personnel',
+          uploadDate: new Date().toISOString(),
+          answers: answers
+        }
+      };
+      setDocuments(newDocs);
+      localStorage.setItem('userDocuments', JSON.stringify(newDocs));
+      setShowQuestionnaireModal(false);
+      setAnswers(['', '', '', '', '']);
+      setCurrentQuestion(0);
+      setLoading(false);
+    }, 1000);
+  };
+
+  const nextQuestion = () => {
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+    }
+  };
+
+  const prevQuestion = () => {
+    if (currentQuestion > 0) {
+      setCurrentQuestion(currentQuestion - 1);
+    }
+  };
+
+  const getProgressPercentage = () => {
+    let progress = 0;
+    if (documents.cv) progress += 25;
+    if (documents.questionnaire) progress += 25;
+    if (documents.offre_emploi) progress += 25;
+    if (documents.reconversion) progress += 25;
+    return progress;
+  };
+
+  const documentTypes = [
+    {
+      id: 'cv',
+      title: 'Mon CV',
+      icon: '📄',
+      color: '#16A34A',
+      bgColor: '#dcfce7',
+      description: documents.cv ? documents.cv.name : 'Non ajouté',
+      uploaded: !!documents.cv
+    },
+    {
+      id: 'questionnaire',
+      title: 'Questionnaire personnel',
+      icon: '📝',
+      color: '#ec4899',
+      bgColor: '#fce7f3',
+      description: documents.questionnaire ? 'Complété' : 'Non ajouté',
+      uploaded: !!documents.questionnaire
+    },
+    {
+      id: 'offre_emploi',
+      title: "Offre d'emploi",
+      icon: '💼',
+      color: '#16A34A',
+      bgColor: '#dcfce7',
+      description: documents.offre_emploi ? documents.offre_emploi.name : 'Non ajouté',
+      uploaded: !!documents.offre_emploi
+    },
+    {
+      id: 'reconversion',
+      title: 'Métier de reconversion',
+      icon: '🔍',
+      color: '#ec4899',
+      bgColor: '#fce7f3',
+      description: documents.reconversion ? 'Défini' : 'Non ajouté',
+      uploaded: !!documents.reconversion
+    }
+  ];
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(180deg, #16A34A 0%, #128A3F 50%, #0B5E2C 100%)',
+      padding: '2rem',
+      color: '#111827'
+    }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        
+        {/* En-tête */}
+        <div style={{
+          background: 'white',
+          borderRadius: '24px',
+          boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+          overflow: 'hidden',
+          marginBottom: '2rem'
+        }}>
+          <div style={{
+            height: '4px',
+            background: 'linear-gradient(90deg, #16A34A 0%, #ec4899 100%)'
+          }} />
+          <div style={{ padding: '2rem' }}>
+            <h1 style={{
+              fontSize: '2rem',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              marginBottom: '0.5rem',
+              color: '#111827'
+            }}>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '40px',
+                height: '40px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #16A34A 0%, #ec4899 100%)',
+                fontSize: '1.5rem'
+              }}>
+                📂
+              </span>
+              Mes documents
+            </h1>
+            <p style={{ color: '#6b7280', fontSize: '1rem' }}>
+              Complétez votre profil pour personnaliser l'analyse de vos candidatures.
+            </p>
+          </div>
+        </div>
+
+        {/* Barre de progression */}
+        <div style={{
+          background: 'white',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          marginBottom: '2rem',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.08)'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem'
+          }}>
+            <span style={{ fontWeight: '500', color: '#374151' }}>
+              Progression de votre profil
+            </span>
+            <span style={{
+              fontSize: '0.875rem',
+              padding: '0.25rem 0.75rem',
+              borderRadius: '20px',
+              background: '#fce7f3',
+              color: '#ec4899',
+              border: '1px solid #fbcfe8'
+            }}>
+              {getProgressPercentage()}%
+            </span>
+          </div>
+          <div style={{
+            width: '100%',
+            height: '8px',
+            borderRadius: '10px',
+            background: '#f3f4f6',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              height: '100%',
+              background: 'linear-gradient(90deg, #16A34A 0%, #ec4899 100%)',
+              width: `${getProgressPercentage()}%`,
+              transition: 'width 0.3s ease'
+            }} />
+          </div>
+          <p style={{
+            fontSize: '0.875rem',
+            color: '#9ca3af',
+            marginTop: '0.75rem'
+          }}>
+            {getProgressPercentage() < 100 
+              ? "Ajoutez une offre d'emploi pour débloquer l'analyse de compatibilité."
+              : "Profil complet ! Lancez votre analyse IA."
+            }
+          </p>
+        </div>
+
+        {/* Grille de documents */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '1.5rem',
+          marginBottom: '2rem'
+        }}>
+          {documentTypes.map(doc => (
+            <div key={doc.id} style={{
+              background: 'white',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
+              transition: 'transform 0.2s',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4
