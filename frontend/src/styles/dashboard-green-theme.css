@@ -1,308 +1,450 @@
-import React, { useState, useEffect } from 'react';
+/* ===================================================================
+   🎨 DASHBOARD IAMONJOB - THÈME VERT MODERNE
+   Style inspiré du modèle fourni avec fond vert dégradé
+   ================================================================== */
 
-// Composant PartnerJobs simulé
-const PartnerJobs = () => {
-  const jobs = [
-    { id: 1, title: "Développeur Full Stack", company: "TechCorp", location: "Paris" },
-    { id: 2, title: "Chef de Projet Digital", company: "WebAgency", location: "Lyon" },
-    { id: 3, title: "Data Analyst", company: "DataSmart", location: "Remote" }
-  ];
+/* ===== OVERRIDE DU FOND PRINCIPAL ===== */
+.revolutionary-dashboard {
+  min-height: 100vh !important;
+  /* Fond vert dégradé comme dans le modèle */
+  background: linear-gradient(180deg, #16A34A 0%, #128A3F 50%, #0B5E2C 100%) !important;
+  padding: 2rem !important;
+  position: relative;
+  overflow-x: hidden;
+}
 
-  return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-      gap: '1rem'
-    }}>
-      {jobs.map(job => (
-        <div key={job.id} style={{
-          padding: '1rem',
-          borderRadius: '8px',
-          border: '1px solid #e5e7eb',
-          background: '#f9fafb',
-          transition: 'transform 0.2s',
-          cursor: 'pointer'
-        }}
-        onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-        onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-        >
-          <h4 style={{ fontSize: '0.95rem', fontWeight: '600', color: '#111827', marginBottom: '0.25rem' }}>
-            {job.title}
-          </h4>
-          <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>
-            {job.company}
-          </p>
-          <p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
-            📍 {job.location}
-          </p>
-        </div>
-      ))}
-    </div>
-  );
-};
+/* Alternative avec les couleurs de l'app existante */
+.revolutionary-dashboard.app-colors {
+  background: linear-gradient(180deg, #0a6b79 0%, #085a66 50%, #054550 100%) !important;
+}
 
-const Dashboard = () => {
-  const [documents, setDocuments] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [showQuestionnaireModal, setShowQuestionnaireModal] = useState(false);
-  const [showTextModal, setShowTextModal] = useState(null);
-  const [textContent, setTextContent] = useState('');
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState(['', '', '', '', '']);
+/* ===== HEADER DU DASHBOARD ===== */
+.dashboard-header {
+  margin-top: 2rem !important;
+  margin-bottom: 2rem !important;
+  text-align: center;
+}
+
+.dashboard-header h1 {
+  color: white !important;
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+  background: none !important;
+  -webkit-text-fill-color: white !important;
+}
+
+/* ===== CONTENEUR PRINCIPAL AVEC CARTES BLANCHES ===== */
+.revolutionary-dashboard-content {
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  padding: 0 1rem !important;
+}
+
+/* ===== CARTE PRINCIPALE D'EN-TÊTE ===== */
+.revolutionary-welcome-card {
+  background: white !important;
+  border-radius: 24px !important;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+  overflow: hidden !important;
+  margin-bottom: 2rem !important;
+}
+
+/* Barre de gradient en haut de la carte */
+.revolutionary-welcome-card::before {
+  content: '';
+  display: block;
+  height: 4px;
+  background: linear-gradient(90deg, #16A34A 0%, #ec4899 100%);
+}
+
+.revolutionary-welcome-content {
+  padding: 2rem !important;
+}
+
+.revolutionary-welcome-title {
+  font-size: 2rem !important;
+  font-weight: bold !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  margin-bottom: 0.5rem !important;
+  color: #111827 !important;
+}
+
+.revolutionary-welcome-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 12px !important;
+  background: linear-gradient(135deg, #16A34A 0%, #ec4899 100%) !important;
+  font-size: 1.5rem !important;
+}
+
+.revolutionary-welcome-description {
+  color: #6b7280 !important;
+  font-size: 1rem !important;
+}
+
+/* ===== BARRE DE PROGRESSION ===== */
+.revolutionary-progress-container {
+  background: white !important;
+  border-radius: 16px !important;
+  padding: 1.5rem !important;
+  margin-bottom: 2rem !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08) !important;
+}
+
+.revolutionary-progress-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 0.75rem !important;
+}
+
+.revolutionary-progress-title {
+  font-weight: 500 !important;
+  color: #374151 !important;
+  font-size: 1rem !important;
+}
+
+.revolutionary-progress-badge {
+  font-size: 0.875rem !important;
+  padding: 0.25rem 0.75rem !important;
+  border-radius: 20px !important;
+  background: #fce7f3 !important;
+  color: #ec4899 !important;
+  border: 1px solid #fbcfe8 !important;
+}
+
+.revolutionary-progress-bar-container {
+  width: 100% !important;
+  height: 8px !important;
+  border-radius: 10px !important;
+  background: #f3f4f6 !important;
+  overflow: hidden !important;
+}
+
+.revolutionary-progress-bar {
+  height: 100% !important;
+  background: linear-gradient(90deg, #16A34A 0%, #ec4899 100%) !important;
+  transition: width 0.3s ease !important;
+}
+
+.revolutionary-progress-message {
+  font-size: 0.875rem !important;
+  color: #9ca3af !important;
+  margin-top: 0.75rem !important;
+}
+
+/* ===== ONGLETS MODERNISÉS ===== */
+.revolutionary-tabs-container {
+  display: flex !important;
+  justify-content: center !important;
+  margin: 2rem 0 !important;
+}
+
+.revolutionary-tabs {
+  background: white !important;
+  border-radius: 20px !important;
+  padding: 0.5rem !important;
+  display: inline-flex !important;
+  gap: 0.5rem !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08) !important;
+}
+
+.revolutionary-tab-button {
+  background: transparent !important;
+  border: none !important;
+  padding: 1rem 2rem !important;
+  border-radius: 16px !important;
+  font-weight: 600 !important;
+  color: #6b7280 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.revolutionary-tab-button:hover {
+  background: #f9fafb !important;
+}
+
+.revolutionary-tab-button.active {
+  background: linear-gradient(135deg, #16A34A 0%, #128A3F 100%) !important;
+  color: white !important;
+}
+
+.revolutionary-tab-icon {
+  font-size: 1.25rem !important;
+}
+
+/* ===== GRILLE DE DOCUMENTS 2x2 ===== */
+.revolutionary-document-types {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 1.5rem !important;
+  margin-bottom: 2rem !important;
+}
+
+/* Sur grand écran, 4 colonnes */
+@media (min-width: 1024px) {
+  .revolutionary-document-types {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+
+/* Sur mobile, 1 colonne */
+@media (max-width: 640px) {
+  .revolutionary-document-types {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ===== CARTES DE DOCUMENTS ===== */
+.revolutionary-document-card {
+  background: white !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08) !important;
+  transition: transform 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.revolutionary-document-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12) !important;
+}
+
+/* Barre colorée en haut de chaque carte */
+.revolutionary-document-card::before {
+  content: '';
+  display: block;
+  height: 3px;
+  background: linear-gradient(90deg, var(--doc-color, #16A34A) 0%, var(--doc-color-end, #ec4899) 100%);
+}
+
+.revolutionary-document-content {
+  padding: 1.25rem !important;
+}
+
+.revolutionary-document-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.revolutionary-document-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 6px !important;
+  font-size: 0.875rem !important;
+}
+
+.revolutionary-document-icon.green {
+  background: #dcfce7 !important;
+}
+
+.revolutionary-document-icon.pink {
+  background: #fce7f3 !important;
+}
+
+.revolutionary-document-info h4 {
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+  color: #111827 !important;
+  margin: 0 !important;
+}
+
+.revolutionary-document-info p {
+  font-size: 0.875rem !important;
+  color: #6b7280 !important;
+  margin: 0.25rem 0 0.75rem 0 !important;
+}
+
+.revolutionary-document-info p.not-uploaded {
+  color: #9ca3af !important;
+  font-style: italic !important;
+}
+
+/* ===== BOUTONS D'ACTION ===== */
+.revolutionary-document-actions {
+  display: flex !important;
+  gap: 0.75rem !important;
+}
+
+.revolutionary-btn {
+  padding: 0.375rem 0.75rem !important;
+  font-size: 0.875rem !important;
+  border-radius: 8px !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-weight: 500 !important;
+}
+
+.revolutionary-btn-primary {
+  background: linear-gradient(135deg, #16A34A 0%, #128A3F 100%) !important;
+  color: white !important;
+}
+
+.revolutionary-btn-primary:hover {
+  opacity: 0.9 !important;
+}
+
+.revolutionary-btn-secondary {
+  background: white !important;
+  color: #374151 !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.revolutionary-btn-secondary:hover {
+  background: #f9fafb !important;
+}
+
+.revolutionary-btn-pink {
+  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%) !important;
+  color: white !important;
+}
+
+/* ===== SECTION CONSEILS ===== */
+.revolutionary-tips-container {
+  border-radius: 16px !important;
+  padding: 1px !important;
+  background: linear-gradient(90deg, #16A34A 0%, #ec4899 100%) !important;
+  margin-bottom: 2rem !important;
+}
+
+.revolutionary-tips-content {
+  background: white !important;
+  border-radius: 15px !important;
+  padding: 1.5rem !important;
+  display: flex !important;
+  gap: 1rem !important;
+  align-items: flex-start !important;
+}
+
+.revolutionary-tips-icon {
+  width: 36px !important;
+  height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 12px !important;
+  background: linear-gradient(135deg, #16A34A 0%, #ec4899 100%) !important;
+  color: white !important;
+  font-size: 1.25rem !important;
+  flex-shrink: 0 !important;
+}
+
+.revolutionary-tips-text h3 {
+  font-weight: 500 !important;
+  color: #111827 !important;
+  margin: 0 0 0.5rem 0 !important;
+  font-size: 1rem !important;
+}
+
+.revolutionary-tips-list {
+  font-size: 0.875rem !important;
+  color: #6b7280 !important;
+  list-style: disc !important;
+  padding-left: 1.25rem !important;
+  margin: 0 !important;
+}
+
+.revolutionary-tips-list li {
+  margin-bottom: 0.25rem !important;
+}
+
+/* ===== SECTION OFFRES PARTENAIRES ===== */
+.revolutionary-partners-section {
+  background: white !important;
+  border-radius: 16px !important;
+  padding: 1.5rem !important;
+  margin-bottom: 2rem !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08) !important;
+}
+
+.revolutionary-partners-title {
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 0.5rem !important;
+  color: #111827 !important;
+}
+
+.revolutionary-partners-description {
+  color: #6b7280 !important;
+  margin-bottom: 1.5rem !important;
+}
+
+/* ===== BOUTON D'ACTION PRINCIPAL ===== */
+.revolutionary-action-container {
+  display: flex !important;
+  justify-content: center !important;
+  margin-top: 2rem !important;
+}
+
+.revolutionary-action-wrapper {
+  border-radius: 16px !important;
+  padding: 1px !important;
+  background: linear-gradient(90deg, #16A34A 0%, #ec4899 100%) !important;
+}
+
+.revolutionary-action-button {
+  border-radius: 15px !important;
+  background: white !important;
+  color: #111827 !important;
+  padding: 0.75rem 1.5rem !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background 0.2s ease !important;
+}
+
+.revolutionary-action-button:hover {
+  background: #f9fafb !important;
+}
+
+.revolutionary-action-button:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.revolutionary-action-text {
+  background: linear-gradient(90deg, #16A34A 0%, #ec4899 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .revolutionary-dashboard {
+    padding: 1rem !important;
+  }
   
-  const questions = [
-    "Quelles sont vos principales compétences professionnelles ?",
-    "Qu'est-ce qui vous motive dans votre recherche d'emploi ?",
-    "Quels sont vos objectifs de carrière à long terme ?",
-    "Quelle est votre expérience la plus pertinente ?",
-    "Qu'est-ce qui vous différencie des autres candidats ?"
-  ];
-
-  useEffect(() => {
-    // Charger les documents depuis localStorage
-    const savedDocs = localStorage.getItem('userDocuments');
-    if (savedDocs) {
-      setDocuments(JSON.parse(savedDocs));
-    }
-  }, []);
-
-  const handleFileUpload = async (type, file) => {
-    if (!file) return;
-    setLoading(true);
-    // Simulation d'upload
-    setTimeout(() => {
-      const newDocs = {
-        ...documents,
-        [type]: {
-          name: file.name,
-          uploadDate: new Date().toISOString(),
-          size: file.size
-        }
-      };
-      setDocuments(newDocs);
-      localStorage.setItem('userDocuments', JSON.stringify(newDocs));
-      setLoading(false);
-    }, 1500);
-  };
-
-  const handleTextUpload = () => {
-    setLoading(true);
-    setTimeout(() => {
-      const newDocs = {
-        ...documents,
-        [showTextModal]: {
-          name: `${showTextModal}_text.txt`,
-          uploadDate: new Date().toISOString(),
-          content: textContent
-        }
-      };
-      setDocuments(newDocs);
-      localStorage.setItem('userDocuments', JSON.stringify(newDocs));
-      setShowTextModal(null);
-      setTextContent('');
-      setLoading(false);
-    }, 1000);
-  };
-
-  const handleQuestionnaireSubmit = () => {
-    setLoading(true);
-    setTimeout(() => {
-      const newDocs = {
-        ...documents,
-        questionnaire: {
-          name: 'Questionnaire personnel',
-          uploadDate: new Date().toISOString(),
-          answers: answers
-        }
-      };
-      setDocuments(newDocs);
-      localStorage.setItem('userDocuments', JSON.stringify(newDocs));
-      setShowQuestionnaireModal(false);
-      setAnswers(['', '', '', '', '']);
-      setCurrentQuestion(0);
-      setLoading(false);
-    }, 1000);
-  };
-
-  const nextQuestion = () => {
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-    }
-  };
-
-  const prevQuestion = () => {
-    if (currentQuestion > 0) {
-      setCurrentQuestion(currentQuestion - 1);
-    }
-  };
-
-  const getProgressPercentage = () => {
-    let progress = 0;
-    if (documents.cv) progress += 25;
-    if (documents.questionnaire) progress += 25;
-    if (documents.offre_emploi) progress += 25;
-    if (documents.reconversion) progress += 25;
-    return progress;
-  };
-
-  const documentTypes = [
-    {
-      id: 'cv',
-      title: 'Mon CV',
-      icon: '📄',
-      color: '#16A34A',
-      bgColor: '#dcfce7',
-      description: documents.cv ? documents.cv.name : 'Non ajouté',
-      uploaded: !!documents.cv
-    },
-    {
-      id: 'questionnaire',
-      title: 'Questionnaire personnel',
-      icon: '📝',
-      color: '#ec4899',
-      bgColor: '#fce7f3',
-      description: documents.questionnaire ? 'Complété' : 'Non ajouté',
-      uploaded: !!documents.questionnaire
-    },
-    {
-      id: 'offre_emploi',
-      title: "Offre d'emploi",
-      icon: '💼',
-      color: '#16A34A',
-      bgColor: '#dcfce7',
-      description: documents.offre_emploi ? documents.offre_emploi.name : 'Non ajouté',
-      uploaded: !!documents.offre_emploi
-    },
-    {
-      id: 'reconversion',
-      title: 'Métier de reconversion',
-      icon: '🔍',
-      color: '#ec4899',
-      bgColor: '#fce7f3',
-      description: documents.reconversion ? 'Défini' : 'Non ajouté',
-      uploaded: !!documents.reconversion
-    }
-  ];
-
-  return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(180deg, #16A34A 0%, #128A3F 50%, #0B5E2C 100%)',
-      padding: '2rem',
-      color: '#111827'
-    }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        
-        {/* En-tête */}
-        <div style={{
-          background: 'white',
-          borderRadius: '24px',
-          boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-          overflow: 'hidden',
-          marginBottom: '2rem'
-        }}>
-          <div style={{
-            height: '4px',
-            background: 'linear-gradient(90deg, #16A34A 0%, #ec4899 100%)'
-          }} />
-          <div style={{ padding: '2rem' }}>
-            <h1 style={{
-              fontSize: '2rem',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem',
-              marginBottom: '0.5rem',
-              color: '#111827'
-            }}>
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '40px',
-                height: '40px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #16A34A 0%, #ec4899 100%)',
-                fontSize: '1.5rem'
-              }}>
-                📂
-              </span>
-              Mes documents
-            </h1>
-            <p style={{ color: '#6b7280', fontSize: '1rem' }}>
-              Complétez votre profil pour personnaliser l'analyse de vos candidatures.
-            </p>
-          </div>
-        </div>
-
-        {/* Barre de progression */}
-        <div style={{
-          background: 'white',
-          borderRadius: '16px',
-          padding: '1.5rem',
-          marginBottom: '2rem',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.08)'
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '0.75rem'
-          }}>
-            <span style={{ fontWeight: '500', color: '#374151' }}>
-              Progression de votre profil
-            </span>
-            <span style={{
-              fontSize: '0.875rem',
-              padding: '0.25rem 0.75rem',
-              borderRadius: '20px',
-              background: '#fce7f3',
-              color: '#ec4899',
-              border: '1px solid #fbcfe8'
-            }}>
-              {getProgressPercentage()}%
-            </span>
-          </div>
-          <div style={{
-            width: '100%',
-            height: '8px',
-            borderRadius: '10px',
-            background: '#f3f4f6',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              height: '100%',
-              background: 'linear-gradient(90deg, #16A34A 0%, #ec4899 100%)',
-              width: `${getProgressPercentage()}%`,
-              transition: 'width 0.3s ease'
-            }} />
-          </div>
-          <p style={{
-            fontSize: '0.875rem',
-            color: '#9ca3af',
-            marginTop: '0.75rem'
-          }}>
-            {getProgressPercentage() < 100 
-              ? "Ajoutez une offre d'emploi pour débloquer l'analyse de compatibilité."
-              : "Profil complet ! Lancez votre analyse IA."
-            }
-          </p>
-        </div>
-
-        {/* Grille de documents */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '1.5rem',
-          marginBottom: '2rem'
-        }}>
-          {documentTypes.map(doc => (
-            <div key={doc.id} style={{
-              background: 'white',
-              borderRadius: '16px',
-              overflow: 'hidden',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
-              transition: 'transform 0.2s',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4
+  .dashboard-header h1 {
+    font-size: 2rem !important;
+  }
+  
+  .revolutionary-tabs {
+    flex-wrap: wrap !important;
+  }
+  
+  .revolutionary-tab-button {
+    padding: 0.75rem 1.25rem !important;
+    font-size: 0.9rem !important;
+  }
+  
+  .revolutionary-document-types {
+    grid-template-columns: 1fr !important;
+  }
+}
