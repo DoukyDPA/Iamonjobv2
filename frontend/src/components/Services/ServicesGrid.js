@@ -1,9 +1,8 @@
 // FICHIER : frontend/src/components/Services/ServicesGrid.js
-// NOUVEAU FICHIER - Vue d'ensemble de tous les services
+// NOUVEAU FICHIER - Vue d'ensemble de tous les services avec API en temps réel
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getServicesByCategory, canExecuteService, SERVICES_CONFIG } from '../../services/servicesConfig';
 import { useApp } from '../../context/AppContext';
 import { ServiceIcon } from '../icons/ModernIcons';
 
@@ -11,66 +10,135 @@ const ServicesGrid = ({ filterTheme = null }) => {
   const { documentStatus } = useApp();
   const [servicesByCategory, setServicesByCategory] = useState({});
   const [loading, setLoading] = useState(true);
-  const [adminServices, setAdminServices] = useState({});
+  const [error, setError] = useState(null);
 
-    // Charger les services depuis la config par défaut (plus stable)
+  // Charger les services depuis l'API Supabase
   useEffect(() => {
-    const loadServices = () => {
+    const loadServices = async () => {
       try {
         setLoading(true);
+        setError(null);
         
-        // Utiliser directement la config par défaut
-        const defaultServices = getServicesByCategory();
+        // Charger les services depuis l'API
+        const response = await fetch('/api/services/by-theme');
+        const data = await response.json();
         
-        if (filterTheme) {
-          // Filtrer par thème
-          const filtered = {};
-          Object.entries(defaultServices).forEach(([category, services]) => {
-            if (category === filterTheme) {
-              filtered[category] = services;
+        if (data.success && data.themes) {
+          // Convertir les services Supabase au format attendu par le composant
+          const formattedServices = formatServicesFromAPI(data.themes);
+          
+          if (filterTheme) {
+            // Filtrer par thème
+            const filtered = {};
+            if (formattedServices[filterTheme]) {
+              filtered[filterTheme] = formattedServices[filterTheme];
             }
-          });
-          setServicesByCategory(filtered);
-        } else {
-          setServicesByCategory(defaultServices);
-        }
-        
-        // Optionnel : essayer de charger les services admin en arrière-plan
-        const loadAdminServicesBackground = async () => {
-          try {
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-            if (token) {
-              const response = await fetch('/api/admin/services', {
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                }
-              });
-
-              if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.services) {
-                  setAdminServices(data.services);
-                }
-              }
-            }
-          } catch (error) {
-            // Ignorer les erreurs en arrière-plan
-            console.log('Services admin non disponibles (normal pour les utilisateurs non-admin)');
+            setServicesByCategory(filtered);
+          } else {
+            setServicesByCategory(formattedServices);
           }
-        };
-        
-        loadAdminServicesBackground();
+        } else {
+          throw new Error(data.error || 'Erreur lors du chargement des services');
+        }
         
       } catch (error) {
         console.error('Erreur chargement services:', error);
+        setError(error.message);
+        // Fallback avec configuration locale si l'API échoue
+        setServicesByCategory(getFallbackServices());
       } finally {
         setLoading(false);
       }
     };
     
     loadServices();
+    
+    // Rafraîchir les services toutes les 30 secondes pour les mises à jour admin
+    const refreshInterval = setInterval(loadServices, 30000);
+    
+    return () => clearInterval(refreshInterval);
   }, [filterTheme]);
+
+  // Formater les services de l'API au format attendu par le composant
+  const formatServicesFromAPI = (apiThemes) => {
+    const formatted = {};
+    
+    Object.entries(apiThemes).forEach(([theme, services]) => {
+      formatted[theme] = services.map(service => ({
+        id: service.service_id,
+        title: service.title,
+        coachAdvice: service.coach_advice,
+        icon: getServiceIcon(service.theme),
+        requiresCV: service.requires_cv,
+        requiresJobOffer: service.requires_job_offer,
+        requiresQuestionnaire: service.requires_questionnaire,
+        difficulty: service.difficulty,
+        durationMinutes: service.duration_minutes,
+        visible: service.visible,
+        featured: service.featured
+      }));
+    });
+    
+    return formatted;
+  };
+
+  // Obtenir l'icône appropriée selon le thème
+  const getServiceIcon = (theme) => {
+    const iconMap = {
+      'optimize_profile': '📄',
+      'evaluate_offer': '🎯',
+      'apply_jobs': '✉️',
+      'interview_tips': '🎤',
+      'networking': '🤝',
+      'career_development': '🚀'
+    };
+    return iconMap[theme] || '📋';
+  };
+
+  // Configuration de fallback si l'API échoue
+  const getFallbackServices = () => {
+    return {
+      evaluate_offer: [
+        {
+          id: 'cv_offer_compatibility',
+          title: 'Compatibilité CV-Offre',
+          coachAdvice: 'Découvrez votre taux de compatibilité avec une offre d\'emploi',
+          icon: '🎯',
+          requiresCV: true,
+          requiresJobOffer: true,
+          requiresQuestionnaire: false
+        }
+      ],
+      optimize_profile: [
+        {
+          id: 'analyze_cv',
+          title: 'Analyse de CV',
+          coachAdvice: 'Laissez notre IA analyser votre CV et obtenir des recommandations personnalisées',
+          icon: '📄',
+          requiresCV: true,
+          requiresJobOffer: false,
+          requiresQuestionnaire: false
+        }
+      ]
+    };
+  };
+
+  // Vérifier si un service peut être exécuté
+  const canExecuteService = (service) => {
+    const missingDocs = [];
+    
+    if (service.requiresCV && !documentStatus.cv?.uploaded) {
+      missingDocs.push('CV');
+    }
+    if (service.requiresJobOffer && !documentStatus.offre_emploi?.uploaded) {
+      missingDocs.push('Offre d\'emploi');
+    }
+    if (service.requiresQuestionnaire && !documentStatus.questionnaire?.uploaded) {
+      missingDocs.push('Questionnaire');
+    }
+    
+    return { canExecute: missingDocs.length === 0, missingDocs };
+  };
 
   // ✅ FONCTION DE CONVERSION ID -> URL
   const convertServiceIdToUrl = (serviceId) => {
@@ -91,8 +159,36 @@ const ServicesGrid = ({ filterTheme = null }) => {
     );
   }
 
+  // Affichage des erreurs
+  if (error) {
+    return (
+      <div style={{
+        textAlign: 'center',
+        padding: '2rem',
+        color: '#dc2626'
+      }}>
+        <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚠️</div>
+        Erreur de chargement : {error}
+        <button 
+          onClick={() => window.location.reload()}
+          style={{
+            marginTop: '1rem',
+            padding: '0.5rem 1rem',
+            background: '#dc2626',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer'
+          }}
+        >
+          Réessayer
+        </button>
+      </div>
+    );
+  }
+
   const renderServiceCard = (service) => {
-    const canExecute = canExecuteService(service.id, documentStatus);
+    const { canExecute, missingDocs } = canExecuteService(service);
     
     return (
       <Link
@@ -119,6 +215,23 @@ const ServicesGrid = ({ filterTheme = null }) => {
             overflow: 'hidden'
           }}
         >
+          {/* Badge de mise en avant */}
+          {service.featured && (
+            <div style={{
+              position: 'absolute',
+              top: '1rem',
+              right: '1rem',
+              background: '#f59e0b',
+              color: 'white',
+              padding: '0.25rem 0.5rem',
+              borderRadius: '4px',
+              fontSize: '0.75rem',
+              fontWeight: '600'
+            }}>
+              ⭐ Mis en avant
+            </div>
+          )}
+
           {/* Effet de brillance */}
           <div 
             className="service-shine"
@@ -164,6 +277,34 @@ const ServicesGrid = ({ filterTheme = null }) => {
           }}>
             {service.coachAdvice}
           </p>
+
+          {/* Badge de difficulté */}
+          {service.difficulty && (
+            <div style={{
+              display: 'inline-block',
+              padding: '0.25rem 0.5rem',
+              borderRadius: '4px',
+              fontSize: '0.75rem',
+              fontWeight: '500',
+              marginBottom: '1rem',
+              background: getDifficultyColor(service.difficulty).background,
+              color: getDifficultyColor(service.difficulty).color
+            }}>
+              {getDifficultyLabel(service.difficulty)}
+            </div>
+          )}
+
+          {/* Durée */}
+          {service.durationMinutes && (
+            <div style={{
+              textAlign: 'center',
+              fontSize: '0.8rem',
+              color: '#6b7280',
+              marginBottom: '1rem'
+            }}>
+              ⏱️ {service.durationMinutes} min
+            </div>
+          )}
           
           {/* Indicateurs de documents requis */}
           <div style={{
@@ -219,7 +360,7 @@ const ServicesGrid = ({ filterTheme = null }) => {
             fontWeight: '500',
             transition: 'all 0.2s ease'
           }}>
-            {canExecute ? 'Disponible' : 'Documents requis manquants'}
+            {canExecute ? 'Disponible' : `Documents requis : ${missingDocs.join(', ')}`}
           </div>
           
           {/* Effet hover */}
@@ -235,6 +376,26 @@ const ServicesGrid = ({ filterTheme = null }) => {
         </div>
       </Link>
     );
+  };
+
+  // Obtenir la couleur de difficulté
+  const getDifficultyColor = (difficulty) => {
+    const colors = {
+      'beginner': { background: '#dcfce7', color: '#166534' },
+      'intermediate': { background: '#fef3c7', color: '#92400e' },
+      'advanced': { background: '#fee2e2', color: '#991b1b' }
+    };
+    return colors[difficulty] || colors.beginner;
+  };
+
+  // Obtenir le label de difficulté
+  const getDifficultyLabel = (difficulty) => {
+    const labels = {
+      'beginner': 'Débutant',
+      'intermediate': 'Intermédiaire',
+      'advanced': 'Avancé'
+    };
+    return labels[difficulty] || 'Débutant';
   };
 
   // Si un thème est filtré, afficher directement les services de ce thème
@@ -298,9 +459,10 @@ const ServicesGrid = ({ filterTheme = null }) => {
   return (
     <div style={{ padding: '2rem 0' }}>
       {renderCategory('evaluate_offer', servicesByCategory.evaluate_offer, '🎯 Évaluer une offre d\'emploi')}
-      {renderCategory('improve_cv', servicesByCategory.improve_cv, '📄 Améliorer mon CV')}
+      {renderCategory('optimize_profile', servicesByCategory.optimize_profile, '📄 Améliorer mon CV')}
       {renderCategory('apply_jobs', servicesByCategory.apply_jobs, '✉️ Candidater')}
-      {renderCategory('career_project', servicesByCategory.career_project, '🚀 Reconstruire mon projet professionnel')}
+      {renderCategory('interview_tips', servicesByCategory.interview_tips, '🎤 Préparer l\'entretien')}
+      {renderCategory('networking', servicesByCategory.networking, '🤝 Networking')}
     </div>
   );
 };
