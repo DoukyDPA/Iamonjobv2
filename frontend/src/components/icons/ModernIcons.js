@@ -310,4 +310,18 @@ export const ServiceIcon = ({ type, size = 20, className = '' }) => {
   }
 };
 
+// Icône du logo Iamonjob
+export const LogoIcon = ({ size = 20, color = 'currentColor', className = '' }) => (
+  <img 
+    src="/src/components/icons/logo-icon.svg"
+    alt="Iamonjob Logo"
+    width={size} 
+    height={size}
+    className={className}
+    style={{ 
+      filter: color !== 'currentColor' ? `brightness(0) saturate(100%) invert(1) sepia(100%) saturate(10000%) hue-rotate(${color === '#FFFFFF' ? '0deg' : color === '#0a6b79' ? '180deg' : '0deg'})` : 'none'
+    }}
+  />
+);
+
 export default ServiceIcon;
