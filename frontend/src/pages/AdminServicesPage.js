@@ -52,12 +52,23 @@ const AdminServicesPage = () => {
       
       console.log('🔍 Réponse API:', response.status, response.statusText);
       
+      // Si l'API retourne 404, utiliser le fallback local
+      if (response.status === 404) {
+        console.log('🔄 API admin non accessible (404), utilisation du fallback local');
+        await loadLocalServicesData();
+        return;
+      }
+      
       // Vérifier si la réponse est du JSON
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         console.error('❌ Réponse non-JSON reçue:', contentType);
         console.error('❌ Contenu de la réponse:', await response.text());
-        throw new Error('Réponse non-JSON reçue de l\'API');
+        
+        // Fallback vers la configuration locale si l'API n'est pas accessible
+        console.log('🔄 Utilisation de la configuration locale en fallback');
+        await loadLocalServicesData();
+        return;
       }
       
       const data = await response.json();
@@ -66,23 +77,108 @@ const AdminServicesPage = () => {
         setServices(data.services);
         setThemes(data.themes);
         setFeaturedService(data.featured);
-        console.log('✅ Services chargés:', Object.keys(data.services));
+        console.log('✅ Services chargés depuis l\'API:', Object.keys(data.services));
       } else {
         toast.error(data.error || 'Erreur lors du chargement des services');
+        // Fallback en cas d'erreur de l'API
+        await loadLocalServicesData();
       }
     } catch (error) {
       console.error('❌ Erreur chargement services:', error);
       
-      // Afficher plus de détails sur l'erreur
-      if (error.message.includes('non-JSON')) {
-        toast.error('Erreur API: Réponse non-JSON reçue. Vérifiez l\'authentification.');
-      } else if (error.name === 'SyntaxError') {
-        toast.error('Erreur API: Réponse invalide reçue. Vérifiez l\'authentification.');
-      } else {
-        toast.error('Erreur lors du chargement');
-      }
+      // Fallback vers la configuration locale en cas d'erreur
+      console.log('🔄 Utilisation de la configuration locale en fallback (erreur)');
+      await loadLocalServicesData();
     } finally {
       setLoading(false);
+    }
+  };
+  
+  // Fallback vers la configuration locale des services
+  const loadLocalServicesData = async () => {
+    try {
+      console.log('🔄 Chargement des services depuis la configuration locale...');
+      
+      // Configuration locale des services (fallback)
+      const localServices = {
+        'matching_cv_offre': {
+          id: 'matching_cv_offre',
+          title: 'Matching CV/Offre',
+          coach_advice: 'Découvrez précisément votre adéquation avec cette offre grâce à une analyse IA approfondie.',
+          theme: 'evaluate_offer',
+          visible: true,
+          featured: false,
+          requires_cv: true,
+          requires_job_offer: true,
+          requires_questionnaire: false,
+          difficulty: 'intermediate',
+          duration_minutes: 8,
+          slug: 'matching-cv-offre'
+        },
+        'analyze_cv': {
+          id: 'analyze_cv',
+          title: 'Évaluer mon CV',
+          coach_advice: 'Obtenez une évaluation professionnelle de votre CV avec des recommandations concrètes.',
+          theme: 'improve_cv',
+          visible: true,
+          featured: false,
+          requires_cv: true,
+          requires_job_offer: false,
+          requires_questionnaire: false,
+          difficulty: 'beginner',
+          duration_minutes: 5,
+          slug: 'analyze-cv'
+        },
+        'reconversion_analysis': {
+          id: 'reconversion_analysis',
+          title: 'Évaluer une reconversion',
+          coach_advice: 'Explorez une reconversion professionnelle avec une analyse détaillée des étapes et opportunités.',
+          theme: 'career_project',
+          visible: true,
+          featured: false,
+          requires_cv: true,
+          requires_job_offer: false,
+          requires_questionnaire: true,
+          difficulty: 'intermediate',
+          duration_minutes: 12,
+          slug: 'reconversion-analysis'
+        },
+        'follow_up_email': {
+          id: 'follow_up_email',
+          title: 'Email de relance',
+          coach_advice: 'Rédigez un email de relance professionnel pour maintenir le contact.',
+          theme: 'apply_jobs',
+          visible: true,
+          featured: false,
+          requires_cv: false,
+          requires_job_offer: true,
+          requires_questionnaire: false,
+          difficulty: 'beginner',
+          duration_minutes: 3,
+          slug: 'follow-up-email'
+        }
+      };
+      
+      // Organiser par thèmes
+      const localThemes = {};
+      Object.values(localServices).forEach(service => {
+        const theme = service.theme;
+        if (!localThemes[theme]) {
+          localThemes[theme] = [];
+        }
+        localThemes[theme].push(service);
+      });
+      
+      setServices(localServices);
+      setThemes(localThemes);
+      setFeaturedService(null);
+      
+      console.log('✅ Services locaux chargés:', Object.keys(localServices));
+      toast.success('Services chargés depuis la configuration locale (API non accessible)');
+      
+    } catch (error) {
+      console.error('❌ Erreur chargement services locaux:', error);
+      toast.error('Impossible de charger les services (API + local)');
     }
   };
 
