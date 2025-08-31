@@ -303,6 +303,23 @@ def clean_duplicate_services():
         logging.error(f"Erreur lors du nettoyage des services: {e}")
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
 
+@admin_api.route('/services/duplicates/analyze', methods=['GET'])
+@verify_jwt_token
+def analyze_duplicate_services():
+    """Analyse les services en double sans les supprimer"""
+    try:
+        # Utiliser le nouveau gestionnaire Supabase
+        try:
+            from backend.admin.supabase_services_manager import analyze_duplicates_admin
+            result = analyze_duplicates_admin()
+        except ImportError:
+            return jsonify({"error": "Gestionnaire Supabase non disponible"}), 500
+        
+        return jsonify({"success": True, "result": result})
+    except Exception as e:
+        logging.error(f"Erreur lors de l'analyse des doublons: {e}")
+        return jsonify({"error": f"Erreur: {str(e)}"}), 500
+
 # === GESTION DES PROMPTS ===
 @admin_api.route('/prompts', methods=['GET'])
 @verify_jwt_token
