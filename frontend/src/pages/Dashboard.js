@@ -36,6 +36,8 @@ import SimpleMarkdownRenderer from '../components/Common/SimpleMarkdownRenderer'
 import MatchingAnalysis from '../components/Analysis/MatchingAnalysis';
 import ActionTile from '../components/Common/ActionTile';
 import ServicesGrid from '../components/Services/ServicesGrid';
+import ProfileAdviceModal from '../components/Common/ProfileAdviceModal';
+import { LogoIcon } from '../components/icons/ModernIcons';
 
 const ServiceCard = ({ title, description, icon, route, color = '#0a6b79', disabled = false, requiredDocs = [], documentStatus }) => {
   const navigate = useNavigate();
@@ -162,6 +164,9 @@ const Dashboard = () => {
   // États pour le modal de texte
   const [showTextModal, setShowTextModal] = useState(null);
   const [textContent, setTextContent] = useState('');
+
+  // État pour le modal de conseils
+  const [showAdviceModal, setShowAdviceModal] = useState(false);
 
   // Questions simples
   const questions = [
@@ -514,7 +519,33 @@ const Dashboard = () => {
       {/* Documents visibles UNIQUEMENT dans l'onglet Documents */}
       {activeTab === 'documents' && (
         <div className="revolutionary-tab-content">
-          <h2 className="revolutionary-section-title">📁 Mes Documents - pour personnaliser l'analyse</h2>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+            <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0 }}>
+              <LogoIcon size={28} />
+              Mes Documents - pour personnaliser l'analyse
+            </h2>
+            <button 
+              onClick={() => setShowAdviceModal(true)}
+              className="revolutionary-btn-advice"
+              style={{
+                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                color: '#92400e',
+                border: 'none',
+                padding: '0.75rem 1.5rem',
+                borderRadius: '8px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <FiLightbulb />
+              Conseils pour optimiser mon profil
+            </button>
+          </div>
 
           {/* Barre de progression optimisée - masquée en mobile */}
           <div className="revolutionary-progress-panel desktop-only">
@@ -626,7 +657,10 @@ const Dashboard = () => {
           {/* Analyse de CV automatique */}
           {cvAnalysis && (
             <div style={{ margin: '2rem 0' }}>
-              <h3 className="revolutionary-section-title" style={{ fontSize: '1.3rem', marginBottom: 12 }}>🧑‍💼 Analyse automatique de votre CV</h3>
+              <h3 className="revolutionary-section-title" style={{ fontSize: '1.3rem', marginBottom: 12, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <LogoIcon size={24} />
+                Analyse automatique de votre CV
+              </h3>
               <SimpleMarkdownRenderer content={cvAnalysis} serviceType="analyze_cv" />
             </div>
           )}
@@ -649,8 +683,9 @@ const Dashboard = () => {
 
           {/* Section partenaires */}
           <div style={{ margin: '2.5rem 0' }}>
-            <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
-              🤝 Testez votre compatibilité avec les métiers de nos partenaires
+            <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <LogoIcon size={28} />
+              Testez votre compatibilité avec les métiers de nos partenaires
             </h2>
             <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
             Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
@@ -670,9 +705,10 @@ const Dashboard = () => {
             <ServicesGrid filterTheme="evaluate_offer" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
-              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
-                🤝 Testez votre compatibilité avec les métiers de nos partenaires
-              </h2>
+                          <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <LogoIcon size={28} />
+              Testez votre compatibilité avec les métiers de nos partenaires
+            </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
               Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
               </p>
@@ -687,8 +723,9 @@ const Dashboard = () => {
             <ServicesGrid filterTheme="improve_cv" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
-              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
-                🤝 Testez votre compatibilité avec les métiers de nos partenaires
+              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <LogoIcon size={28} />
+                Testez votre compatibilité avec les métiers de nos partenaires
               </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
               Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
@@ -704,8 +741,9 @@ const Dashboard = () => {
             <ServicesGrid filterTheme="apply_jobs" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
-              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
-                🤝 Testez votre compatibilité avec les métiers de nos partenaires
+              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <LogoIcon size={28} />
+                Testez votre compatibilité avec les métiers de nos partenaires
               </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
               Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
@@ -721,8 +759,9 @@ const Dashboard = () => {
             <ServicesGrid filterTheme="interview_prep" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
-              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
-                🤝 Testez votre compatibilité avec les métiers de nos partenaires
+              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <LogoIcon size={28} />
+                Testez votre compatibilité avec les métiers de nos partenaires
               </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
               Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
@@ -739,8 +778,9 @@ const Dashboard = () => {
             <ServicesGrid filterTheme="career_project" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
-              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
-                🤝 Testez votre compatibilité avec les métiers de nos partenaires
+              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <LogoIcon size={28} />
+                Testez votre compatibilité avec les métiers de nos partenaires
               </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
               Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
@@ -894,6 +934,12 @@ const Dashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Modal de conseils pour optimiser le profil */}
+      <ProfileAdviceModal 
+        isOpen={showAdviceModal} 
+        onClose={() => setShowAdviceModal(false)} 
+      />
     </div>
   );
 };
