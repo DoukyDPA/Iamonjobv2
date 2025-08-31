@@ -386,7 +386,28 @@ def list_prompts():
     """Liste tous les prompts disponibles"""
     try:
         from services.ai_service_prompts import AI_PROMPTS
-        return jsonify({"success": True, "prompts": AI_PROMPTS})
+        
+        # Nettoyer les prompts pour l'affichage admin (remplacer les variables par des descriptions)
+        cleaned_prompts = {}
+        for service_id, prompt_data in AI_PROMPTS.items():
+            if isinstance(prompt_data, dict) and 'prompt' in prompt_data:
+                prompt_text = prompt_data['prompt']
+                # Remplacer les variables par des descriptions lisibles
+                cleaned_prompt = prompt_text.replace('{cv_content}', '[CONTENU DU CV]')
+                cleaned_prompt = cleaned_prompt.replace('{job_content}', '[CONTENU DE L\'OFFRE D\'EMPLOI]')
+                cleaned_prompt = cleaned_prompt.replace('{questionnaire_content}', '[CONTENU DU QUESTIONNAIRE]')
+                cleaned_prompt = cleaned_prompt.replace('{user_notes}', '[NOTES PERSONNELLES]')
+                cleaned_prompt = cleaned_prompt.replace('{questionnaire_context}', '[CONTEXTE PERSONNEL]')
+                cleaned_prompt = cleaned_prompt.replace('{questionnaire_instruction}', '[INSTRUCTIONS DU QUESTIONNAIRE]')
+                
+                cleaned_prompts[service_id] = {
+                    **prompt_data,
+                    'prompt': cleaned_prompt
+                }
+            else:
+                cleaned_prompts[service_id] = prompt_data
+        
+        return jsonify({"success": True, "prompts": cleaned_prompts})
     except Exception as e:
         logging.error(f"Erreur lors de la récupération des prompts: {e}")
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
@@ -401,9 +422,22 @@ def handle_prompt(service_id):
         if request.method == 'GET':
             prompt_entry = get_prompt(service_id)
             if prompt_entry:
-                # Retourner le texte du prompt, pas l'objet complet
-                prompt_text = prompt_entry.get("prompt", "")
-                return jsonify({"success": True, "prompt": prompt_text})
+                # Nettoyer le prompt pour l'affichage admin
+                if isinstance(prompt_entry, dict) and 'prompt' in prompt_entry:
+                    prompt_text = prompt_entry.get("prompt", "")
+                    # Remplacer les variables par des descriptions lisibles
+                    cleaned_prompt = prompt_text.replace('{cv_content}', '[CONTENU DU CV]')
+                    cleaned_prompt = cleaned_prompt.replace('{job_content}', '[CONTENU DE L\'OFFRE D\'EMPLOI]')
+                    cleaned_prompt = cleaned_prompt.replace('{questionnaire_content}', '[CONTENU DU QUESTIONNAIRE]')
+                    cleaned_prompt = cleaned_prompt.replace('{user_notes}', '[NOTES PERSONNELLES]')
+                    cleaned_prompt = cleaned_prompt.replace('{questionnaire_context}', '[CONTEXTE PERSONNEL]')
+                    cleaned_prompt = cleaned_prompt.replace('{questionnaire_instruction}', '[INSTRUCTIONS DU QUESTIONNAIRE]')
+                    
+                    return jsonify({"success": True, "prompt": cleaned_prompt})
+                else:
+                    # Retourner le texte du prompt, pas l'objet complet
+                    prompt_text = prompt_entry.get("prompt", "")
+                    return jsonify({"success": True, "prompt": prompt_text})
             return jsonify({"success": False, "error": "Service inconnu"}), 404
 
         data = request.get_json() or {}
@@ -1198,4 +1232,7 @@ def admin_partners():
     except Exception as e:
         logging.error(f"Erreur administration partenaires: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+
 
