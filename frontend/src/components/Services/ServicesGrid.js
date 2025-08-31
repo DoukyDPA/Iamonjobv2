@@ -1,470 +1,327 @@
-// FICHIER : frontend/src/components/Services/ServicesGrid.js
-// NOUVEAU FICHIER - Vue d'ensemble de tous les services avec API en temps réel
+// FICHIER : frontend/src/components/icons/ModernIcons.js
+// COMPOSANTS - Icônes modernes sans couleurs pour l'interface
 
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useApp } from '../../context/AppContext';
-import { ServiceIcon } from '../icons/ModernIcons';
+import React from 'react';
 
-const ServicesGrid = ({ filterTheme = null }) => {
-  const { documentStatus } = useApp();
-  const [servicesByCategory, setServicesByCategory] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+// Icône pour les documents/fichiers
+export const DocumentIcon = ({ size = 20, className = '' }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14,2 14,8 20,8"/>
+    <line x1="16" y1="13" x2="8" y2="13"/>
+    <line x1="16" y1="17" x2="8" y2="17"/>
+    <polyline points="10,9 9,9 8,9"/>
+  </svg>
+);
 
-  // Charger les services depuis l'API Supabase
-  useEffect(() => {
-    const loadServices = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Charger les services depuis l'API
-        const response = await fetch('/api/services/by-theme');
-        const data = await response.json();
-        
-        if (data.success && data.themes) {
-          // Convertir les services Supabase au format attendu par le composant
-          const formattedServices = formatServicesFromAPI(data.themes);
-          
-          if (filterTheme) {
-            // Filtrer par thème
-            const filtered = {};
-            if (formattedServices[filterTheme]) {
-              filtered[filterTheme] = formattedServices[filterTheme];
-            }
-            setServicesByCategory(filtered);
-          } else {
-            setServicesByCategory(formattedServices);
-          }
-        } else {
-          throw new Error(data.error || 'Erreur lors du chargement des services');
-        }
-        
-      } catch (error) {
-        console.error('Erreur chargement services:', error);
-        setError(error.message);
-        // Fallback avec configuration locale si l'API échoue
-        setServicesByCategory(getFallbackServices());
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadServices();
-    
-    // Rafraîchir les services toutes les 30 secondes pour les mises à jour admin
-    const refreshInterval = setInterval(loadServices, 30000);
-    
-    return () => clearInterval(refreshInterval);
-  }, [filterTheme]);
+// Icône pour les conseils/ampoule
+export const AdviceIcon = ({ size = 20, className = '' }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M9 21h6"/>
+    <path d="M12 17v4"/>
+    <path d="M12 3a6 6 0 0 1 6 6c0 3-2 4-2 4H8s-2-1-2-4a6 6 0 0 1 6-6z"/>
+  </svg>
+);
 
-  // Formater les services de l'API au format attendu par le composant
-  const formatServicesFromAPI = (apiThemes) => {
-    const formatted = {};
-    
-    Object.entries(apiThemes).forEach(([theme, services]) => {
-      formatted[theme] = services.map(service => ({
-        id: service.service_id,
-        title: service.title,
-        coachAdvice: service.coach_advice,
-        icon: getServiceIcon(service.theme),
-        requiresCV: service.requires_cv,
-        requiresJobOffer: service.requires_job_offer,
-        requiresQuestionnaire: service.requires_questionnaire,
-        difficulty: service.difficulty,
-        durationMinutes: service.duration_minutes,
-        visible: service.visible,
-        featured: service.featured
-      }));
-    });
-    
-    return formatted;
-  };
+// Icône pour les lettres/emails
+export const LetterIcon = ({ size = 20, className = '' }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+    <polyline points="22,6 12,13 2,6"/>
+  </svg>
+);
 
-  // Obtenir l'icône appropriée selon le thème
-  const getServiceIcon = (theme) => {
-    const iconMap = {
-      'optimize_profile': '📄',
-      'evaluate_offer': '🎯',
-      'apply_jobs': '✉️',
-      'interview_tips': '🎤',
-      'networking': '🤝',
-      'career_development': '🚀'
-    };
-    return iconMap[theme] || '📋';
-  };
+// Icône pour les entretiens/microphone
+export const InterviewIcon = ({ size = 20, className = '' }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+    <path d="M19 10v1a7 7 0 0 1-14 0v-1"/>
+    <line x1="12" y1="19" x2="12" y2="23"/>
+    <line x1="8" y1="23" x2="16" y2="23"/>
+  </svg>
+);
 
-  // Configuration de fallback si l'API échoue
-  const getFallbackServices = () => {
-    return {
-      evaluate_offer: [
-        {
-          id: 'cv_offer_compatibility',
-          title: 'Compatibilité CV-Offre',
-          coachAdvice: 'Découvrez votre taux de compatibilité avec une offre d\'emploi',
-          icon: '🎯',
-          requiresCV: true,
-          requiresJobOffer: true,
-          requiresQuestionnaire: false
-        }
-      ],
-      optimize_profile: [
-        {
-          id: 'analyze_cv',
-          title: 'Analyse de CV',
-          coachAdvice: 'Laissez notre IA analyser votre CV et obtenir des recommandations personnalisées',
-          icon: '📄',
-          requiresCV: true,
-          requiresJobOffer: false,
-          requiresQuestionnaire: false
-        }
-      ]
-    };
-  };
+// Icône pour les informations
+export const InfoIcon = ({ size = 20, className = '' }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="12" y1="16" x2="12" y2="12"/>
+    <line x1="12" y1="8" x2="12.01" y2="8"/>
+  </svg>
+);
 
-  // Vérifier si un service peut être exécuté
-  const canExecuteService = (service) => {
-    const missingDocs = [];
-    
-    if (service.requiresCV && !documentStatus.cv?.uploaded) {
-      missingDocs.push('CV');
-    }
-    if (service.requiresJobOffer && !documentStatus.offre_emploi?.uploaded) {
-      missingDocs.push('Offre d\'emploi');
-    }
-    if (service.requiresQuestionnaire && !documentStatus.questionnaire?.uploaded) {
-      missingDocs.push('Questionnaire');
-    }
-    
-    return { canExecute: missingDocs.length === 0, missingDocs };
-  };
+// Icône pour les objectifs/cible
+export const TargetIcon = ({ size = 20, className = '' }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <circle cx="12" cy="12" r="10"/>
+    <circle cx="12" cy="12" r="6"/>
+    <circle cx="12" cy="12" r="2"/>
+  </svg>
+);
 
-  // ✅ FONCTION DE CONVERSION ID -> URL
-  const convertServiceIdToUrl = (serviceId) => {
-    return serviceId.replace(/_/g, '-');  // Remplace _ par -
-  };
+// Icône pour les livres/guide
+export const GuideIcon = ({ size = 20, className = '' }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+  </svg>
+);
 
-  // Indicateur de chargement
-  if (loading) {
-    return (
-      <div style={{
-        textAlign: 'center',
-        padding: '2rem',
-        color: '#6b7280'
-      }}>
-        <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
-        Chargement des services...
-      </div>
-    );
+// Icône pour les horloges/temps
+export const TimeIcon = ({ size = 20, className = '' }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <circle cx="12" cy="12" r="10"/>
+    <polyline points="12,6 12,12 16,14"/>
+  </svg>
+);
+
+// Icône pour les alertes/attention
+export const AlertIcon = ({ size = 20, className = '' }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/>
+    <line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+);
+
+// Icône pour les validations/check
+export const CheckIcon = ({ size = 20, className = '' }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <circle cx="12" cy="12" r="10"/>
+    <path d="M9 12l2 2 4-4"/>
+  </svg>
+);
+
+// Icône pour les erreurs/croix
+export const ErrorIcon = ({ size = 20, className = '' }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="15" y1="9" x2="9" y2="15"/>
+    <line x1="9" y1="9" x2="15" y2="15"/>
+  </svg>
+);
+
+// Icône pour l'édition/stylo
+export const EditIcon = ({ size = 20, className = '' }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </svg>
+);
+
+// Icône pour les CV/profil
+export const CVIcon = ({ size = 20, className = '' }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+    <circle cx="12" cy="7" r="4"/>
+  </svg>
+);
+
+// Icône pour les offres d'emploi/entreprise
+export const JobOfferIcon = ({ size = 20, className = '' }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M4 4h16v16H4V4z"/>
+    <path d="M8 2v4"/>
+    <path d="M16 2v4"/>
+    <path d="M4 8h16"/>
+    <circle cx="12" cy="14" r="2"/>
+  </svg>
+);
+
+// Ajoutez aussi l'icône user
+export const UserIcon = ({ size = 20, className = '' }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+    <circle cx="12" cy="7" r="4"/>
+  </svg>
+);
+
+// Composant pour afficher les icônes selon le type
+export const ServiceIcon = ({ type, size = 20, className = '' }) => {
+  const iconProps = { size, className };
+  
+  switch (type) {
+    case 'advice':
+      return <AdviceIcon {...iconProps} />;
+    case 'letter':
+      return <LetterIcon {...iconProps} />;
+    case 'interview':
+      return <InterviewIcon {...iconProps} />;
+    case 'cv':
+      return <CVIcon {...iconProps} />;
+    case 'target':
+      return <TargetIcon {...iconProps} />;
+    case 'user':
+      return <UserIcon {...iconProps} />;
+    case 'document':
+      return <DocumentIcon {...iconProps} />;
+    default:
+      return <DocumentIcon {...iconProps} />;
   }
-
-  // Affichage des erreurs
-  if (error) {
-    return (
-      <div style={{
-        textAlign: 'center',
-        padding: '2rem',
-        color: '#dc2626'
-      }}>
-        <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚠️</div>
-        Erreur de chargement : {error}
-        <button 
-          onClick={() => window.location.reload()}
-          style={{
-            marginTop: '1rem',
-            padding: '0.5rem 1rem',
-            background: '#dc2626',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer'
-          }}
-        >
-          Réessayer
-        </button>
-      </div>
-    );
-  }
-
-  const renderServiceCard = (service) => {
-    const { canExecute, missingDocs } = canExecuteService(service);
-    
-    return (
-      <Link
-        key={service.id}
-        to={`/${convertServiceIdToUrl(service.id)}`}  // ✅ CONVERSION ID -> URL
-        style={{
-          display: 'block',
-          textDecoration: 'none',
-          color: 'inherit'
-        }}
-      >
-        <div 
-          className="service-card"
-          style={{
-            background: 'white',
-            borderRadius: '12px',
-            padding: '1.5rem',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            border: '1px solid #e5e7eb',
-            transition: 'all 0.3s ease',
-            opacity: canExecute ? 1 : 0.6,
-            cursor: 'pointer',
-            position: 'relative',
-            overflow: 'hidden'
-          }}
-        >
-          {/* Badge de mise en avant */}
-          {service.featured && (
-            <div style={{
-              position: 'absolute',
-              top: '1rem',
-              right: '1rem',
-              background: '#f59e0b',
-              color: 'white',
-              padding: '0.25rem 0.5rem',
-              borderRadius: '4px',
-              fontSize: '0.75rem',
-              fontWeight: '600'
-            }}>
-              ⭐ Mis en avant
-            </div>
-          )}
-
-          {/* Effet de brillance */}
-          <div 
-            className="service-shine"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: '-100%',
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
-              transition: 'left 0.5s',
-              pointerEvents: 'none'
-            }} 
-          />
-          
-          {/* Icône du service */}
-          <div style={{
-            marginBottom: '1rem',
-            textAlign: 'center',
-            fontSize: '2rem'
-          }}>
-            {service.icon}
-          </div>
-          
-          {/* Titre du service */}
-          <h3 style={{
-            margin: '0 0 0.5rem 0',
-            fontSize: '1.2rem',
-            fontWeight: '600',
-            color: '#1f2937',
-            textAlign: 'center'
-          }}>
-            {service.title}
-          </h3>
-          
-          {/* Description du service */}
-          <p style={{
-            margin: '0 0 1rem 0',
-            fontSize: '0.9rem',
-            color: '#6b7280',
-            lineHeight: '1.4',
-            textAlign: 'center'
-          }}>
-            {service.coachAdvice}
-          </p>
-
-          {/* Badge de difficulté */}
-          {service.difficulty && (
-            <div style={{
-              display: 'inline-block',
-              padding: '0.25rem 0.5rem',
-              borderRadius: '4px',
-              fontSize: '0.75rem',
-              fontWeight: '500',
-              marginBottom: '1rem',
-              background: getDifficultyColor(service.difficulty).background,
-              color: getDifficultyColor(service.difficulty).color
-            }}>
-              {getDifficultyLabel(service.difficulty)}
-            </div>
-          )}
-
-          {/* Durée */}
-          {service.durationMinutes && (
-            <div style={{
-              textAlign: 'center',
-              fontSize: '0.8rem',
-              color: '#6b7280',
-              marginBottom: '1rem'
-            }}>
-              ⏱️ {service.durationMinutes} min
-            </div>
-          )}
-          
-          {/* Indicateurs de documents requis */}
-          <div style={{
-            display: 'flex',
-            gap: '0.5rem',
-            flexWrap: 'wrap',
-            marginBottom: '1rem',
-            justifyContent: 'center'
-          }}>
-            {service.requiresCV && (
-              <span style={{
-                padding: '0.25rem 0.5rem',
-                borderRadius: '4px',
-                fontSize: '0.75rem',
-                background: documentStatus.cv?.uploaded ? '#dcfce7' : '#fef2f2',
-                color: documentStatus.cv?.uploaded ? '#166534' : '#dc2626'
-              }}>
-                CV {documentStatus.cv?.uploaded ? '✓' : '✗'}
-              </span>
-            )}
-            {service.requiresJobOffer && (
-              <span style={{
-                padding: '0.25rem 0.5rem',
-                borderRadius: '4px',
-                fontSize: '0.75rem',
-                background: documentStatus.offre_emploi?.uploaded ? '#dcfce7' : '#fef2f2',
-                color: documentStatus.offre_emploi?.uploaded ? '#166534' : '#dc2626'
-              }}>
-                Offre {documentStatus.offre_emploi?.uploaded ? '✓' : '✗'}
-              </span>
-            )}
-            {service.requiresQuestionnaire && (
-              <span style={{
-                padding: '0.25rem 0.5rem',
-                borderRadius: '4px',
-                fontSize: '0.75rem',
-                background: documentStatus.questionnaire?.uploaded ? '#dcfce7' : '#fef2f2',
-                color: documentStatus.questionnaire?.uploaded ? '#166534' : '#dc2626'
-              }}>
-                Questionnaire {documentStatus.questionnaire?.uploaded ? '✓' : '✗'}
-              </span>
-            )}
-          </div>
-          
-          {/* Bouton d'action */}
-          <div style={{
-            textAlign: 'center',
-            padding: '0.75rem 1rem',
-            borderRadius: '6px',
-            background: canExecute ? '#e6f3ff' : '#f3f4f6',
-            color: canExecute ? '#0066cc' : '#9ca3af',
-            fontSize: '0.85rem',
-            fontWeight: '500',
-            transition: 'all 0.2s ease'
-          }}>
-            {canExecute ? 'Disponible' : `Documents requis : ${missingDocs.join(', ')}`}
-          </div>
-          
-          {/* Effet hover */}
-          <style>{`
-            .service-card:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            }
-            .service-card:hover .service-shine {
-              left: 100%;
-            }
-          `}</style>
-        </div>
-      </Link>
-    );
-  };
-
-  // Obtenir la couleur de difficulté
-  const getDifficultyColor = (difficulty) => {
-    const colors = {
-      'beginner': { background: '#dcfce7', color: '#166534' },
-      'intermediate': { background: '#fef3c7', color: '#92400e' },
-      'advanced': { background: '#fee2e2', color: '#991b1b' }
-    };
-    return colors[difficulty] || colors.beginner;
-  };
-
-  // Obtenir le label de difficulté
-  const getDifficultyLabel = (difficulty) => {
-    const labels = {
-      'beginner': 'Débutant',
-      'intermediate': 'Intermédiaire',
-      'advanced': 'Avancé'
-    };
-    return labels[difficulty] || 'Débutant';
-  };
-
-  // Si un thème est filtré, afficher directement les services de ce thème
-  if (filterTheme) {
-    const themeServices = servicesByCategory[filterTheme] || [];
-    if (themeServices.length > 0) {
-      return (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '1.5rem',
-          padding: '0 1rem'
-        }}>
-          {themeServices.map(renderServiceCard)}
-        </div>
-      );
-    } else {
-      // Aucun service pour ce thème
-      return (
-        <div style={{
-          textAlign: 'center',
-          padding: '2rem',
-          color: '#6b7280'
-        }}>
-          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📭</div>
-          Aucun service disponible pour cette catégorie
-        </div>
-      );
-    }
-  }
-
-  // Rendu des catégories (pour l'affichage complet)
-  const renderCategory = (categoryKey, services, categoryTitle) => {
-    if (!services || services.length === 0) return null;
-
-    return (
-      <div key={categoryKey} style={{ marginBottom: '3rem' }}>
-        <h2 style={{
-          fontSize: '1.5rem',
-          fontWeight: '700',
-          color: '#1f2937',
-          marginBottom: '1.5rem',
-          textAlign: 'center'
-        }}>
-          {categoryTitle}
-        </h2>
-        
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '1.5rem',
-          padding: '0 1rem'
-        }}>
-          {services.map(renderServiceCard)}
-        </div>
-      </div>
-    );
-  };
-
-  // Rendu principal (affichage complet)
-  return (
-    <div style={{ padding: '2rem 0' }}>
-      {renderCategory('evaluate_offer', servicesByCategory.evaluate_offer, '🎯 Évaluer une offre d\'emploi')}
-      {renderCategory('optimize_profile', servicesByCategory.optimize_profile, '📄 Améliorer mon CV')}
-      {renderCategory('apply_jobs', servicesByCategory.apply_jobs, '✉️ Candidater')}
-      {renderCategory('interview_tips', servicesByCategory.interview_tips, '🎤 Préparer l\'entretien')}
-      {renderCategory('networking', servicesByCategory.networking, '🤝 Networking')}
-    </div>
-  );
 };
 
-export default ServicesGrid;
+// Icône du logo Iamonjob
+export const LogoIcon = ({ size = 24, className = '' }) => (
+  <img 
+    src="/src/components/icons/logo-icon.svg"
+    alt="Iamonjob Logo"
+    width={size} 
+    height={size}
+    className={className}
+    style={{ 
+      filter: 'brightness(0) saturate(100%) invert(1)'
+    }}
+  />
+);
+
+export default ServiceIcon;
