@@ -3,6 +3,26 @@ from backend.admin.services_manager import services_manager
 
 services_api = Blueprint('services_api', __name__)
 
+@services_api.route('/config', methods=['GET'])
+def get_services_config():
+    """Récupérer la configuration complète des services pour le frontend"""
+    try:
+        # Récupérer tous les services depuis Supabase
+        all_services = services_manager.get_all_services()
+        
+        return jsonify({
+            "success": True,
+            "services": all_services,
+            "count": len(all_services)
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "services": [],
+            "count": 0
+        }), 500
+
 @services_api.route('/', methods=['GET'])
 def get_services():
     """Récupérer tous les services disponibles"""
