@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Link } from 'react-router-dom';
 import { FiArrowLeft, FiDownload, FiCopy, FiUser, FiFileText, FiBriefcase } from 'react-icons/fi';
+import { LogoIcon } from '../icons/ModernIcons';
 import toast from 'react-hot-toast';
 import MatchingAnalysis from '../Analysis/MatchingAnalysis';
 import SimpleMarkdownRenderer from './SimpleMarkdownRenderer';
@@ -32,17 +33,29 @@ const safeSetStorageItem = (key, value) => {
 };
 
 // Petit composant pour afficher le statut d'un document de la même
-// manière que sur le dashboard
+// manière que sur le dashboard - maintenant cliquable vers "Mes Documents"
 const StatusTile = ({ title, icon, uploaded }) => (
-  <div className="document-tile" style={{ '--tile-color': uploaded ? '#16a34a' : '#dc2626' }}>
-    <div className={`revolutionary-service-icon ${uploaded ? '' : 'disabled'}`} style={{ background: uploaded ? '#16a34a' : '#9ca3af' }}>
-      {icon}
+  <Link 
+    to="/dashboard" 
+    style={{ textDecoration: 'none', color: 'inherit' }}
+    title={uploaded ? 'Document fourni' : 'Cliquez pour gérer vos documents'}
+  >
+    <div className="document-tile" style={{ 
+      '--tile-color': uploaded ? '#16a34a' : '#dc2626',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease'
+    }}>
+      <div className={`revolutionary-service-icon ${uploaded ? '' : 'disabled'}`} style={{ background: uploaded ? '#16a34a' : '#9ca3af' }}>
+        {icon}
+      </div>
+      <div className="revolutionary-service-content">
+        <h4 className={`revolutionary-service-title ${uploaded ? '' : 'disabled'}`}>{title}</h4>
+        <p className={`revolutionary-service-description ${uploaded ? '' : 'disabled'}`}>
+          {uploaded ? 'Document fourni' : 'Cliquez pour gérer'}
+        </p>
+      </div>
     </div>
-    <div className="revolutionary-service-content">
-      <h4 className={`revolutionary-service-title ${uploaded ? '' : 'disabled'}`}>{title}</h4>
-      <p className={`revolutionary-service-description ${uploaded ? '' : 'disabled'}`}>{uploaded ? 'Document fourni' : 'Manquant'}</p>
-    </div>
-  </div>
+  </Link>
 );
 
 const GenericDocumentProcessor = ({ serviceConfig }) => {
@@ -219,8 +232,9 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
             Retour
           </Link>
         </div>
-        <h2 className="revolutionary-section-title" style={{ marginBottom: '0.5rem' }}>
-          {serviceConfig.icon} {serviceConfig.title}
+        <h2 className="revolutionary-section-title" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <LogoIcon size={32} />
+          {serviceConfig.title}
         </h2>
         <p className="revolutionary-section-description" style={{ marginBottom: '2rem' }}>
           {serviceConfig.description}
@@ -239,7 +253,7 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
           boxShadow: '0 4px 24px rgba(16,185,129,0.08)' 
         }}>
           <h3 style={{ margin: 0, fontWeight: 600, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            💡 Conseils du coach
+            <LogoIcon size={20} /> Conseils du coach
           </h3>
           <p style={{ margin: '0.5rem 0 0 0' }}>{serviceConfig.coachAdvice || serviceConfig.description}</p>
         </div>
@@ -248,7 +262,7 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
         {serviceConfig.id === 'matching_cv_offre' && documentStatus.offre_emploi?.uploaded && (
           <div className="revolutionary-service-card" style={{ background: '#dbeafe', border: '1px solid #93c5fd', color: '#1e40af', marginBottom: '2rem', boxShadow: '0 4px 24px rgba(59,130,246,0.08)' }}>
             <h3 style={{ margin: 0, fontWeight: 600, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              🎯 Offre d'emploi chargée automatiquement
+              <LogoIcon size={20} /> Offre d'emploi chargée automatiquement
             </h3>
             <p style={{ margin: 0 }}>
               Votre offre d'emploi a été pré-remplie et est prête pour l'analyse de compatibilité avec votre CV.
@@ -258,8 +272,8 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
 
         {/* Statut des documents */}
         <div className="revolutionary-service-card" style={{ marginBottom: '2rem' }}>
-          <h3 style={{ margin: '0 0 1rem 0', color: 'white', fontSize: '1.1rem', fontWeight: '600' }}>
-            📋 Documents requis
+          <h3 style={{ margin: '0 0 1rem 0', color: 'white', fontSize: '1.1rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <LogoIcon size={20} /> Documents requis
           </h3>
           <div className="revolutionary-document-types">
             {serviceConfig.requiresCV && (
@@ -277,18 +291,12 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
         {/* Zone d'exécution */}
         {!canExecute ? (
           <div className="revolutionary-service-card" style={{ background: '#fef3c7', border: '1px solid #fbbf24', color: '#92400e', textAlign: 'center', marginBottom: '2rem' }}>
-            <h3 style={{ color: '#92400e', marginBottom: '1rem' }}>
-              📋 Documents manquants
-            </h3>
-            <p style={{ color: '#92400e', marginBottom: '1rem' }}>
-              Pour utiliser ce service, vous devez d'abord uploader : <strong>{missingDocuments.join(', ')}</strong>
+            <p style={{ color: '#92400e', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: '500' }}>
+              ⚠️ Pour utiliser ce service, vous devez d'abord fournir : <strong>{missingDocuments.join(', ')}</strong>
             </p>
-            <Link
-              to="/dashboard"
-              style={{ display: 'inline-block', padding: '0.75rem 1.5rem', background: '#f59e0b', color: 'white', textDecoration: 'none', borderRadius: '8px', fontWeight: '600' }}
-            >
-              📄 Gérer mes documents
-            </Link>
+            <p style={{ color: '#92400e', fontSize: '0.9rem', margin: 0 }}>
+              Cliquez sur les documents manquants ci-dessus pour les gérer
+            </p>
           </div>
         ) : !result ? (
           <div className="revolutionary-service-card" style={{ padding: '2rem', marginBottom: '2rem' }}>
@@ -302,8 +310,8 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
                   padding: '1rem', 
                   marginBottom: '1rem' 
                 }}>
-                  <h4 style={{ margin: '0 0 0.5rem 0', color: '#0369a1', fontSize: '1rem' }}>
-                    💡 Voulez-vous ajouter un complément d'information ?
+                  <h4 style={{ margin: '0 0 0.5rem 0', color: '#0369a1', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <LogoIcon size={16} /> Voulez-vous ajouter un complément d'information ?
                   </h4>
                   <p style={{ margin: 0, color: '#0c4a6e', fontSize: '0.9rem', lineHeight: '1.4' }}>
                     Ajoutez des détails personnels, exemples concrets ou contraintes pour personnaliser l'analyse de l'IA.
@@ -329,13 +337,13 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
                   marginBottom: '1rem',
                   textAlign: 'left'
                 }}>
-                  <p style={{ margin: '0 0 0.5rem 0', color: '#166534', fontSize: '0.9rem', fontWeight: '500' }}>
-                    ✅ Prêt à lancer l'analyse
+                  <p style={{ margin: '0 0 0.5rem 0', color: '#166534', fontSize: '0.9rem', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <LogoIcon size={16} /> Prêt à lancer l'analyse
                   </p>
                   <p style={{ margin: 0, color: '#15803d', fontSize: '0.85rem' }}>
                     {userNotes ? 
-                      `📝 ${userNotes.length} caractères de notes personnelles ajoutées` : 
-                      '📝 Aucune note personnelle - l\'analyse sera basée sur vos documents uniquement'
+                      `${userNotes.length} caractères de notes personnelles ajoutées` : 
+                      'Aucune note personnelle - l\'analyse sera basée sur vos documents uniquement'
                     }
                   </p>
                 </div>
@@ -363,12 +371,12 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
                     Traitement en cours...
                   </>
                 ) : (
-                  <>{serviceConfig.allowsNotes ? '🚀 Lancer l\'analyse personnalisée' : '🚀 Lancer l\'analyse'}</>
+                  <>{serviceConfig.allowsNotes ? 'Lancer l\'analyse personnalisée' : 'Lancer l\'analyse'}</>
                 )}
               </button>
               {error && (
                 <div style={{ marginTop: '1rem', padding: '1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#dc2626' }}>
-                  ❌ {error}
+                  {error}
                 </div>
               )}
             </div>
