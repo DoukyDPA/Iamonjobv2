@@ -85,14 +85,14 @@ const ServicesGrid = ({ filterTheme = null }) => {
   // Obtenir l'icône appropriée selon le thème
   const getServiceIcon = (theme) => {
     const iconMap = {
-      'optimize_profile': '📄',
-      'evaluate_offer': '🎯',
-      'apply_jobs': '✉️',
-      'interview_tips': '🎤',
+      'optimize_profile': <LogoIcon size={20} />,
+      'evaluate_offer': <LogoIcon size={20} />,
+      'apply_jobs': <LogoIcon size={20} />,
+      'interview_tips': <LogoIcon size={20} />,
       'networking': <LogoIcon size={24} />,
-      'career_development': '🚀'
+      'career_development': <LogoIcon size={20} />
     };
-    return iconMap[theme] || '📋';
+    return iconMap[theme] || <LogoIcon size={20} />;
   };
 
   // Configuration de fallback si l'API échoue
@@ -458,10 +458,10 @@ const ServicesGrid = ({ filterTheme = null }) => {
   // Rendu principal (affichage complet)
   return (
     <div style={{ padding: '2rem 0' }}>
-      {renderCategory('evaluate_offer', servicesByCategory.evaluate_offer, '🎯 Évaluer une offre d\'emploi')}
-      {renderCategory('optimize_profile', servicesByCategory.optimize_profile, '📄 Améliorer mon CV')}
-      {renderCategory('apply_jobs', servicesByCategory.apply_jobs, '✉️ Candidater')}
-      {renderCategory('interview_tips', servicesByCategory.interview_tips, '🎤 Préparer l\'entretien')}
+      {renderCategory('evaluate_offer', servicesByCategory.evaluate_offer, <><LogoIcon size={28} /> Évaluer une offre d'emploi</>)}
+      {renderCategory('optimize_profile', servicesByCategory.optimize_profile, <><LogoIcon size={28} /> Améliorer mon CV</>)}
+      {renderCategory('apply_jobs', servicesByCategory.apply_jobs, <><LogoIcon size={28} /> Candidater</>)}
+      {renderCategory('interview_tips', servicesByCategory.interview_tips, <><LogoIcon size={28} /> Préparer l'entretien</>)}
       {renderCategory('networking', servicesByCategory.networking, <><LogoIcon size={32} /> Networking</>)}
     </div>
   );
