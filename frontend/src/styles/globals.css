@@ -583,3 +583,279 @@ body {
     font-size: 0.85rem;
   }
 }
+
+/* ===== STYLES POUR LES PAGES D'AUTHENTIFICATION ===== */
+.revolutionary-auth-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a6b79 0%, #0d4b56 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.revolutionary-auth-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  max-width: 1200px;
+  width: 100%;
+  align-items: center;
+}
+
+.revolutionary-auth-card {
+  background: white;
+  border-radius: 16px;
+  padding: 3rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.revolutionary-auth-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.revolutionary-auth-logo {
+  margin-bottom: 1.5rem;
+}
+
+.revolutionary-auth-logo-image {
+  height: 60px;
+  width: auto;
+}
+
+.revolutionary-auth-header h1 {
+  color: #0a6b79;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem 0;
+}
+
+.revolutionary-auth-header p {
+  color: #6b7280;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.revolutionary-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.revolutionary-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.revolutionary-form-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.revolutionary-form-icon {
+  color: #0a6b79;
+  font-size: 1.1rem;
+}
+
+.revolutionary-form-input {
+  padding: 0.875rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.revolutionary-form-input:focus {
+  outline: none;
+  border-color: #0a6b79;
+  box-shadow: 0 0 0 3px rgba(10, 107, 121, 0.1);
+}
+
+.revolutionary-form-input.error {
+  border-color: #dc2626;
+}
+
+.revolutionary-form-error {
+  color: #dc2626;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.revolutionary-password-wrapper {
+  position: relative;
+}
+
+.revolutionary-password-toggle {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.revolutionary-password-toggle:hover {
+  color: #0a6b79;
+  background: #f3f4f6;
+}
+
+.revolutionary-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.5rem;
+}
+
+.revolutionary-auth-link {
+  color: #0a6b79;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.revolutionary-auth-link:hover {
+  color: #064d57;
+  text-decoration: underline;
+}
+
+.revolutionary-auth-btn {
+  background: linear-gradient(135deg, #0a6b79 0%, #064d57 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(10, 107, 121, 0.3);
+}
+
+.revolutionary-auth-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(10, 107, 121, 0.4);
+}
+
+.revolutionary-auth-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.revolutionary-loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.5rem;
+}
+
+.revolutionary-auth-footer {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.revolutionary-auth-footer p {
+  color: #6b7280;
+  margin: 0;
+}
+
+.revolutionary-auth-info {
+  color: white;
+  padding: 2rem;
+}
+
+.revolutionary-auth-info h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+  color: white;
+}
+
+.revolutionary-auth-info p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin: 0 0 2rem 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.revolutionary-auth-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem 0;
+}
+
+.revolutionary-auth-info li {
+  padding: 0.75rem 0;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.revolutionary-auth-info li:last-child {
+  border-bottom: none;
+}
+
+.revolutionary-auth-info-footer {
+  text-align: center;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.revolutionary-auth-info-footer p {
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Responsive pour l'authentification */
+@media (max-width: 1024px) {
+  .revolutionary-auth-container {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .revolutionary-auth-card {
+    padding: 2rem;
+  }
+  
+  .revolutionary-auth-info {
+    text-align: center;
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .revolutionary-auth-page {
+    padding: 1rem;
+  }
+  
+  .revolutionary-auth-card {
+    padding: 1.5rem;
+  }
+  
+  .revolutionary-auth-header h1 {
+    font-size: 1.75rem;
+  }
+  
+  .revolutionary-auth-info h2 {
+    font-size: 1.75rem;
+  }
+}
