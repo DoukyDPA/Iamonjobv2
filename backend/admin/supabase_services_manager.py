@@ -23,26 +23,47 @@ class SupabaseServicesManager:
     def _init_supabase(self):
         """Initialise la connexion Supabase"""
         try:
-            # Utiliser directement les variables d'environnement (plus simple et fiable)
-            supabase_url = os.environ.get('SUPABASE_URL')
-            supabase_key = os.environ.get('SUPABASE_ANON_KEY')
-            
-            if supabase_url and supabase_key:
-                from supabase import create_client, Client
-                self.supabase_client = create_client(supabase_url, supabase_key)
-                logger.info("✅ Connexion Supabase établie via variables d'environnement")
+            # Utiliser config.py directement (plus simple et fiable)
+            try:
+                import sys
+                import os
                 
-                # Test de connexion
-                try:
-                    response = self.supabase_client.table('admin_services_config').select('service_id').limit(1).execute()
-                    logger.info("✅ Test de connexion Supabase réussi")
-                except Exception as test_error:
-                    logger.warning(f"⚠️ Test de connexion échoué: {test_error}")
+                # Importer config.py directement depuis le répertoire racine
+                current_dir = os.path.dirname(__file__)
+                root_dir = os.path.dirname(os.path.dirname(current_dir))
+                config_path = os.path.join(root_dir, 'config.py')
+                
+                if os.path.exists(config_path):
+                    import importlib.util
+                    spec = importlib.util.spec_from_file_location("config", config_path)
+                    config_module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(config_module)
                     
-            else:
-                logger.warning("⚠️ Variables Supabase manquantes dans l'environnement")
-                logger.warning(f"   SUPABASE_URL: {'défini' if supabase_url else 'manquant'}")
-                logger.warning(f"   SUPABASE_ANON_KEY: {'défini' if supabase_key else 'manquant'}")
+                    supabase_url = config_module.MIGRATION_CONFIG.get('SUPABASE_URL')
+                    supabase_key = config_module.MIGRATION_CONFIG.get('SUPABASE_ANON_KEY')
+                else:
+                    logger.warning(f"⚠️ Fichier config.py non trouvé: {config_path}")
+                    supabase_url = None
+                    supabase_key = None
+                
+                if supabase_url and supabase_key:
+                    from supabase import create_client, Client
+                    self.supabase_client = create_client(supabase_url, supabase_key)
+                    logger.info("✅ Connexion Supabase établie via config.py")
+                    
+                    # Test de connexion
+                    try:
+                        response = self.supabase_client.table('admin_services_config').select('service_id').limit(1).execute()
+                        logger.info("✅ Test de connexion Supabase réussi")
+                    except Exception as test_error:
+                        logger.warning(f"⚠️ Test de connexion échoué: {test_error}")
+                        
+                else:
+                    logger.warning("⚠️ Variables Supabase manquantes dans config.py")
+                    self.supabase_client = None
+                    
+            except ImportError as e:
+                logger.warning(f"⚠️ Import config.py échoué: {e}")
                 self.supabase_client = None
                 
         except Exception as e:
@@ -184,7 +205,7 @@ class SupabaseServicesManager:
             }).eq('service_id', service_id).execute()
             
             if response.data:
-                logger.info(f"✅ Service {service_id} mis en avant")
+                logger.info(f"✅ Service {service_id} mis en avant jusqu'au {featured_until}")
                 return True
             else:
                 logger.warning(f"⚠️ Service {service_id} non trouvé")
@@ -192,52 +213,6 @@ class SupabaseServicesManager:
                 
         except Exception as e:
             logger.error(f"❌ Erreur mise en avant: {e}")
-            return False
-    
-    def create_service(self, service_id: str, title: str, coach_advice: str, theme: str, 
-                      visible: bool = True, requires_cv: bool = False, requires_job_offer: bool = False,
-                      requires_questionnaire: bool = False, difficulty: str = 'beginner', 
-                      duration_minutes: int = 5, slug: str = None) -> bool:
-        """Crée un nouveau service dans Supabase"""
-        if not self.supabase_client:
-            logger.warning("⚠️ Supabase non disponible")
-            return False
-        
-        try:
-            # Créer le slug si non fourni
-            if not slug:
-                slug = service_id.replace('_', '-')
-            
-            service_data = {
-                'service_id': service_id,
-                'title': title,
-                'coach_advice': coach_advice,
-                'theme': theme,
-                'visible': visible,
-                'featured': False,
-                'featured_until': None,
-                'featured_title': None,
-                'requires_cv': requires_cv,
-                'requires_job_offer': requires_job_offer,
-                'requires_questionnaire': requires_questionnaire,
-                'difficulty': difficulty,
-                'duration_minutes': duration_minutes,
-                'slug': slug,
-                'created_at': datetime.now().isoformat(),
-                'updated_at': datetime.now().isoformat()
-            }
-            
-            response = self.supabase_client.table('admin_services_config').insert(service_data).execute()
-            
-            if response.data:
-                logger.info(f"✅ Service {service_id} créé avec succès")
-                return True
-            else:
-                logger.warning(f"⚠️ Échec création service {service_id}")
-                return False
-                
-        except Exception as e:
-            logger.error(f"❌ Erreur création service {service_id}: {e}")
             return False
     
     def clear_featured_service(self) -> bool:
@@ -553,16 +528,6 @@ def set_featured_service_admin(service_id: str, featured_title: str = None, dura
     """Met un service en avant (pour l'admin)"""
     return supabase_services_manager.set_featured_service(service_id, featured_title, duration_days)
 
-def create_service_admin(service_id: str, title: str, coach_advice: str, theme: str, 
-                         visible: bool = True, requires_cv: bool = False, requires_job_offer: bool = False,
-                         requires_questionnaire: bool = False, difficulty: str = 'beginner', 
-                         duration_minutes: int = 5, slug: str = None):
-    """Crée un nouveau service (pour l'admin)"""
-    return supabase_services_manager.create_service(service_id, title, coach_advice, theme, 
-                                                    visible, requires_cv, requires_job_offer,
-                                                    requires_questionnaire, difficulty, 
-                                                    duration_minutes, slug)
-
 def clear_featured_service_admin():
     """Retire la mise en avant (pour l'admin)"""
     return supabase_services_manager.clear_featured_service()
@@ -575,6 +540,5 @@ __all__ = [
     'update_service_theme_admin',
     'update_service_requirements_admin',
     'set_featured_service_admin', 
-    'clear_featured_service_admin',
-    'create_service_admin'
+    'clear_featured_service_admin'
 ]
