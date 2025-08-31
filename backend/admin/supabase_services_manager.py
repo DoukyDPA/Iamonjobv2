@@ -310,18 +310,48 @@ class SupabaseServicesManager:
             response = self.supabase_client.table('admin_services_config').select('*').execute()
             services = response.data
             
-            # Identifier les doublons par service_id
-            duplicates = {}
-            to_delete = []
-            
+            # Étape 1: Identifier les doublons exacts par service_id
+            exact_duplicates = {}
             for service in services:
                 service_id = service['service_id']
-                if service_id not in duplicates:
-                    duplicates[service_id] = []
-                duplicates[service_id].append(service)
+                if service_id not in exact_duplicates:
+                    exact_duplicates[service_id] = []
+                exact_duplicates[service_id].append(service)
             
-            # Identifier les services à supprimer (garder le plus récent)
-            for service_id, service_list in duplicates.items():
+            # Étape 2: Identifier les doublons similaires (avec variations de nom)
+            similar_duplicates = {}
+            processed_ids = set()
+            
+            for i, service1 in enumerate(services):
+                if service1['id'] in processed_ids:
+                    continue
+                    
+                service_id1 = service1['service_id']
+                normalized_id1 = self._normalize_service_id(service_id1)
+                
+                similar_group = [service1]
+                processed_ids.add(service1['id'])
+                
+                for j, service2 in enumerate(services):
+                    if i == j or service2['id'] in processed_ids:
+                        continue
+                        
+                    service_id2 = service2['service_id']
+                    normalized_id2 = self._normalize_service_id(service_id2)
+                    
+                    # Vérifier si les IDs normalisés sont identiques
+                    if normalized_id1 == normalized_id2:
+                        similar_group.append(service2)
+                        processed_ids.add(service2['id'])
+                
+                if len(similar_group) > 1:
+                    # Créer une clé unique pour ce groupe
+                    group_key = f"similar_{normalized_id1}"
+                    similar_duplicates[group_key] = similar_group
+            
+            # Étape 3: Traiter les doublons exacts
+            exact_to_delete = []
+            for service_id, service_list in exact_duplicates.items():
                 if len(service_list) > 1:
                     # Trier par date de création/mise à jour
                     sorted_services = sorted(
@@ -332,27 +362,236 @@ class SupabaseServicesManager:
                     
                     # Garder le premier (le plus récent), supprimer les autres
                     for service in sorted_services[1:]:
-                        to_delete.append(service['id'])
+                        exact_to_delete.append(service['id'])
             
-            # Supprimer les doublons
+            # Étape 4: Traiter les doublons similaires
+            similar_to_delete = []
+            for group_key, service_list in similar_duplicates.items():
+                if len(service_list) > 1:
+                    # Trier par date et garder le plus récent
+                    sorted_services = sorted(
+                        service_list, 
+                        key=lambda x: x.get('updated_at', x.get('created_at', '')),
+                        reverse=True
+                    )
+                    
+                    # Garder le premier (le plus récent), supprimer les autres
+                    for service in sorted_services[1:]:
+                        similar_to_delete.append(service['id'])
+            
+            # Étape 5: Supprimer tous les doublons
+            all_to_delete = exact_to_delete + similar_to_delete
             deleted_count = 0
-            for service_id in to_delete:
+            
+            for service_id in all_to_delete:
                 try:
                     self.supabase_client.table('admin_services_config').delete().eq('id', service_id).execute()
                     deleted_count += 1
                 except Exception as e:
                     logger.error(f"❌ Erreur suppression service {service_id}: {e}")
             
-            logger.info(f"✅ Nettoyage terminé: {deleted_count} doublons supprimés")
+            # Étape 6: Logs détaillés
+            logger.info(f"✅ Nettoyage terminé:")
+            logger.info(f"   - Doublons exacts trouvés: {len([s for s in exact_duplicates.values() if len(s) > 1])}")
+            logger.info(f"   - Doublons similaires trouvés: {len([s for s in similar_duplicates.values() if len(s) > 1])}")
+            logger.info(f"   - Total supprimé: {deleted_count}")
+            
             return {
                 "total_services": len(services),
-                "duplicates_found": len([s for s in duplicates.values() if len(s) > 1]),
-                "duplicates_deleted": deleted_count
+                "exact_duplicates_found": len([s for s in exact_duplicates.values() if len(s) > 1]),
+                "similar_duplicates_found": len([s for s in similar_duplicates.values() if len(s) > 1]),
+                "duplicates_deleted": deleted_count,
+                "similar_groups": {k: [s['service_id'] for s in v] for k, v in similar_duplicates.items() if len(v) > 1}
             }
             
         except Exception as e:
             logger.error(f"❌ Erreur nettoyage doublons: {e}")
             return {"error": str(e)}
+
+    def _normalize_service_id(self, service_id: str) -> str:
+        """Normalise un service_id pour la comparaison des doublons"""
+        if not service_id:
+            return ""
+        
+        # Convertir en minuscules
+        normalized = service_id.lower()
+        
+        # Remplacer les tirets et underscores par des espaces
+        normalized = normalized.replace('-', ' ').replace('_', ' ')
+        
+        # Supprimer les espaces multiples
+        normalized = ' '.join(normalized.split())
+        
+        # Supprimer les espaces (pour avoir une chaîne compacte)
+        normalized = normalized.replace(' ', '')
+        
+        return normalized
+
+    def analyze_duplicates(self) -> Dict[str, Any]:
+        """Analyse les doublons sans les supprimer - pour examen préalable"""
+        if not self.supabase_client:
+            logger.warning("⚠️ Supabase non disponible")
+            return {"error": "Supabase non disponible"}
+        
+        try:
+            # Récupérer tous les services
+            response = self.supabase_client.table('admin_services_config').select('*').execute()
+            services = response.data
+            
+            # Étape 1: Identifier les doublons exacts par service_id
+            exact_duplicates = {}
+            for service in services:
+                service_id = service['service_id']
+                if service_id not in exact_duplicates:
+                    exact_duplicates[service_id] = []
+                exact_duplicates[service_id].append(service)
+            
+            # Étape 2: Identifier les doublons similaires (avec variations de nom)
+            similar_duplicates = {}
+            processed_ids = set()
+            
+            for i, service1 in enumerate(services):
+                if service1['id'] in processed_ids:
+                    continue
+                    
+                service_id1 = service1['service_id']
+                normalized_id1 = self._normalize_service_id(service_id1)
+                
+                similar_group = [service1]
+                processed_ids.add(service1['id'])
+                
+                for j, service2 in enumerate(services):
+                    if i == j or service2['id'] in processed_ids:
+                        continue
+                        
+                    service_id2 = service2['service_id']
+                    normalized_id2 = self._normalize_service_id(service_id2)
+                    
+                    # Vérifier si les IDs normalisés sont identiques
+                    if normalized_id1 == normalized_id2:
+                        similar_group.append(service2)
+                        processed_ids.add(service2['id'])
+                
+                if len(similar_group) > 1:
+                    # Créer une clé unique pour ce groupe
+                    group_key = f"similar_{normalized_id1}"
+                    similar_duplicates[group_key] = similar_group
+            
+            # Étape 3: Analyser les causes possibles des doublons
+            duplicate_analysis = {
+                "exact_duplicates": {},
+                "similar_duplicates": {},
+                "causes_analysis": {},
+                "recommendations": []
+            }
+            
+            # Analyser les doublons exacts
+            for service_id, service_list in exact_duplicates.items():
+                if len(service_list) > 1:
+                    duplicate_analysis["exact_duplicates"][service_id] = {
+                        "services": service_list,
+                        "count": len(service_list),
+                        "possible_causes": self._analyze_duplicate_causes(service_list)
+                    }
+            
+            # Analyser les doublons similaires
+            for group_key, service_list in similar_duplicates.items():
+                if len(service_list) > 1:
+                    duplicate_analysis["similar_duplicates"][group_key] = {
+                        "services": service_list,
+                        "count": len(service_list),
+                        "normalized_id": self._normalize_service_id(service_list[0]['service_id']),
+                        "possible_causes": self._analyze_duplicate_causes(service_list)
+                    }
+            
+            # Étape 4: Générer des recommandations
+            total_exact = sum(len(v["services"]) - 1 for v in duplicate_analysis["exact_duplicates"].values())
+            total_similar = sum(len(v["services"]) - 1 for v in duplicate_analysis["similar_duplicates"].values())
+            
+            duplicate_analysis["summary"] = {
+                "total_services": len(services),
+                "exact_duplicates_found": len(duplicate_analysis["exact_duplicates"]),
+                "similar_duplicates_found": len(duplicate_analysis["similar_duplicates"]),
+                "total_duplicates": total_exact + total_similar,
+                "services_after_cleanup": len(services) - (total_exact + total_similar)
+            }
+            
+            # Générer des recommandations
+            if total_exact > 0:
+                duplicate_analysis["recommendations"].append(
+                    f"Supprimer {total_exact} doublons exacts (même service_id)"
+                )
+            
+            if total_similar > 0:
+                duplicate_analysis["recommendations"].append(
+                    f"Fusionner {total_similar} doublons similaires (noms normalisés identiques)"
+                )
+            
+            if duplicate_analysis["summary"]["total_duplicates"] > 0:
+                duplicate_analysis["recommendations"].append(
+                    "Examiner chaque groupe avant suppression pour choisir la meilleure version"
+                )
+            
+            logger.info(f"✅ Analyse des doublons terminée: {duplicate_analysis['summary']['total_duplicates']} doublons trouvés")
+            return duplicate_analysis
+            
+        except Exception as e:
+            logger.error(f"❌ Erreur analyse des doublons: {e}")
+            return {"error": str(e)}
+
+    def _analyze_duplicate_causes(self, service_list: List[Dict]) -> List[str]:
+        """Analyse les causes possibles des doublons"""
+        causes = []
+        
+        if len(service_list) < 2:
+            return causes
+        
+        # Trier par date de création
+        sorted_services = sorted(service_list, key=lambda x: x.get('created_at', ''))
+        
+        # Analyser les différences
+        first_service = sorted_services[0]
+        last_service = sorted_services[-1]
+        
+        # Vérifier les dates de création
+        if first_service.get('created_at') and last_service.get('created_at'):
+            try:
+                from datetime import datetime
+                first_date = datetime.fromisoformat(first_service['created_at'].replace('Z', '+00:00'))
+                last_date = datetime.fromisoformat(last_service['created_at'].replace('Z', '+00:00'))
+                time_diff = last_date - first_date
+                
+                if time_diff.days > 30:
+                    causes.append(f"Création échelonnée sur {time_diff.days} jours")
+                elif time_diff.days > 7:
+                    causes.append(f"Création échelonnée sur {time_diff.days} jours")
+                else:
+                    causes.append("Création rapprochée (possible erreur de saisie)")
+            except:
+                causes.append("Dates de création non comparables")
+        
+        # Vérifier les différences de contenu
+        content_differences = []
+        if first_service.get('title') != last_service.get('title'):
+            content_differences.append("titres différents")
+        if first_service.get('coach_advice') != last_service.get('coach_advice'):
+            content_differences.append("conseils différents")
+        if first_service.get('theme') != last_service.get('theme'):
+            content_differences.append("thèmes différents")
+        
+        if content_differences:
+            causes.append(f"Contenu différent: {', '.join(content_differences)}")
+        
+        # Vérifier les patterns de nommage
+        service_ids = [s['service_id'] for s in service_list]
+        if any('-' in sid for sid in service_ids) and any('_' in sid for sid in service_ids):
+            causes.append("Incohérence de nommage (tirets vs underscores)")
+        
+        # Recommandations basées sur l'analyse
+        if len(causes) == 0:
+            causes.append("Doublons identiques (probablement erreur de saisie)")
+        
+        return causes
 
     def get_services_by_theme(self) -> Dict[str, List[str]]:
         """Retourne les services groupés par thème"""
@@ -654,6 +893,10 @@ def clean_duplicate_services_admin():
     """Nettoie les services en double (pour l'admin)"""
     return supabase_services_manager.clean_duplicate_services()
 
+def analyze_duplicates_admin():
+    """Analyse les doublons sans les supprimer (pour l'admin)"""
+    return supabase_services_manager.analyze_duplicates()
+
 # Export de l'instance pour utilisation dans l'app
 __all__ = [
     'supabase_services_manager', 
@@ -664,5 +907,6 @@ __all__ = [
     'set_featured_service_admin', 
     'clear_featured_service_admin',
     'add_new_service_admin',
-    'clean_duplicate_services_admin'
+    'clean_duplicate_services_admin',
+    'analyze_duplicates_admin'
 ]
