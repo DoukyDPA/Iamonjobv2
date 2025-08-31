@@ -1145,79 +1145,82 @@ const AdminServicesPage = () => {
 
       {/* Modal édition de prompt */}
       {editingService && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
+        <>
+          {console.log('🔍 Modal prompt - editingService:', editingService)}
           <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            padding: '2rem',
-            maxWidth: '600px',
-            width: '90%',
-            maxHeight: '90vh',
-            overflowY: 'auto'
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
           }}>
-            <h3 style={{ margin: '0 0 1rem 0' }}>Modifier le prompt</h3>
-            <textarea
-              value={editingPrompt}
-              onChange={(e) => setEditingPrompt(e.target.value)}
-              style={{
-                width: '100%',
-                minHeight: '200px',
-                padding: '0.75rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px'
-              }}
-            />
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-              <button
-                onClick={savePrompt}
+            <div style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '2rem',
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '90vh',
+              overflowY: 'auto'
+            }}>
+              <h3 style={{ margin: '0 0 1rem 0' }}>Modifier le prompt</h3>
+              <textarea
+                value={editingPrompt}
+                onChange={(e) => setEditingPrompt(e.target.value)}
                 style={{
-                  flex: 1,
-                  background: '#10b981',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
+                  width: '100%',
+                  minHeight: '200px',
                   padding: '0.75rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem'
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px'
                 }}
-              >
-                <FiSave size={16} /> Sauvegarder
-              </button>
-              <button
-                onClick={() => setEditingService(null)}
-                style={{
-                  flex: 1,
-                  background: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '0.75rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem'
-                }}
-              >
-                <FiX size={16} /> Annuler
-              </button>
+              />
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                <button
+                  onClick={savePrompt}
+                  style={{
+                    flex: 1,
+                    background: '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.75rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <FiSave size={16} /> Sauvegarder
+                </button>
+                <button
+                  onClick={() => setEditingService(null)}
+                  style={{
+                    flex: 1,
+                    background: '#6b7280',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.75rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <FiX size={16} /> Annuler
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Modal édition des documents requis */}
