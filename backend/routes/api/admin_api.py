@@ -60,77 +60,31 @@ def admin_status():
         logging.error(f"Erreur admin status: {e}")
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
 
-@admin_api.route('/test-supabase', methods=['GET'])
-@verify_jwt_token
-def test_supabase():
-    """Test de la connexion Supabase"""
-    try:
-        try:
-            from backend.admin.supabase_services_manager import supabase_services_manager
-            
-            # Test de la connexion
-            if supabase_services_manager.supabase_client:
-                # Test de connexion à la table
-                try:
-                    response = supabase_services_manager.supabase_client.table('admin_services_config').select('service_id').limit(1).execute()
-                    return jsonify({
-                        "success": True,
-                        "message": "Supabase connecté",
-                        "table_exists": True,
-                        "test_response": response.data
-                    })
-                except Exception as table_error:
-                    return jsonify({
-                        "success": False,
-                        "message": "Supabase connecté mais table inaccessible",
-                        "error": str(table_error)
-                    })
-            else:
-                return jsonify({
-                    "success": False,
-                    "message": "Supabase non connecté",
-                    "client": None
-                })
-                
-        except Exception as e:
-            return jsonify({
-                "success": False,
-                "message": "Erreur import Supabase",
-                "error": str(e)
-            })
-            
-    except Exception as e:
-        logging.error(f"Erreur test Supabase: {e}")
-        return jsonify({"error": f"Erreur: {str(e)}"}), 500
-
 # === GESTION DES SERVICES ===
 @admin_api.route('/services', methods=['GET'])
 @verify_jwt_token
 def get_services_config():
     """Liste tous les services avec leur configuration"""
     try:
-        # Essayer d'abord Supabase
+        # Essayer d'abord le nouveau manager Supabase
         try:
             from backend.admin.supabase_services_manager import supabase_services_manager
             services = supabase_services_manager.get_all_services()
             
-            # Vérifier si Supabase a retourné des services
-            if not services or len(services) == 0:
-                logging.warning("⚠️ Supabase retourne 0 services, fallback vers services_manager")
-                from backend.admin.services_manager import get_services_for_admin
-                return get_services_for_admin()
-            
-            # Organiser par thèmes
+            # Récupérer les thèmes disponibles
             themes = {}
             for service in services.values():
-                theme = service.get('theme', 'other')
+                theme = service.get('theme')
                 if theme not in themes:
-                    themes[theme] = []
-                themes[theme].append(service)
+                    themes[theme] = {
+                        "title": f"Thème {theme}",
+                        "services": []
+                    }
+                themes[theme]['services'].append(service)
             
+            # Récupérer le service mis en avant
             featured = supabase_services_manager.get_featured_service()
             
-            logging.info(f"✅ {len(services)} services chargés depuis Supabase")
             return jsonify({
                 "success": True,
                 "services": services,
@@ -138,67 +92,14 @@ def get_services_config():
                 "featured": featured
             })
             
-        except Exception as e:
-            logging.warning(f"Supabase non disponible, fallback vers services_manager: {e}")
+        except ImportError:
+            # Fallback vers l'ancien manager
             from backend.admin.services_manager import get_services_for_admin
             return get_services_for_admin()
             
     except Exception as e:
         logging.error(f"Erreur lors de la récupération des services: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@admin_api.route('/services/init-defaults', methods=['POST'])
-@verify_jwt_token
-def init_default_services():
-    """Initialise les services par défaut depuis la configuration locale"""
-    try:
-        from backend.admin.supabase_services_manager import supabase_services_manager
-        
-        # Récupérer la configuration par défaut
-        default_services = supabase_services_manager._get_default_config()
-        
-        # Initialiser chaque service dans Supabase
-        initialized_count = 0
-        for service_id, service_config in default_services.items():
-            try:
-                # Vérifier si le service existe déjà
-                existing_service = supabase_services_manager.get_service_by_id(service_id)
-                if not existing_service:
-                    # Créer le service avec la configuration par défaut
-                    success = supabase_services_manager.create_service(
-                        service_id=service_id,
-                        title=service_config['title'],
-                        coach_advice=service_config['coach_advice'],
-                        theme=service_config['theme'],
-                        visible=service_config['visible'],
-                        requires_cv=service_config['requires_cv'],
-                        requires_job_offer=service_config['requires_job_offer'],
-                        requires_questionnaire=service_config['requires_questionnaire'],
-                        difficulty=service_config['difficulty'],
-                        duration_minutes=service_config['duration_minutes'],
-                        slug=service_config['slug']
-                    )
-                    if success:
-                        initialized_count += 1
-                        logging.info(f"✅ Service {service_id} initialisé")
-                    else:
-                        logging.warning(f"⚠️ Échec initialisation service {service_id}")
-                else:
-                    logging.info(f"ℹ️ Service {service_id} existe déjà")
-                    
-            except Exception as service_error:
-                logging.error(f"❌ Erreur initialisation service {service_id}: {service_error}")
-                continue
-        
-        return jsonify({
-            "success": True,
-            "message": f"{initialized_count} services initialisés avec succès",
-            "initialized_count": initialized_count
-        })
-        
-    except Exception as e:
-        logging.error(f"Erreur lors de l'initialisation des services: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"error": f"Erreur: {str(e)}"}), 500
 
 @admin_api.route('/services/<service_id>/visibility', methods=['POST'])
 @verify_jwt_token
