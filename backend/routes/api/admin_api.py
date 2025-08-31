@@ -979,10 +979,30 @@ def get_all_prompts():
         prompts = get_all_prompts()
         
         if prompts:
+            # Nettoyer les prompts pour l'affichage admin (remplacer les variables par des descriptions)
+            cleaned_prompts = {}
+            for service_id, prompt_data in prompts.items():
+                if isinstance(prompt_data, dict) and 'prompt' in prompt_data:
+                    prompt_text = prompt_data['prompt']
+                    # Remplacer les variables par des descriptions lisibles
+                    cleaned_prompt = prompt_text.replace('{cv_content}', '[CONTENU DU CV]')
+                    cleaned_prompt = cleaned_prompt.replace('{job_content}', '[CONTENU DE L\'OFFRE D\'EMPLOI]')
+                    cleaned_prompt = cleaned_prompt.replace('{questionnaire_content}', '[CONTENU DU QUESTIONNAIRE]')
+                    cleaned_prompt = cleaned_prompt.replace('{user_notes}', '[NOTES PERSONNELLES]')
+                    cleaned_prompt = cleaned_prompt.replace('{questionnaire_context}', '[CONTEXTE PERSONNEL]')
+                    cleaned_prompt = cleaned_prompt.replace('{questionnaire_instruction}', '[INSTRUCTIONS DU QUESTIONNAIRE]')
+                    
+                    cleaned_prompts[service_id] = {
+                        **prompt_data,
+                        'prompt': cleaned_prompt
+                    }
+                else:
+                    cleaned_prompts[service_id] = prompt_data
+            
             return jsonify({
                 "success": True,
-                "prompts": prompts
-            }), 200
+                "prompts": cleaned_prompts
+            })
         else:
             return jsonify({
                 "success": False,
@@ -991,10 +1011,7 @@ def get_all_prompts():
             
     except Exception as e:
         logging.error(f"Erreur lors de la récupération des prompts: {e}")
-        return jsonify({
-            "success": False,
-            "error": f"Erreur serveur: {str(e)}"
-        }), 500
+        return jsonify({"error": f"Erreur: {str(e)}"}), 500
 
 @admin_api.route('/prompts/<service_id>', methods=['GET'])
 @verify_jwt_token
@@ -1006,10 +1023,31 @@ def get_prompt(service_id):
         prompt = get_prompt(service_id)
         
         if prompt:
-            return jsonify({
-                "success": True,
-                "prompt": prompt
-            }), 200
+            # Nettoyer le prompt pour l'affichage admin
+            if isinstance(prompt, dict) and 'prompt' in prompt:
+                prompt_text = prompt['prompt']
+                # Remplacer les variables par des descriptions lisibles
+                cleaned_prompt = prompt_text.replace('{cv_content}', '[CONTENU DU CV]')
+                cleaned_prompt = cleaned_prompt.replace('{job_content}', '[CONTENU DE L\'OFFRE D\'EMPLOI]')
+                cleaned_prompt = cleaned_prompt.replace('{questionnaire_content}', '[CONTENU DU QUESTIONNAIRE]')
+                cleaned_prompt = cleaned_prompt.replace('{user_notes}', '[NOTES PERSONNELLES]')
+                cleaned_prompt = cleaned_prompt.replace('{questionnaire_context}', '[CONTEXTE PERSONNEL]')
+                cleaned_prompt = cleaned_prompt.replace('{questionnaire_instruction}', '[INSTRUCTIONS DU QUESTIONNAIRE]')
+                
+                cleaned_prompt_data = {
+                    **prompt,
+                    'prompt': cleaned_prompt
+                }
+                
+                return jsonify({
+                    "success": True,
+                    "prompt": cleaned_prompt_data
+                })
+            else:
+                return jsonify({
+                    "success": True,
+                    "prompt": prompt
+                })
         else:
             return jsonify({
                 "success": False,
@@ -1018,10 +1056,7 @@ def get_prompt(service_id):
             
     except Exception as e:
         logging.error(f"Erreur lors de la récupération du prompt {service_id}: {e}")
-        return jsonify({
-            "success": False,
-            "error": f"Erreur serveur: {str(e)}"
-        }), 500
+        return jsonify({"error": f"Erreur: {str(e)}"}), 500
 
 @admin_api.route('/prompts/<service_id>', methods=['PUT'])
 @verify_jwt_token
@@ -1163,7 +1198,4 @@ def admin_partners():
     except Exception as e:
         logging.error(f"Erreur administration partenaires: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
-
-
-
 
