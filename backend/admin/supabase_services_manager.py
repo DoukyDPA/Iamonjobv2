@@ -239,7 +239,121 @@ class SupabaseServicesManager:
         except Exception as e:
             logger.error(f"❌ Erreur suppression mise en avant: {e}")
             return False
-    
+
+    def add_new_service(self, service_config: Dict[str, Any]) -> bool:
+        """Ajoute un nouveau service dans Supabase"""
+        if not self.supabase_client:
+            logger.warning("⚠️ Supabase non disponible")
+            return False
+        
+        try:
+            # Validation des données requises
+            required_fields = ['service_id', 'title', 'theme']
+            for field in required_fields:
+                if field not in service_config or not service_config[field]:
+                    logger.error(f"❌ Champ requis manquant: {field}")
+                    return False
+            
+            service_id = service_config['service_id']
+            
+            # Vérifier si le service existe déjà
+            existing = self.supabase_client.table('admin_services_config').select('id').eq(
+                'service_id', service_id
+            ).execute()
+            
+            if existing.data and len(existing.data) > 0:
+                logger.warning(f"⚠️ Service {service_id} existe déjà")
+                return False
+            
+            # Préparer les données avec valeurs par défaut
+            service_data = {
+                'service_id': service_id,
+                'title': service_config['title'],
+                'coach_advice': service_config.get('coach_advice', ''),
+                'theme': service_config['theme'],
+                'visible': service_config.get('visible', True),
+                'featured': False,
+                'featured_until': None,
+                'featured_title': None,
+                'requires_cv': service_config.get('requires_cv', False),
+                'requires_job_offer': service_config.get('requires_job_offer', False),
+                'requires_questionnaire': service_config.get('requires_questionnaire', False),
+                'difficulty': service_config.get('difficulty', 'beginner'),
+                'duration_minutes': service_config.get('duration_minutes', 5),
+                'slug': service_config.get('slug', service_id.replace('_', '-')),
+                'created_at': datetime.now().isoformat(),
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            # Insérer le nouveau service
+            response = self.supabase_client.table('admin_services_config').insert(service_data).execute()
+            
+            if response.data:
+                logger.info(f"✅ Service {service_id} créé avec succès")
+                return True
+            else:
+                logger.error(f"❌ Erreur lors de la création du service {service_id}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Erreur ajout service: {e}")
+            return False
+
+    def clean_duplicate_services(self) -> Dict[str, int]:
+        """Nettoie les services en double et retourne les statistiques"""
+        if not self.supabase_client:
+            logger.warning("⚠️ Supabase non disponible")
+            return {"error": "Supabase non disponible"}
+        
+        try:
+            # Récupérer tous les services
+            response = self.supabase_client.table('admin_services_config').select('*').execute()
+            services = response.data
+            
+            # Identifier les doublons par service_id
+            duplicates = {}
+            to_delete = []
+            
+            for service in services:
+                service_id = service['service_id']
+                if service_id not in duplicates:
+                    duplicates[service_id] = []
+                duplicates[service_id].append(service)
+            
+            # Identifier les services à supprimer (garder le plus récent)
+            for service_id, service_list in duplicates.items():
+                if len(service_list) > 1:
+                    # Trier par date de création/mise à jour
+                    sorted_services = sorted(
+                        service_list, 
+                        key=lambda x: x.get('updated_at', x.get('created_at', '')),
+                        reverse=True
+                    )
+                    
+                    # Garder le premier (le plus récent), supprimer les autres
+                    for service in sorted_services[1:]:
+                        to_delete.append(service['id'])
+            
+            # Supprimer les doublons
+            deleted_count = 0
+            for service_id in to_delete:
+                try:
+                    self.supabase_client.table('admin_services_config').delete().eq('id', service_id).execute()
+                    deleted_count += 1
+                except Exception as e:
+                    logger.error(f"❌ Erreur suppression service {service_id}: {e}")
+            
+            logger.info(f"✅ Nettoyage terminé: {deleted_count} doublons supprimés")
+            return {
+                "total_services": len(services),
+                "duplicates_found": len([s for s in duplicates.values() if len(s) > 1]),
+                "duplicates_deleted": deleted_count
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Erreur nettoyage doublons: {e}")
+            return {"error": str(e)}
+
     def get_services_by_theme(self) -> Dict[str, List[str]]:
         """Retourne les services groupés par thème"""
         services = self.get_all_services()
@@ -532,6 +646,14 @@ def clear_featured_service_admin():
     """Retire la mise en avant (pour l'admin)"""
     return supabase_services_manager.clear_featured_service()
 
+def add_new_service_admin(service_config: Dict[str, Any]):
+    """Ajoute un nouveau service (pour l'admin)"""
+    return supabase_services_manager.add_new_service(service_config)
+
+def clean_duplicate_services_admin():
+    """Nettoie les services en double (pour l'admin)"""
+    return supabase_services_manager.clean_duplicate_services()
+
 # Export de l'instance pour utilisation dans l'app
 __all__ = [
     'supabase_services_manager', 
@@ -540,5 +662,7 @@ __all__ = [
     'update_service_theme_admin',
     'update_service_requirements_admin',
     'set_featured_service_admin', 
-    'clear_featured_service_admin'
+    'clear_featured_service_admin',
+    'add_new_service_admin',
+    'clean_duplicate_services_admin'
 ]
