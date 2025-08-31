@@ -67,46 +67,54 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-page">
-      <div className="container">
-        <div className="auth-container">
-          <div className="auth-form">
-            <div className="auth-header">
-              <h1>🔐 Connexion</h1>
-              <p>Accédez à votre assistant IA personnalisé</p>
+    <div className="revolutionary-auth-page">
+      <div className="revolutionary-auth-container">
+        <div className="revolutionary-auth-card">
+          <div className="revolutionary-auth-header">
+            <div className="revolutionary-auth-logo">
+              <img 
+                src={`${process.env.PUBLIC_URL}/logo_iamonjob.png`}
+                alt="IAMONJOB" 
+                className="revolutionary-auth-logo-image"
+              />
             </div>
+            <h1>Connexion</h1>
+            <p>Accédez à votre assistant IA personnalisé</p>
+          </div>
             
-            <form onSubmit={handleSubmit} className="form">
-              <div className="form-group">
-                <label htmlFor="email">Email</label>
-                <div className="input-wrapper">
-                  <FiMail className="input-icon" />
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    className={`form-input ${errors.email ? 'error' : ''}`}
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="votre@email.com"
-                    autoComplete="username"
-                    disabled={loading}
-                  />
-                </div>
+            <form onSubmit={handleSubmit} className="revolutionary-auth-form">
+              <div className="revolutionary-form-group">
+                <label htmlFor="email" className="revolutionary-form-label">
+                  <FiMail className="revolutionary-form-icon" />
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  className={`revolutionary-form-input ${errors.email ? 'error' : ''}`}
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="votre@email.com"
+                  autoComplete="username"
+                  disabled={loading}
+                />
                 {errors.email && (
-                  <span className="form-error">{errors.email}</span>
+                  <span className="revolutionary-form-error">{errors.email}</span>
                 )}
               </div>
               
-              <div className="form-group">
-                <label htmlFor="password">Mot de passe</label>
-                <div className="input-wrapper">
-                  <FiLock className="input-icon" />
+              <div className="revolutionary-form-group">
+                <label htmlFor="password" className="revolutionary-form-label">
+                  <FiLock className="revolutionary-form-icon" />
+                  Mot de passe
+                </label>
+                <div className="revolutionary-password-wrapper">
                   <input
                     type={showPassword ? "text" : "password"}
                     id="password"
                     name="password"
-                    className={`form-input ${errors.password ? 'error' : ''}`}
+                    className={`revolutionary-form-input ${errors.password ? 'error' : ''}`}
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="••••••••"
@@ -115,7 +123,7 @@ const Login = () => {
                   />
                   <button
                     type="button"
-                    className="password-toggle"
+                    className="revolutionary-password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
                     tabIndex="-1"
                   >
@@ -123,24 +131,24 @@ const Login = () => {
                   </button>
                 </div>
                 {errors.password && (
-                  <span className="form-error">{errors.password}</span>
+                  <span className="revolutionary-form-error">{errors.password}</span>
                 )}
               </div>
               
-              <div className="form-actions">
-                <Link to="/forgot-password" className="auth-link">
+              <div className="revolutionary-form-actions">
+                <Link to="/forgot-password" className="revolutionary-auth-link">
                   Mot de passe oublié ?
                 </Link>
               </div>
               
               <button 
                 type="submit" 
-                className="btn btn-primary btn-block"
+                className="revolutionary-auth-btn"
                 disabled={loading}
               >
                 {loading ? (
                   <>
-                    <span className="loading-spinner"></span>
+                    <span className="revolutionary-loading-spinner"></span>
                     Connexion...
                   </>
                 ) : (
@@ -149,27 +157,27 @@ const Login = () => {
               </button>
             </form>
             
-            <div className="auth-footer">
+            <div className="revolutionary-auth-footer">
               <p>
                 Pas encore de compte ?{' '}
-                <Link to="/register" className="auth-link">
+                <Link to="/register" className="revolutionary-auth-link">
                   Créer un compte gratuit
                 </Link>
               </p>
             </div>
           </div>
           
-          <div className="auth-info">
-            <h2>🚀 Bienvenue sur IAMONJOB !</h2>
+          <div className="revolutionary-auth-info">
+            <h2>Bienvenue sur IAMONJOB !</h2>
             <p>Votre assistant IA pour réussir votre recherche d'emploi</p>
             <ul>
-              <li>📄 Analyse complète de CV</li>
-              <li>🎯 Évaluation de compatibilité</li>
-              <li>✉️ Lettres de motivation personnalisées</li>
-              <li>🎤 Préparation aux entretiens</li>
-              <li>🔄 Conseils reconversion</li>
+              <li>Analyse complète de CV</li>
+              <li>Évaluation de compatibilité</li>
+              <li>Lettres de motivation personnalisées</li>
+              <li>Préparation aux entretiens</li>
+              <li>Conseils reconversion</li>
             </ul>
-            <div className="auth-info-footer">
+            <div className="revolutionary-auth-info-footer">
               <p><strong>Accès gratuit</strong> • IA de dernière génération</p>
             </div>
           </div>
