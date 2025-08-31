@@ -678,7 +678,10 @@ const Dashboard = () => {
 
         {activeTab === 'evaluate' && (
           <div className="revolutionary-tab-content">
-            <h2 className="revolutionary-section-title">🎯 Évaluer une offre</h2>
+            <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <LogoIcon size={32} />
+              Évaluer une offre
+            </h2>
             <ServicesGrid filterTheme="evaluate_offer" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
@@ -696,7 +699,10 @@ const Dashboard = () => {
 
         {activeTab === 'improve' && (
           <div className="revolutionary-tab-content">
-            <h2 className="revolutionary-section-title">📈 Améliorer son CV</h2>
+            <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <LogoIcon size={32} />
+              Améliorer son CV
+            </h2>
             <ServicesGrid filterTheme="improve_cv" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
@@ -714,7 +720,10 @@ const Dashboard = () => {
 
         {activeTab === 'apply' && (
           <div className="revolutionary-tab-content">
-            <h2 className="revolutionary-section-title">📧 Candidater</h2>
+            <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <LogoIcon size={32} />
+              Candidater
+            </h2>
             <ServicesGrid filterTheme="apply_jobs" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
@@ -732,7 +741,10 @@ const Dashboard = () => {
 
         {activeTab === 'interview' && (
           <div className="revolutionary-tab-content">
-            <h2 className="revolutionary-section-title">🎤 Préparer l'entretien</h2>
+            <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <LogoIcon size={32} />
+              Préparer l'entretien
+            </h2>
             <ServicesGrid filterTheme="interview_prep" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
@@ -750,7 +762,10 @@ const Dashboard = () => {
 
         {activeTab === 'change' && (
           <div className="revolutionary-tab-content">
-            <h2 className="revolutionary-section-title">🔄 Tout changer</h2>
+            <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <LogoIcon size={32} />
+              Tout changer
+            </h2>
             <p className="revolutionary-section-description">Explorez de nouvelles opportunités de carrière</p>
             <ServicesGrid filterTheme="career_project" />
             {/* Section partenaires */}
