@@ -522,7 +522,7 @@ const Dashboard = () => {
         <div className="revolutionary-tab-content">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
             <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0 }}>
-              <LogoIcon size={28} />
+              <LogoIcon size={36} />
               Mes Documents - pour personnaliser l'analyse
             </h2>
             <button 
@@ -629,37 +629,13 @@ const Dashboard = () => {
                 isUploading={loading}
               />
             </div>
-            <div style={{ gridArea: 'conseils' }}>
-              <div className="tips-section">
-                <h4 className="tips-title">
-                  <FiInfo />
-                  💡 Conseils pour optimiser votre profil
-                </h4>
-                <ul className="tips-list">
-                  <li>
-                    <strong>Votre CV est prioritaire :</strong> Il débloque toutes les analyses IA de l'application. Pensez à l'anonymiser en retirant nom, email et téléphone pour ne pas laisser trainer vos coordonnées personnelles en ligne.
-                  </li>
-                  <li>
-                    <strong>Ajoutez une offre d'emploi :</strong> Iamonjob vous dira si ce poste est fait pour vous.
-                  </li>
-                  <li>
-                    <strong>Le questionnaire enrichit vos analyses :</strong> L'IA comprendra mieux vos aspirations personnelles et vous donnera des réponses plus personnalisées.
-                  </li>
-                  <li>
-                    <strong>Explorez la reconversion :</strong> Et si vous changiez complètement de voie professionnelle ?
-                  </li>
-                  <li>
-                    <strong>Formats acceptés :</strong> PDF, DOC, DOCX ou copier/coller directement dans l'interface
-                  </li>
-                </ul>
-              </div>
-            </div>
+
           </div>
           {/* Analyse de CV automatique */}
           {cvAnalysis && (
             <div style={{ margin: '2rem 0' }}>
               <h3 className="revolutionary-section-title" style={{ fontSize: '1.3rem', marginBottom: 12, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <LogoIcon size={24} />
+                <LogoIcon size={32} />
                 Analyse automatique de votre CV
               </h3>
               <SimpleMarkdownRenderer content={cvAnalysis} serviceType="analyze_cv" />
@@ -685,7 +661,7 @@ const Dashboard = () => {
           {/* Section partenaires */}
           <div style={{ margin: '2.5rem 0' }}>
             <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <LogoIcon size={28} />
+              <LogoIcon size={36} />
               Testez votre compatibilité avec les métiers de nos partenaires
             </h2>
             <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
@@ -707,7 +683,7 @@ const Dashboard = () => {
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
                           <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <LogoIcon size={28} />
+              <LogoIcon size={36} />
               Testez votre compatibilité avec les métiers de nos partenaires
             </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
@@ -725,7 +701,7 @@ const Dashboard = () => {
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
               <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <LogoIcon size={28} />
+                <LogoIcon size={36} />
                 Testez votre compatibilité avec les métiers de nos partenaires
               </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
@@ -743,7 +719,7 @@ const Dashboard = () => {
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
               <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <LogoIcon size={28} />
+                <LogoIcon size={36} />
                 Testez votre compatibilité avec les métiers de nos partenaires
               </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
@@ -761,7 +737,7 @@ const Dashboard = () => {
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
               <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <LogoIcon size={28} />
+                <LogoIcon size={36} />
                 Testez votre compatibilité avec les métiers de nos partenaires
               </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
@@ -780,7 +756,7 @@ const Dashboard = () => {
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
               <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <LogoIcon size={28} />
+                <LogoIcon size={36} />
                 Testez votre compatibilité avec les métiers de nos partenaires
               </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
