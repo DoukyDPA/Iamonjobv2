@@ -47,7 +47,7 @@ const Home = () => {
   const stats = [
     { value: "30 ans", label: "d'expérience de l'accompagnement vers l'emploi" },
     { value: "400", label: "personnes formées à l'utilisation de l'IA pour l'emploi" },
-    { value: "12", label: "fonctions IA pour vous aider dans voree recherche" },
+    { value: "12", label: "fonctions IA pour vous aider dans votre recherche" },
     { value: "24/7", label: "Un coach, toujours disponible pour vous conseiller" },
   ];
 
