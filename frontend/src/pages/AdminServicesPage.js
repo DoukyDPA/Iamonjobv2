@@ -527,6 +527,79 @@ const AdminServicesPage = () => {
         >
           Actualiser
         </button>
+        
+        {/* Bouton de debug pour voir tous les services */}
+        <button
+          onClick={() => {
+            console.log('🔍 DEBUG - Tous les services:', services);
+            console.log('🔍 DEBUG - Services par thème:');
+            Object.entries(themeLabels).forEach(([themeKey, themeLabel]) => {
+              const themeServices = Object.values(services).filter(service => service.theme === themeKey);
+              console.log(`  ${themeLabel} (${themeKey}):`, themeServices.map(s => s.id));
+            });
+            toast.success('Debug affiché dans la console');
+          }}
+          style={{
+            background: '#f59e0b',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '0.75rem 1.5rem',
+            cursor: 'pointer',
+            fontSize: '0.9rem'
+          }}
+        >
+          🐛 Debug Services
+        </button>
+        
+        {/* Bouton pour initialiser les services par défaut */}
+        <button
+          onClick={async () => {
+            try {
+              setLoading(true);
+              const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+              
+              if (!token) {
+                toast.error('Token d\'authentification manquant');
+                return;
+              }
+              
+              const response = await fetch('/api/admin/services/init-defaults', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+              
+              const data = await response.json();
+              
+              if (data.success) {
+                toast.success(data.message);
+                // Recharger les services
+                await loadServicesData();
+              } else {
+                toast.error(data.error || 'Erreur lors de l\'initialisation');
+              }
+            } catch (error) {
+              console.error('Erreur initialisation services:', error);
+              toast.error('Erreur lors de l\'initialisation');
+            } finally {
+              setLoading(false);
+            }
+          }}
+          style={{
+            background: '#8b5cf6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '0.75rem 1.5rem',
+            cursor: 'pointer',
+            fontSize: '0.9rem'
+          }}
+        >
+          🔧 Initialiser Services
+        </button>
       </div>
 
       {/* Liste des services par thème */}
