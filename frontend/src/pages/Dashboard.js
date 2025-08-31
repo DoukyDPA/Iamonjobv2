@@ -116,12 +116,15 @@ const DocumentCard = ({
       </div>
       <div className="revolutionary-service-content">
         <h4 className={`revolutionary-service-title ${uploaded ? '' : 'disabled'}`}>{title}</h4>
-        {description && (
-          <p className={`revolutionary-service-description ${uploaded ? '' : 'disabled'}`}>{description}</p>
-        )}
+        <p className={`revolutionary-service-description ${uploaded ? '' : 'disabled'}`}>{description}</p>
         {uploaded && fileName && (
           <div className="revolutionary-service-missing">
             <p className="revolutionary-service-missing-text">📄 {fileName}</p>
+          </div>
+        )}
+        {!uploaded && (
+          <div className="revolutionary-service-missing">
+            <p className="revolutionary-service-missing-text">À ajouter</p>
           </div>
         )}
         <div className="revolutionary-document-actions" style={{ marginTop: 12 }}>
@@ -545,6 +548,7 @@ const Dashboard = () => {
               <DocumentCard
                 type="cv"
                 title="Mon CV"
+                description="Document essentiel pour toutes les analyses IA"
                 icon={<FiFileText />}
                 color="#0a6b79"
                 uploaded={!!documentStatus.cv?.uploaded}
@@ -559,6 +563,7 @@ const Dashboard = () => {
               <DocumentCard
                 type="questionnaire"
                 title="Questionnaire personnel"
+                description="Vos objectifs et aspirations professionnelles"
                 icon={<FiUser />}
                 color="#f59e0b"
                 uploaded={!!documentStatus.questionnaire?.uploaded}
@@ -573,6 +578,7 @@ const Dashboard = () => {
               <DocumentCard
                 type="offre_emploi"
                 title="Offre d'emploi"
+                description="Pour l'analyse de compatibilité détaillée"
                 icon={<FiTarget />}
                 color="#22c55e"
                 uploaded={!!documentStatus.offre_emploi?.uploaded}
@@ -587,13 +593,14 @@ const Dashboard = () => {
               <DocumentCard
                 type="metier_souhaite"
                 title="Métier de reconversion"
+                description="Explorez un nouveau domaine professionnel"
                 icon={<FiRefreshCw />}
                 color="#8b5cf6"
                 uploaded={!!documentStatus.metier_souhaite?.uploaded}
                 fileName={documentStatus.metier_souhaite?.name}
-                onFileUpload={undefined}
+                onFileUpload={(e) => handleFileUpload(e, 'metier_souhaite')}
                 onTextClick={() => setShowTextModal('metier_souhaite')}
-                isTextOnly={true}
+                isTextOnly={false}
                 isUploading={loading}
               />
             </div>
