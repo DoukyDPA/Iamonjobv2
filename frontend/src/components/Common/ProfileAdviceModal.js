@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiX, FiLightbulb, FiTrendingUp, FiTarget, FiCheckCircle } from 'react-icons/fi';
+import { FiX, FiHelpCircle, FiTrendingUp, FiTarget, FiCheckCircle } from 'react-icons/fi';
 import './ProfileAdviceModal.css';
 
 const ProfileAdviceModal = ({ isOpen, onClose }) => {
@@ -22,7 +22,7 @@ const ProfileAdviceModal = ({ isOpen, onClose }) => {
       description: "Identifiez et développez les compétences recherchées dans votre secteur d'activité."
     },
     {
-      icon: <FiLightbulb />,
+      icon: <FiHelpCircle />,
       title: "Développer votre réseau",
       description: "Construisez et entretenez un réseau professionnel pour accéder à de nouvelles opportunités."
     }
@@ -34,7 +34,7 @@ const ProfileAdviceModal = ({ isOpen, onClose }) => {
         {/* Header */}
         <div className="profile-advice-modal-header">
           <div className="profile-advice-modal-title">
-            <FiLightbulb className="profile-advice-modal-title-icon" />
+            <FiHelpCircle className="profile-advice-modal-title-icon" />
             <h2>Conseils pour optimiser votre profil</h2>
           </div>
           <button onClick={onClose} className="profile-advice-modal-close">
