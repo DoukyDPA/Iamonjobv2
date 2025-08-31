@@ -27,7 +27,8 @@ import {
   FiUsers,
   FiDollarSign,
   FiHandHeart,
-  FiInfo
+  FiInfo,
+  FiHelpCircle
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -542,7 +543,7 @@ const Dashboard = () => {
                 transition: 'all 0.2s ease'
               }}
             >
-              <FiLightbulb />
+              <FiHelpCircle />
               Conseils pour optimiser mon profil
             </button>
           </div>
