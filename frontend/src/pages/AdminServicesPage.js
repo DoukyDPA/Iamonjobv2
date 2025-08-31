@@ -19,6 +19,8 @@ const AdminServicesPage = () => {
   const [editingPrompt, setEditingPrompt] = useState('');
   const [editingRequirements, setEditingRequirements] = useState(null); // service id pour les exigences
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showDuplicatesModal, setShowDuplicatesModal] = useState(false);
+  const [duplicatesAnalysis, setDuplicatesAnalysis] = useState(null);
   const [newService, setNewService] = useState({
     id: '', title: '', coach_advice: '', theme: 'evaluate_offer',
     requires_cv: false, requires_job_offer: false, requires_questionnaire: false,
@@ -327,7 +329,27 @@ const AdminServicesPage = () => {
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
-          toast.success(`Nettoyage terminé: ${result.result.duplicates_deleted} doublons supprimés`);
+          const stats = result.result;
+          
+          // Message détaillé
+          let message = `Nettoyage terminé: ${stats.duplicates_deleted} doublons supprimés`;
+          
+          if (stats.exact_duplicates_found > 0) {
+            message += `\n• Doublons exacts: ${stats.exact_duplicates_found}`;
+          }
+          
+          if (stats.similar_duplicates_found > 0) {
+            message += `\n• Doublons similaires: ${stats.similar_duplicates_found}`;
+          }
+          
+          if (stats.similar_groups && Object.keys(stats.similar_groups).length > 0) {
+            message += `\n\nGroupes de doublons similaires:`;
+            Object.entries(stats.similar_groups).forEach(([group, services]) => {
+              message += `\n  - ${services.join(' vs ')}`;
+            });
+          }
+          
+          toast.success(message, { duration: 8000 });
           loadServicesData(); // Recharger les données
         } else {
           toast.error('Erreur lors du nettoyage');
@@ -339,6 +361,42 @@ const AdminServicesPage = () => {
     } catch (error) {
       console.error('Erreur nettoyage services:', error);
       toast.error('Erreur lors du nettoyage');
+    }
+  };
+
+  // Analyser les doublons (sans les supprimer)
+  const analyzeDuplicates = async () => {
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Token d\'authentification manquant');
+        return;
+      }
+      
+      const response = await fetch('/api/admin/services/duplicates/analyze', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setDuplicatesAnalysis(result.result);
+          setShowDuplicatesModal(true);
+        } else {
+          toast.error('Erreur lors de l\'analyse');
+        }
+      } else {
+        const errorData = await response.json();
+        toast.error(`Erreur: ${errorData.error || 'Erreur lors de l\'analyse'}`);
+      }
+    } catch (error) {
+      console.error('Erreur analyse doublons:', error);
+      toast.error('Erreur lors de l\'analyse');
     }
   };
 
@@ -575,6 +633,24 @@ const AdminServicesPage = () => {
           }}
         >
           🧹 Nettoyer les doublons
+        </button>
+        
+        <button
+          onClick={analyzeDuplicates}
+          style={{
+            background: '#3b82f6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '0.75rem 1.5rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontSize: '0.9rem'
+          }}
+        >
+          🔍 Analyser les doublons
         </button>
         
         <button
@@ -832,8 +908,8 @@ const AdminServicesPage = () => {
           bottom: 0,
           background: 'rgba(0,0,0,0.5)',
           display: 'flex',
-          alignItems: 'center',
           justifyContent: 'center',
+          alignItems: 'center',
           zIndex: 1000
         }}>
           <div style={{
@@ -1170,6 +1246,238 @@ const AdminServicesPage = () => {
                 }}
               >
                 <FiX size={16} /> Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal d'analyse des doublons */}
+      {showDuplicatesModal && duplicatesAnalysis && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '2rem',
+            maxWidth: '90vw',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            position: 'relative'
+          }}>
+            {/* Header */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '2rem',
+              borderBottom: '2px solid #e5e7eb',
+              paddingBottom: '1rem'
+            }}>
+              <h2 style={{ margin: 0, color: '#1f2937' }}>
+                🔍 Analyse des Doublons
+              </h2>
+              <button
+                onClick={() => setShowDuplicatesModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  color: '#6b7280'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Résumé */}
+            <div style={{
+              background: '#f3f4f6',
+              borderRadius: '8px',
+              padding: '1rem',
+              marginBottom: '2rem'
+            }}>
+              <h3 style={{ margin: '0 0 1rem 0', color: '#374151' }}>📊 Résumé</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                <div>
+                  <strong>Total services:</strong> {duplicatesAnalysis.summary.total_services}
+                </div>
+                <div>
+                  <strong>Doublons exacts:</strong> {duplicatesAnalysis.summary.exact_duplicates_found}
+                </div>
+                <div>
+                  <strong>Doublons similaires:</strong> {duplicatesAnalysis.summary.similar_duplicates_found}
+                </div>
+                <div>
+                  <strong>Total doublons:</strong> {duplicatesAnalysis.summary.total_duplicates}
+                </div>
+                <div>
+                  <strong>Après nettoyage:</strong> {duplicatesAnalysis.summary.services_after_cleanup}
+                </div>
+              </div>
+            </div>
+
+            {/* Recommandations */}
+            {duplicatesAnalysis.recommendations.length > 0 && (
+              <div style={{
+                background: '#dbeafe',
+                borderRadius: '8px',
+                padding: '1rem',
+                marginBottom: '2rem'
+              }}>
+                <h3 style={{ margin: '0 0 1rem 0', color: '#1e40af' }}>💡 Recommandations</h3>
+                <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
+                  {duplicatesAnalysis.recommendations.map((rec, index) => (
+                    <li key={index} style={{ marginBottom: '0.5rem' }}>{rec}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Doublons exacts */}
+            {Object.keys(duplicatesAnalysis.exact_duplicates).length > 0 && (
+              <div style={{ marginBottom: '2rem' }}>
+                <h3 style={{ color: '#dc2626', marginBottom: '1rem' }}>
+                  ❌ Doublons Exactes ({Object.keys(duplicatesAnalysis.exact_duplicates).length})
+                </h3>
+                {Object.entries(duplicatesAnalysis.exact_duplicates).map(([service_id, data]) => (
+                  <div key={service_id} style={{
+                    border: '1px solid #fecaca',
+                    borderRadius: '8px',
+                    padding: '1rem',
+                    marginBottom: '1rem',
+                    background: '#fef2f2'
+                  }}>
+                    <h4 style={{ margin: '0 0 1rem 0', color: '#dc2626' }}>
+                      Service ID: {service_id} ({data.count} versions)
+                    </h4>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <strong>Causes possibles:</strong>
+                      <ul style={{ margin: '0.5rem 0 0 1.5rem' }}>
+                        {data.possible_causes.map((cause, index) => (
+                          <li key={index}>{cause}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+                      {data.services.map((service, index) => (
+                        <div key={service.id} style={{
+                          border: '1px solid #d1d5db',
+                          borderRadius: '6px',
+                          padding: '0.75rem',
+                          background: 'white'
+                        }}>
+                          <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                            Version {index + 1} (ID: {service.id})
+                          </div>
+                          <div><strong>Titre:</strong> {service.title}</div>
+                          <div><strong>Thème:</strong> {service.theme}</div>
+                          <div><strong>Créé:</strong> {new Date(service.created_at).toLocaleDateString()}</div>
+                          <div><strong>Modifié:</strong> {new Date(service.updated_at).toLocaleDateString()}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Doublons similaires */}
+            {Object.keys(duplicatesAnalysis.similar_duplicates).length > 0 && (
+              <div style={{ marginBottom: '2rem' }}>
+                <h3 style={{ color: '#f59e0b', marginBottom: '1rem' }}>
+                  ⚠️ Doublons Similaires ({Object.keys(duplicatesAnalysis.similar_duplicates).length})
+                </h3>
+                {Object.entries(duplicatesAnalysis.similar_duplicates).map(([group_key, data]) => (
+                  <div key={group_key} style={{
+                    border: '1px solid #fed7aa',
+                    borderRadius: '8px',
+                    padding: '1rem',
+                    marginBottom: '1rem',
+                    background: '#fffbeb'
+                  }}>
+                    <h4 style={{ margin: '0 0 1rem 0', color: '#f59e0b' }}>
+                      Groupe: {data.normalized_id} ({data.count} versions)
+                    </h4>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <strong>Causes possibles:</strong>
+                      <ul style={{ margin: '0.5rem 0 0 1.5rem' }}>
+                        {data.possible_causes.map((cause, index) => (
+                          <li key={index}>{cause}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+                      {data.services.map((service, index) => (
+                        <div key={service.id} style={{
+                          border: '1px solid #d1d5db',
+                          borderRadius: '6px',
+                          padding: '0.75rem',
+                          background: 'white'
+                        }}>
+                          <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                            Version {index + 1} (ID: {service.service_id})
+                          </div>
+                          <div><strong>Titre:</strong> {service.title}</div>
+                          <div><strong>Thème:</strong> {service.theme}</div>
+                          <div><strong>Conseil:</strong> {service.coach_advice?.substring(0, 100)}...</div>
+                          <div><strong>Créé:</strong> {new Date(service.created_at).toLocaleDateString()}</div>
+                          <div><strong>Modifié:</strong> {new Date(service.updated_at).toLocaleDateString()}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div style={{
+              display: 'flex',
+              gap: '1rem',
+              justifyContent: 'flex-end',
+              borderTop: '2px solid #e5e7eb',
+              paddingTop: '1rem'
+            }}>
+              <button
+                onClick={() => setShowDuplicatesModal(false)}
+                style={{
+                  background: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.75rem 1.5rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Fermer
+              </button>
+              <button
+                onClick={() => {
+                  setShowDuplicatesModal(false);
+                  cleanDuplicateServices();
+                }}
+                style={{
+                  background: '#dc2626',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.75rem 1.5rem',
+                  cursor: 'pointer'
+                }}
+              >
+                🧹 Nettoyer les Doublons
               </button>
             </div>
           </div>
