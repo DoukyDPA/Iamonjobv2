@@ -247,9 +247,8 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
           color: '#166534', 
           marginBottom: '2rem', 
           marginTop: '2rem',
-          marginLeft: '1rem',
-          marginRight: '1rem',
           padding: '1.5rem',
+          borderRadius: '12px',
           boxShadow: '0 4px 24px rgba(16,185,129,0.08)' 
         }}>
           <h3 style={{ margin: 0, fontWeight: 600, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -260,7 +259,7 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
 
         {/* Message d'offre pré-remplie automatiquement */}
         {serviceConfig.id === 'matching_cv_offre' && documentStatus.offre_emploi?.uploaded && (
-          <div className="revolutionary-service-card" style={{ background: '#dbeafe', border: '1px solid #93c5fd', color: '#1e40af', marginBottom: '2rem', boxShadow: '0 4px 24px rgba(59,130,246,0.08)' }}>
+          <div className="revolutionary-service-card" style={{ background: '#dbeafe', border: '1px solid #93c5fd', color: '#1e40af', marginBottom: '2rem', borderRadius: '12px', boxShadow: '0 4px 24px rgba(59,130,246,0.08)' }}>
             <h3 style={{ margin: 0, fontWeight: 600, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <LogoIcon size={20} /> Offre d'emploi chargée automatiquement
             </h3>
@@ -271,7 +270,7 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
         )}
 
         {/* Statut des documents */}
-        <div className="revolutionary-service-card" style={{ marginBottom: '2rem' }}>
+        <div className="revolutionary-service-card" style={{ marginBottom: '2rem', borderRadius: '12px' }}>
           <h3 style={{ margin: '0 0 1rem 0', color: 'white', fontSize: '1.1rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <LogoIcon size={20} /> Documents requis
           </h3>
@@ -290,13 +289,13 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
 
         {/* Zone d'exécution */}
         {!canExecute ? (
-          <div className="revolutionary-service-card" style={{ background: '#f0f9ff', border: '1px solid #0ea5e9', color: '#0c4a6e', textAlign: 'center', marginBottom: '2rem' }}>
+          <div className="revolutionary-service-card" style={{ background: '#f0f9ff', border: '1px solid #0ea5e9', color: '#0c4a6e', textAlign: 'center', marginBottom: '2rem', borderRadius: '12px' }}>
             <p style={{ color: '#0c4a6e', fontSize: '0.9rem', margin: 0 }}>
               Cliquez sur les documents manquants ci-dessus pour les gérer
             </p>
           </div>
         ) : !result ? (
-          <div className="revolutionary-service-card" style={{ padding: '2rem', marginBottom: '2rem' }}>
+          <div className="revolutionary-service-card" style={{ padding: '2rem', marginBottom: '2rem', borderRadius: '12px' }}>
             {/* Zone de notes personnelles */}
             {serviceConfig.allowsNotes && (
               <div style={{ marginBottom: '2rem' }}>
@@ -361,7 +360,7 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
         ) : (
           /* Affichage des résultats */
           (serviceConfig?.id === 'matching_cv_offre' ? (
-            <div className="revolutionary-service-card" style={{ padding: '2rem', marginBottom: '2rem' }}>
+            <div className="revolutionary-service-card" style={{ padding: '2rem', marginBottom: '2rem', borderRadius: '12px' }}>
               {/* Actions sur le résultat */}
               <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #e5e7eb' }}>
                 <button
@@ -384,7 +383,7 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
               <MatchingAnalysis preloadedData={result} hideButton={true} />
             </div>
           ) : (
-            <div className="revolutionary-service-card" style={{ padding: '2rem', marginBottom: '2rem' }}>
+            <div className="revolutionary-service-card" style={{ padding: '2rem', marginBottom: '2rem', borderRadius: '12px' }}>
               {/* Actions sur le résultat */}
               <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #e5e7eb' }}>
                 <button
