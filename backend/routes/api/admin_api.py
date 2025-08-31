@@ -7,7 +7,6 @@ import os
 import jwt
 from functools import wraps
 from datetime import datetime, date
-from flask_jwt_extended import jwt_required
 
 admin_api = Blueprint('admin_api', __name__)
 
@@ -63,7 +62,7 @@ def admin_status():
 
 # === GESTION DES SERVICES ===
 @admin_api.route('/services', methods=['GET'])
-@jwt_required()
+@verify_jwt_token
 def get_services_config():
     """Liste tous les services avec leur configuration"""
     try:
@@ -99,7 +98,7 @@ def get_services_config():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @admin_api.route('/services/init-defaults', methods=['POST'])
-@jwt_required()
+@verify_jwt_token
 def init_default_services():
     """Initialise les services par défaut depuis la configuration locale"""
     try:
@@ -1114,7 +1113,3 @@ def admin_partners():
     except Exception as e:
         logging.error(f"Erreur administration partenaires: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
-
-
-
-
