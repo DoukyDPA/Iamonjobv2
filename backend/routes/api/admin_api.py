@@ -60,31 +60,77 @@ def admin_status():
         logging.error(f"Erreur admin status: {e}")
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
 
+@admin_api.route('/test-supabase', methods=['GET'])
+@verify_jwt_token
+def test_supabase():
+    """Test de la connexion Supabase"""
+    try:
+        try:
+            from backend.admin.supabase_services_manager import supabase_services_manager
+            
+            # Test de la connexion
+            if supabase_services_manager.supabase_client:
+                # Test de connexion à la table
+                try:
+                    response = supabase_services_manager.supabase_client.table('admin_services_config').select('service_id').limit(1).execute()
+                    return jsonify({
+                        "success": True,
+                        "message": "Supabase connecté",
+                        "table_exists": True,
+                        "test_response": response.data
+                    })
+                except Exception as table_error:
+                    return jsonify({
+                        "success": False,
+                        "message": "Supabase connecté mais table inaccessible",
+                        "error": str(table_error)
+                    })
+            else:
+                return jsonify({
+                    "success": False,
+                    "message": "Supabase non connecté",
+                    "client": None
+                })
+                
+        except Exception as e:
+            return jsonify({
+                "success": False,
+                "message": "Erreur import Supabase",
+                "error": str(e)
+            })
+            
+    except Exception as e:
+        logging.error(f"Erreur test Supabase: {e}")
+        return jsonify({"error": f"Erreur: {str(e)}"}), 500
+
 # === GESTION DES SERVICES ===
 @admin_api.route('/services', methods=['GET'])
 @verify_jwt_token
 def get_services_config():
     """Liste tous les services avec leur configuration"""
     try:
-        # Essayer d'abord le nouveau manager Supabase
+        # Essayer d'abord Supabase
         try:
             from backend.admin.supabase_services_manager import supabase_services_manager
             services = supabase_services_manager.get_all_services()
             
-            # Récupérer les thèmes disponibles
+            # Vérifier si Supabase a retourné des services
+            if not services or len(services) == 0:
+                logging.warning("⚠️ Supabase retourne 0 services, fallback vers services_manager")
+                from backend.admin.services_manager import get_services_for_admin
+                return get_services_for_admin()
+            
+            # Organiser par thèmes
             themes = {}
             for service in services.values():
-                theme = service.get('theme')
+                theme = service.get('theme', 'other')
                 if theme not in themes:
-                    themes[theme] = {
-                        "title": f"Thème {theme}",
-                        "services": []
-                    }
-                themes[theme]['services'].append(service)
+                    themes[theme] = []
+                themes[theme].append(service)
             
-            # Récupérer le service mis en avant
             featured = supabase_services_manager.get_featured_service()
             
+            logging.info(f"✅ {len(services)} services chargés depuis Supabase")
             return jsonify({
                 "success": True,
                 "services": services,
@@ -92,14 +138,67 @@ def get_services_config():
                 "featured": featured
             })
             
-        except ImportError:
-            # Fallback vers l'ancien manager
+        except Exception as e:
+            logging.warning(f"Supabase non disponible, fallback vers services_manager: {e}")
             from backend.admin.services_manager import get_services_for_admin
             return get_services_for_admin()
             
     except Exception as e:
         logging.error(f"Erreur lors de la récupération des services: {e}")
-        return jsonify({"error": f"Erreur: {str(e)}"}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@admin_api.route('/services/init-defaults', methods=['POST'])
+@verify_jwt_token
+def init_default_services():
+    """Initialise les services par défaut depuis la configuration locale"""
+    try:
+        from backend.admin.supabase_services_manager import supabase_services_manager
+        
+        # Récupérer la configuration par défaut
+        default_services = supabase_services_manager._get_default_config()
+        
+        # Initialiser chaque service dans Supabase
+        initialized_count = 0
+        for service_id, service_config in default_services.items():
+            try:
+                # Vérifier si le service existe déjà
+                existing_service = supabase_services_manager.get_service_by_id(service_id)
+                if not existing_service:
+                    # Créer le service avec la configuration par défaut
+                    success = supabase_services_manager.create_service(
+                        service_id=service_id,
+                        title=service_config['title'],
+                        coach_advice=service_config['coach_advice'],
+                        theme=service_config['theme'],
+                        visible=service_config['visible'],
+                        requires_cv=service_config['requires_cv'],
+                        requires_job_offer=service_config['requires_job_offer'],
+                        requires_questionnaire=service_config['requires_questionnaire'],
+                        difficulty=service_config['difficulty'],
+                        duration_minutes=service_config['duration_minutes'],
+                        slug=service_config['slug']
+                    )
+                    if success:
+                        initialized_count += 1
+                        logging.info(f"✅ Service {service_id} initialisé")
+                    else:
+                        logging.warning(f"⚠️ Échec initialisation service {service_id}")
+                else:
+                    logging.info(f"ℹ️ Service {service_id} existe déjà")
+                    
+            except Exception as service_error:
+                logging.error(f"❌ Erreur initialisation service {service_id}: {service_error}")
+                continue
+        
+        return jsonify({
+            "success": True,
+            "message": f"{initialized_count} services initialisés avec succès",
+            "initialized_count": initialized_count
+        })
+        
+    except Exception as e:
+        logging.error(f"Erreur lors de l'initialisation des services: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @admin_api.route('/services/<service_id>/visibility', methods=['POST'])
 @verify_jwt_token
@@ -286,8 +385,16 @@ def add_new_service():
 def list_prompts():
     """Liste tous les prompts disponibles"""
     try:
-        from services.ai_service_prompts import AI_PROMPTS
-        return jsonify({"success": True, "prompts": AI_PROMPTS})
+        from services.ai_service_prompts import get_all_prompts
+        
+        # Récupérer les prompts depuis la base de données ou le fichier JSON
+        prompts = get_all_prompts()
+        
+        if not prompts:
+            return jsonify({"success": False, "error": "Aucun prompt trouvé"}), 404
+        
+        # Retourner les prompts tels quels, sans nettoyage
+        return jsonify({"success": True, "prompts": prompts})
     except Exception as e:
         logging.error(f"Erreur lors de la récupération des prompts: {e}")
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
@@ -302,9 +409,14 @@ def handle_prompt(service_id):
         if request.method == 'GET':
             prompt_entry = get_prompt(service_id)
             if prompt_entry:
-                # Retourner le texte du prompt, pas l'objet complet
-                prompt_text = prompt_entry.get("prompt", "")
-                return jsonify({"success": True, "prompt": prompt_text})
+                # Retourner le prompt tel quel, sans nettoyage
+                if isinstance(prompt_entry, dict) and 'prompt' in prompt_entry:
+                    prompt_text = prompt_entry.get("prompt", "")
+                    return jsonify({"success": True, "prompt": prompt_text})
+                else:
+                    # Retourner le texte du prompt, pas l'objet complet
+                    prompt_text = prompt_entry.get("prompt", "")
+                    return jsonify({"success": True, "prompt": prompt_text})
             return jsonify({"success": False, "error": "Service inconnu"}), 404
 
         data = request.get_json() or {}
@@ -336,6 +448,67 @@ def reload_prompts():
         return jsonify({"success": True, "message": "Prompts rechargés" if success else "Erreur lors du rechargement"})
     except Exception as e:
         logging.error(f"Erreur lors du rechargement des prompts: {e}")
+        return jsonify({"error": f"Erreur: {str(e)}"}), 500
+
+@admin_api.route('/test-prompts', methods=['GET'])
+@verify_jwt_token
+def test_prompts():
+    """Test de diagnostic pour les prompts"""
+    try:
+        from services.ai_service_prompts import get_prompts_from_database, get_prompts_from_json
+        
+        # Test 1: Récupération depuis la base de données
+        try:
+            db_prompts = get_prompts_from_database()
+            db_count = len(db_prompts) if db_prompts else 0
+            db_status = "✅ Base de données accessible" if db_prompts else "⚠️ Base de données vide"
+        except Exception as e:
+            db_prompts = None
+            db_count = 0
+            db_status = f"❌ Erreur base de données: {str(e)}"
+        
+        # Test 2: Récupération depuis le fichier JSON
+        try:
+            json_prompts = get_prompts_from_json()
+            json_count = len(json_prompts) if json_prompts else 0
+            json_status = "✅ Fichier JSON accessible" if json_prompts else "⚠️ Fichier JSON vide"
+        except Exception as e:
+            json_prompts = None
+            json_count = 0
+            json_status = f"❌ Erreur fichier JSON: {str(e)}"
+        
+        # Test 3: État de AI_PROMPTS
+        try:
+            from services.ai_service_prompts import AI_PROMPTS
+            ai_prompts_count = len(AI_PROMPTS) if AI_PROMPTS else 0
+            ai_prompts_status = f"✅ AI_PROMPTS contient {ai_prompts_count} prompts"
+        except Exception as e:
+            ai_prompts_count = 0
+            ai_prompts_status = f"❌ Erreur AI_PROMPTS: {str(e)}"
+        
+        return jsonify({
+            "success": True,
+            "diagnostic": {
+                "base_de_donnees": {
+                    "status": db_status,
+                    "count": db_count,
+                    "sample": list(db_prompts.keys())[:3] if db_prompts and len(db_prompts) > 0 else []
+                },
+                "fichier_json": {
+                    "status": json_status,
+                    "count": json_count,
+                    "sample": list(json_prompts.keys())[:3] if json_prompts and len(json_prompts) > 0 else []
+                },
+                "ai_prompts": {
+                    "status": ai_prompts_status,
+                    "count": ai_prompts_count,
+                    "sample": list(AI_PROMPTS.keys())[:3] if AI_PROMPTS and len(AI_PROMPTS) > 0 else []
+                }
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"Erreur test prompts: {e}")
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
 
 @admin_api.route('/health', methods=['GET'])
@@ -880,10 +1053,30 @@ def get_all_prompts():
         prompts = get_all_prompts()
         
         if prompts:
+            # Nettoyer les prompts pour l'affichage admin (remplacer les variables par des descriptions)
+            cleaned_prompts = {}
+            for service_id, prompt_data in prompts.items():
+                if isinstance(prompt_data, dict) and 'prompt' in prompt_data:
+                    prompt_text = prompt_data['prompt']
+                    # Remplacer les variables par des descriptions lisibles
+                    cleaned_prompt = prompt_text.replace('{cv_content}', '[CONTENU DU CV]')
+                    cleaned_prompt = cleaned_prompt.replace('{job_content}', '[CONTENU DE L\'OFFRE D\'EMPLOI]')
+                    cleaned_prompt = cleaned_prompt.replace('{questionnaire_content}', '[CONTENU DU QUESTIONNAIRE]')
+                    cleaned_prompt = cleaned_prompt.replace('{user_notes}', '[NOTES PERSONNELLES]')
+                    cleaned_prompt = cleaned_prompt.replace('{questionnaire_context}', '[CONTEXTE PERSONNEL]')
+                    cleaned_prompt = cleaned_prompt.replace('{questionnaire_instruction}', '[INSTRUCTIONS DU QUESTIONNAIRE]')
+                    
+                    cleaned_prompts[service_id] = {
+                        **prompt_data,
+                        'prompt': cleaned_prompt
+                    }
+                else:
+                    cleaned_prompts[service_id] = prompt_data
+            
             return jsonify({
                 "success": True,
-                "prompts": prompts
-            }), 200
+                "prompts": cleaned_prompts
+            })
         else:
             return jsonify({
                 "success": False,
@@ -892,10 +1085,7 @@ def get_all_prompts():
             
     except Exception as e:
         logging.error(f"Erreur lors de la récupération des prompts: {e}")
-        return jsonify({
-            "success": False,
-            "error": f"Erreur serveur: {str(e)}"
-        }), 500
+        return jsonify({"error": f"Erreur: {str(e)}"}), 500
 
 @admin_api.route('/prompts/<service_id>', methods=['GET'])
 @verify_jwt_token
@@ -907,10 +1097,31 @@ def get_prompt(service_id):
         prompt = get_prompt(service_id)
         
         if prompt:
-            return jsonify({
-                "success": True,
-                "prompt": prompt
-            }), 200
+            # Nettoyer le prompt pour l'affichage admin
+            if isinstance(prompt, dict) and 'prompt' in prompt:
+                prompt_text = prompt['prompt']
+                # Remplacer les variables par des descriptions lisibles
+                cleaned_prompt = prompt_text.replace('{cv_content}', '[CONTENU DU CV]')
+                cleaned_prompt = cleaned_prompt.replace('{job_content}', '[CONTENU DE L\'OFFRE D\'EMPLOI]')
+                cleaned_prompt = cleaned_prompt.replace('{questionnaire_content}', '[CONTENU DU QUESTIONNAIRE]')
+                cleaned_prompt = cleaned_prompt.replace('{user_notes}', '[NOTES PERSONNELLES]')
+                cleaned_prompt = cleaned_prompt.replace('{questionnaire_context}', '[CONTEXTE PERSONNEL]')
+                cleaned_prompt = cleaned_prompt.replace('{questionnaire_instruction}', '[INSTRUCTIONS DU QUESTIONNAIRE]')
+                
+                cleaned_prompt_data = {
+                    **prompt,
+                    'prompt': cleaned_prompt
+                }
+                
+                return jsonify({
+                    "success": True,
+                    "prompt": cleaned_prompt_data
+                })
+            else:
+                return jsonify({
+                    "success": True,
+                    "prompt": prompt
+                })
         else:
             return jsonify({
                 "success": False,
@@ -919,10 +1130,7 @@ def get_prompt(service_id):
             
     except Exception as e:
         logging.error(f"Erreur lors de la récupération du prompt {service_id}: {e}")
-        return jsonify({
-            "success": False,
-            "error": f"Erreur serveur: {str(e)}"
-        }), 500
+        return jsonify({"error": f"Erreur: {str(e)}"}), 500
 
 @admin_api.route('/prompts/<service_id>', methods=['PUT'])
 @verify_jwt_token
@@ -1064,7 +1272,3 @@ def admin_partners():
     except Exception as e:
         logging.error(f"Erreur administration partenaires: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
-
-
-
-
