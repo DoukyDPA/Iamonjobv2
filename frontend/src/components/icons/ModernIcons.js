@@ -311,9 +311,11 @@ export const ServiceIcon = ({ type, size = 20, className = '' }) => {
 };
 
 // Icône du logo Iamonjob
+import logoIcon from './logo-icon.svg';
+
 export const LogoIcon = ({ size = 24, className = '' }) => (
   <img 
-    src="/src/components/icons/logo-icon.svg"
+    src={logoIcon}
     alt="Iamonjob Logo"
     width={size} 
     height={size}
