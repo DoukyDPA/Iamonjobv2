@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { ServiceIcon, LogoIcon } from '../icons/ModernIcons';
+import { FiArrowRight } from 'react-icons/fi';
 
 const ServicesGrid = ({ filterTheme = null }) => {
   const { documentStatus } = useApp();
@@ -187,216 +188,50 @@ const ServicesGrid = ({ filterTheme = null }) => {
     );
   }
 
-  const renderServiceCard = (service) => {
+    const renderServiceCard = (service) => {
     const { canExecute, missingDocs } = canExecuteService(service);
     
     return (
       <Link
         key={service.id}
-        to={`/${convertServiceIdToUrl(service.id)}`}  // ✅ CONVERSION ID -> URL
+        to={`/${convertServiceIdToUrl(service.id)}`}
         style={{
           display: 'block',
           textDecoration: 'none',
           color: 'inherit'
         }}
       >
-        <div 
-          className="service-card"
-          style={{
-            background: 'white',
-            borderRadius: '12px',
-            padding: '1.5rem',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            border: '1px solid #e5e7eb',
-            transition: 'all 0.3s ease',
-            opacity: canExecute ? 1 : 0.6,
-            cursor: 'pointer',
-            position: 'relative',
-            overflow: 'hidden'
-          }}
-        >
-          {/* Badge de mise en avant */}
-          {service.featured && (
-            <div style={{
-              position: 'absolute',
-              top: '1rem',
-              right: '1rem',
-              background: '#f59e0b',
-              color: 'white',
-              padding: '0.25rem 0.5rem',
-              borderRadius: '4px',
-              fontSize: '0.75rem',
-              fontWeight: '600'
-            }}>
-              ⭐ Mis en avant
-            </div>
-          )}
-
-          {/* Effet de brillance */}
-          <div 
-            className="service-shine"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: '-100%',
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
-              transition: 'left 0.5s',
-              pointerEvents: 'none'
-            }} 
-          />
-          
-          {/* Icône du service */}
-          <div style={{
-            marginBottom: '1rem',
-            textAlign: 'center',
-            fontSize: '2rem'
-          }}>
+        <div className="document-tile" style={{
+          '--tile-color': '#0a6b79',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease'
+        }}>
+          <div className="revolutionary-service-icon" style={{ background: canExecute ? '#0a6b79' : '#9ca3af' }}>
             {service.icon}
           </div>
-          
-          {/* Titre du service */}
-          <h3 style={{
-            margin: '0 0 0.5rem 0',
-            fontSize: '1.2rem',
-            fontWeight: '600',
-            color: '#1f2937',
-            textAlign: 'center'
-          }}>
-            {service.title}
-          </h3>
-          
-          {/* Description du service */}
-          <p style={{
-            margin: '0 0 1rem 0',
-            fontSize: '0.9rem',
-            color: '#6b7280',
-            lineHeight: '1.4',
-            textAlign: 'center'
-          }}>
-            {service.coachAdvice}
-          </p>
-
-          {/* Badge de difficulté */}
-          {service.difficulty && (
-            <div style={{
-              display: 'inline-block',
-              padding: '0.25rem 0.5rem',
-              borderRadius: '4px',
-              fontSize: '0.75rem',
-              fontWeight: '500',
-              marginBottom: '1rem',
-              background: getDifficultyColor(service.difficulty).background,
-              color: getDifficultyColor(service.difficulty).color
-            }}>
-              {getDifficultyLabel(service.difficulty)}
-            </div>
-          )}
-
-          {/* Durée */}
-          {service.durationMinutes && (
-            <div style={{
-              textAlign: 'center',
-              fontSize: '0.8rem',
-              color: '#6b7280',
-              marginBottom: '1rem'
-            }}>
-              ⏱️ {service.durationMinutes} min
-            </div>
-          )}
-          
-          {/* Indicateurs de documents requis */}
-          <div style={{
-            display: 'flex',
-            gap: '0.5rem',
-            flexWrap: 'wrap',
-            marginBottom: '1rem',
-            justifyContent: 'center'
-          }}>
-            {service.requiresCV && (
-              <span style={{
-                padding: '0.25rem 0.5rem',
-                borderRadius: '4px',
-                fontSize: '0.75rem',
-                background: documentStatus.cv?.uploaded ? '#dcfce7' : '#fef2f2',
-                color: documentStatus.cv?.uploaded ? '#166534' : '#dc2626'
-              }}>
-                CV {documentStatus.cv?.uploaded ? '✓' : '✗'}
-              </span>
+          <div className="revolutionary-service-content">
+            <h4 className="revolutionary-service-title">{service.title}</h4>
+            <p className="revolutionary-service-description">{service.coachAdvice}</p>
+            {!canExecute && (
+              <div className="revolutionary-service-missing">
+                <p className="revolutionary-service-missing-text">
+                  Requis : {missingDocs.join(', ')}
+                </p>
+              </div>
             )}
-            {service.requiresJobOffer && (
-              <span style={{
-                padding: '0.25rem 0.5rem',
-                borderRadius: '4px',
-                fontSize: '0.75rem',
-                background: documentStatus.offre_emploi?.uploaded ? '#dcfce7' : '#fef2f2',
-                color: documentStatus.offre_emploi?.uploaded ? '#166534' : '#dc2626'
-              }}>
-                Offre {documentStatus.offre_emploi?.uploaded ? '✓' : '✗'}
-              </span>
-            )}
-            {service.requiresQuestionnaire && (
-              <span style={{
-                padding: '0.25rem 0.5rem',
-                borderRadius: '4px',
-                fontSize: '0.75rem',
-                background: documentStatus.questionnaire?.uploaded ? '#dcfce7' : '#fef2f2',
-                color: documentStatus.questionnaire?.uploaded ? '#166534' : '#dc2626'
-              }}>
-                Questionnaire {documentStatus.questionnaire?.uploaded ? '✓' : '✗'}
-              </span>
+            {canExecute && (
+              <div className="revolutionary-service-access" style={{ color: '#0a6b79' }}>
+                Accéder au service
+                <FiArrowRight className="revolutionary-service-arrow" />
+              </div>
             )}
           </div>
-          
-          {/* Bouton d'action */}
-          <div style={{
-            textAlign: 'center',
-            padding: '0.75rem 1rem',
-            borderRadius: '6px',
-            background: canExecute ? '#e6f3ff' : '#f3f4f6',
-            color: canExecute ? '#0066cc' : '#9ca3af',
-            fontSize: '0.85rem',
-            fontWeight: '500',
-            transition: 'all 0.2s ease'
-          }}>
-            {canExecute ? 'Disponible' : `Documents requis : ${missingDocs.join(', ')}`}
-          </div>
-          
-          {/* Effet hover */}
-          <style>{`
-            .service-card:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            }
-            .service-card:hover .service-shine {
-              left: 100%;
-            }
-          `}</style>
         </div>
       </Link>
     );
   };
 
-  // Obtenir la couleur de difficulté
-  const getDifficultyColor = (difficulty) => {
-    const colors = {
-      'beginner': { background: '#dcfce7', color: '#166534' },
-      'intermediate': { background: '#fef3c7', color: '#92400e' },
-      'advanced': { background: '#fee2e2', color: '#991b1b' }
-    };
-    return colors[difficulty] || colors.beginner;
-  };
 
-  // Obtenir le label de difficulté
-  const getDifficultyLabel = (difficulty) => {
-    const labels = {
-      'beginner': 'Débutant',
-      'intermediate': 'Intermédiaire',
-      'advanced': 'Avancé'
-    };
-    return labels[difficulty] || 'Débutant';
-  };
 
   // Si un thème est filtré, afficher directement les services de ce thème
   if (filterTheme) {
