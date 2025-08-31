@@ -41,6 +41,8 @@ const AdminServicesPage = () => {
         return;
       }
       
+      console.log('🔍 Token trouvé:', token.substring(0, 20) + '...');
+      
       const response = await fetch('/api/admin/services', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -48,18 +50,37 @@ const AdminServicesPage = () => {
         }
       });
       
+      console.log('🔍 Réponse API:', response.status, response.statusText);
+      
+      // Vérifier si la réponse est du JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('❌ Réponse non-JSON reçue:', contentType);
+        console.error('❌ Contenu de la réponse:', await response.text());
+        throw new Error('Réponse non-JSON reçue de l\'API');
+      }
+      
       const data = await response.json();
       
       if (data.success) {
         setServices(data.services);
         setThemes(data.themes);
         setFeaturedService(data.featured);
+        console.log('✅ Services chargés:', Object.keys(data.services));
       } else {
         toast.error(data.error || 'Erreur lors du chargement des services');
       }
     } catch (error) {
-      console.error('Erreur chargement services:', error);
-      toast.error('Erreur lors du chargement');
+      console.error('❌ Erreur chargement services:', error);
+      
+      // Afficher plus de détails sur l'erreur
+      if (error.message.includes('non-JSON')) {
+        toast.error('Erreur API: Réponse non-JSON reçue. Vérifiez l\'authentification.');
+      } else if (error.name === 'SyntaxError') {
+        toast.error('Erreur API: Réponse invalide reçue. Vérifiez l\'authentification.');
+      } else {
+        toast.error('Erreur lors du chargement');
+      }
     } finally {
       setLoading(false);
     }
@@ -599,6 +620,59 @@ const AdminServicesPage = () => {
           }}
         >
           🔧 Initialiser Services
+        </button>
+        
+        {/* Bouton de test d'authentification */}
+        <button
+          onClick={async () => {
+            try {
+              const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+              
+              if (!token) {
+                toast.error('Aucun token trouvé');
+                return;
+              }
+              
+              console.log('🔍 Test d\'authentification avec token:', token.substring(0, 20) + '...');
+              
+              // Test de l'API d'authentification
+              const authResponse = await fetch('/api/auth/verify-token', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+              
+              console.log('🔍 Réponse auth:', authResponse.status, authResponse.statusText);
+              
+              if (authResponse.ok) {
+                const authData = await authResponse.json();
+                console.log('✅ Auth OK:', authData);
+                toast.success('Authentification OK');
+              } else {
+                console.error('❌ Auth échoué:', authResponse.status);
+                const errorText = await authResponse.text();
+                console.error('❌ Contenu erreur:', errorText);
+                toast.error(`Auth échoué: ${authResponse.status}`);
+              }
+              
+            } catch (error) {
+              console.error('❌ Erreur test auth:', error);
+              toast.error('Erreur lors du test d\'authentification');
+            }
+          }}
+          style={{
+            background: '#ef4444',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '0.75rem 1.5rem',
+            cursor: 'pointer',
+            fontSize: '0.9rem'
+          }}
+        >
+          🔐 Test Auth
         </button>
       </div>
 
