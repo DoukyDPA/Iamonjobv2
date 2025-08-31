@@ -36,6 +36,7 @@ import SimpleMarkdownRenderer from '../components/Common/SimpleMarkdownRenderer'
 import MatchingAnalysis from '../components/Analysis/MatchingAnalysis';
 import ActionTile from '../components/Common/ActionTile';
 import ServicesGrid from '../components/Services/ServicesGrid';
+import { LogoIcon } from '../components/icons/ModernIcons';
 
 const ServiceCard = ({ title, description, icon, route, color = '#0a6b79', disabled = false, requiredDocs = [], documentStatus }) => {
   const navigate = useNavigate();
@@ -116,12 +117,15 @@ const DocumentCard = ({
       </div>
       <div className="revolutionary-service-content">
         <h4 className={`revolutionary-service-title ${uploaded ? '' : 'disabled'}`}>{title}</h4>
-        {description && (
-          <p className={`revolutionary-service-description ${uploaded ? '' : 'disabled'}`}>{description}</p>
-        )}
+        <p className={`revolutionary-service-description ${uploaded ? '' : 'disabled'}`}>{description}</p>
         {uploaded && fileName && (
           <div className="revolutionary-service-missing">
             <p className="revolutionary-service-missing-text">📄 {fileName}</p>
+          </div>
+        )}
+        {!uploaded && (
+          <div className="revolutionary-service-missing">
+            <p className="revolutionary-service-missing-text">À ajouter</p>
           </div>
         )}
         <div className="revolutionary-document-actions" style={{ marginTop: 12 }}>
@@ -514,7 +518,10 @@ const Dashboard = () => {
       {/* Documents visibles UNIQUEMENT dans l'onglet Documents */}
       {activeTab === 'documents' && (
         <div className="revolutionary-tab-content">
-          <h2 className="revolutionary-section-title">📁 Mes Documents - pour personnaliser l'analyse</h2>
+          <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <LogoIcon size={24} />
+            <span>Mes Documents - pour personnaliser l'analyse</span>
+          </h2>
 
           {/* Barre de progression optimisée - masquée en mobile */}
           <div className="revolutionary-progress-panel desktop-only">
@@ -545,6 +552,7 @@ const Dashboard = () => {
               <DocumentCard
                 type="cv"
                 title="Mon CV"
+                description="Document essentiel pour toutes les analyses IA"
                 icon={<FiFileText />}
                 color="#0a6b79"
                 uploaded={!!documentStatus.cv?.uploaded}
@@ -559,6 +567,7 @@ const Dashboard = () => {
               <DocumentCard
                 type="questionnaire"
                 title="Questionnaire personnel"
+                description="Vos objectifs et aspirations professionnelles"
                 icon={<FiUser />}
                 color="#f59e0b"
                 uploaded={!!documentStatus.questionnaire?.uploaded}
@@ -573,6 +582,7 @@ const Dashboard = () => {
               <DocumentCard
                 type="offre_emploi"
                 title="Offre d'emploi"
+                description="Pour l'analyse de compatibilité détaillée"
                 icon={<FiTarget />}
                 color="#22c55e"
                 uploaded={!!documentStatus.offre_emploi?.uploaded}
@@ -587,13 +597,14 @@ const Dashboard = () => {
               <DocumentCard
                 type="metier_souhaite"
                 title="Métier de reconversion"
+                description="Explorez un nouveau domaine professionnel"
                 icon={<FiRefreshCw />}
                 color="#8b5cf6"
                 uploaded={!!documentStatus.metier_souhaite?.uploaded}
                 fileName={documentStatus.metier_souhaite?.name}
-                onFileUpload={undefined}
+                onFileUpload={(e) => handleFileUpload(e, 'metier_souhaite')}
                 onTextClick={() => setShowTextModal('metier_souhaite')}
-                isTextOnly={true}
+                isTextOnly={false}
                 isUploading={loading}
               />
             </div>
@@ -626,7 +637,10 @@ const Dashboard = () => {
           {/* Analyse de CV automatique */}
           {cvAnalysis && (
             <div style={{ margin: '2rem 0' }}>
-              <h3 className="revolutionary-section-title" style={{ fontSize: '1.3rem', marginBottom: 12 }}>🧑‍💼 Analyse automatique de votre CV</h3>
+              <h3 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.3rem', marginBottom: 12 }}>
+                <LogoIcon size={20} />
+                <span>Analyse automatique de votre CV</span>
+              </h3>
               <SimpleMarkdownRenderer content={cvAnalysis} serviceType="analyze_cv" />
             </div>
           )}
@@ -649,8 +663,9 @@ const Dashboard = () => {
 
           {/* Section partenaires */}
           <div style={{ margin: '2.5rem 0' }}>
-            <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
-              🤝 Testez votre compatibilité avec les métiers de nos partenaires
+            <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+              <LogoIcon size={24} />
+              <span>Testez votre compatibilité avec les métiers de nos partenaires</span>
             </h2>
             <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
             Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
@@ -670,8 +685,9 @@ const Dashboard = () => {
             <ServicesGrid filterTheme="evaluate_offer" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
-              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
-                🤝 Testez votre compatibilité avec les métiers de nos partenaires
+              <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                <LogoIcon size={24} />
+                <span>Testez votre compatibilité avec les métiers de nos partenaires</span>
               </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
               Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
@@ -687,8 +703,9 @@ const Dashboard = () => {
             <ServicesGrid filterTheme="improve_cv" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
-              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
-                🤝 Testez votre compatibilité avec les métiers de nos partenaires
+              <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                <LogoIcon size={24} />
+                <span>Testez votre compatibilité avec les métiers de nos partenaires</span>
               </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
               Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
@@ -704,8 +721,9 @@ const Dashboard = () => {
             <ServicesGrid filterTheme="apply_jobs" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
-              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
-                🤝 Testez votre compatibilité avec les métiers de nos partenaires
+              <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                <LogoIcon size={24} />
+                <span>Testez votre compatibilité avec les métiers de nos partenaires</span>
               </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
               Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
@@ -721,8 +739,9 @@ const Dashboard = () => {
             <ServicesGrid filterTheme="interview_prep" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
-              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
-                🤝 Testez votre compatibilité avec les métiers de nos partenaires
+              <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                <LogoIcon size={24} />
+                <span>Testez votre compatibilité avec les métiers de nos partenaires</span>
               </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
               Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
@@ -739,8 +758,9 @@ const Dashboard = () => {
             <ServicesGrid filterTheme="career_project" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
-              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem' }}>
-                🤝 Testez votre compatibilité avec les métiers de nos partenaires
+              <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                <LogoIcon size={24} />
+                <span>Testez votre compatibilité avec les métiers de nos partenaires</span>
               </h2>
               <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
               Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
