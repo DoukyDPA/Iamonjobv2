@@ -272,12 +272,35 @@ def add_new_service():
     try:
         data = request.get_json()
         
-        from backend.admin.services_manager import add_new_service_admin
-        success = add_new_service_admin(data)
+        # Utiliser le nouveau gestionnaire Supabase
+        try:
+            from backend.admin.supabase_services_manager import add_new_service_admin
+            success = add_new_service_admin(data)
+        except ImportError:
+            # Fallback vers l'ancien manager
+            from backend.admin.services_manager import add_new_service_admin
+            success = add_new_service_admin(data)
         
         return jsonify({"success": success, "service": data if success else None})
     except Exception as e:
         logging.error(f"Erreur lors de l'ajout du service: {e}")
+        return jsonify({"error": f"Erreur: {str(e)}"}), 500
+
+@admin_api.route('/services/cleanup', methods=['POST'])
+@verify_jwt_token
+def clean_duplicate_services():
+    """Nettoie les services en double"""
+    try:
+        # Utiliser le nouveau gestionnaire Supabase
+        try:
+            from backend.admin.supabase_services_manager import clean_duplicate_services_admin
+            result = clean_duplicate_services_admin()
+        except ImportError:
+            return jsonify({"error": "Gestionnaire Supabase non disponible"}), 500
+        
+        return jsonify({"success": True, "result": result})
+    except Exception as e:
+        logging.error(f"Erreur lors du nettoyage des services: {e}")
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
 
 # === GESTION DES PROMPTS ===
