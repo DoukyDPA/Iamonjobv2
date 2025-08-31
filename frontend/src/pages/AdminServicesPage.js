@@ -289,10 +289,56 @@ const AdminServicesPage = () => {
           difficulty: 'beginner', duration_minutes: 5
         });
         loadServicesData();
+      } else {
+        const errorData = await response.json();
+        toast.error(`Erreur: ${errorData.error || 'Erreur lors de l\'ajout'}`);
       }
     } catch (error) {
       console.error('Erreur ajout service:', error);
       toast.error('Erreur lors de l\'ajout');
+    }
+  };
+
+  // Nettoyer les services en double
+  const cleanDuplicateServices = async () => {
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Token d\'authentification manquant');
+        return;
+      }
+      
+      const confirmed = window.confirm(
+        'Êtes-vous sûr de vouloir nettoyer les services en double ? ' +
+        'Cette action supprimera les doublons en gardant le service le plus récent.'
+      );
+      
+      if (!confirmed) return;
+      
+      const response = await fetch('/api/admin/services/cleanup', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          toast.success(`Nettoyage terminé: ${result.result.duplicates_deleted} doublons supprimés`);
+          loadServicesData(); // Recharger les données
+        } else {
+          toast.error('Erreur lors du nettoyage');
+        }
+      } else {
+        const errorData = await response.json();
+        toast.error(`Erreur: ${errorData.error || 'Erreur lors du nettoyage'}`);
+      }
+    } catch (error) {
+      console.error('Erreur nettoyage services:', error);
+      toast.error('Erreur lors du nettoyage');
     }
   };
 
@@ -511,6 +557,24 @@ const AdminServicesPage = () => {
           }}
         >
           <FiPlus size={16} /> Ajouter un service
+        </button>
+        
+        <button
+          onClick={cleanDuplicateServices}
+          style={{
+            background: '#f59e0b',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '0.75rem 1.5rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontSize: '0.9rem'
+          }}
+        >
+          🧹 Nettoyer les doublons
         </button>
         
         <button
