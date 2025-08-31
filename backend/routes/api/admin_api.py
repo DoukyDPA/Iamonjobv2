@@ -385,29 +385,16 @@ def add_new_service():
 def list_prompts():
     """Liste tous les prompts disponibles"""
     try:
-        from services.ai_service_prompts import AI_PROMPTS
+        from services.ai_service_prompts import get_all_prompts
         
-        # Nettoyer les prompts pour l'affichage admin (remplacer les variables par des descriptions)
-        cleaned_prompts = {}
-        for service_id, prompt_data in AI_PROMPTS.items():
-            if isinstance(prompt_data, dict) and 'prompt' in prompt_data:
-                prompt_text = prompt_data['prompt']
-                # Remplacer les variables par des descriptions lisibles
-                cleaned_prompt = prompt_text.replace('{cv_content}', '[CONTENU DU CV]')
-                cleaned_prompt = cleaned_prompt.replace('{job_content}', '[CONTENU DE L\'OFFRE D\'EMPLOI]')
-                cleaned_prompt = cleaned_prompt.replace('{questionnaire_content}', '[CONTENU DU QUESTIONNAIRE]')
-                cleaned_prompt = cleaned_prompt.replace('{user_notes}', '[NOTES PERSONNELLES]')
-                cleaned_prompt = cleaned_prompt.replace('{questionnaire_context}', '[CONTEXTE PERSONNEL]')
-                cleaned_prompt = cleaned_prompt.replace('{questionnaire_instruction}', '[INSTRUCTIONS DU QUESTIONNAIRE]')
-                
-                cleaned_prompts[service_id] = {
-                    **prompt_data,
-                    'prompt': cleaned_prompt
-                }
-            else:
-                cleaned_prompts[service_id] = prompt_data
+        # Récupérer les prompts depuis la base de données ou le fichier JSON
+        prompts = get_all_prompts()
         
-        return jsonify({"success": True, "prompts": cleaned_prompts})
+        if not prompts:
+            return jsonify({"success": False, "error": "Aucun prompt trouvé"}), 404
+        
+        # Retourner les prompts tels quels, sans nettoyage
+        return jsonify({"success": True, "prompts": prompts})
     except Exception as e:
         logging.error(f"Erreur lors de la récupération des prompts: {e}")
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
@@ -422,18 +409,10 @@ def handle_prompt(service_id):
         if request.method == 'GET':
             prompt_entry = get_prompt(service_id)
             if prompt_entry:
-                # Nettoyer le prompt pour l'affichage admin
+                # Retourner le prompt tel quel, sans nettoyage
                 if isinstance(prompt_entry, dict) and 'prompt' in prompt_entry:
                     prompt_text = prompt_entry.get("prompt", "")
-                    # Remplacer les variables par des descriptions lisibles
-                    cleaned_prompt = prompt_text.replace('{cv_content}', '[CONTENU DU CV]')
-                    cleaned_prompt = cleaned_prompt.replace('{job_content}', '[CONTENU DE L\'OFFRE D\'EMPLOI]')
-                    cleaned_prompt = cleaned_prompt.replace('{questionnaire_content}', '[CONTENU DU QUESTIONNAIRE]')
-                    cleaned_prompt = cleaned_prompt.replace('{user_notes}', '[NOTES PERSONNELLES]')
-                    cleaned_prompt = cleaned_prompt.replace('{questionnaire_context}', '[CONTEXTE PERSONNEL]')
-                    cleaned_prompt = cleaned_prompt.replace('{questionnaire_instruction}', '[INSTRUCTIONS DU QUESTIONNAIRE]')
-                    
-                    return jsonify({"success": True, "prompt": cleaned_prompt})
+                    return jsonify({"success": True, "prompt": prompt_text})
                 else:
                     # Retourner le texte du prompt, pas l'objet complet
                     prompt_text = prompt_entry.get("prompt", "")
@@ -469,6 +448,67 @@ def reload_prompts():
         return jsonify({"success": True, "message": "Prompts rechargés" if success else "Erreur lors du rechargement"})
     except Exception as e:
         logging.error(f"Erreur lors du rechargement des prompts: {e}")
+        return jsonify({"error": f"Erreur: {str(e)}"}), 500
+
+@admin_api.route('/test-prompts', methods=['GET'])
+@verify_jwt_token
+def test_prompts():
+    """Test de diagnostic pour les prompts"""
+    try:
+        from services.ai_service_prompts import get_prompts_from_database, get_prompts_from_json
+        
+        # Test 1: Récupération depuis la base de données
+        try:
+            db_prompts = get_prompts_from_database()
+            db_count = len(db_prompts) if db_prompts else 0
+            db_status = "✅ Base de données accessible" if db_prompts else "⚠️ Base de données vide"
+        except Exception as e:
+            db_prompts = None
+            db_count = 0
+            db_status = f"❌ Erreur base de données: {str(e)}"
+        
+        # Test 2: Récupération depuis le fichier JSON
+        try:
+            json_prompts = get_prompts_from_json()
+            json_count = len(json_prompts) if json_prompts else 0
+            json_status = "✅ Fichier JSON accessible" if json_prompts else "⚠️ Fichier JSON vide"
+        except Exception as e:
+            json_prompts = None
+            json_count = 0
+            json_status = f"❌ Erreur fichier JSON: {str(e)}"
+        
+        # Test 3: État de AI_PROMPTS
+        try:
+            from services.ai_service_prompts import AI_PROMPTS
+            ai_prompts_count = len(AI_PROMPTS) if AI_PROMPTS else 0
+            ai_prompts_status = f"✅ AI_PROMPTS contient {ai_prompts_count} prompts"
+        except Exception as e:
+            ai_prompts_count = 0
+            ai_prompts_status = f"❌ Erreur AI_PROMPTS: {str(e)}"
+        
+        return jsonify({
+            "success": True,
+            "diagnostic": {
+                "base_de_donnees": {
+                    "status": db_status,
+                    "count": db_count,
+                    "sample": list(db_prompts.keys())[:3] if db_prompts and len(db_prompts) > 0 else []
+                },
+                "fichier_json": {
+                    "status": json_status,
+                    "count": json_count,
+                    "sample": list(json_prompts.keys())[:3] if json_prompts and len(json_prompts) > 0 else []
+                },
+                "ai_prompts": {
+                    "status": ai_prompts_status,
+                    "count": ai_prompts_count,
+                    "sample": list(AI_PROMPTS.keys())[:3] if AI_PROMPTS and len(AI_PROMPTS) > 0 else []
+                }
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"Erreur test prompts: {e}")
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
 
 @admin_api.route('/health', methods=['GET'])
@@ -1232,7 +1272,3 @@ def admin_partners():
     except Exception as e:
         logging.error(f"Erreur administration partenaires: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
-
-
-
-
