@@ -52,10 +52,12 @@ const AdminServicesPage = () => {
       
       console.log('🔍 Réponse API:', response.status, response.statusText);
       
-      // Si l'API retourne 404, utiliser le fallback local
+      // Si l'API retourne 404, afficher l'erreur
       if (response.status === 404) {
-        console.log('🔄 API admin non accessible (404), utilisation du fallback local');
-        await loadLocalServicesData();
+        console.error('❌ API admin non accessible (404)');
+        console.error('❌ Routes admin non déployées sur Railway');
+        toast.error('❌ API admin non accessible. Vérifiez le déploiement Railway.');
+        setLoading(false);
         return;
       }
       
@@ -63,11 +65,10 @@ const AdminServicesPage = () => {
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         console.error('❌ Réponse non-JSON reçue:', contentType);
-        console.error('❌ Contenu de la réponse:', await response.text());
-        
-        // Fallback vers la configuration locale si l'API n'est pas accessible
-        console.log('🔄 Utilisation de la configuration locale en fallback');
-        await loadLocalServicesData();
+        const errorText = await response.text();
+        console.error('❌ Contenu de la réponse:', errorText);
+        toast.error('❌ Réponse invalide de l\'API admin. Vérifiez le déploiement.');
+        setLoading(false);
         return;
       }
       
@@ -77,108 +78,17 @@ const AdminServicesPage = () => {
         setServices(data.services);
         setThemes(data.themes);
         setFeaturedService(data.featured);
-        console.log('✅ Services chargés depuis l\'API:', Object.keys(data.services));
+        console.log('✅ Services chargés depuis Supabase:', Object.keys(data.services));
+        toast.success('Services chargés depuis Supabase');
       } else {
-        toast.error(data.error || 'Erreur lors du chargement des services');
-        // Fallback en cas d'erreur de l'API
-        await loadLocalServicesData();
+        toast.error(data.error || 'Erreur lors du chargement des services depuis Supabase');
+        console.error('❌ Erreur API:', data);
       }
     } catch (error) {
-      console.error('❌ Erreur chargement services:', error);
-      
-      // Fallback vers la configuration locale en cas d'erreur
-      console.log('🔄 Utilisation de la configuration locale en fallback (erreur)');
-      await loadLocalServicesData();
+      console.error('❌ Erreur chargement services depuis Supabase:', error);
+      toast.error('❌ Impossible de se connecter à Supabase. Vérifiez le déploiement Railway.');
     } finally {
       setLoading(false);
-    }
-  };
-  
-  // Fallback vers la configuration locale des services
-  const loadLocalServicesData = async () => {
-    try {
-      console.log('🔄 Chargement des services depuis la configuration locale...');
-      
-      // Configuration locale des services (fallback)
-      const localServices = {
-        'matching_cv_offre': {
-          id: 'matching_cv_offre',
-          title: 'Matching CV/Offre',
-          coach_advice: 'Découvrez précisément votre adéquation avec cette offre grâce à une analyse IA approfondie.',
-          theme: 'evaluate_offer',
-          visible: true,
-          featured: false,
-          requires_cv: true,
-          requires_job_offer: true,
-          requires_questionnaire: false,
-          difficulty: 'intermediate',
-          duration_minutes: 8,
-          slug: 'matching-cv-offre'
-        },
-        'analyze_cv': {
-          id: 'analyze_cv',
-          title: 'Évaluer mon CV',
-          coach_advice: 'Obtenez une évaluation professionnelle de votre CV avec des recommandations concrètes.',
-          theme: 'improve_cv',
-          visible: true,
-          featured: false,
-          requires_cv: true,
-          requires_job_offer: false,
-          requires_questionnaire: false,
-          difficulty: 'beginner',
-          duration_minutes: 5,
-          slug: 'analyze-cv'
-        },
-        'reconversion_analysis': {
-          id: 'reconversion_analysis',
-          title: 'Évaluer une reconversion',
-          coach_advice: 'Explorez une reconversion professionnelle avec une analyse détaillée des étapes et opportunités.',
-          theme: 'career_project',
-          visible: true,
-          featured: false,
-          requires_cv: true,
-          requires_job_offer: false,
-          requires_questionnaire: true,
-          difficulty: 'intermediate',
-          duration_minutes: 12,
-          slug: 'reconversion-analysis'
-        },
-        'follow_up_email': {
-          id: 'follow_up_email',
-          title: 'Email de relance',
-          coach_advice: 'Rédigez un email de relance professionnel pour maintenir le contact.',
-          theme: 'apply_jobs',
-          visible: true,
-          featured: false,
-          requires_cv: false,
-          requires_job_offer: true,
-          requires_questionnaire: false,
-          difficulty: 'beginner',
-          duration_minutes: 3,
-          slug: 'follow-up-email'
-        }
-      };
-      
-      // Organiser par thèmes
-      const localThemes = {};
-      Object.values(localServices).forEach(service => {
-        const theme = service.theme;
-        if (!localThemes[theme]) {
-          localThemes[theme] = [];
-        }
-        localThemes[theme].push(service);
-      });
-      
-      setServices(localServices);
-      setThemes(localThemes);
-      setFeaturedService(null);
-      
-      console.log('✅ Services locaux chargés:', Object.keys(localServices));
-      toast.success('Services chargés depuis la configuration locale (API non accessible)');
-      
-    } catch (error) {
-      console.error('❌ Erreur chargement services locaux:', error);
-      toast.error('Impossible de charger les services (API + local)');
     }
   };
 
@@ -769,6 +679,59 @@ const AdminServicesPage = () => {
           }}
         >
           🔐 Test Auth
+        </button>
+        
+        {/* Bouton pour tester l'API admin */}
+        <button
+          onClick={async () => {
+            try {
+              const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+              
+              if (!token) {
+                toast.error('Aucun token trouvé');
+                return;
+              }
+              
+              console.log('🔍 Test de l\'API admin...');
+              
+              // Test de l'API admin
+              const adminResponse = await fetch('/api/admin/services', {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+              
+              console.log('🔍 Réponse API admin:', adminResponse.status, adminResponse.statusText);
+              console.log('🔍 Headers:', Object.fromEntries(adminResponse.headers.entries()));
+              
+              if (adminResponse.ok) {
+                const adminData = await adminResponse.json();
+                console.log('✅ API admin OK:', adminData);
+                toast.success('API admin accessible');
+              } else {
+                console.error('❌ API admin échoué:', adminResponse.status);
+                const errorText = await adminResponse.text();
+                console.error('❌ Contenu erreur:', errorText);
+                toast.error(`API admin échoué: ${adminResponse.status}`);
+              }
+              
+            } catch (error) {
+              console.error('❌ Erreur test API admin:', error);
+              toast.error('Erreur lors du test de l\'API admin');
+            }
+          }}
+          style={{
+            background: '#dc2626',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '0.75rem 1.5rem',
+            cursor: 'pointer',
+            fontSize: '0.9rem'
+          }}
+        >
+          🚨 Test API Admin
         </button>
       </div>
 
