@@ -290,11 +290,8 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
 
         {/* Zone d'exécution */}
         {!canExecute ? (
-          <div className="revolutionary-service-card" style={{ background: '#fef3c7', border: '1px solid #fbbf24', color: '#92400e', textAlign: 'center', marginBottom: '2rem' }}>
-            <p style={{ color: '#92400e', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: '500' }}>
-              ⚠️ Pour utiliser ce service, vous devez d'abord fournir : <strong>{missingDocuments.join(', ')}</strong>
-            </p>
-            <p style={{ color: '#92400e', fontSize: '0.9rem', margin: 0 }}>
+          <div className="revolutionary-service-card" style={{ background: '#f0f9ff', border: '1px solid #0ea5e9', color: '#0c4a6e', textAlign: 'center', marginBottom: '2rem' }}>
+            <p style={{ color: '#0c4a6e', fontSize: '0.9rem', margin: 0 }}>
               Cliquez sur les documents manquants ci-dessus pour les gérer
             </p>
           </div>
