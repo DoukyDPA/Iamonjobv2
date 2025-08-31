@@ -325,26 +325,6 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
             )}
             {/* Bouton d'exécution */}
             <div style={{ textAlign: 'center' }}>
-              {serviceConfig.allowsNotes && (
-                <div style={{ 
-                  background: '#f0fdf4', 
-                  border: '1px solid #22c55e', 
-                  borderRadius: '8px', 
-                  padding: '1rem', 
-                  marginBottom: '1rem',
-                  textAlign: 'left'
-                }}>
-                  <p style={{ margin: '0 0 0.5rem 0', color: '#166534', fontSize: '0.9rem', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <LogoIcon size={16} /> Prêt à lancer l'analyse
-                  </p>
-                  <p style={{ margin: 0, color: '#15803d', fontSize: '0.85rem' }}>
-                    {userNotes ? 
-                      `${userNotes.length} caractères de notes personnelles ajoutées` : 
-                      'Aucune note personnelle - l\'analyse sera basée sur vos documents uniquement'
-                    }
-                  </p>
-                </div>
-              )}
               <button
                 onClick={handleExecute}
                 disabled={serviceLoading || !canExecute}
