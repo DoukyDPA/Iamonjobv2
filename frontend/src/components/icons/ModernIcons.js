@@ -2,6 +2,7 @@
 // COMPOSANTS - Icônes modernes sans couleurs pour l'interface
 
 import React from 'react';
+import logoIcon from './logo-icon.svg';
 
 // Icône pour les documents/fichiers
 export const DocumentIcon = ({ size = 20, className = '' }) => (
@@ -311,8 +312,6 @@ export const ServiceIcon = ({ type, size = 20, className = '' }) => {
 };
 
 // Icône du logo Iamonjob
-import logoIcon from './logo-icon.svg';
-
 export const LogoIcon = ({ size = 24, className = '' }) => (
   <img 
     src={logoIcon}
