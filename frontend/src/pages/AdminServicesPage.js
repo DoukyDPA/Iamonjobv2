@@ -41,8 +41,6 @@ const AdminServicesPage = () => {
         return;
       }
       
-      console.log('🔍 Token trouvé:', token.substring(0, 20) + '...');
-      
       const response = await fetch('/api/admin/services', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -50,43 +48,18 @@ const AdminServicesPage = () => {
         }
       });
       
-      console.log('🔍 Réponse API:', response.status, response.statusText);
-      
-      // Si l'API retourne 404, afficher l'erreur
-      if (response.status === 404) {
-        console.error('❌ API admin non accessible (404)');
-        console.error('❌ Routes admin non déployées sur Railway');
-        toast.error('❌ API admin non accessible. Vérifiez le déploiement Railway.');
-        setLoading(false);
-        return;
-      }
-      
-      // Vérifier si la réponse est du JSON
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        console.error('❌ Réponse non-JSON reçue:', contentType);
-        const errorText = await response.text();
-        console.error('❌ Contenu de la réponse:', errorText);
-        toast.error('❌ Réponse invalide de l\'API admin. Vérifiez le déploiement.');
-        setLoading(false);
-        return;
-      }
-      
       const data = await response.json();
       
       if (data.success) {
         setServices(data.services);
         setThemes(data.themes);
         setFeaturedService(data.featured);
-        console.log('✅ Services chargés depuis Supabase:', Object.keys(data.services));
-        toast.success('Services chargés depuis Supabase');
       } else {
-        toast.error(data.error || 'Erreur lors du chargement des services depuis Supabase');
-        console.error('❌ Erreur API:', data);
+        toast.error(data.error || 'Erreur lors du chargement des services');
       }
     } catch (error) {
-      console.error('❌ Erreur chargement services depuis Supabase:', error);
-      toast.error('❌ Impossible de se connecter à Supabase. Vérifiez le déploiement Railway.');
+      console.error('Erreur chargement services:', error);
+      toast.error('Erreur lors du chargement');
     } finally {
       setLoading(false);
     }
@@ -553,185 +526,6 @@ const AdminServicesPage = () => {
           }}
         >
           Actualiser
-        </button>
-        
-        {/* Bouton de debug pour voir tous les services */}
-        <button
-          onClick={() => {
-            console.log('🔍 DEBUG - Tous les services:', services);
-            console.log('🔍 DEBUG - Services par thème:');
-            Object.entries(themeLabels).forEach(([themeKey, themeLabel]) => {
-              const themeServices = Object.values(services).filter(service => service.theme === themeKey);
-              console.log(`  ${themeLabel} (${themeKey}):`, themeServices.map(s => s.id));
-            });
-            toast.success('Debug affiché dans la console');
-          }}
-          style={{
-            background: '#f59e0b',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '0.75rem 1.5rem',
-            cursor: 'pointer',
-            fontSize: '0.9rem'
-          }}
-        >
-          🐛 Debug Services
-        </button>
-        
-        {/* Bouton pour initialiser les services par défaut */}
-        <button
-          onClick={async () => {
-            try {
-              setLoading(true);
-              const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-              
-              if (!token) {
-                toast.error('Token d\'authentification manquant');
-                return;
-              }
-              
-              const response = await fetch('/api/admin/services/init-defaults', {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                }
-              });
-              
-              const data = await response.json();
-              
-              if (data.success) {
-                toast.success(data.message);
-                // Recharger les services
-                await loadServicesData();
-              } else {
-                toast.error(data.error || 'Erreur lors de l\'initialisation');
-              }
-            } catch (error) {
-              console.error('Erreur initialisation services:', error);
-              toast.error('Erreur lors de l\'initialisation');
-            } finally {
-              setLoading(false);
-            }
-          }}
-          style={{
-            background: '#8b5cf6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '0.75rem 1.5rem',
-            cursor: 'pointer',
-            fontSize: '0.9rem'
-          }}
-        >
-          🔧 Initialiser Services
-        </button>
-        
-        {/* Bouton de test d'authentification */}
-        <button
-          onClick={async () => {
-            try {
-              const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-              
-              if (!token) {
-                toast.error('Aucun token trouvé');
-                return;
-              }
-              
-              console.log('🔍 Test d\'authentification avec token:', token.substring(0, 20) + '...');
-              
-              // Test de l'API d'authentification
-              const authResponse = await fetch('/api/auth/verify-token', {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                }
-              });
-              
-              console.log('🔍 Réponse auth:', authResponse.status, authResponse.statusText);
-              
-              if (authResponse.ok) {
-                const authData = await authResponse.json();
-                console.log('✅ Auth OK:', authData);
-                toast.success('Authentification OK');
-              } else {
-                console.error('❌ Auth échoué:', authResponse.status);
-                const errorText = await authResponse.text();
-                console.error('❌ Contenu erreur:', errorText);
-                toast.error(`Auth échoué: ${authResponse.status}`);
-              }
-              
-            } catch (error) {
-              console.error('❌ Erreur test auth:', error);
-              toast.error('Erreur lors du test d\'authentification');
-            }
-          }}
-          style={{
-            background: '#ef4444',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '0.75rem 1.5rem',
-            cursor: 'pointer',
-            fontSize: '0.9rem'
-          }}
-        >
-          🔐 Test Auth
-        </button>
-        
-        {/* Bouton pour tester l'API admin */}
-        <button
-          onClick={async () => {
-            try {
-              const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-              
-              if (!token) {
-                toast.error('Aucun token trouvé');
-                return;
-              }
-              
-              console.log('🔍 Test de l\'API admin...');
-              
-              // Test de l'API admin
-              const adminResponse = await fetch('/api/admin/services', {
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                }
-              });
-              
-              console.log('🔍 Réponse API admin:', adminResponse.status, adminResponse.statusText);
-              console.log('🔍 Headers:', Object.fromEntries(adminResponse.headers.entries()));
-              
-              if (adminResponse.ok) {
-                const adminData = await adminResponse.json();
-                console.log('✅ API admin OK:', adminData);
-                toast.success('API admin accessible');
-              } else {
-                console.error('❌ API admin échoué:', adminResponse.status);
-                const errorText = await adminResponse.text();
-                console.error('❌ Contenu erreur:', errorText);
-                toast.error(`API admin échoué: ${adminResponse.status}`);
-              }
-              
-            } catch (error) {
-              console.error('❌ Erreur test API admin:', error);
-              toast.error('Erreur lors du test de l\'API admin');
-            }
-          }}
-          style={{
-            background: '#dc2626',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '0.75rem 1.5rem',
-            cursor: 'pointer',
-            fontSize: '0.9rem'
-          }}
-        >
-          🚨 Test API Admin
         </button>
       </div>
 
