@@ -325,7 +325,10 @@ const AdminServicesPage = () => {
 
   // Éditer le prompt d'un service
   const editPrompt = async (serviceId) => {
+    console.log('🔍 editPrompt appelé avec serviceId:', serviceId);
     setEditingService(serviceId);
+    console.log('🔍 editingService défini à:', serviceId);
+    
     try {
       // Récupérer le token d'authentification
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -335,6 +338,7 @@ const AdminServicesPage = () => {
         return;
       }
       
+      console.log('🔍 Appel API /api/admin/prompts/' + serviceId);
       const res = await fetch(`/api/admin/prompts/${serviceId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -342,15 +346,20 @@ const AdminServicesPage = () => {
         }
       });
       
+      console.log('🔍 Réponse API prompt:', res.status, res.statusText);
       const data = await res.json();
+      console.log('🔍 Données reçues:', data);
+      
       if (data.success) {
+        console.log('🔍 Prompt reçu:', data.prompt);
         setEditingPrompt(data.prompt);
       } else {
+        console.log('🔍 Erreur API:', data.error);
         setEditingPrompt('');
         toast.error(data.error || 'Erreur lors du chargement du prompt');
       }
     } catch (err) {
-      console.error('Erreur chargement prompt:', err);
+      console.error('❌ Erreur chargement prompt:', err);
       toast.error('Erreur lors du chargement');
     }
   };
