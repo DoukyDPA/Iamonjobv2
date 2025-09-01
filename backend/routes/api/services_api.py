@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from backend.admin.services_manager import services_manager
-from backend.routes.api.auth_api import verify_jwt_token, get_jwt_identity
+from backend.routes.api.auth_api import verify_jwt_token
 import logging
 
 services_api = Blueprint('services_api', __name__)
@@ -114,7 +114,7 @@ def execute_service(service_id):
     """Endpoint générique pour exécuter n'importe quel service"""
     try:
         data = request.get_json()
-        user_id = get_jwt_identity()
+        user_id = request.headers.get("Authorization", "").split(" ")[-1] if request.headers.get("Authorization") else None
 
         # Récupérer le prompt pour ce service
         from backend.admin.ai_prompts_manager import get_all_ai_prompts
@@ -154,7 +154,7 @@ def analyse_emploi():
     """Service: Analyse d'offre d'emploi (route spécifique pour compatibilité)"""
     try:
         data = request.get_json()
-        user_id = get_jwt_identity()
+        user_id = request.headers.get("Authorization", "").split(" ")[-1] if request.headers.get("Authorization") else None
 
         # Récupérer le prompt pour ce service
         from backend.admin.ai_prompts_manager import get_all_ai_prompts
@@ -194,7 +194,7 @@ def follow_up_email():
     """Service: Email de relance (route spécifique pour compatibilité)"""
     try:
         data = request.get_json()
-        user_id = get_jwt_identity()
+        user_id = request.headers.get("Authorization", "").split(" ")[-1] if request.headers.get("Authorization") else None
 
         # Récupérer le prompt pour ce service
         from backend.admin.ai_prompts_manager import get_all_ai_prompts
