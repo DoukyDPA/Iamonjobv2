@@ -217,7 +217,8 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
 
       {/* Titre du service */}
       <div style={{ 
-        background: 'white',
+        background: '#0a6b79',
+        color: 'white',
         padding: '2rem',
         borderRadius: '16px',
         textAlign: 'center',
@@ -228,14 +229,15 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
           margin: '0 0 0.5rem 0', 
           fontSize: '2rem', 
           fontWeight: '700',
-          color: '#0a6b79'
+          color: 'white'
         }}>
           {serviceConfig.title}
         </h1>
         <p style={{ 
           margin: 0, 
           fontSize: '1.1rem', 
-          color: '#6b7280'
+          color: 'white',
+          opacity: 0.9
         }}>
           {serviceConfig.description}
         </p>
