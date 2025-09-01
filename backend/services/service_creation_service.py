@@ -125,10 +125,17 @@ class ServiceCreationService:
         try:
             if not self.supabase_client:
                 return {"error": "Connexion Supabase non disponible"}
+            # Préparer les données pour ai_prompts
+            # Nettoyer et valider le prompt
+            prompt_text = service_data['prompt']
+            if len(prompt_text) > 2000:  # Limite de sécurité
+                logger.warning(f"Prompt trop long ({len(prompt_text)} caractères), tronqué")
+                prompt_text = prompt_text[:2000] + "..."
+            
             prompt_data = {
                 'title': service_data['title'],
                 'description': service_data.get('description', ''),
-                'prompt': service_data['prompt'],
+                'prompt': prompt_text,
                 'service_id': service_data['service_id'],
                 'requires_cv': service_data.get('requires_cv', False),
                 'requires_job_offer': service_data.get('requires_job_offer', False),
@@ -136,10 +143,19 @@ class ServiceCreationService:
                 'created_at': datetime.now().isoformat(),
                 'updated_at': datetime.now().isoformat()
             }
-            response = self.supabase_client.table('ai_prompts').insert(prompt_data).execute()
-            if response.data:
-                return {"success": True, "data": response.data[0]}
-            return {"error": "Insertion ai_prompts sans data"}
+            try:
+                response = self.supabase_client.table('ai_prompts').insert(prompt_data).execute()
+                
+                if response.data:
+                    logger.info(f"✅ Prompt créé avec succès pour {service_data['service_id']}")
+                    return {"success": True, "data": response.data[0]}
+                else:
+                    logger.error(f"❌ Réponse Supabase vide pour ai_prompts")
+                    return {"error": "Réponse Supabase vide"}
+                    
+            except Exception as e:
+                logger.error(f"❌ Erreur insertion ai_prompts: {e}")
+                return {"error": f"Erreur insertion: {str(e)}"}
         except Exception as e:
             logger.error(f"❌ Erreur ai_prompts: {e}")
             return {"error": str(e)}
