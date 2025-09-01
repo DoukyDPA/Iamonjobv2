@@ -669,7 +669,7 @@ class SupabaseServicesManager:
             },
             'cv_ats_optimization': {
                 'id': 'cv_ats_optimization',
-                'title': 'Optimiser pour les ATS',
+                'title': 'Rédigez un CV qui franchit les ATS',
                 'coach_advice': 'Adaptez votre CV pour qu\'il soit parfaitement lisible par les systèmes de tri automatiques des entreprises.',
                 'theme': 'improve_cv',
                 'visible': True,
@@ -703,7 +703,7 @@ class SupabaseServicesManager:
             },
             'cover_letter_generate': {
                 'id': 'cover_letter_generate',
-                'title': 'Générer lettre de motivation',
+                'title': 'Rédigez votre lettre de motivation',
                 'coach_advice': 'Créez une lettre de motivation complète et personnalisée prête à être envoyée avec votre candidature.',
                 'theme': 'apply_jobs',
                 'visible': True,
@@ -737,7 +737,7 @@ class SupabaseServicesManager:
             # === THÈME : PRÉPARER L'ENTRETIEN ===
             'professional_pitch': {
                 'id': 'professional_pitch',
-                'title': 'Pitch professionnel',
+                'title': 'Présentez-vous en 30 secondes chrono !',
                 'coach_advice': 'Développez un pitch percutant pour vous présenter efficacement en entretien ou en networking.',
                 'theme': 'interview_prep',
                 'visible': True,
@@ -753,7 +753,7 @@ class SupabaseServicesManager:
             },
             'interview_prep': {
                 'id': 'interview_prep',
-                'title': 'Préparation entretien',
+                'title': 'Préparez-vous pour l\'entretien d\'embauche',
                 'coach_advice': 'Préparez-vous méthodiquement à votre entretien avec des questions types et des stratégies de réponse.',
                 'theme': 'interview_prep',
                 'visible': True,
@@ -787,7 +787,7 @@ class SupabaseServicesManager:
             },
             'reconversion_analysis': {
                 'id': 'reconversion_analysis',
-                'title': 'Évaluer une reconversion',
+                'title': 'Découvrez les reconversions possibles',
                 'coach_advice': 'Explorez une reconversion professionnelle avec une analyse détaillée des étapes et opportunités.',
                 'theme': 'career_project',
                 'visible': True,
@@ -819,7 +819,7 @@ class SupabaseServicesManager:
             },
             'salary_negotiation': {
                 'id': 'salary_negotiation',
-                'title': 'Négociation salariale',
+                'title': 'Négociez votre salaire',
                 'coach_advice': 'Préparez-vous à négocier votre salaire avec des arguments concrets et une stratégie gagnante.',
                 'theme': 'career_project',
                 'visible': True,
