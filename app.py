@@ -370,11 +370,24 @@ except Exception as e:
 # ENREGISTREMENT DES ROUTES DE SERVICES
 # ====================================
 
-# Les anciennes routes de services ont été remplacées par generic_services
-# Suppression de l'ancien blueprint services_bp
+try:
+    from routes.services import services_bp
+    app.register_blueprint(services_bp)
+    print("✅ Routes de services enregistrées")
+except ImportError as e:
+    print(f"❌ Erreur import services_bp: {e}")
 
 print("🚀 === ROUTES SERVICES ENREGISTRÉES ===")
-print("✅ Toutes les routes sont maintenant gérées par generic_services")
+print("✅ /api/actions/compatibility [POST] - NOUVELLE")
+print("✅ /api/actions/cover-letter_generate [POST]")
+print("✅ /api/cover-letter/advice [POST]")
+print("✅ /api/cover-letter/generate [POST]")
+print("✅ /api/interview/prepare [POST]")
+print("✅ /api/pitch/generate [POST]")
+print("✅ /api/presentation/generate [POST]")
+print("✅ /api/reconversion/analyze [POST]")
+print("✅ /api/followup/generate [POST]")
+print("✅ /api/salary/prepare [POST]")
 print("================================================")
 
 # ====================================
