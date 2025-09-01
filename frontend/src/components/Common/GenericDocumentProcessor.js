@@ -198,7 +198,7 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
-        alignItems: 'flex-start', 
+        alignItems: 'center', 
         marginBottom: '2rem' 
       }}>
         {/* Navigation de gauche */}
