@@ -17,163 +17,63 @@ def execute_ai_service(*args, **kwargs):
         print(f"❌ Erreur import execute_ai_service: {e}")
         return "Service IA temporairement indisponible"
 
-# Configuration des services (équivalent JS en Python)
-# REMPLACEZ le SERVICES_CONFIG existant par celui-ci dans generic_services.py
-
-SERVICES_CONFIG = {
-    # === SERVICES DE LETTRE DE MOTIVATION (NOUVEAUX) ===
-    "cover_letter_advice": {
-        "title": "Conseils Lettre de Motivation",
-        "output_key": "advice",
-        "action_type": "cover_letter_advice_response",
-        "requires_cv": True,
-        "requires_job": False,  # Peut fonctionner avec juste CV
-        "requires_questionnaire": False,
-        "allows_notes": False
-    },
-    "cover_letter_generate": {
-        "title": "Génération Lettre de Motivation",
-        "output_key": "letter",
-        "action_type": "cover_letter_generated",
-        "requires_cv": True,
-        "requires_job": True,
-        "requires_questionnaire": False,
-        "allows_notes": True
-    },
-    
-    # === SERVICES EXISTANTS (inchangés) ===
-    "interview_prep": {
-        "title": "Préparation Entretien",
-        "output_key": "preparation",
-        "action_type": "interview_prep_response",
-        "requires_cv": True,
-        "requires_job": True,
-        "requires_questionnaire": False,
-        "allows_notes": True
-    },
-    "professional_pitch": {
-        "title": "Pitch Professionnel", 
-        "output_key": "pitch",
-        "action_type": "pitch_generated",
-        "requires_cv": True,
-        "requires_job": False,
-        "requires_questionnaire": True,
-        "allows_notes": True
-    },
-    "presentation_slides": {
-        "title": "Présentation Candidature",
-        "output_key": "presentation", 
-        "action_type": "presentation_generated",
-        "requires_cv": True,
-        "requires_job": True,
-        "requires_questionnaire": False,
-        "allows_notes": True
-    },
-    "reconversion_analysis": {
-        "title": "Analyse Reconversion",
-        "output_key": "analysis",
-        "action_type": "reconversion_analysis_response",
-        "requires_cv": True,
-        "requires_job": False,
-        "requires_questionnaire": True,
-        "allows_notes": True
-    },
-    "career_transition": {
-        "title": "Orientation Métier",
-        "output_key": "orientation",
-        "action_type": "career_transition_response",
-        "requires_cv": True,
-        "requires_job": False,
-        "requires_questionnaire": True,
-        "allows_notes": True
-    },
-    "industry_orientation": {
-        "title": "Orientation Industrie",
-        "output_key": "industry_orientation",
-        "action_type": "industry_orientation_response",
-        "requires_cv": True,
-        "requires_job": False,
-        "requires_questionnaire": True,
-        "allows_notes": True
-    },
-    "follow_up_email": {
-        "title": "Email de Relance",
-        "output_key": "email",
-        "action_type": "followup_email_generated",
-        "requires_cv": False,
-        "requires_job": True,
-        "requires_questionnaire": False,
-        "allows_notes": True
-    },
-    "skills_analysis": {
-        "title": "Analyse des Compétences",
-        "output_key": "analysis",
-        "action_type": "skills_analysis_response",
-        "requires_cv": True,
-        "requires_job": False,
-        "requires_questionnaire": True,
-        "allows_notes": True
-    },
-    "salary_negotiation": {
-        "title": "Négociation Salariale",
-        "output_key": "negotiation",
-        "action_type": "salary_negotiation_response",
-        "requires_cv": True,
-        "requires_job": True,
-        "requires_questionnaire": False,
-        "allows_notes": True
-    },
-    # === NOUVEAUX SERVICES UNIFIÉS ===
-    "analyze_cv": {
-        "title": "Analyse CV Approfondie",
-        "output_key": "analysis",
-        "action_type": "analyze_cv_response",
-        "requires_cv": True,
-        "requires_job": False,
-        "requires_questionnaire": False,
-        "allows_notes": False
-    },
-    "cv_ats_optimization": {
-        "title": "Optimisation CV ATS",
-        "output_key": "optimization",
-        "action_type": "ats_optimization_response",
-        "requires_cv": True,
-        "requires_job": True,
-        "requires_questionnaire": False,
-        "allows_notes": False
-    },
-    "matching_cv_offre": {
-        "title": "Matching CV/Offre Professionnel",
-        "output_key": "matching",
-        "action_type": "matching_response",
-        "requires_cv": True,
-        "requires_job": True,
-        "requires_questionnaire": False,
-        "allows_notes": True
-    },
-    "analyse_emploi": {
-        "title": "Analyse d'Offre d'Emploi",
-        "output_key": "analysis",
-        "action_type": "analyse_emploi_response",
-        "requires_cv": True,
-        "requires_job": True,
-        "requires_questionnaire": False,
-        "allows_notes": True
-    }
-}
+# Configuration des services - SUPPRIMÉE
+# La configuration est maintenant centralisée dans frontend/src/services/servicesConfig.js
+# et récupérée via l'API /api/services/config
 
 def handle_generic_service(service_id, request):
     """Gère un service générique basé sur sa configuration"""
     try:
+        # Configuration minimale pour les services essentiels
+        # La configuration complète est maintenant dans frontend/src/services/servicesConfig.js
+        basic_configs = {
+            "matching_cv_offre": {
+                "title": "Matching CV/Offre",
+                "output_key": "matching",
+                "action_type": "matching_response",
+                "requires_cv": True,
+                "requires_job": True,
+                "requires_questionnaire": False,
+                "allows_notes": True
+            },
+            "analyze_cv": {
+                "title": "Analyse CV",
+                "output_key": "analysis",
+                "action_type": "analyze_cv_response",
+                "requires_cv": True,
+                "requires_job": False,
+                "requires_questionnaire": False,
+                "allows_notes": False
+            },
+            "cv_ats_optimization": {
+                "title": "Optimisation CV ATS",
+                "output_key": "optimization",
+                "action_type": "ats_optimization_response",
+                "requires_cv": True,
+                "requires_job": True,
+                "requires_questionnaire": False,
+                "allows_notes": False
+            },
+            "analyse_emploi": {
+                "title": "Analyse d'Offre d'Emploi",
+                "output_key": "analysis",
+                "action_type": "analyse_emploi_response",
+                "requires_cv": True,
+                "requires_job": True,
+                "requires_questionnaire": False,
+                "allows_notes": True
+            }
+        }
+        
         # Vérifier que le service est configuré
-        if service_id not in SERVICES_CONFIG:
+        if service_id not in basic_configs:
             print(f"❌ Service {service_id} non configuré")
             return jsonify({
                 "success": False,
                 "error": f"Service {service_id} non configuré"
             }), 400
 
-        config = SERVICES_CONFIG[service_id]
+        config = basic_configs[service_id]
         print(f"🔍 === DEBUG {config['title'].upper()} ===")
         
         # ✅ CORRIGÉ : Récupérer les données utilisateur avec individualisation
@@ -437,183 +337,14 @@ def analyse_emploi_unified():
 print("✅ Routes génériques sans conflit enregistrées")
 
 # Export pour utilisation dans app.py
-__all__ = ['generic_services_bp', 'handle_generic_service', 'SERVICES_CONFIG']
+__all__ = ['generic_services_bp', 'handle_generic_service']
 
 def get_fallback_services_config():
-    """Configuration de fallback des services"""
+    """Configuration de fallback des services - SUPPRIMÉE"""
+    # La configuration est maintenant centralisée dans frontend/src/services/servicesConfig.js
     return jsonify({
-        "success": True,
-        "themes": {
-            "evaluate_offer": {
-                "title": "🎯 Évaluer une offre d'emploi",
-                "services": [
-                    {
-                        "id": "matching_cv_offre",
-                        "title": "Matching CV/Offre",
-                        "coachAdvice": "Découvrez précisément votre adéquation avec cette offre grâce à une analyse IA approfondie avec graphiques détaillés.",
-                        "slug": "matching-cv-offre",
-                        "requiresCV": True,
-                        "requiresJobOffer": True,
-                        "requiresQuestionnaire": False,
-                        "difficulty": "intermediate",
-                        "duration": "5-10 min"
-                    },
-                    {
-                        "id": "analyse_emploi",
-                        "title": "Analyse d'offre d'emploi",
-                        "coachAdvice": "Obtenez une analyse détaillée de l'offre d'emploi pour identifier les points clés et adapter votre candidature.",
-                        "slug": "analyse-emploi",
-                        "requiresCV": True,
-                        "requiresJobOffer": True,
-                        "requiresQuestionnaire": False,
-                        "difficulty": "beginner",
-                        "duration": "3-5 min"
-                    }
-                ]
-            },
-            "improve_cv": {
-                "title": "📄 Améliorer mon CV",
-                "services": [
-                    {
-                        "id": "analyze_cv",
-                        "title": "Évaluer mon CV",
-                        "coachAdvice": "Obtenez une évaluation professionnelle de votre CV avec des recommandations concrètes pour l'optimiser.",
-                        "slug": "analyze-cv",
-                        "requiresCV": True,
-                        "requiresJobOffer": False,
-                        "requiresQuestionnaire": False,
-                        "difficulty": "beginner",
-                        "duration": "3-5 min"
-                    },
-                    {
-                        "id": "cv_ats_optimization",
-                        "title": "Optimisez votre CV pour les ATS",
-                        "coachAdvice": "Adaptez votre CV pour qu'il soit parfaitement lisible par les systèmes de tri automatiques des entreprises.",
-                        "slug": "cv-ats-optimization",
-                        "requiresCV": True,
-                        "requiresJobOffer": True,
-                        "requiresQuestionnaire": False,
-                        "difficulty": "intermediate",
-                        "duration": "5-8 min"
-                    }
-                ]
-            },
-            "apply_jobs": {
-                "title": "✉️ Candidater",
-                "services": [
-                    {
-                        "id": "cover_letter_advice",
-                        "title": "Conseils lettre de motivation",
-                        "coachAdvice": "Recevez des conseils personnalisés pour structurer et rédiger une lettre de motivation percutante.",
-                        "slug": "cover-letter-advice",
-                        "requiresCV": True,
-                        "requiresJobOffer": True,
-                        "requiresQuestionnaire": False,
-                        "difficulty": "beginner",
-                        "duration": "3-5 min"
-                    },
-                    {
-                        "id": "cover_letter_generate",
-                        "title": "Régigez votre lettre de motivation",
-                        "coachAdvice": "Créez une lettre de motivation complète et personnalisée prête à être envoyée avec votre candidature.",
-                        "slug": "cover-letter-generate",
-                        "requiresCV": True,
-                        "requiresJobOffer": True,
-                        "requiresQuestionnaire": True,
-                        "difficulty": "intermediate",
-                        "duration": "8-12 min"
-                    },
-                    {
-                        "id": "professional_pitch",
-                        "title": "Présentez-vous en 30 secondes chrono !",
-                        "coachAdvice": "Développez un pitch percutant pour vous présenter efficacement en entretien ou en networking.",
-                        "slug": "professional-pitch",
-                        "requiresCV": True,
-                        "requiresJobOffer": False,
-                        "requiresQuestionnaire": True,
-                        "difficulty": "intermediate",
-                        "duration": "6-10 min"
-                    },
-                    {
-                        "id": "interview_prep",
-                        "title": "Préparez votre entretien d'embauche",
-                        "coachAdvice": "Préparez-vous méthodiquement à votre entretien avec des questions types et des stratégies de réponse.",
-                        "slug": "interview-prep",
-                        "requiresCV": True,
-                        "requiresJobOffer": True,
-                        "requiresQuestionnaire": False,
-                        "difficulty": "intermediate",
-                        "duration": "10-15 min"
-                    },
-                    {
-                        "id": "follow_up_email",
-                        "title": "Rédigez un email de relance",
-                        "coachAdvice": "Rédigez un email de relance professionnel pour maintenir le contact après un entretien ou une candidature.",
-                        "slug": "follow-up-email",
-                        "requiresCV": False,
-                        "requiresJobOffer": True,
-                        "requiresQuestionnaire": False,
-                        "difficulty": "beginner",
-                        "duration": "3-5 min"
-                    }
-                ]
-            },
-            "career_project": {
-                "title": "🚀 Reconstruire mon projet professionnel",
-                "services": [
-                    {
-                        "id": "skills_analysis",
-                        "title": "Analyser mes compétences",
-                        "coachAdvice": "Identifiez vos compétences transférables et découvrez de nouveaux domaines d'application pour votre profil.",
-                        "slug": "skills-analysis",
-                        "requiresCV": True,
-                        "requiresJobOffer": False,
-                        "requiresQuestionnaire": True,
-                        "difficulty": "intermediate",
-                        "duration": "8-12 min"
-                    },
-                    {
-                        "id": "reconversion_analysis",
-                        "title": "Découvrez des pistes de reconversion",
-                        "coachAdvice": "Explorez une reconversion professionnelle avec une analyse détaillée des étapes et opportunités.",
-                        "slug": "reconversion-analysis",
-                        "requiresCV": True,
-                        "requiresJobOffer": False,
-                        "requiresQuestionnaire": True,
-                        "difficulty": "advanced",
-                        "duration": "15-20 min"
-                    },
-                    {
-                        "id": "career_transition",
-                        "title": "Vers quel métier aller ?",
-                        "coachAdvice": "Identifiez des métiers compatibles avec vos compétences et vos envies.",
-                        "slug": "career-transition",
-                        "requiresCV": True,
-                        "requiresJobOffer": False,
-                        "requiresQuestionnaire": True,
-                        "difficulty": "intermediate",
-                        "duration": "10-15 min"
-                    },
-                    {
-                        "id": "industry_orientation",
-                        "title": "Et pourquoi pas un métier dans l'industrie ?",
-                        "coachAdvice": "Explorez les métiers industriels adaptés à votre profil.",
-                        "slug": "industry-orientation",
-                        "requiresCV": True,
-                        "requiresJobOffer": False,
-                        "requiresQuestionnaire": True,
-                        "difficulty": "intermediate",
-                        "duration": "10-15 min"
-                    }
-                ]
-            }
-        },
-        "featured": {
-            "id": "reconversion_analysis",
-            "title": "Tester ma compatibilité avec le métier de chauffeur de bus",
-            "coachAdvice": "Découvrez si le métier de chauffeur de bus correspond à votre profil et vos aspirations professionnelles.",
-            "slug": "reconversion-analysis"
-        }
-    }), 200
+        "success": False,
+        "error": "Configuration des services non disponible. Veuillez recharger la page."
+    }), 500
 
 print("✅ Routes services config enregistrées avec fallback")
