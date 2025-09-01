@@ -107,103 +107,12 @@ def get_services_config():
         })
     except ImportError as e:
         print(f"❌ Erreur import services_manager: {e}")
-        # Fallback avec configuration locale
+        # Fallback avec configuration locale - SUPPRIMÉE
+        # La configuration est maintenant centralisée dans frontend/src/services/servicesConfig.js
         return jsonify({
-            "success": True,
-            "themes": {
-                "evaluate_offer": {
-                    "title": "🎯 Évaluer une offre d'emploi",
-                    "services": [
-                        {
-                            "id": "matching_cv_offre",
-                            "title": "Matching CV/Offre",
-                            "coach_advice": "Découvrez précisément votre adéquation avec cette offre grâce à une analyse IA approfondie avec graphiques détaillés.",
-                            "slug": "matching-cv-offre",
-                            "requires_cv": True,
-                            "requires_job_offer": True,
-                            "difficulty": "intermediate",
-                            "duration_minutes": 8
-                        }
-                    ]
-                },
-                "improve_cv": {
-                    "title": "📄 Améliorer mon CV",
-                    "services": [
-                        {
-                            "id": "analyze_cv",
-                            "title": "Évaluer mon CV",
-                            "coach_advice": "Obtenez une évaluation professionnelle de votre CV avec des recommandations concrètes pour l'optimiser.",
-                            "slug": "analyze-cv",
-                            "requires_cv": True,
-                            "requires_job_offer": False,
-                            "difficulty": "beginner",
-                            "duration_minutes": 5
-                        },
-                        {
-                            "id": "cv_ats_optimization",
-                            "title": "Optimiser pour les ATS",
-                            "coach_advice": "Adaptez votre CV pour qu'il soit parfaitement lisible par les systèmes de tri automatiques des entreprises.",
-                            "slug": "cv-ats-optimization",
-                            "requires_cv": True,
-                            "requires_job_offer": True,
-                            "difficulty": "intermediate",
-                            "duration_minutes": 7
-                        }
-                    ]
-                },
-                "apply_jobs": {
-                    "title": "✉️ Candidater",
-                    "services": [
-                        {
-                            "id": "cover_letter_advice",
-                            "title": "Conseils lettre de motivation",
-                            "coach_advice": "Recevez des conseils personnalisés pour structurer et rédiger une lettre de motivation percutante.",
-                            "slug": "cover-letter-advice",
-                            "requires_cv": True,
-                            "requires_job_offer": True,
-                            "difficulty": "beginner",
-                            "duration_minutes": 4
-                        },
-                        {
-                            "id": "professional_pitch",
-                            "title": "Pitch professionnel",
-                            "coach_advice": "Développez un pitch percutant pour vous présenter efficacement en entretien ou en networking.",
-                            "slug": "professional-pitch",
-                            "requires_cv": True,
-                            "requires_job_offer": False,
-                            "difficulty": "intermediate",
-                            "duration_minutes": 8
-                        }
-                    ]
-                },
-                "career_project": {
-                    "title": "🚀 Reconstruire mon projet professionnel",
-                    "services": [
-                        {
-                            "id": "reconversion_analysis",
-                            "title": "Évaluer une reconversion",
-                            "coach_advice": "Explorez une reconversion professionnelle avec une analyse détaillée des étapes et opportunités.",
-                            "slug": "reconversion-analysis",
-                            "requires_cv": True,
-                            "requires_job_offer": False,
-                            "difficulty": "advanced",
-                            "duration_minutes": 15
-                        },
-                        {
-                            "id": "career_transition",
-                            "title": "Vers quel métier aller ?",
-                            "coach_advice": "Identifiez des métiers compatibles avec vos compétences et vos envies.",
-                            "slug": "career-transition",
-                            "requires_cv": True,
-                            "requires_job_offer": False,
-                            "difficulty": "intermediate",
-                            "duration_minutes": 12
-                        }
-                    ]
-                }
-            },
-            "featured": None
-        })
+            "success": False,
+            "error": "Configuration des services non disponible. Veuillez recharger la page."
+        }), 500
     except Exception as e:
         print(f"❌ Erreur endpoint services config: {e}")
         return jsonify({
