@@ -164,7 +164,23 @@ def handle_generic_service(service_id, request):
                 "error": f"Service {service_id} non configuré"
             }), 400
 
-        config = SERVICES_CONFIG[service_id]
+        config = SERVICES_CONFIG[service_id].copy()
+
+        # 🔄 Charger la configuration depuis l'admin (Supabase ou JSON)
+        try:
+            from services.ai_service_prompts import get_prompt
+            admin_cfg = get_prompt(service_id)
+            if admin_cfg:
+                config['title'] = admin_cfg.get('title', config.get('title'))
+                config['requires_cv'] = admin_cfg.get('requires_cv', config.get('requires_cv'))
+                config['requires_job'] = admin_cfg.get('requires_job_offer', config.get('requires_job'))
+                config['requires_questionnaire'] = admin_cfg.get('requires_questionnaire', config.get('requires_questionnaire'))
+                print(f"⚙️ Config admin détectée pour {service_id}: {admin_cfg}")
+            else:
+                print(f"⚠️ Aucune config admin trouvée pour {service_id}, utilisation de la config locale")
+        except Exception as e:
+            print(f"⚠️ Impossible de charger la config admin pour {service_id}: {e}")
+
         print(f"🔍 === DEBUG {config['title'].upper()} ===")
         
         # ✅ CORRIGÉ : Récupérer les données utilisateur avec individualisation
