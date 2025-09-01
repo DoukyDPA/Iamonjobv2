@@ -194,13 +194,14 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
       minHeight: '100vh', 
       padding: '2rem'
     }}>
-      {/* Header avec navigation */}
+      {/* Header avec navigation et documents requis */}
       <div style={{ 
         display: 'flex', 
-        alignItems: 'center', 
-        gap: '1rem', 
+        justifyContent: 'space-between', 
+        alignItems: 'flex-start', 
         marginBottom: '2rem' 
       }}>
+        {/* Navigation de gauche */}
         <Link to="/dashboard" style={{ 
           display: 'flex', 
           alignItems: 'center', 
@@ -213,9 +214,44 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
           <FiArrowLeft />
           Retour au tableau de bord
         </Link>
+
+        {/* Documents requis en haut à droite */}
+        <div style={{ 
+          background: 'white',
+          padding: '1rem',
+          borderRadius: '12px',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+          borderLeft: '3px solid #c7356c',
+          minWidth: '200px'
+        }}>
+          <h4 style={{ 
+            margin: '0 0 0.75rem 0', 
+            color: '#c7356c', 
+            fontSize: '0.9rem', 
+            fontWeight: '600',
+            textAlign: 'center'
+          }}>
+            Documents requis
+          </h4>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.5rem'
+          }}>
+            {serviceConfig.requiresCV && (
+              <StatusTile title="CV" icon={<FiFileText />} uploaded={documentStatus.cv?.uploaded} />
+            )}
+            {serviceConfig.requiresJobOffer && (
+              <StatusTile title="Offre d'emploi" icon={<FiBriefcase />} uploaded={documentStatus.offre_emploi?.uploaded} />
+            )}
+            {serviceConfig.requiresQuestionnaire && (
+              <StatusTile title="Questionnaire" icon={<FiUser />} uploaded={documentStatus.questionnaire?.uploaded} />
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Titre du service */}
+      {/* Titre du service avec icône */}
       <div style={{ 
         background: '#0a6b79',
         color: 'white',
@@ -229,8 +265,13 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
           margin: '0 0 0.5rem 0', 
           fontSize: '2rem', 
           fontWeight: '700',
-          color: 'white'
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.75rem'
         }}>
+          <LogoIcon size={32} />
           {serviceConfig.title}
         </h1>
         <p style={{ 
@@ -309,43 +350,7 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
           </div>
         )}
 
-        {/* Section 3: Statut des documents - COMPACTE */}
-        <div style={{ 
-          background: 'white',
-          padding: '1.5rem',
-          borderRadius: '16px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-          borderLeft: '4px solid #f59e0b'
-        }}>
-          <h3 style={{ 
-            margin: '0 0 1rem 0', 
-            color: '#f59e0b', 
-            fontSize: '1.1rem', 
-            fontWeight: '600', 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.75rem' 
-          }}>
-            <LogoIcon size={20} /> Documents requis
-          </h3>
-          <div style={{
-            display: 'flex',
-            gap: '0.75rem',
-            flexWrap: 'wrap'
-          }}>
-            {serviceConfig.requiresCV && (
-              <StatusTile title="CV" icon={<FiFileText />} uploaded={documentStatus.cv?.uploaded} />
-            )}
-            {serviceConfig.requiresJobOffer && (
-              <StatusTile title="Offre d'emploi" icon={<FiBriefcase />} uploaded={documentStatus.offre_emploi?.uploaded} />
-            )}
-            {serviceConfig.requiresQuestionnaire && (
-              <StatusTile title="Questionnaire" icon={<FiUser />} uploaded={documentStatus.questionnaire?.uploaded} />
-            )}
-          </div>
-        </div>
-
-        {/* Section 4: Zone d'exécution ou message d'erreur */}
+        {/* Section 3: Zone d'exécution ou message d'erreur */}
         {!canExecute ? (
           <div style={{ 
             background: 'white',
@@ -372,32 +377,32 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
             boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
             borderLeft: '4px solid #10b981'
           }}>
-            {/* Zone de notes personnelles */}
+            {/* Zone de notes personnelles - RÉDUITE */}
             {serviceConfig.allowsNotes && (
-              <div style={{ marginBottom: '2rem' }}>
+              <div style={{ marginBottom: '1.5rem' }}>
                 <div style={{ 
                   background: '#f0fdf4', 
                   border: '1px solid #bbf7d0', 
                   borderRadius: '12px', 
-                  padding: '1.5rem', 
-                  marginBottom: '1.5rem' 
+                  padding: '1rem', 
+                  marginBottom: '1rem' 
                 }}>
                   <h4 style={{ 
-                    margin: '0 0 0.75rem 0', 
+                    margin: '0 0 0.5rem 0', 
                     color: '#10b981', 
-                    fontSize: '1.1rem', 
+                    fontSize: '1rem', 
                     fontWeight: '600',
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: '0.5rem' 
                   }}>
-                    <LogoIcon size={20} /> Voulez-vous ajouter un complément d'information ?
+                    <LogoIcon size={18} /> Voulez-vous ajouter un complément d'information ?
                   </h4>
                   <p style={{ 
-                    margin: '0 0 1rem 0', 
+                    margin: '0 0 0.75rem 0', 
                     color: '#166534', 
-                    fontSize: '1rem', 
-                    lineHeight: '1.5' 
+                    fontSize: '0.9rem', 
+                    lineHeight: '1.4' 
                   }}>
                     Ajoutez des détails personnels, exemples concrets ou contraintes pour personnaliser l'analyse de l'IA.
                   </p>
@@ -407,21 +412,21 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
                     placeholder="Exemples : vos réalisations chiffrées, contraintes géographiques, motivations spécifiques, expériences pertinentes..."
                     style={{ 
                       width: '100%', 
-                      minHeight: '120px', 
-                      padding: '1rem', 
+                      minHeight: '80px', 
+                      padding: '0.75rem', 
                       border: '1px solid #d1d5db', 
                       borderRadius: '8px', 
-                      fontSize: '1rem', 
+                      fontSize: '0.9rem', 
                       resize: 'vertical',
                       fontFamily: 'inherit',
-                      lineHeight: '1.5'
+                      lineHeight: '1.4'
                     }}
                   />
                 </div>
               </div>
             )}
             
-            {/* Bouton d'exécution */}
+            {/* Bouton d'exécution - ROSE DU LOGO */}
             <div style={{ textAlign: 'center' }}>
               <button
                 onClick={handleExecute}
@@ -434,11 +439,11 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
                   fontSize: '1.1rem', 
                   fontWeight: '600', 
                   borderRadius: '12px', 
-                  background: canExecute ? (serviceConfig.allowsNotes ? '#10b981' : '#0a6b79') : '#9ca3af', 
+                  background: canExecute ? '#c7356c' : '#9ca3af', 
                   color: 'white',
                   cursor: canExecute ? 'pointer' : 'not-allowed',
                   border: 'none',
-                  boxShadow: canExecute ? '0 4px 16px rgba(16,185,129,0.3)' : 'none',
+                  boxShadow: canExecute ? '0 4px 16px rgba(199,53,108,0.3)' : 'none',
                   transition: 'all 0.2s ease'
                 }}
               >
@@ -475,7 +480,7 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
             </div>
           </div>
         ) : (
-          /* Section 5: Affichage des résultats */
+          /* Section 4: Affichage des résultats */
           <div style={{ 
             background: 'white',
             padding: '2rem',
