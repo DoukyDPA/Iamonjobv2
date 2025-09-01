@@ -404,6 +404,22 @@ def cv_ats_optimization_unified():
     return verify_jwt_token(handle_generic_service)("cv_ats_optimization", request)
 
 
+@generic_services_bp.route('/api/actions/cover_letter_generate', methods=['POST'])
+def cover_letter_generate_unified():
+    """Route unifiée pour la génération de lettre de motivation via le système générique"""
+    # Import lazy pour éviter les problèmes de déploiement
+    from backend.routes.api.auth_api import verify_jwt_token
+    return verify_jwt_token(handle_generic_service)('cover_letter_generate', request)
+
+
+@generic_services_bp.route('/api/actions/cover_letter_advice', methods=['POST'])
+def cover_letter_advice_unified():
+    """Route unifiée pour les conseils de lettre de motivation via le système générique"""
+    # Import lazy pour éviter les problèmes de déploiement
+    from backend.routes.api.auth_api import verify_jwt_token
+    return verify_jwt_token(handle_generic_service)('cover_letter_advice', request)
+
+
 # === ÉVITER LES ROUTES EN CONFLIT ===
 # Ne pas enregistrer interview_prepare, pitch_generate, etc.
 # car elles existent déjà dans app.py
