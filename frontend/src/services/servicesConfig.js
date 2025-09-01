@@ -93,7 +93,7 @@ export const SERVICES_CONFIG = {
     title: 'Conseils lettre de motivation',
     shortTitle: 'Conseils lettre',
     icon: '💡',
-    coachAdvice: "L'IA analyse votre CV et l'offre pour vous donner des conseils personnalisés. Votre mission : notez 3 points clés à retenir et appliquez-les dans votre lettre. Un conseil non appliqué = lettre ratée. Un conseil appliqué = lettre percutante.",
+    coachAdvice: "L'IA vous donne la structure gagnante en 3 parties. Votre mission : remplir avec VOS exemples concrets. Paragraphe 1 : pourquoi cette entreprise (citez un projet récent). Paragraphe 2 : une réussite similaire de votre parcours. Paragraphe 3 : votre vision du poste.",
     requiresCV: true,
     requiresJobOffer: true,
     requiresQuestionnaire: false,
@@ -101,7 +101,7 @@ export const SERVICES_CONFIG = {
     outputType: 'advice',
     storageKey: 'iamonjob_cover_advice',
     actionType: 'cover_letter_advice_response',
-    apiEndpoint: '/api/actions/cover_letter_advice',
+    apiEndpoint: '/api/cover-letter/advice',
     tabs: [
       { id: 'structure', label: 'Structure', icon: '📋' },
       { id: 'examples', label: 'Exemples', icon: '💡' },
@@ -122,7 +122,7 @@ export const SERVICES_CONFIG = {
     outputType: 'cover_letter',
     storageKey: 'iamonjob_cover_letter',
     actionType: 'cover_letter_generate_response',
-    apiEndpoint: '/api/actions/cover_letter_generate',
+    apiEndpoint: '/api/cover-letter/generate',
     tabs: [
       { id: 'letter', label: 'Lettre', icon: '✉️' },
       { id: 'alternatives', label: 'Variantes', icon: '🔄' },

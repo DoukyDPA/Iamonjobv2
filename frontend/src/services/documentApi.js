@@ -41,16 +41,6 @@ class DocumentsApiService {
     const data = await response.json();
     
     if (!response.ok) {
-      // Gestion spéciale pour les tokens expirés
-      if (response.status === 401 && data.error === 'Token expiré') {
-        console.warn('🔄 Token expiré - Redirection vers la connexion');
-        // Nettoyer le token expiré
-        localStorage.removeItem('token');
-        // Rediriger vers la page de connexion
-        window.location.href = '/login';
-        throw new Error('Token expiré - Redirection vers la connexion');
-      }
-      
       throw new Error(data.error || `Erreur HTTP: ${response.status}`);
     }
 

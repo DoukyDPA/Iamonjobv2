@@ -84,7 +84,7 @@ export const ENHANCED_SERVICES_CONFIG = {
     
     // URL et API
     slug: 'matching-cv-offre',
-    apiEndpoint: '/api/actions/matching_cv_offre'
+    apiEndpoint: '/api/actions/compatibility'
   },
 
   // === THÈME : AMÉLIORER MON CV ===
@@ -110,7 +110,7 @@ export const ENHANCED_SERVICES_CONFIG = {
     outputType: 'structured_analysis',
     
     slug: 'analyze-cv',
-    apiEndpoint: '/api/actions/analyze_cv'
+    apiEndpoint: '/api/actions/analyze-cv'
   },
 
   cv_ats_optimization: {
@@ -161,7 +161,7 @@ export const ENHANCED_SERVICES_CONFIG = {
     outputType: 'advice_guide',
     
     slug: 'cover-letter-advice',
-    apiEndpoint: '/api/actions/cover_letter_advice'
+    apiEndpoint: '/api/cover-letter/advice'
   },
 
   cover_letter_generate: {
@@ -186,7 +186,7 @@ export const ENHANCED_SERVICES_CONFIG = {
     outputType: 'complete_letter',
     
     slug: 'cover-letter-generate',
-    apiEndpoint: '/api/actions/cover_letter_generate'
+    apiEndpoint: '/api/cover-letter/generate'
   },
 
   professional_pitch: {
@@ -211,7 +211,7 @@ export const ENHANCED_SERVICES_CONFIG = {
     outputType: 'pitch_versions',
     
     slug: 'professional-pitch',
-    apiEndpoint: '/api/actions/professional_pitch'
+    apiEndpoint: '/api/pitch/generate'
   },
 
   interview_prep: {
@@ -236,7 +236,7 @@ export const ENHANCED_SERVICES_CONFIG = {
     outputType: 'interview_guide',
     
     slug: 'interview-prep',
-    apiEndpoint: '/api/actions/interview_prep'
+    apiEndpoint: '/api/interview/prepare'
   },
 
   follow_up_email: {
@@ -261,7 +261,7 @@ export const ENHANCED_SERVICES_CONFIG = {
     outputType: 'email_template',
     
     slug: 'follow-up-email',
-    apiEndpoint: '/api/actions/follow_up_email'
+    apiEndpoint: '/api/followup/generate'
   },
 
   // === THÈME : PROJET PROFESSIONNEL ===
@@ -287,7 +287,7 @@ export const ENHANCED_SERVICES_CONFIG = {
     outputType: 'skills_mapping',
     
     slug: 'skills-analysis',
-    apiEndpoint: '/api/actions/skills_analysis'
+    apiEndpoint: '/api/skills/analyze'
   },
 
   reconversion_analysis: {
@@ -313,7 +313,7 @@ export const ENHANCED_SERVICES_CONFIG = {
     outputType: 'reconversion_roadmap',
     
     slug: 'reconversion-analysis',
-    apiEndpoint: '/api/actions/reconversion_analysis'
+    apiEndpoint: '/api/reconversion/analyze'
   },
 
   career_transition: {
@@ -338,7 +338,7 @@ export const ENHANCED_SERVICES_CONFIG = {
     outputType: 'career_orientation',
 
     slug: 'career-transition',
-    apiEndpoint: '/api/actions/career_transition'
+    apiEndpoint: '/api/career/orientation'
   },
 
   industry_orientation: {
@@ -363,7 +363,7 @@ export const ENHANCED_SERVICES_CONFIG = {
     outputType: 'industry_orientation',
 
     slug: 'industry-orientation',
-    apiEndpoint: '/api/actions/industry_orientation'
+    apiEndpoint: '/api/industry/orientation'
   }
 };
 
