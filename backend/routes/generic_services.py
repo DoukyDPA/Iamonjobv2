@@ -101,8 +101,17 @@ SERVICES_CONFIG = {
         "output_key": "email",
         "action_type": "followup_email_generated",
         "requires_cv": False,
-        "requires_job": True, 
+        "requires_job": True,
         "requires_questionnaire": False,
+        "allows_notes": True
+    },
+    "skills_analysis": {
+        "title": "Analyse des Compétences",
+        "output_key": "analysis",
+        "action_type": "skills_analysis_response",
+        "requires_cv": True,
+        "requires_job": False,
+        "requires_questionnaire": True,
         "allows_notes": True
     },
     "salary_negotiation": {
