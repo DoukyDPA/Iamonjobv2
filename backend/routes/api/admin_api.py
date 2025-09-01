@@ -290,9 +290,12 @@ def add_new_service():
         }
         
         # Utiliser le service de création complète
-        from backend.services.service_creation_service import service_creation_service
-        
-        result = service_creation_service.create_complete_service(service_data)
+        try:
+            from backend.services.service_creation_service import service_creation_service
+            result = service_creation_service.create_complete_service(service_data)
+        except Exception as e:
+            logging.error(f"Erreur import service_creation_service: {e}")
+            return jsonify({"error": f"Erreur import service: {str(e)}"}), 500
         
         if result.get('success'):
             # NOUVEAU: Synchroniser SERVICES_CONFIG après création
