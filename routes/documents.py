@@ -88,19 +88,6 @@ def api_documents_upload():
                 file.filename.rsplit('.', 1)[1].lower() in allowed_extensions):
             return jsonify({"error": "Type de fichier non autorisé"}), 400
         
-        # 🗑️ PURGE AUTOMATIQUE SI NOUVEAU DOCUMENT
-        if document_type in ['cv', 'offre_emploi', 'questionnaire']:
-            print(f"🗑️ PURGE AUTOMATIQUE DU CACHE POUR NOUVEAU {document_type.upper()}")
-            try:
-                # Utiliser la nouvelle fonction centralisée avec individualisation
-                user_email = request.current_user.email
-                StatelessDataManager.clear_generic_actions_history(document_type, user_email)
-                print(f"✅ Cache purgé automatiquement pour nouveau {document_type} de {user_email}")
-                
-            except Exception as e:
-                print(f"⚠️ Erreur lors de la purge automatique: {e}")
-                # Continuer même si la purge échoue
-        
         # ✅ EXTRACTION RÉELLE du contenu
         import tempfile
 
@@ -135,6 +122,44 @@ def api_documents_upload():
         user_email = request.current_user.email
         print(f"👤 Upload document pour utilisateur: {user_email}")
         
+        # 🗑️ PURGE AUTOMATIQUE SEULEMENT SI LE CONTENU CHANGE RÉELLEMENT
+        if document_type in ['cv', 'offre_emploi', 'questionnaire']:
+            try:
+                # Vérifier si le contenu a réellement changé
+                user_email = request.current_user.email
+                current_data = StatelessDataManager.get_user_data_by_email(user_email)
+                current_doc = current_data.get('documents', {}).get(document_type, {})
+                
+                # Ne nettoyer que si le contenu a changé
+                should_clear_cache = False
+                if current_doc.get('uploaded') and current_doc.get('content'):
+                    # Comparer le contenu actuel avec le nouveau
+                    if current_doc.get('content') != file_content:
+                        should_clear_cache = True
+                        print(f"🔄 Contenu {document_type} modifié - Cache sera nettoyé")
+                    else:
+                        print(f"📄 Contenu {document_type} identique - Cache conservé")
+                else:
+                    # Premier upload de ce type de document
+                    should_clear_cache = True
+                    print(f"🆕 Premier upload {document_type} - Cache sera nettoyé")
+                
+                if should_clear_cache:
+                    print(f"🗑️ PURGE AUTOMATIQUE DU CACHE POUR NOUVEAU {document_type.upper()}")
+                    StatelessDataManager.clear_generic_actions_history(document_type, user_email)
+                    print(f"✅ Cache purgé automatiquement pour nouveau {document_type} de {user_email}")
+                else:
+                    print(f"✅ Cache conservé - Contenu {document_type} inchangé")
+                    
+            except Exception as e:
+                print(f"⚠️ Erreur lors de la vérification du cache: {e}")
+                # En cas d'erreur, nettoyer par sécurité
+                try:
+                    StatelessDataManager.clear_generic_actions_history(document_type, user_email)
+                    print(f"✅ Cache purgé par sécurité pour {document_type}")
+                except Exception as purge_error:
+                    print(f"❌ Erreur lors de la purge de sécurité: {purge_error}")
+        
         StatelessDataManager.update_document_atomic(document_type, doc_data, user_email)
         
         print(f"✅ Nouveau {document_type} uploadé avec purge automatique")
@@ -167,18 +192,43 @@ def api_documents_upload_text():
         if not text_content or not text_content.strip():
             return jsonify({"error": "Contenu texte manquant"}), 400
         
-        # 🗑️ PURGE AUTOMATIQUE SI NOUVEAU DOCUMENT
+        # ��️ PURGE AUTOMATIQUE SEULEMENT SI LE CONTENU CHANGE RÉELLEMENT
         if document_type in ['cv', 'offre_emploi', 'questionnaire']:
-            print(f"🗑️ PURGE AUTOMATIQUE DU CACHE POUR NOUVEAU {document_type.upper()} (texte)")
             try:
-                # Utiliser la nouvelle fonction centralisée avec individualisation
+                # Vérifier si le contenu a réellement changé
                 user_email = request.current_user.email
-                StatelessDataManager.clear_generic_actions_history(document_type, user_email)
-                print(f"✅ Cache purgé automatiquement pour nouveau {document_type} de {user_email}")
+                current_data = StatelessDataManager.get_user_data_by_email(user_email)
+                current_doc = current_data.get('documents', {}).get(document_type, {})
                 
+                # Ne nettoyer que si le contenu a changé
+                should_clear_cache = False
+                if current_doc.get('uploaded') and current_doc.get('content'):
+                    # Comparer le contenu actuel avec le nouveau
+                    if current_doc.get('content') != text_content:
+                        should_clear_cache = True
+                        print(f"🔄 Contenu {document_type} modifié (texte) - Cache sera nettoyé")
+                    else:
+                        print(f"📄 Contenu {document_type} identique (texte) - Cache conservé")
+                else:
+                    # Premier upload de ce type de document
+                    should_clear_cache = True
+                    print(f"🆕 Premier upload {document_type} (texte) - Cache sera nettoyé")
+                
+                if should_clear_cache:
+                    print(f"🗑️ PURGE AUTOMATIQUE DU CACHE POUR NOUVEAU {document_type.upper()} (texte)")
+                    StatelessDataManager.clear_generic_actions_history(document_type, user_email)
+                    print(f"✅ Cache purgé automatiquement pour nouveau {document_type} de {user_email}")
+                else:
+                    print(f"✅ Cache conservé - Contenu {document_type} (texte) inchangé")
+                    
             except Exception as e:
-                print(f"⚠️ Erreur lors de la purge automatique: {e}")
-                # Continuer même si la purge échoue
+                print(f"⚠️ Erreur lors de la vérification du cache (texte): {e}")
+                # En cas d'erreur, nettoyer par sécurité
+                try:
+                    StatelessDataManager.clear_generic_actions_history(document_type, user_email)
+                    print(f"✅ Cache purgé par sécurité pour {document_type} (texte)")
+                except Exception as purge_error:
+                    print(f"❌ Erreur lors de la purge de sécurité (texte): {purge_error}")
         
         print(f"📝 Upload texte - Type: {document_type}, Longueur: {len(text_content)}")
         print(f"📝 Aperçu contenu: {text_content[:100]}...")
