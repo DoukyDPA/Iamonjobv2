@@ -17,7 +17,8 @@ const STORAGE_KEYS_TO_CLEAR = [
   'iamonjob_ats_optimization',
   'iamonjob_matching',
   'iamonjob_cover_advice',
-  'iamonjob_cover_generate',
+  'iamonjob_cover_generate', // ancienne clé (compatibilité)
+  'iamonjob_cover_letter',   // nouvelle clé pour les lettres générées
   'iamonjob_follow_up',
   'iamonjob_interview_prep',
   'iamonjob_pitch',
