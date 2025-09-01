@@ -32,7 +32,7 @@ SERVICES_CONFIG = {
         "allows_notes": False
     },
     "cover_letter_generate": {
-        "title": "Génération Lettre de Motivation",
+        "title": "Rédigez votre lettre de motivation",
         "output_key": "letter",
         "action_type": "cover_letter_generated",
         "requires_cv": True,
@@ -43,7 +43,7 @@ SERVICES_CONFIG = {
     
     # === SERVICES EXISTANTS (inchangés) ===
     "interview_prep": {
-        "title": "Préparation Entretien",
+        "title": "Préparez les questions de l'entretien d'embauche",
         "output_key": "preparation",
         "action_type": "interview_prep_response",
         "requires_cv": True,
@@ -52,7 +52,7 @@ SERVICES_CONFIG = {
         "allows_notes": True
     },
     "professional_pitch": {
-        "title": "Pitch Professionnel", 
+        "title": "Présentez-vous en 30 secondes", 
         "output_key": "pitch",
         "action_type": "pitch_generated",
         "requires_cv": True,
@@ -70,7 +70,7 @@ SERVICES_CONFIG = {
         "allows_notes": True
     },
     "reconversion_analysis": {
-        "title": "Analyse Reconversion",
+        "title": "Cherchez une nouvelle voie",
         "output_key": "analysis",
         "action_type": "reconversion_analysis_response",
         "requires_cv": True,
@@ -88,7 +88,7 @@ SERVICES_CONFIG = {
         "allows_notes": True
     },
     "industry_orientation": {
-        "title": "Orientation Industrie",
+        "title": "Pourquoi pas un métier dans l'industrie ?",
         "output_key": "industry_orientation",
         "action_type": "industry_orientation_response",
         "requires_cv": True,
@@ -97,7 +97,7 @@ SERVICES_CONFIG = {
         "allows_notes": True
     },
     "follow_up_email": {
-        "title": "Email de Relance",
+        "title": "Rédigez un email de relance",
         "output_key": "email",
         "action_type": "followup_email_generated",
         "requires_cv": False,
@@ -106,7 +106,7 @@ SERVICES_CONFIG = {
         "allows_notes": True
     },
     "skills_analysis": {
-        "title": "Analyse des Compétences",
+        "title": "Analysez vos compétences",
         "output_key": "analysis",
         "action_type": "skills_analysis_response",
         "requires_cv": True,
@@ -115,7 +115,7 @@ SERVICES_CONFIG = {
         "allows_notes": True
     },
     "salary_negotiation": {
-        "title": "Négociation Salariale",
+        "title": "Négociez votre salaire",
         "output_key": "negotiation",
         "action_type": "salary_negotiation_response",
         "requires_cv": True,
