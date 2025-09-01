@@ -295,11 +295,21 @@ def add_new_service():
         result = service_creation_service.create_complete_service(service_data)
         
         if result.get('success'):
+            # NOUVEAU: Synchroniser SERVICES_CONFIG après création
+            try:
+                from backend.services.services_config_sync import services_config_sync
+                sync_result = services_config_sync.sync_services_config()
+                logger.info(f"Synchronisation SERVICES_CONFIG: {sync_result}")
+            except Exception as e:
+                logger.warning(f"⚠️ Synchronisation SERVICES_CONFIG échouée: {e}")
+                sync_result = {"error": str(e)}
+            
             return jsonify({
                 "success": True,
                 "message": result.get('message'),
                 "steps_completed": result.get('steps_completed'),
                 "endpoint_code": result.get('endpoint_code'),  # Code à ajouter dans services_api.py
+                "services_config_synced": sync_result.get('success', False),
                 "service": {
                     "service_id": result.get('service_id'),
                     "title": result.get('title')
