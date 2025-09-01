@@ -71,7 +71,10 @@ export const SERVICES_CONFIG = {
     title: 'Optimisez votre CV pour les ATS',
     shortTitle: 'Optimisation ATS',
     icon: '🤖',
-    coachAdvice: "L'IA détecte les mots-clés manquants pour passer les filtres robots. Intégrez-les naturellement dans VOS expériences réelles. Astuce : reprenez l'intitulé exact du poste visé et les compétences de l'annonce dans votre CV, mais toujours avec vos vraies expériences.",
+    coachAdvice: "Les grandes entreprises utilisent des logiciels (ATS) qui filtrent les CV avant qu'un humain ne les lise. L'IA a identifié les mots-clés essentiels de cette offre.
+Intégrez ces termes naturellement dans votre CV en restant authentique. Reprenez l'intitulé exact du poste et le vocabulaire de l'annonce pour décrire VOS vraies expériences. Évitez tableaux et colonnes qui perturbent les robots.
+L'IA vous aide à franchir le filtre technique, mais c'est votre parcours réel qui convaincra l'humain ensuite. Ne jamais inventer - juste mieux formuler.
+_Un CV optimisé ATS reste avant tout VOTRE histoire, racontée avec les bons mots._",
     requiresCV: true,
     requiresJobOffer: true,
     requiresQuestionnaire: false,
