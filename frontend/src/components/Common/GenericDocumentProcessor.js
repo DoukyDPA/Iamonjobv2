@@ -194,14 +194,10 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
       minHeight: '100vh', 
       padding: '2rem'
     }}>
-      {/* Header avec navigation et documents requis */}
+      {/* Navigation en haut à gauche */}
       <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '0.5rem' 
+        marginBottom: '1rem' 
       }}>
-        {/* Navigation de gauche */}
         <Link to="/dashboard" style={{ 
           display: 'flex', 
           alignItems: 'center', 
@@ -214,6 +210,52 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
           <FiArrowLeft />
           Retour au tableau de bord
         </Link>
+      </div>
+
+      {/* Header avec titre au milieu et documents requis à droite */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '2rem' 
+      }}>
+        {/* Titre du service au milieu */}
+        <div style={{ 
+          background: '#0a6b79',
+          color: 'white',
+          padding: '1.5rem 2rem',
+          borderRadius: '16px',
+          textAlign: 'center',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+          flex: '1',
+          marginRight: '2rem',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <h1 style={{ 
+            margin: '0 0 0.5rem 0', 
+            fontSize: '2rem', 
+            fontWeight: '700',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.75rem'
+          }}>
+            <LogoIcon size={32} />
+            {serviceConfig.title}
+          </h1>
+          <p style={{ 
+            margin: 0, 
+            fontSize: '1.1rem', 
+            color: 'white',
+            opacity: 0.9
+          }}>
+            {serviceConfig.description}
+          </p>
+        </div>
 
         {/* Documents requis en haut à droite */}
         <div style={{ 
@@ -249,45 +291,6 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
             )}
           </div>
         </div>
-      </div>
-
-      {/* Titre du service avec icône - REMONTÉ AU MILIEU DU PAVÉ */}
-      <div style={{ 
-        background: '#0a6b79',
-        color: 'white',
-        padding: '1.5rem 2rem',
-        borderRadius: '16px',
-        textAlign: 'center',
-        marginBottom: '2rem',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: '-1rem'
-      }}>
-        <h1 style={{ 
-          margin: '0 0 0.5rem 0', 
-          fontSize: '2rem', 
-          fontWeight: '700',
-          color: 'white',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '0.75rem'
-        }}>
-          <LogoIcon size={32} />
-          {serviceConfig.title}
-        </h1>
-        <p style={{ 
-          margin: 0, 
-          fontSize: '1.1rem', 
-          color: 'white',
-          opacity: 0.9
-        }}>
-          {serviceConfig.description}
-        </p>
       </div>
 
       {/* Grille des sections avec style Home */}
