@@ -259,7 +259,7 @@ import {{ useAuth }} from '../context/AuthContext';
 
 const {page_name} = () => {{
   const {{ user }} = useAuth();
-  const [loading, setLoading] = useState(False);
+  const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
