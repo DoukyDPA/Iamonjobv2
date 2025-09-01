@@ -150,6 +150,15 @@ SERVICES_CONFIG = {
         "requires_job": True,
         "requires_questionnaire": False,
         "allows_notes": True
+    },
+    "analyse_emploi": {
+        "title": "Analyse d'Offre d'Emploi",
+        "output_key": "analysis",
+        "action_type": "analyse_emploi_response",
+        "requires_cv": True,
+        "requires_job": True,
+        "requires_questionnaire": False,
+        "allows_notes": True
     }
 }
 
@@ -413,6 +422,14 @@ def cv_ats_optimization_unified():
     return verify_jwt_token(handle_generic_service)("cv_ats_optimization", request)
 
 
+@generic_services_bp.route("/api/generic/analyse_emploi", methods=["POST"])
+def analyse_emploi_unified():
+    """Route unifiée pour l'analyse d'offre d'emploi"""
+    # Import lazy pour éviter les problèmes de déploiement
+    from backend.routes.api.auth_api import verify_jwt_token
+    return verify_jwt_token(handle_generic_service)("analyse_emploi", request)
+
+
 # === ÉVITER LES ROUTES EN CONFLIT ===
 # Ne pas enregistrer interview_prepare, pitch_generate, etc.
 # car elles existent déjà dans app.py
@@ -440,6 +457,17 @@ def get_fallback_services_config():
                         "requiresQuestionnaire": False,
                         "difficulty": "intermediate",
                         "duration": "5-10 min"
+                    },
+                    {
+                        "id": "analyse_emploi",
+                        "title": "Analyse d'offre d'emploi",
+                        "coachAdvice": "Obtenez une analyse détaillée de l'offre d'emploi pour identifier les points clés et adapter votre candidature.",
+                        "slug": "analyse-emploi",
+                        "requiresCV": True,
+                        "requiresJobOffer": True,
+                        "requiresQuestionnaire": False,
+                        "difficulty": "beginner",
+                        "duration": "3-5 min"
                     }
                 ]
             },
