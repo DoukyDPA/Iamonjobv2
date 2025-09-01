@@ -132,8 +132,11 @@ class ServiceCreationService:
         try:
             if not self.supabase_client:
                 return {"error": "Connexion Supabase non disponible"}
+            # Normaliser le service_id pour éviter les problèmes de cohérence
+            service_id = service_data['service_id'].replace(' ', '_').replace('-', '_').lower()
+            
             admin_service_data = {
-                'service_id': service_data['service_id'],
+                'service_id': service_id,  # Utiliser l'ID normalisé
                 'title': service_data['title'],
                 'coach_advice': service_data.get('coach_advice', ''),
                 'theme': service_data.get('theme', 'general'),
@@ -144,7 +147,7 @@ class ServiceCreationService:
                 'requires_questionnaire': service_data.get('requires_questionnaire', False),
                 'difficulty': service_data.get('difficulty', 'beginner'),
                 'duration_minutes': service_data.get('duration_minutes', 5),
-                'slug': service_data.get('slug', service_data['service_id']),
+                'slug': service_data.get('slug', service_id),  # Utiliser l'ID normalisé
                 'created_at': datetime.now().isoformat(),
                 'updated_at': datetime.now().isoformat()
             }
@@ -168,11 +171,14 @@ class ServiceCreationService:
                 logger.warning(f"Prompt trop long ({len(prompt_text)} caractères), tronqué")
                 prompt_text = prompt_text[:2000] + "..."
             
+            # Normaliser le service_id pour éviter les problèmes de cohérence
+            service_id = service_data['service_id'].replace(' ', '_').replace('-', '_').lower()
+            
             prompt_data = {
                 'title': service_data['title'],
                 'description': service_data.get('description', ''),
                 'prompt': prompt_text,
-                'service_id': service_data['service_id'],
+                'service_id': service_id,  # Utiliser l'ID normalisé
                 'requires_cv': service_data.get('requires_cv', False),
                 'requires_job_offer': service_data.get('requires_job_offer', False),
                 'requires_questionnaire': service_data.get('requires_questionnaire', False),
