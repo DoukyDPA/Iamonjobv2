@@ -37,7 +37,7 @@ SERVICES_CONFIG = {
         "action_type": "cover_letter_generated",
         "requires_cv": True,
         "requires_job": True,
-        "requires_questionnaire": False,
+        "requires_questionnaire": True,
         "allows_notes": True
     },
     
