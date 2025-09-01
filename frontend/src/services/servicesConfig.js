@@ -68,7 +68,7 @@ export const SERVICES_CONFIG = {
 
   cv_ats_optimization: {
     id: 'cv_ats_optimization',
-    title: 'Optimiser pour les ATS',
+    title: 'Optimisez votre CV pour les ATS',
     shortTitle: 'Optimisation ATS',
     icon: '🤖',
     coachAdvice: "L'IA détecte les mots-clés manquants pour passer les filtres robots. Intégrez-les naturellement dans VOS expériences réelles. Astuce : reprenez l'intitulé exact du poste visé et les compétences de l'annonce dans votre CV, mais toujours avec vos vraies expériences.",
@@ -111,7 +111,7 @@ export const SERVICES_CONFIG = {
 
   cover_letter_generate: {
     id: 'cover_letter_generate',
-    title: 'Générer lettre de motivation',
+    title: 'Rédigez votre lettre de motivation',
     shortTitle: 'Générer lettre',
     icon: '✉️',
     coachAdvice: "L'IA crée une lettre personnalisée. Votre mission : personnalisez chaque phrase avec VOS exemples concrets. Remplacez les formulations génériques par vos vraies expériences. Une lettre générique = candidature ignorée. Une lettre personnalisée = entretien garanti.",
@@ -132,7 +132,7 @@ export const SERVICES_CONFIG = {
 
   professional_pitch: {
     id: 'professional_pitch',
-    title: 'Pitch professionnel',
+    title: 'Présentez-vous en 30 secondes chrono !',
     shortTitle: 'Pitch pro',
     icon: '🎤',
     coachAdvice: "L'IA crée un pitch de 30 secondes. Votre mission : mémorisez-le et testez-le sur 3 personnes différentes. Un pitch efficace doit être : court, clair, mémorable. Adaptez le ton selon votre interlocuteur : formel pour un recruteur, décontracté pour un réseau.",
@@ -153,7 +153,7 @@ export const SERVICES_CONFIG = {
 
   interview_prep: {
     id: 'interview_prep',
-    title: 'Préparation entretien',
+    title: 'Préparez votre entretien d'embauche',
     shortTitle: 'Préparation entretien',
     icon: '🎯',
     coachAdvice: "L'IA identifie les questions probables. Votre mission : préparez 3 réponses concrètes pour chaque question. Utilisez la méthode STAR : Situation, Tâche, Action, Résultat. Entraînez-vous à haute voix : une réponse non pratiquée = hésitation = doute du recruteur.",
@@ -174,7 +174,7 @@ export const SERVICES_CONFIG = {
 
   follow_up_email: {
     id: 'follow_up_email',
-    title: 'Email de relance',
+    title: 'Rédigez un email de relance',
     shortTitle: 'Email relance',
     icon: '📧',
     coachAdvice: "L'IA crée un email de relance professionnel. Votre mission : personnalisez-le avec des éléments de suivi concrets. Mentionnez un point de l'entretien, une actualité de l'entreprise, ou une nouvelle compétence acquise. Un email générique = ignoré. Un email personnalisé = réponse garantie.",
@@ -196,7 +196,7 @@ export const SERVICES_CONFIG = {
   // === THÈME : PROJET PROFESSIONNEL ===
   skills_analysis: {
     id: 'skills_analysis',
-    title: 'Analyser mes compétences',
+    title: 'Analysez vos compétences',
     shortTitle: 'Analyse compétences',
     icon: '🔍',
     coachAdvice: "L'IA identifie vos compétences transférables et découvre de nouveaux domaines d'application. Votre mission : pour chaque compétence identifiée, trouvez 3 exemples concrets de votre parcours. Les compétences sont transférables si vous pouvez les prouver avec des réalisations.",
@@ -218,7 +218,7 @@ export const SERVICES_CONFIG = {
 
   reconversion_analysis: {
     id: 'reconversion_analysis',
-    title: 'Évaluer une reconversion',
+    title: 'Découvrez des pistes de reconversion',
     shortTitle: 'Reconversion',
     icon: '🔄',
     coachAdvice: "L'IA objective votre projet de reconversion. Listez ensuite vos contraintes réelles (finances, famille, mobilité). Pour chaque compétence manquante identifiée, trouvez une formation courte ou une expérience bénévole. Testez le métier : stage d'observation, freelance, bénévolat avant de vous lancer.",
@@ -260,7 +260,7 @@ export const SERVICES_CONFIG = {
 
   salary_negotiation: {
     id: 'salary_negotiation',
-    title: 'Négociation salariale',
+    title: 'Négociez votre salaire',
     shortTitle: 'Négociation salaire',
     icon: '💰',
     coachAdvice: "L'IA identifie vos arguments de négociation. Votre mission : préparez 3 exemples concrets de vos réussites avec des chiffres. Ne négociez jamais sans alternatives (autres offres, freelance, formation). Un salaire négocié = +15% en moyenne. Un salaire accepté tel quel = opportunité perdue.",
