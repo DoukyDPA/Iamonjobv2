@@ -297,6 +297,27 @@ export const SERVICES_CONFIG = {
       { id: 'summary', label: 'Synthèse', icon: '📊' },
       { id: 'table', label: 'Tableau comparatif', icon: '📋' }
     ]
+  },
+
+  analyse_emploi: {
+    id: 'analyse_emploi',
+    title: 'Analyse d\'offre d\'emploi',
+    shortTitle: 'Analyse offre',
+    icon: '🔍',
+    coachAdvice: "L'IA analyse en détail l'offre d'emploi pour identifier les points clés, les compétences requises et les opportunités. Utilisez cette analyse pour adapter votre CV et préparer votre candidature de manière ciblée.",
+    requiresCV: true,
+    requiresJobOffer: true,
+    requiresQuestionnaire: false,
+    allowsNotes: true,
+    outputType: 'analysis',
+    storageKey: 'iamonjob_analyse_emploi',
+    actionType: 'analyse_emploi_response',
+    apiEndpoint: '/api/generic/analyse_emploi',
+    tabs: [
+      { id: 'analysis', label: 'Analyse', icon: '📊' },
+      { id: 'skills', label: 'Compétences', icon: '🎯' },
+      { id: 'opportunities', label: 'Opportunités', icon: '🌟' }
+    ]
   }
 };
 
@@ -307,7 +328,7 @@ export const getServiceConfig = (serviceId) => {
 
 export const getServicesByCategory = () => {
   const categories = {
-    evaluate_offer: ['matching_cv_offre'],
+    evaluate_offer: ['matching_cv_offre', 'analyse_emploi'],
     improve_cv: ['analyze_cv', 'cv_ats_optimization'],
     apply_jobs: ['cover_letter_advice', 'cover_letter_generate', 'follow_up_email'],
     interview_prep: ['professional_pitch', 'interview_prep', 'salary_negotiation'],
