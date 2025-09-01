@@ -108,7 +108,7 @@ def get_service(service_id):
             "error": str(e)
         }), 500
 
-@services_api.route('/<service_id>', methods=['POST'])
+@services_api.route('/execute/<service_id>', methods=['POST'])
 @verify_jwt_token
 def execute_service(service_id):
     """Endpoint générique pour exécuter n'importe quel service"""
