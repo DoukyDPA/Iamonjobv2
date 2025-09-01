@@ -146,3 +146,83 @@ def execute_service(service_id):
     except Exception as e:
         logging.error(f"Erreur service {service_id}: %s", e)
         return jsonify({"error": f"Erreur lors du service {service_id}"}, 500)
+
+# Route spécifique pour analyse_emploi (compatibilité)
+@services_api.route('/analyse_emploi', methods=['POST'])
+@verify_jwt_token
+def analyse_emploi():
+    """Service: Analyse d'offre d'emploi (route spécifique pour compatibilité)"""
+    try:
+        data = request.get_json()
+        user_id = get_jwt_identity()
+
+        # Récupérer le prompt pour ce service
+        from backend.admin.ai_prompts_manager import get_all_ai_prompts
+        prompts = get_all_ai_prompts()
+        
+        # Chercher le prompt analyse_emploi
+        service_prompt = None
+        for prompt in prompts.values():
+            if 'analyse' in prompt.get('title', '').lower() and 'offre' in prompt.get('title', '').lower():
+                service_prompt = prompt
+                break
+        
+        if not service_prompt:
+            return jsonify({"error": "Service analyse_emploi non disponible"}, 500)
+
+        # Appeler le service AI
+        from backend.services.ai_service import ai_service
+        result = ai_service.process_service_request(
+            service_id='analyse_emploi',
+            user_id=user_id,
+            prompt_template=service_prompt.get('prompt', ''),
+            input_data=data
+        )
+        return jsonify({
+            "success": True,
+            "result": result,
+            "service": "Analyse d'offre d'emploi"
+        })
+    except Exception as e:
+        logging.error("Erreur service analyse_emploi: %s", e)
+        return jsonify({"error": "Erreur lors du service analyse_emploi"}, 500)
+
+# Route spécifique pour follow-up (compatibilité)
+@services_api.route('/follow-up/generate', methods=['POST'])
+@verify_jwt_token
+def follow_up_email():
+    """Service: Email de relance (route spécifique pour compatibilité)"""
+    try:
+        data = request.get_json()
+        user_id = get_jwt_identity()
+
+        # Récupérer le prompt pour ce service
+        from backend.admin.ai_prompts_manager import get_all_ai_prompts
+        prompts = get_all_ai_prompts()
+        
+        # Chercher le prompt follow_up_email
+        service_prompt = None
+        for prompt in prompts.values():
+            if 'follow' in prompt.get('title', '').lower() or 'relance' in prompt.get('title', '').lower():
+                service_prompt = prompt
+                break
+        
+        if not service_prompt:
+            return jsonify({"error": "Service follow-up non disponible"}, 500)
+
+        # Appeler le service AI
+        from backend.services.ai_service import ai_service
+        result = ai_service.process_service_request(
+            service_id='follow_up_email',
+            user_id=user_id,
+            prompt_template=service_prompt.get('prompt', ''),
+            input_data=data
+        )
+        return jsonify({
+            "success": True,
+            "result": result,
+            "service": "Email de relance"
+        })
+    except Exception as e:
+        logging.error("Erreur service follow-up: %s", e)
+        return jsonify({"error": "Erreur lors du service follow-up"}, 500)
