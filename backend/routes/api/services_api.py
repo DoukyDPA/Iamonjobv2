@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from backend.admin.services_manager import services_manager
-from backend.routes.generic_services import verify_jwt_token, get_jwt_identity
+from backend.routes.api.auth_api import verify_jwt_token, get_jwt_identity
 import logging
 
 services_api = Blueprint('services_api', __name__)
