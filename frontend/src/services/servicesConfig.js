@@ -153,7 +153,7 @@ export const SERVICES_CONFIG = {
 
   interview_prep: {
     id: 'interview_prep',
-    title: 'Préparez votre entretien d'embauche',
+    title: 'Préparez votre entretien d\'embauche',
     shortTitle: 'Préparation entretien',
     icon: '🎯',
     coachAdvice: "L'IA identifie les questions probables. Votre mission : préparez 3 réponses concrètes pour chaque question. Utilisez la méthode STAR : Situation, Tâche, Action, Résultat. Entraînez-vous à haute voix : une réponse non pratiquée = hésitation = doute du recruteur.",
