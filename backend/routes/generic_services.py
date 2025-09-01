@@ -32,7 +32,7 @@ SERVICES_CONFIG = {
         "allows_notes": False
     },
     "cover_letter_generate": {
-        "title": "Rédigez votre lettre de motivation",
+        "title": "Génération Lettre de Motivation",
         "output_key": "letter",
         "action_type": "cover_letter_generated",
         "requires_cv": True,
@@ -43,7 +43,7 @@ SERVICES_CONFIG = {
     
     # === SERVICES EXISTANTS (inchangés) ===
     "interview_prep": {
-        "title": "Préparez les questions de l'entretien d'embauche",
+        "title": "Préparation Entretien",
         "output_key": "preparation",
         "action_type": "interview_prep_response",
         "requires_cv": True,
@@ -52,7 +52,7 @@ SERVICES_CONFIG = {
         "allows_notes": True
     },
     "professional_pitch": {
-        "title": "Présentez-vous en 30 secondes", 
+        "title": "Pitch Professionnel", 
         "output_key": "pitch",
         "action_type": "pitch_generated",
         "requires_cv": True,
@@ -70,7 +70,7 @@ SERVICES_CONFIG = {
         "allows_notes": True
     },
     "reconversion_analysis": {
-        "title": "Cherchez une nouvelle voie",
+        "title": "Analyse Reconversion",
         "output_key": "analysis",
         "action_type": "reconversion_analysis_response",
         "requires_cv": True,
@@ -88,7 +88,7 @@ SERVICES_CONFIG = {
         "allows_notes": True
     },
     "industry_orientation": {
-        "title": "Pourquoi pas un métier dans l'industrie ?",
+        "title": "Orientation Industrie",
         "output_key": "industry_orientation",
         "action_type": "industry_orientation_response",
         "requires_cv": True,
@@ -97,7 +97,7 @@ SERVICES_CONFIG = {
         "allows_notes": True
     },
     "follow_up_email": {
-        "title": "Rédigez un email de relance",
+        "title": "Email de Relance",
         "output_key": "email",
         "action_type": "followup_email_generated",
         "requires_cv": False,
@@ -106,7 +106,7 @@ SERVICES_CONFIG = {
         "allows_notes": True
     },
     "skills_analysis": {
-        "title": "Analysez vos compétences",
+        "title": "Analyse des Compétences",
         "output_key": "analysis",
         "action_type": "skills_analysis_response",
         "requires_cv": True,
@@ -115,7 +115,7 @@ SERVICES_CONFIG = {
         "allows_notes": True
     },
     "salary_negotiation": {
-        "title": "Négociez votre salaire",
+        "title": "Négociation Salariale",
         "output_key": "negotiation",
         "action_type": "salary_negotiation_response",
         "requires_cv": True,
@@ -164,23 +164,7 @@ def handle_generic_service(service_id, request):
                 "error": f"Service {service_id} non configuré"
             }), 400
 
-        config = SERVICES_CONFIG[service_id].copy()
-
-        # 🔄 Charger la configuration depuis l'admin (Supabase ou JSON)
-        try:
-            from services.ai_service_prompts import get_prompt
-            admin_cfg = get_prompt(service_id)
-            if admin_cfg:
-                config['title'] = admin_cfg.get('title', config.get('title'))
-                config['requires_cv'] = admin_cfg.get('requires_cv', config.get('requires_cv'))
-                config['requires_job'] = admin_cfg.get('requires_job_offer', config.get('requires_job'))
-                config['requires_questionnaire'] = admin_cfg.get('requires_questionnaire', config.get('requires_questionnaire'))
-                print(f"⚙️ Config admin détectée pour {service_id}: {admin_cfg}")
-            else:
-                print(f"⚠️ Aucune config admin trouvée pour {service_id}, utilisation de la config locale")
-        except Exception as e:
-            print(f"⚠️ Impossible de charger la config admin pour {service_id}: {e}")
-
+        config = SERVICES_CONFIG[service_id]
         print(f"🔍 === DEBUG {config['title'].upper()} ===")
         
         # ✅ CORRIGÉ : Récupérer les données utilisateur avec individualisation
@@ -475,7 +459,7 @@ def get_fallback_services_config():
                     },
                     {
                         "id": "cv_ats_optimization",
-                        "title": "Optimiser pour les ATS",
+                        "title": "Optimisez votre CV pour les ATS",
                         "coachAdvice": "Adaptez votre CV pour qu'il soit parfaitement lisible par les systèmes de tri automatiques des entreprises.",
                         "slug": "cv-ats-optimization",
                         "requiresCV": True,
@@ -502,7 +486,7 @@ def get_fallback_services_config():
                     },
                     {
                         "id": "cover_letter_generate",
-                        "title": "Générer lettre de motivation",
+                        "title": "Régigez votre lettre de motivation",
                         "coachAdvice": "Créez une lettre de motivation complète et personnalisée prête à être envoyée avec votre candidature.",
                         "slug": "cover-letter-generate",
                         "requiresCV": True,
@@ -513,7 +497,7 @@ def get_fallback_services_config():
                     },
                     {
                         "id": "professional_pitch",
-                        "title": "Pitch professionnel",
+                        "title": "Présentez-vous en 30 secondes chrono !",
                         "coachAdvice": "Développez un pitch percutant pour vous présenter efficacement en entretien ou en networking.",
                         "slug": "professional-pitch",
                         "requiresCV": True,
@@ -524,7 +508,7 @@ def get_fallback_services_config():
                     },
                     {
                         "id": "interview_prep",
-                        "title": "Préparation entretien",
+                        "title": "Préparez votre entretien d'embauche",
                         "coachAdvice": "Préparez-vous méthodiquement à votre entretien avec des questions types et des stratégies de réponse.",
                         "slug": "interview-prep",
                         "requiresCV": True,
@@ -535,7 +519,7 @@ def get_fallback_services_config():
                     },
                     {
                         "id": "follow_up_email",
-                        "title": "Email de relance",
+                        "title": "Rédigez un email de relance",
                         "coachAdvice": "Rédigez un email de relance professionnel pour maintenir le contact après un entretien ou une candidature.",
                         "slug": "follow-up-email",
                         "requiresCV": False,
@@ -562,7 +546,7 @@ def get_fallback_services_config():
                     },
                     {
                         "id": "reconversion_analysis",
-                        "title": "Évaluer une reconversion",
+                        "title": "Découvrez des pistes de reconversion",
                         "coachAdvice": "Explorez une reconversion professionnelle avec une analyse détaillée des étapes et opportunités.",
                         "slug": "reconversion-analysis",
                         "requiresCV": True,
