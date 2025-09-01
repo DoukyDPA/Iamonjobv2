@@ -18,7 +18,7 @@ import { coverLetterApi } from '../../services/coverLetterApi';
 import toast from 'react-hot-toast';
 
 const CoverLetterGenerator = () => {
-  const { documentStatus } = useApp();
+  const { documentStatus, messages = [] } = useApp();
   const [activeStep, setActiveStep] = useState('advice'); // 'advice' ou 'generate'
   const [loading, setLoading] = useState(false);
   const [advice, setAdvice] = useState(null);
@@ -95,7 +95,7 @@ const CoverLetterGenerator = () => {
 
   useEffect(() => {
     restoreData();
-  }, []);
+  }, [messages]);
 
   // Nettoyer les données locales quand un nouveau document est chargé
   useEffect(() => {
@@ -114,7 +114,50 @@ const CoverLetterGenerator = () => {
   }, []);
 
   const restoreData = () => {
-    // Restaurer uniquement depuis localStorage pour éviter la persistance d'anciennes lettres
+    // Chat history en priorité
+    if (messages && messages.length > 0) {
+      if (!advice) {
+        const lastAdvice = [...messages].reverse().find(msg => 
+          msg.role === 'assistant' && 
+          (msg.action_type === 'cover_letter_advice_response' || 
+           msg.content?.includes('Structure recommandée'))
+        );
+        if (lastAdvice) {
+          setAdvice(lastAdvice.content);
+          console.log('✅ Conseils restaurés depuis chat');
+          return;
+        }
+      }
+
+      if (!generatedLetter) {
+        const lastLetter = [...messages].reverse().find(msg => 
+          msg.role === 'assistant' && 
+          (// ✅ CHERCHER TOUS LES TYPES D'ACTION POUR LES LETTRES
+           msg.action_type === 'cover_letter_generated' ||
+           msg.action_type === 'cover_letter_response' ||
+           msg.action_type === 'cover_letter' ||
+           // ✅ OU DETECTER PAR LE CONTENU
+           (msg.content?.length > 300 && (
+             msg.content?.includes('Madame, Monsieur') ||
+             msg.content?.includes('Objet :') ||
+             msg.content?.includes('motivation') ||
+             msg.content?.includes('candidature') ||
+             msg.content?.includes('poste') ||
+             msg.content?.includes('emploi')
+           )))
+        );
+        if (lastLetter) {
+          setGeneratedLetter({
+            content: lastLetter.content,
+            metadata: lastLetter.metadata || {}
+          });
+          console.log('✅ Lettre restaurée depuis chat, action_type:', lastLetter.action_type);
+          return;
+        }
+      }
+    }
+
+    // Sinon localStorage
     if (!advice) {
       const stored = getFromLocalStorage('iamonjob_advice');
       if (stored) {
