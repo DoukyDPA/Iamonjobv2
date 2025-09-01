@@ -286,7 +286,7 @@ def add_new_service():
             'visible': True,
             'featured': False,
             'prompt': data.get('prompt', f'Tu es un expert. Aide l\'utilisateur avec {data.get("title", "ce service")}.'),
-            'description': data.get('description', f'Service pour {data.get("title", "aider l\'utilisateur")}')
+            'description': data.get('description', 'Service personnalisé')
         }
         
         # Utiliser le service de création complète
