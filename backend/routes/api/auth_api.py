@@ -44,7 +44,7 @@ def generate_token(user_id):
     """Génère un token JWT pour l'utilisateur"""
     payload = {
         'user_id': str(user_id),
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1),
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30),  # 30 jours au lieu de 1
         'iat': datetime.datetime.utcnow()
     }
     secret_key = os.environ.get('FLASK_SECRET_KEY') or 'dev_secret_key'
