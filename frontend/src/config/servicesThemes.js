@@ -161,7 +161,7 @@ export const ENHANCED_SERVICES_CONFIG = {
     outputType: 'advice_guide',
     
     slug: 'cover-letter-advice',
-    apiEndpoint: '/api/cover-letter/advice'
+    apiEndpoint: '/api/actions/cover_letter_advice'
   },
 
   cover_letter_generate: {
@@ -186,7 +186,7 @@ export const ENHANCED_SERVICES_CONFIG = {
     outputType: 'complete_letter',
     
     slug: 'cover-letter-generate',
-    apiEndpoint: '/api/cover-letter/generate'
+    apiEndpoint: '/api/actions/cover_letter_generate'
   },
 
   professional_pitch: {
