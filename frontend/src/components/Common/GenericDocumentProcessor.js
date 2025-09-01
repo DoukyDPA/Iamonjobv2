@@ -199,7 +199,7 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        marginBottom: '2rem' 
+        marginBottom: '0.5rem' 
       }}>
         {/* Navigation de gauche */}
         <Link to="/dashboard" style={{ 
@@ -251,17 +251,21 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
         </div>
       </div>
 
-      {/* Titre du service avec icône - CENTRÉ */}
+      {/* Titre du service avec icône - REMONTÉ AU MILIEU DU PAVÉ */}
       <div style={{ 
         background: '#0a6b79',
         color: 'white',
-        padding: '2rem',
+        padding: '1.5rem 2rem',
         borderRadius: '16px',
         textAlign: 'center',
         marginBottom: '2rem',
         boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-        maxWidth: '800px',
-        margin: '0 auto 2rem auto'
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: '-1rem'
       }}>
         <h1 style={{ 
           margin: '0 0 0.5rem 0', 
