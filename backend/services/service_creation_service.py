@@ -206,11 +206,13 @@ class ServiceCreationService:
             service_id = service_data['service_id']
             title = service_data['title']
             safe_fn = re.sub(r'[^a-zA-Z0-9_]', '_', service_id)
+            
+            # Créer le code endpoint sans f-string pour éviter les conflits
             endpoint_code = f"""
 @services_api.route('/{service_id}', methods=['POST'])
 @verify_jwt_token
 def {safe_fn}():
-    """Service: {title}"""
+    \"\"\"Service: {title}\"\"\"
     try:
         data = request.get_json()
         user_id = get_jwt_identity()
@@ -220,7 +222,7 @@ def {safe_fn}():
         prompts = get_all_ai_prompts()
         service_prompt = prompts.get('{title}', {{}})
         if not service_prompt:
-            return jsonify({{"error": "Service non disponible"}}), 500
+            return jsonify({{"error": "Service non disponible"}}, 500)
 
         # Appeler le service AI
         from backend.services.ai_service import ai_service
@@ -236,8 +238,8 @@ def {safe_fn}():
             "service": "{title}"
         }})
     except Exception as e:
-        logging.error(f"Erreur service {service_id}: {{e}}")
-        return jsonify({{"error": f"Erreur: {{str(e)}}"}}), 500
+        logging.error("Erreur service {service_id}: %s", e)
+        return jsonify({{"error": "Erreur lors du service"}}, 500)
 """
             return {"success": True, "endpoint_code": endpoint_code}
         except Exception as e:
