@@ -17,6 +17,12 @@ def execute_ai_service(service_id, cv_content, job_content="", questionnaire_con
             service_config = AI_PROMPTS[service_id]
             prompt_template = service_config["prompt"]
             
+            print(f"🔍 DEBUG execute_ai_service pour {service_id}:")
+            print(f"   Prompt template: {prompt_template[:200]}...")
+            print(f"   CV content length: {len(cv_content or '')}")
+            print(f"   Job content length: {len(job_content or '')}")
+            print(f"   Questionnaire content length: {len(questionnaire_content or '')}")
+            
             # Remplacer les variables de contexte dans le prompt
             prompt = prompt_template.replace("{cv_content}", cv_content or "CV non disponible")
             prompt = prompt.replace("{job_content}", job_content or "Offre d'emploi non disponible")
@@ -30,6 +36,9 @@ def execute_ai_service(service_id, cv_content, job_content="", questionnaire_con
             
             prompt = prompt.replace("{questionnaire_context}", 
                 f"\n\nCONTEXTE PERSONNEL:\n{questionnaire_content}" if questionnaire_content else "")
+            
+            print(f"   Prompt final length: {len(prompt)}")
+            print(f"   Prompt final preview: {prompt[:300]}...")
             
             # Appeler l'API avec le prompt personnalisé (sans contexte séparé)
             return call_mistral_api(prompt, service_id=service_id)
