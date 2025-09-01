@@ -23,11 +23,47 @@ class ServiceCreationService:
     def _init_supabase(self):
         """Initialise la connexion Supabase"""
         try:
-            from config.app_config import get_supabase_client
-            self.supabase_client = get_supabase_client()
-            logger.info("✅ Connexion Supabase établie pour la création de service")
+            # Essayer d'abord la méthode config.py
+            try:
+                import sys
+                import os
+                
+                # Importer config.py directement depuis le répertoire racine
+                current_dir = os.path.dirname(__file__)
+                root_dir = os.path.dirname(os.path.dirname(current_dir))
+                config_path = os.path.join(root_dir, 'config.py')
+                
+                if os.path.exists(config_path):
+                    import importlib.util
+                    spec = importlib.util.spec_from_file_location("config", config_path)
+                    config_module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(config_module)
+                    
+                    supabase_url = config_module.MIGRATION_CONFIG.get('SUPABASE_URL')
+                    supabase_key = config_module.MIGRATION_CONFIG.get('SUPABASE_ANON_KEY')
+                else:
+                    logger.warning(f"⚠️ Fichier config.py non trouvé: {config_path}")
+                    supabase_url = None
+                    supabase_key = None
+                
+                if supabase_url and supabase_key:
+                    from supabase import create_client, Client
+                    self.supabase_client = create_client(supabase_url, supabase_key)
+                    logger.info("✅ Connexion Supabase établie via config.py")
+                else:
+                    raise ImportError("Variables Supabase manquantes dans config.py")
+                    
+            except Exception as e:
+                logger.warning(f"⚠️ Fallback vers services.supabase_storage: {e}")
+                # Fallback vers l'ancien système
+                from services.supabase_storage import SupabaseStorage
+                supabase_storage = SupabaseStorage()
+                self.supabase_client = supabase_storage.client
+                logger.info("✅ Connexion Supabase établie via supabase_storage")
+                
         except Exception as e:
             logger.error(f"❌ Erreur connexion Supabase: {e}")
+            self.supabase_client = None
     
     def create_complete_service(self, service_data: Dict[str, Any]) -> Dict[str, Any]:
         """
