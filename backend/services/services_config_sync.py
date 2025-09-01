@@ -109,7 +109,7 @@ class ServicesConfigSync:
     def _update_services_config_file(self, new_config: Dict[str, Any]) -> bool:
         """Met à jour le fichier SERVICES_CONFIG"""
         try:
-            config_file_path = "frontend/src/config/servicesConfig.js"
+            config_file_path = "frontend/src/services/servicesConfig.js"
             
             # Lire le fichier existant
             with open(config_file_path, 'r', encoding='utf-8') as f:
@@ -159,7 +159,7 @@ class ServicesConfigSync:
             
             # Récupérer les services de la config actuelle
             try:
-                from frontend.src.config.servicesConfig import SERVICES_CONFIG
+                from frontend.src.services.servicesConfig import SERVICES_CONFIG
                 config_services = set(SERVICES_CONFIG.keys())
             except ImportError:
                 config_services = set()
