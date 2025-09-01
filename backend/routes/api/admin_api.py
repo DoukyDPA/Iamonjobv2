@@ -302,9 +302,9 @@ def add_new_service():
             try:
                 from backend.services.services_config_sync import services_config_sync
                 sync_result = services_config_sync.sync_services_config()
-                logger.info(f"Synchronisation SERVICES_CONFIG: {sync_result}")
+                logging.info(f"Synchronisation SERVICES_CONFIG: {sync_result}")
             except Exception as e:
-                logger.warning(f"⚠️ Synchronisation SERVICES_CONFIG échouée: {e}")
+                logging.warning(f"⚠️ Synchronisation SERVICES_CONFIG échouée: {e}")
                 sync_result = {"error": str(e)}
             
             return jsonify({
