@@ -24,7 +24,7 @@ const AdminServicesPage = () => {
   const [newService, setNewService] = useState({
     id: '', title: '', coach_advice: '', theme: 'evaluate_offer',
     requires_cv: false, requires_job_offer: false, requires_questionnaire: false,
-    difficulty: 'beginner', duration_minutes: 5
+    difficulty: 'beginner', duration_minutes: 5, prompt: ''
   });
 
   // Charger les données depuis l'API
@@ -283,12 +283,27 @@ const AdminServicesPage = () => {
       });
 
       if (response.ok) {
-        toast.success('Service ajouté avec succès');
+        const result = await response.json();
+        if (result.success) {
+          toast.success(`Service créé avec succès ! ${result.steps_completed?.length || 0}/5 étapes réussies`);
+          console.log('Service créé:', result);
+          
+          // Afficher le code d'endpoint à copier si disponible
+          if (result.endpoint_code) {
+            console.log('Code endpoint à ajouter dans services_api.py:', result.endpoint_code);
+            toast.success('Consultez la console pour le code d\'endpoint à ajouter !');
+          }
+        } else {
+          toast.error(`Erreur: ${result.error || 'Erreur lors de la création'}`);
+          if (result.errors?.length > 0) {
+            console.error('Erreurs détaillées:', result.errors);
+          }
+        }
         setShowAddModal(false);
         setNewService({
           id: '', title: '', coach_advice: '', theme: 'evaluate_offer',
           requires_cv: false, requires_job_offer: false, requires_questionnaire: false,
-          difficulty: 'beginner', duration_minutes: 5
+          difficulty: 'beginner', duration_minutes: 5, prompt: ''
         });
         loadServicesData();
       } else {
@@ -997,6 +1012,25 @@ const AdminServicesPage = () => {
                   <option key={key} value={key}>{label}</option>
                 ))}
               </select>
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                Prompt IA:
+              </label>
+              <textarea
+                value={newService.prompt}
+                onChange={(e) => setNewService({...newService, prompt: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  minHeight: '120px',
+                  fontFamily: 'monospace'
+                }}
+                placeholder="Tu es un expert. Aide l'utilisateur avec ce service. Donne des conseils précis et utiles."
+              />
             </div>
 
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
