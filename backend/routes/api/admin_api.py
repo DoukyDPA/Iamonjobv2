@@ -268,20 +268,51 @@ def clear_featured_service():
 @admin_api.route('/services', methods=['POST'])
 @verify_jwt_token
 def add_new_service():
-    """Ajoute un nouveau service"""
+    """Ajoute un nouveau service complet avec création automatique"""
     try:
         data = request.get_json()
         
-        # Utiliser le nouveau gestionnaire Supabase
-        try:
-            from backend.admin.supabase_services_manager import add_new_service_admin
-            success = add_new_service_admin(data)
-        except ImportError:
-            # Fallback vers l'ancien manager
-            from backend.admin.services_manager import add_new_service_admin
-            success = add_new_service_admin(data)
+        # Mapper les données frontend vers le format attendu
+        service_data = {
+            'service_id': data.get('id', ''),  # Frontend utilise 'id', on mappe vers 'service_id'
+            'title': data.get('title', ''),
+            'coach_advice': data.get('coach_advice', ''),
+            'theme': data.get('theme', 'general'),
+            'requires_cv': data.get('requires_cv', False),
+            'requires_job_offer': data.get('requires_job_offer', False),
+            'requires_questionnaire': data.get('requires_questionnaire', False),
+            'difficulty': data.get('difficulty', 'beginner'),
+            'duration_minutes': data.get('duration_minutes', 5),
+            'visible': True,
+            'featured': False,
+            'prompt': data.get('prompt', f'Tu es un expert. Aide l\'utilisateur avec {data.get("title", "ce service")}.'),
+            'description': data.get('description', f'Service pour {data.get("title", "aider l\'utilisateur")}')
+        }
         
-        return jsonify({"success": success, "service": data if success else None})
+        # Utiliser le service de création complète
+        from backend.services.service_creation_service import service_creation_service
+        
+        result = service_creation_service.create_complete_service(service_data)
+        
+        if result.get('success'):
+            return jsonify({
+                "success": True,
+                "message": result.get('message'),
+                "steps_completed": result.get('steps_completed'),
+                "endpoint_code": result.get('endpoint_code'),  # Code à ajouter dans services_api.py
+                "service": {
+                    "service_id": result.get('service_id'),
+                    "title": result.get('title')
+                }
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": result.get('error', 'Erreur inconnue'),
+                "steps_completed": result.get('steps_completed', []),
+                "errors": result.get('errors', [])
+            }), 500
+            
     except Exception as e:
         logging.error(f"Erreur lors de l'ajout du service: {e}")
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
