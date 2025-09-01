@@ -115,7 +115,7 @@ export const ENHANCED_SERVICES_CONFIG = {
 
   cv_ats_optimization: {
     id: 'cv_ats_optimization',
-    title: 'Optimiser pour les ATS',
+    title: 'Optimisez mon CV pour les ATS',
     shortTitle: 'Optimisation ATS',
     coachAdvice: 'Adaptez votre CV pour qu\'il soit parfaitement lisible par les systèmes de tri automatiques des entreprises.',
     description: 'Optimisation de votre CV pour les systèmes ATS',
@@ -166,7 +166,7 @@ export const ENHANCED_SERVICES_CONFIG = {
 
   cover_letter_generate: {
     id: 'cover_letter_generate', 
-    title: 'Générer lettre de motivation',
+    title: 'Rédigez votre lettre de motivation',
     shortTitle: 'Générer lettre',
     coachAdvice: 'Créez une lettre de motivation complète et personnalisée prête à être envoyée avec votre candidature.',
     description: 'Génération complète d\'une lettre de motivation personnalisée',
@@ -191,7 +191,7 @@ export const ENHANCED_SERVICES_CONFIG = {
 
   professional_pitch: {
     id: 'professional_pitch',
-    title: 'Pitch professionnel',
+    title: 'Présentez-vous en 30 secondes chrono !',
     shortTitle: 'Pitch',
     coachAdvice: 'Développez un pitch percutant pour vous présenter efficacement en entretien ou en networking.',
     description: 'Création de votre pitch professionnel personnalisé',
@@ -216,7 +216,7 @@ export const ENHANCED_SERVICES_CONFIG = {
 
   interview_prep: {
     id: 'interview_prep',
-    title: 'Préparation entretien',
+    title: 'Préparez votre entretien d'embauche',
     shortTitle: 'Entretien',
     coachAdvice: 'Préparez-vous méthodiquement à votre entretien avec des questions types et des stratégies de réponse.',
     description: 'Préparation complète à votre entretien d\'embauche',
@@ -241,7 +241,7 @@ export const ENHANCED_SERVICES_CONFIG = {
 
   follow_up_email: {
     id: 'follow_up_email',
-    title: 'Email de relance',
+    title: 'Rédigez un email de relance',
     shortTitle: 'Relance',
     coachAdvice: 'Rédigez un email de relance professionnel pour maintenir le contact après un entretien ou une candidature.',
     description: 'Rédaction d\'emails de relance professionnels',
@@ -267,7 +267,7 @@ export const ENHANCED_SERVICES_CONFIG = {
   // === THÈME : PROJET PROFESSIONNEL ===
   skills_analysis: {
     id: 'skills_analysis',
-    title: 'Analyser mes compétences',
+    title: 'Analysez vos compétences',
     shortTitle: 'Compétences',
     coachAdvice: 'Identifiez vos compétences transférables et découvrez de nouveaux domaines d\'application pour votre profil.',
     description: 'Analyse approfondie de vos compétences et potentiels',
@@ -292,7 +292,7 @@ export const ENHANCED_SERVICES_CONFIG = {
 
   reconversion_analysis: {
     id: 'reconversion_analysis',
-    title: 'Évaluer une reconversion',
+    title: 'Découvrez des pistes de reconversion',
     shortTitle: 'Reconversion',
     coachAdvice: 'Explorez une reconversion professionnelle avec une analyse détaillée des étapes et opportunités.',
     description: 'Analyse complète d\'un projet de reconversion professionnelle',
