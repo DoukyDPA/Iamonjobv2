@@ -88,6 +88,19 @@ def api_documents_upload():
                 file.filename.rsplit('.', 1)[1].lower() in allowed_extensions):
             return jsonify({"error": "Type de fichier non autorisé"}), 400
         
+        # 🗑️ PURGE AUTOMATIQUE SI NOUVEAU DOCUMENT
+        if document_type in ['cv', 'offre_emploi', 'questionnaire']:
+            print(f"🗑️ PURGE AUTOMATIQUE DU CACHE POUR NOUVEAU {document_type.upper()}")
+            try:
+                # Utiliser la nouvelle fonction centralisée avec individualisation
+                user_email = request.current_user.email
+                StatelessDataManager.clear_generic_actions_history(document_type, user_email)
+                print(f"✅ Cache purgé automatiquement pour nouveau {document_type} de {user_email}")
+                
+            except Exception as e:
+                print(f"⚠️ Erreur lors de la purge automatique: {e}")
+                # Continuer même si la purge échoue
+        
         # ✅ EXTRACTION RÉELLE du contenu
         import tempfile
 
@@ -122,23 +135,6 @@ def api_documents_upload():
         user_email = request.current_user.email
         print(f"👤 Upload document pour utilisateur: {user_email}")
         
-        # 🗑️ PURGE FORCÉE DU CACHE POUR TOUT NOUVEAU CV/OFFRE/QUESTIONNAIRE (texte)
-        if document_type in ['cv', 'offre_emploi', 'questionnaire']:
-            try:
-                user_email = request.current_user.email
-                print(f"🗑️ PURGE FORCÉE DU CACHE POUR NOUVEAU {document_type.upper()} (texte)")
-                StatelessDataManager.clear_generic_actions_history(document_type, user_email)
-                print(f"✅ Cache purgé automatiquement pour nouveau {document_type} de {user_email}")
-                    
-            except Exception as e:
-                print(f"⚠️ Erreur lors de la purge du cache (texte): {e}")
-                # En cas d'erreur, nettoyer par sécurité
-                try:
-                    StatelessDataManager.clear_generic_actions_history(document_type, user_email)
-                    print(f"✅ Cache purgé par sécurité pour {document_type} (texte)")
-                except Exception as purge_error:
-                    print(f"❌ Erreur lors de la purge de sécurité (texte): {purge_error}")
-        
         StatelessDataManager.update_document_atomic(document_type, doc_data, user_email)
         
         print(f"✅ Nouveau {document_type} uploadé avec purge automatique")
@@ -171,22 +167,18 @@ def api_documents_upload_text():
         if not text_content or not text_content.strip():
             return jsonify({"error": "Contenu texte manquant"}), 400
         
-        # 🗑️ PURGE FORCÉE DU CACHE POUR TOUT NOUVEAU CV/OFFRE/QUESTIONNAIRE (texte)
+        # 🗑️ PURGE AUTOMATIQUE SI NOUVEAU DOCUMENT
         if document_type in ['cv', 'offre_emploi', 'questionnaire']:
+            print(f"🗑️ PURGE AUTOMATIQUE DU CACHE POUR NOUVEAU {document_type.upper()} (texte)")
             try:
+                # Utiliser la nouvelle fonction centralisée avec individualisation
                 user_email = request.current_user.email
-                print(f"🗑️ PURGE FORCÉE DU CACHE POUR NOUVEAU {document_type.upper()} (texte)")
                 StatelessDataManager.clear_generic_actions_history(document_type, user_email)
                 print(f"✅ Cache purgé automatiquement pour nouveau {document_type} de {user_email}")
-                    
+                
             except Exception as e:
-                print(f"⚠️ Erreur lors de la purge du cache (texte): {e}")
-                # En cas d'erreur, nettoyer par sécurité
-                try:
-                    StatelessDataManager.clear_generic_actions_history(document_type, user_email)
-                    print(f"✅ Cache purgé par sécurité pour {document_type} (texte)")
-                except Exception as purge_error:
-                    print(f"❌ Erreur lors de la purge de sécurité (texte): {purge_error}")
+                print(f"⚠️ Erreur lors de la purge automatique: {e}")
+                # Continuer même si la purge échoue
         
         print(f"📝 Upload texte - Type: {document_type}, Longueur: {len(text_content)}")
         print(f"📝 Aperçu contenu: {text_content[:100]}...")
