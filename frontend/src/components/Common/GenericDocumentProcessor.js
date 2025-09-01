@@ -251,7 +251,7 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
         </div>
       </div>
 
-      {/* Titre du service avec icône */}
+      {/* Titre du service avec icône - CENTRÉ */}
       <div style={{ 
         background: '#0a6b79',
         color: 'white',
@@ -259,7 +259,9 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
         borderRadius: '16px',
         textAlign: 'center',
         marginBottom: '2rem',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+        boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+        maxWidth: '800px',
+        margin: '0 auto 2rem auto'
       }}>
         <h1 style={{ 
           margin: '0 0 0.5rem 0', 
