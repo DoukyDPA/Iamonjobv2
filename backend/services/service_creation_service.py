@@ -133,7 +133,11 @@ class ServiceCreationService:
             if not self.supabase_client:
                 return {"error": "Connexion Supabase non disponible"}
             # Normaliser le service_id pour éviter les problèmes de cohérence
+            # Remplacer espaces et tirets par underscores, puis en minuscules
             service_id = service_data['service_id'].replace(' ', '_').replace('-', '_').lower()
+            
+            # S'assurer que l'ID est cohérent partout
+            service_data['service_id'] = service_id
             
             admin_service_data = {
                 'service_id': service_id,  # Utiliser l'ID normalisé
@@ -172,7 +176,11 @@ class ServiceCreationService:
                 prompt_text = prompt_text[:2000] + "..."
             
             # Normaliser le service_id pour éviter les problèmes de cohérence
+            # Remplacer espaces et tirets par underscores, puis en minuscules
             service_id = service_data['service_id'].replace(' ', '_').replace('-', '_').lower()
+            
+            # S'assurer que l'ID est cohérent partout
+            service_data['service_id'] = service_id
             
             prompt_data = {
                 'title': service_data['title'],
