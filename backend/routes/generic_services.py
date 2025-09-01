@@ -420,6 +420,63 @@ def cover_letter_advice_unified():
     return verify_jwt_token(handle_generic_service)('cover_letter_advice', request)
 
 
+# === ROUTES MANQUANTES POUR TOUS LES SERVICES ===
+@generic_services_bp.route('/api/actions/interview_prep', methods=['POST'])
+def interview_prep_unified():
+    """Route unifiée pour la préparation d'entretien via le système générique"""
+    from backend.routes.api.auth_api import verify_jwt_token
+    return verify_jwt_token(handle_generic_service)('interview_prep', request)
+
+
+@generic_services_bp.route('/api/actions/professional_pitch', methods=['POST'])
+def professional_pitch_unified():
+    """Route unifiée pour le pitch professionnel via le système générique"""
+    from backend.routes.api.auth_api import verify_jwt_token
+    return verify_jwt_token(handle_generic_service)('professional_pitch', request)
+
+
+@generic_services_bp.route('/api/actions/salary_negotiation', methods=['POST'])
+def salary_negotiation_unified():
+    """Route unifiée pour la négociation salariale via le système générique"""
+    from backend.routes.api.auth_api import verify_jwt_token
+    return verify_jwt_token(handle_generic_service)('salary_negotiation', request)
+
+
+@generic_services_bp.route('/api/actions/follow_up_email', methods=['POST'])
+def follow_up_email_unified():
+    """Route unifiée pour l'email de relance via le système générique"""
+    from backend.routes.api.auth_api import verify_jwt_token
+    return verify_jwt_token(handle_generic_service)('follow_up_email', request)
+
+
+@generic_services_bp.route('/api/actions/skills_analysis', methods=['POST'])
+def skills_analysis_unified():
+    """Route unifiée pour l'analyse des compétences via le système générique"""
+    from backend.routes.api.auth_api import verify_jwt_token
+    return verify_jwt_token(handle_generic_service)('skills_analysis', request)
+
+
+@generic_services_bp.route('/api/actions/reconversion_analysis', methods=['POST'])
+def reconversion_analysis_unified():
+    """Route unifiée pour l'analyse de reconversion via le système générique"""
+    from backend.routes.api.auth_api import verify_jwt_token
+    return verify_jwt_token(handle_generic_service)('reconversion_analysis', request)
+
+
+@generic_services_bp.route('/api/actions/career_transition', methods=['POST'])
+def career_transition_unified():
+    """Route unifiée pour l'orientation métier via le système générique"""
+    from backend.routes.api.auth_api import verify_jwt_token
+    return verify_jwt_token(handle_generic_service)('career_transition', request)
+
+
+@generic_services_bp.route('/api/actions/industry_orientation', methods=['POST'])
+def industry_orientation_unified():
+    """Route unifiée pour l'orientation industrie via le système générique"""
+    from backend.routes.api.auth_api import verify_jwt_token
+    return verify_jwt_token(handle_generic_service)('industry_orientation', request)
+
+
 # === ÉVITER LES ROUTES EN CONFLIT ===
 # Ne pas enregistrer interview_prepare, pitch_generate, etc.
 # car elles existent déjà dans app.py
