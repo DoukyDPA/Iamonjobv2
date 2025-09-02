@@ -11,18 +11,11 @@ HAS_AI_SERVICE = True  # Toujours True, import différé
 def execute_ai_service(*args, **kwargs):
     """Import différé pour éviter le circular import"""
     try:
-        print(f"🔍 Wrapper execute_ai_service - Début appel avec args: {args}, kwargs: {kwargs}")
         from services.ai_service_prompts import execute_ai_service as real_execute_ai_service
-        print(f"🔍 Wrapper execute_ai_service - Import réussi, appel de la vraie fonction...")
-        result = real_execute_ai_service(*args, **kwargs)
-        print(f"🔍 Wrapper execute_ai_service - Résultat: {result[:100] if result else 'None'}...")
-        return result
-    except Exception as e:
-        print(f"❌ Erreur dans wrapper execute_ai_service: {e}")
-        print(f"❌ Type d'erreur: {type(e).__name__}")
-        import traceback
-        traceback.print_exc()
-        raise e
+        return real_execute_ai_service(*args, **kwargs)
+    except ImportError as e:
+        print(f"❌ Erreur import execute_ai_service: {e}")
+        return "Service IA temporairement indisponible"
 
 # Configuration des services - SUPPRIMÉE
 # La configuration est maintenant centralisée dans frontend/src/services/servicesConfig.js
@@ -248,10 +241,9 @@ def handle_generic_service(service_id, request):
         job_content = job_data.get('content', '') if config['requires_job'] else ''
         questionnaire_content = questionnaire_data.get('content', '') if config['requires_questionnaire'] else ''
         
-        # Récupérer les notes personnelles et paramètres
+        # Récupérer les notes personnelles
         data = request.get_json() or {}
         user_notes = data.get('notes', '') if config['allows_notes'] else ''
-        force_new = data.get('force_new', False)
         
         print(f"CV content length: {len(cv_content)}")
         print(f"Job content length: {len(job_content)}")
@@ -272,8 +264,7 @@ def handle_generic_service(service_id, request):
                     cv_content=cv_content,
                     job_content=job_content,
                     questionnaire_content=questionnaire_content,
-                    user_notes=user_notes,
-                    force_new=force_new
+                    user_notes=user_notes
                 )
             else:
                 # Appel générique pour les autres services
@@ -282,8 +273,7 @@ def handle_generic_service(service_id, request):
                     cv_content=cv_content,
                     job_content=job_content,
                     questionnaire_content=questionnaire_content,
-                    user_notes=user_notes,
-                    force_new=force_new
+                    user_notes=user_notes
                 )
             
             print(f"🔍 Résultat IA brut: {repr(result)}")
