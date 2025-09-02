@@ -62,6 +62,96 @@ def handle_generic_service(service_id, request):
                 "requires_job": True,
                 "requires_questionnaire": False,
                 "allows_notes": True
+            },
+            "cover_letter_advice": {
+                "title": "Conseils Lettre de Motivation",
+                "output_key": "advice",
+                "action_type": "cover_letter_advice_response",
+                "requires_cv": True,
+                "requires_job": True,
+                "requires_questionnaire": False,
+                "allows_notes": False
+            },
+            "cover_letter_generate": {
+                "title": "Génération Lettre de Motivation",
+                "output_key": "cover_letter",
+                "action_type": "cover_letter_generate_response",
+                "requires_cv": True,
+                "requires_job": True,
+                "requires_questionnaire": True,
+                "allows_notes": True
+            },
+            "professional_pitch": {
+                "title": "Pitch Professionnel",
+                "output_key": "pitch",
+                "action_type": "professional_pitch_response",
+                "requires_cv": True,
+                "requires_job": True,
+                "requires_questionnaire": True,
+                "allows_notes": True
+            },
+            "interview_prep": {
+                "title": "Préparation Entretien",
+                "output_key": "interview_prep",
+                "action_type": "interview_prep_response",
+                "requires_cv": True,
+                "requires_job": True,
+                "requires_questionnaire": False,
+                "allows_notes": True
+            },
+            "follow_up_email": {
+                "title": "Email de Relance",
+                "output_key": "email",
+                "action_type": "follow_up_email_response",
+                "requires_cv": False,
+                "requires_job": True,
+                "requires_questionnaire": False,
+                "allows_notes": True
+            },
+            "skills_analysis": {
+                "title": "Analyse des Compétences",
+                "output_key": "skills_analysis",
+                "action_type": "skills_analysis_response",
+                "requires_cv": True,
+                "requires_job": False,
+                "requires_questionnaire": True,
+                "allows_notes": True
+            },
+            "reconversion_analysis": {
+                "title": "Analyse de Reconversion",
+                "output_key": "reconversion",
+                "action_type": "reconversion_analysis_response",
+                "requires_cv": True,
+                "requires_job": False,
+                "requires_questionnaire": True,
+                "allows_notes": True
+            },
+            "career_transition": {
+                "title": "Transition de Carrière",
+                "output_key": "career_orientation",
+                "action_type": "career_transition_response",
+                "requires_cv": True,
+                "requires_job": False,
+                "requires_questionnaire": True,
+                "allows_notes": True
+            },
+            "salary_negotiation": {
+                "title": "Négociation Salariale",
+                "output_key": "salary_negotiation",
+                "action_type": "salary_negotiation_response",
+                "requires_cv": True,
+                "requires_job": True,
+                "requires_questionnaire": True,
+                "allows_notes": True
+            },
+            "industry_orientation": {
+                "title": "Orientation Secteur",
+                "output_key": "industry_orientation",
+                "action_type": "industry_orientation_response",
+                "requires_cv": True,
+                "requires_job": False,
+                "requires_questionnaire": True,
+                "allows_notes": True
             }
         }
         
