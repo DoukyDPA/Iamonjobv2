@@ -565,7 +565,10 @@ const Dashboard = () => {
             <div className="mini-upload-buttons">
               {/* CV */}
               <div className="mini-doc-item">
-                <div className="mini-doc-icon" style={{ backgroundColor: documentStatus.cv?.uploaded ? '#0a6b79' : '#e5e7eb' }}>
+                <div className="mini-doc-icon" style={{ 
+                  backgroundColor: documentStatus.cv?.uploaded ? '#22c55e' : '#e5e7eb',
+                  border: documentStatus.cv?.uploaded ? '2px solid #16a34a' : '2px solid #d1d5db'
+                }}>
                   <FiFileText style={{ color: documentStatus.cv?.uploaded ? 'white' : '#9ca3af', fontSize: '14px' }} />
                 </div>
                 <span className="mini-doc-label">CV</span>
@@ -622,7 +625,10 @@ const Dashboard = () => {
 
               {/* Questionnaire */}
               <div className="mini-doc-item">
-                <div className="mini-doc-icon" style={{ backgroundColor: documentStatus.questionnaire?.uploaded ? '#f59e0b' : '#e5e7eb' }}>
+                <div className="mini-doc-icon" style={{ 
+                  backgroundColor: documentStatus.questionnaire?.uploaded ? '#f59e0b' : '#e5e7eb',
+                  border: documentStatus.questionnaire?.uploaded ? '2px solid #d97706' : '2px solid #d1d5db'
+                }}>
                   <FiUser style={{ color: documentStatus.questionnaire?.uploaded ? 'white' : '#9ca3af', fontSize: '14px' }} />
                 </div>
                 <span className="mini-doc-label">Questionnaire</span>
@@ -652,7 +658,10 @@ const Dashboard = () => {
 
               {/* Offre d'emploi */}
               <div className="mini-doc-item">
-                <div className="mini-doc-icon" style={{ backgroundColor: documentStatus.offre_emploi?.uploaded ? '#22c55e' : '#e5e7eb' }}>
+                <div className="mini-doc-icon" style={{ 
+                  backgroundColor: documentStatus.offre_emploi?.uploaded ? '#3b82f6' : '#e5e7eb',
+                  border: documentStatus.offre_emploi?.uploaded ? '2px solid #2563eb' : '2px solid #d1d5db'
+                }}>
                   <FiTarget style={{ color: documentStatus.offre_emploi?.uploaded ? 'white' : '#9ca3af', fontSize: '14px' }} />
                 </div>
                 <span className="mini-doc-label">Offre</span>
