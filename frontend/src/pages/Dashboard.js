@@ -487,7 +487,7 @@ const Dashboard = () => {
 
   return (
     <div style={{ 
-      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)', 
+      background: 'white', 
       minHeight: '100vh',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
@@ -501,11 +501,11 @@ const Dashboard = () => {
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
             <h1 style={{ 
-              fontSize: '2.5rem',
+              fontSize: '3rem',
               fontWeight: '700',
               color: 'white',
-              margin: '0 0 0.5rem 0',
-              textShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              margin: '0 0 1.5rem 0',
+              lineHeight: '1.2',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -590,12 +590,10 @@ const Dashboard = () => {
         {/* Section Documents harmonisée - onglet documents */}
         {activeTab === 'documents' && (
         <div style={{
-          background: 'rgba(255, 255, 255, 0.05)',
+          background: 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)',
           borderRadius: '20px',
           padding: '2rem',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
           marginBottom: '2rem'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
@@ -608,7 +606,8 @@ const Dashboard = () => {
               fontSize: '1.5rem',
               fontWeight: '600'
             }}>
-              📄 Vos Documents pour personnaliser l'analyse
+              <LogoIcon size={24} />
+              Vos Documents pour personnaliser l'analyse
             </h2>
             <button 
               onClick={() => setShowAdviceModal(true)}
@@ -836,177 +835,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Barre de progression compacte avec boutons d'upload */}
-          <div className="mini-progress-bar">
-            <div className="mini-progress-info">
-              <span className="mini-progress-text">Progression: {documentsCount}/3 documents</span>
-              <div className="mini-progress-badge" style={{ backgroundColor: documentsCount === 3 ? '#22c55e' : '#c7356c' }}>
-                {documentsCount === 3 ? '✅ Complet' : `${documentsCount}/3`}
-              </div>
-            </div>
-            <div className="mini-progress-track">
-              <div 
-                className="mini-progress-fill"
-                style={{ width: `${(documentsCount / 3) * 100}%` }}
-              />
-            </div>
-            
-            {/* Boutons d'upload compacts */}
-            <div className="mini-upload-buttons">
-              {/* CV */}
-              <div className="mini-doc-item">
-                <div className="mini-doc-icon" style={{ 
-                  backgroundColor: documentStatus.cv?.uploaded ? '#22c55e' : '#e5e7eb',
-                  border: documentStatus.cv?.uploaded ? '2px solid #16a34a' : '2px solid #d1d5db'
-                }}>
-                  <FiFileText style={{ color: documentStatus.cv?.uploaded ? 'white' : '#9ca3af', fontSize: '14px' }} />
-                </div>
-                <span className="mini-doc-label">CV</span>
-                <div className="mini-doc-buttons">
-                  <button 
-                    className="mini-upload-btn"
-                    onClick={() => document.getElementById('cv-upload')?.click()}
-                    title="Télécharger un CV"
-                    style={{
-                      background: '#c7356c',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      padding: '0.2rem 0.4rem',
-                      cursor: 'pointer',
-                      fontSize: '10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.2rem'
-                    }}
-                  >
-                    <FiUpload style={{ fontSize: '10px' }} />
-                    Télécharger
-                  </button>
-                  <button 
-                    className="mini-upload-btn"
-                    onClick={() => setShowTextModal('cv')}
-                    title="Copier/coller un CV"
-                    style={{
-                      background: '#0a6b79',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      padding: '0.2rem 0.4rem',
-                      cursor: 'pointer',
-                      fontSize: '10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.2rem'
-                    }}
-                  >
-                    <FiEdit3 style={{ fontSize: '10px' }} />
-                    Copier/coller
-                  </button>
-                </div>
-                <input
-                  id="cv-upload"
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={(e) => handleFileUpload(e, 'cv')}
-                  style={{ display: 'none' }}
-                />
-              </div>
 
-              {/* Questionnaire */}
-              <div className="mini-doc-item">
-                <div className="mini-doc-icon" style={{ 
-                  backgroundColor: documentStatus.questionnaire?.uploaded ? '#f59e0b' : '#e5e7eb',
-                  border: documentStatus.questionnaire?.uploaded ? '2px solid #d97706' : '2px solid #d1d5db'
-                }}>
-                  <FiUser style={{ color: documentStatus.questionnaire?.uploaded ? 'white' : '#9ca3af', fontSize: '14px' }} />
-                </div>
-                <span className="mini-doc-label">Questionnaire</span>
-                <div className="mini-doc-buttons">
-                  <button 
-                    className="mini-upload-btn"
-                    onClick={() => setShowQuestionnaireModal(true)}
-                    title="Remplir le questionnaire"
-                    style={{
-                      background: '#c7356c',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      padding: '0.2rem 0.4rem',
-                      cursor: 'pointer',
-                      fontSize: '10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.2rem'
-                    }}
-                  >
-                    <FiEdit3 style={{ fontSize: '10px' }} />
-                    Remplir
-                  </button>
-                </div>
-              </div>
-
-              {/* Offre d'emploi */}
-              <div className="mini-doc-item">
-                <div className="mini-doc-icon" style={{ 
-                  backgroundColor: documentStatus.offre_emploi?.uploaded ? '#3b82f6' : '#e5e7eb',
-                  border: documentStatus.offre_emploi?.uploaded ? '2px solid #2563eb' : '2px solid #d1d5db'
-                }}>
-                  <FiTarget style={{ color: documentStatus.offre_emploi?.uploaded ? 'white' : '#9ca3af', fontSize: '14px' }} />
-                </div>
-                <span className="mini-doc-label">Offre</span>
-                <div className="mini-doc-buttons">
-                  <button 
-                    className="mini-upload-btn"
-                    onClick={() => document.getElementById('offre-upload')?.click()}
-                    title="Télécharger une offre"
-                    style={{
-                      background: '#c7356c',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      padding: '0.2rem 0.4rem',
-                      cursor: 'pointer',
-                      fontSize: '10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.2rem'
-                    }}
-                  >
-                    <FiUpload style={{ fontSize: '10px' }} />
-                    Télécharger
-                  </button>
-                  <button 
-                    className="mini-upload-btn"
-                    onClick={() => setShowTextModal('offre_emploi')}
-                    title="Copier/coller une offre"
-                    style={{
-                      background: '#0a6b79',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      padding: '0.2rem 0.4rem',
-                      cursor: 'pointer',
-                      fontSize: '10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.2rem'
-                    }}
-                  >
-                    <FiEdit3 style={{ fontSize: '10px' }} />
-                    Copier/coller
-                  </button>
-                </div>
-                <input
-                  id="offre-upload"
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={(e) => handleFileUpload(e, 'offre_emploi')}
-                  style={{ display: 'none' }}
-                />
-              </div>
-            </div>
-          </div>
           {/* Analyse de CV avec nouveau dashboard */}
           {cvAnalysis && documentStatus.cv?.uploaded && (
             <CVAnalysisDashboard 
@@ -1067,12 +896,10 @@ const Dashboard = () => {
         {/* Autres onglets avec le même style */}
         {activeTab === 'evaluate' && (
           <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
+            background: 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)',
             borderRadius: '20px',
             padding: '2rem',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
           }}>
             <h2 style={{ 
               display: 'flex', 
@@ -1083,7 +910,8 @@ const Dashboard = () => {
               fontWeight: '600',
               marginBottom: '2rem'
             }}>
-              🎯 Évaluer une offre
+              <LogoIcon size={24} />
+              Évaluer une offre
             </h2>
             <ServicesGrid filterTheme="evaluate_offer" />
             {/* Section partenaires */}
@@ -1106,12 +934,10 @@ const Dashboard = () => {
 
         {activeTab === 'improve' && (
           <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
+            background: 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)',
             borderRadius: '20px',
             padding: '2rem',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
           }}>
             <h2 style={{ 
               display: 'flex', 
@@ -1122,7 +948,8 @@ const Dashboard = () => {
               fontWeight: '600',
               marginBottom: '2rem'
             }}>
-              📄 Améliorer mon CV
+              <LogoIcon size={24} />
+              Améliorer mon CV
             </h2>
             <ServicesGrid filterTheme="improve_cv" />
           </div>
@@ -1130,12 +957,10 @@ const Dashboard = () => {
 
         {activeTab === 'apply' && (
           <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
+            background: 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)',
             borderRadius: '20px',
             padding: '2rem',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
           }}>
             <h2 style={{ 
               display: 'flex', 
@@ -1146,7 +971,8 @@ const Dashboard = () => {
               fontWeight: '600',
               marginBottom: '2rem'
             }}>
-              ✉️ Candidater
+              <LogoIcon size={24} />
+              Candidater
             </h2>
             <ServicesGrid filterTheme="apply_jobs" />
           </div>
@@ -1154,12 +980,10 @@ const Dashboard = () => {
 
         {activeTab === 'interview' && (
           <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
+            background: 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)',
             borderRadius: '20px',
             padding: '2rem',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
           }}>
             <h2 style={{ 
               display: 'flex', 
@@ -1170,7 +994,8 @@ const Dashboard = () => {
               fontWeight: '600',
               marginBottom: '2rem'
             }}>
-              🎤 Préparer l'entretien
+              <LogoIcon size={24} />
+              Préparer l'entretien
             </h2>
             <ServicesGrid filterTheme="interview_prep" />
           </div>
@@ -1178,12 +1003,10 @@ const Dashboard = () => {
 
         {activeTab === 'change' && (
           <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
+            background: 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)',
             borderRadius: '20px',
             padding: '2rem',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
           }}>
             <h2 style={{ 
               display: 'flex', 
@@ -1194,7 +1017,8 @@ const Dashboard = () => {
               fontWeight: '600',
               marginBottom: '2rem'
             }}>
-              🔄 Tout changer
+              <LogoIcon size={24} />
+              Tout changer
             </h2>
             <ServicesGrid filterTheme="career_project" />
           </div>
