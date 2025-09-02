@@ -269,24 +269,7 @@ def handle_document_upload(file=None, text_content=None, doc_type="inconnu"):
 
         # Traitement selon le type de document
         if doc_type == "cv":
-            # Vérifier si une analyse en cache existe
-            analyse_prompt = (
-                "Tu es un recruteur expert en analyse de CV et développement professionnel. "
-                "Ton objectif est de m'aider à redéfinir mon projet professionnel en examinant minutieusement "
-                "le CV joint. Concentre-toi sur l'identification des compétences professionnelles et soft skills "
-                "et réalise les étapes suivantes : A ce stade, il s'agit d'analyser exclusivement le CV, ne tient "
-                "pas compte de l'offre d'emploi si elle a été communiquée\n"
-                "• Fournis une synthèse claire de 5 points forts et 5 points faibles majeurs du CV\n"
-                "• Rédige une analyse très précise de ce CV en 300 mots. Ton analyse sera professionnel et " # Réduit de 500 à 300 mots
-                "analytique sans exagération ni extrême bienveillance\n"
-                "• Présente un tableau récapitulatif des compétences techniques, soft skills acquises pour "
-                "chaque expérience.\nIdentifie aussi les compétences et soft skills déduites de mes centre d'intérêt\n"
-                "• Donne une note de 1 à 10 à ce CV\n"
-                "• Propose un tableau avec des recommandations pour optimiser cette note. Tu termineras en "
-                "explicitant comment augmenter ma note sous forme d'un tableau récapitulatif."
-            )
-            
-            # Utiliser le système Mistral via ai_service_prompts
+            # Utiliser le système unifié avec prompts Supabase
             from services.ai_service_prompts import execute_ai_service
             reponse_ia = execute_ai_service("analyze_cv", texte)
             response = {
