@@ -104,7 +104,7 @@ const ServicesGrid = ({ filterTheme = null }) => {
           id: 'cv_offer_compatibility',
           title: 'Compatibilité CV-Offre',
           coachAdvice: 'Découvrez votre taux de compatibilité avec une offre d\'emploi',
-          icon: '🎯',
+          icon: <LogoIcon size={20} />,
           requiresCV: true,
           requiresJobOffer: true,
           requiresQuestionnaire: false
@@ -115,10 +115,108 @@ const ServicesGrid = ({ filterTheme = null }) => {
           id: 'analyze_cv',
           title: 'Analyse de CV',
           coachAdvice: 'Laissez notre IA analyser votre CV et obtenir des recommandations personnalisées',
-          icon: '📄',
+          icon: <LogoIcon size={20} />,
           requiresCV: true,
           requiresJobOffer: false,
           requiresQuestionnaire: false
+        }
+      ],
+      apply_jobs: [
+        {
+          id: 'job_application',
+          title: 'Candidature optimisée',
+          coachAdvice: 'Optimisez votre candidature pour maximiser vos chances',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: true,
+          requiresQuestionnaire: false
+        },
+        {
+          id: 'cover_letter',
+          title: 'Lettre de motivation',
+          coachAdvice: 'Rédigez une lettre de motivation percutante',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: true,
+          requiresQuestionnaire: false
+        },
+        {
+          id: 'linkedin_optimization',
+          title: 'Optimiser LinkedIn',
+          coachAdvice: 'Améliorez votre profil LinkedIn pour attirer les recruteurs',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: false,
+          requiresQuestionnaire: false
+        }
+      ],
+      improve_cv: [
+        {
+          id: 'analyze_cv',
+          title: 'Analyse de CV',
+          coachAdvice: 'Laissez notre IA analyser votre CV et obtenir des recommandations personnalisées',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: false,
+          requiresQuestionnaire: false
+        },
+        {
+          id: 'optimize_ats',
+          title: 'Optimiser pour ATS',
+          coachAdvice: 'Améliorez votre CV pour passer les systèmes de recrutement automatisés',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: false,
+          requiresQuestionnaire: false
+        }
+      ],
+      interview_prep: [
+        {
+          id: 'interview_tips',
+          title: 'Conseils entretien',
+          coachAdvice: 'Préparez-vous efficacement pour vos entretiens d\'embauche',
+          icon: <LogoIcon size={20} />,
+          requiresCV: false,
+          requiresJobOffer: false,
+          requiresQuestionnaire: true
+        },
+        {
+          id: 'salary_negotiation',
+          title: 'Négocier salaire',
+          coachAdvice: 'Apprenez les techniques pour négocier votre salaire efficacement',
+          icon: <LogoIcon size={20} />,
+          requiresCV: false,
+          requiresJobOffer: true,
+          requiresQuestionnaire: true
+        }
+      ],
+      career_project: [
+        {
+          id: 'career_orientation',
+          title: 'Vers quel métier ?',
+          coachAdvice: 'Découvrez les métiers qui correspondent à votre profil',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: false,
+          requiresQuestionnaire: true
+        },
+        {
+          id: 'career_change',
+          title: 'Idées de reconversion',
+          coachAdvice: 'Explorez les possibilités de reconversion professionnelle',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: false,
+          requiresQuestionnaire: true
+        },
+        {
+          id: 'skills_assessment',
+          title: 'Évaluer compétences',
+          coachAdvice: 'Évaluez vos compétences et identifiez vos points forts',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: false,
+          requiresQuestionnaire: true
         }
       ]
     };
