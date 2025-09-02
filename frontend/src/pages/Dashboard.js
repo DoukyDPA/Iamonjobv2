@@ -218,8 +218,9 @@ const Dashboard = () => {
     { id: 'entretien', title: 'Préparer entretien', icon: <FiMic />, requiresCV: true },
   ];
 
-  // Calculer le nombre de documents uploadés
-  const documentsCount = Object.values(documentStatus).filter(doc => doc.uploaded).length;
+  // Calculer le nombre de documents uploadés (CV, questionnaire, offre d'emploi seulement)
+  const relevantDocuments = ['cv', 'questionnaire', 'offre_emploi'];
+  const documentsCount = relevantDocuments.filter(docType => documentStatus[docType]?.uploaded).length;
 
   // Gérer l'upload de texte
   const handleTextUpload = async () => {
