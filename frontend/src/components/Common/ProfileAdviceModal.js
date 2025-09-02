@@ -23,8 +23,8 @@ const ProfileAdviceModal = ({ isOpen, onClose }) => {
     },
     {
       icon: <FiHelpCircle />,
-      title: "Développez votre réseau",
-      description: "L'IA c'est bien, mais c'est le réseau humain qui fait souvent la différenceonstruisez et entretenez un réseau professionnel pour accéder à de nouvelles opportunités."
+      title: "Attention",
+      description: "Dès que vous téléchargez un nouveau CV ou une nouvelle offre, les anciennes analyses de Iamonjob sont effacées. Pensez à utiliser les fonctions Copier ou Télécharger si vous souhaitez les garder."
     }
   ];
 
