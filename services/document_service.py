@@ -17,7 +17,7 @@ def get_session_data():
 def save_session_data(data):
     supabase = SupabaseStorage()
     return supabase.save_session_data(data)
-from services.ai_service import chat_avec_ia, get_or_create_cv_analysis, analyze_job_offer, analyze_metier, generate_document_summary
+from services.ai_service import chat_avec_ia, analyze_job_offer, analyze_metier, generate_document_summary
 from datetime import datetime
 
 def extraire_texte_pdf(path):
@@ -286,7 +286,9 @@ def handle_document_upload(file=None, text_content=None, doc_type="inconnu"):
                 "explicitant comment augmenter ma note sous forme d'un tableau récapitulatif."
             )
             
-            reponse_ia = get_or_create_cv_analysis(texte)
+            # Utiliser le système Mistral via ai_service_prompts
+            from services.ai_service_prompts import execute_ai_service
+            reponse_ia = execute_ai_service("analyze_cv", texte)
             response = {
                 "success": True, 
                 "response": reponse_ia, 
