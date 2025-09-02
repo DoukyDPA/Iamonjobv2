@@ -287,4 +287,19 @@
   .revolutionary-dashboard .revolutionary-section-title {
     font-size: 1.8rem;
   }
+}
+
+/* ===== CORRECTION INDICATEUR DE CHARGEMENT ===== */
+.dashboard-modal-btn.disabled,
+.dashboard-modal-btn:disabled {
+  background: #6b7280 !important;
+  color: white !important;
+  border-color: #6b7280 !important;
+  opacity: 0.7 !important;
+}
+
+.dashboard-modal-btn.disabled:hover,
+.dashboard-modal-btn:disabled:hover {
+  background: #6b7280 !important;
+  transform: none !important;
 } 
