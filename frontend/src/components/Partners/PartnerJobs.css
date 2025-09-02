@@ -58,7 +58,7 @@
 
 /* Carte partenaire compacte */
 .partner-card.compact {
-  background: linear-gradient(135deg, #0a6b79 0%, #22c55e 100%) !important;
+  background: linear-gradient(135deg, #0a6b79 0%, #086068 100%) !important;
   border-radius: 12px;
   padding: 1.25rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
