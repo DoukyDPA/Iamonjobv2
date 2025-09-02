@@ -137,7 +137,7 @@ def process_uploaded_document(file, doc_type):
 
 
 
-def handle_document_upload(file=None, text_content=None, doc_type="inconnu"):
+def handle_document_upload(file=None, text_content=None, doc_type="inconnu", user_email=None):
     """
     Gère le téléchargement d'un document (fichier ou texte) de manière unifiée
     
@@ -209,25 +209,15 @@ def handle_document_upload(file=None, text_content=None, doc_type="inconnu"):
         # Récupérer les données de session
         session_data = get_session_data()
 
-        # Nettoyer l'historique des actions lorsqu'un nouveau CV est téléchargé
-        if doc_type == "cv":
+        # Nettoyer l'historique des actions lorsqu'un nouveau document est téléchargé
+        if doc_type in ["cv", "offre_emploi", "metier_souhaite", "questionnaire"]:
             try:
                 from services.stateless_manager import StatelessDataManager
-                StatelessDataManager.clear_generic_actions_history("cv")
+                StatelessDataManager.clear_generic_actions_history(doc_type, user_email)
                 session_data = get_session_data()  # Rafraîchir après purge
-                logging.info("Historique filtré pour nouveau CV")
+                logging.info(f"🗑️ Historique et cache effacés pour nouveau {doc_type}")
             except Exception as e:
-                logging.warning(f"Erreur lors du nettoyage de l'historique: {e}")
-                # Continuer même si le nettoyage échoue
-        elif doc_type in ["offre_emploi", "metier_souhaite", "questionnaire"] and session_data.get('documents', {}).get(doc_type, False):
-            # Un document de ce type existe déjà, utiliser la fonction centralisée
-            try:
-                from services.stateless_manager import StatelessDataManager
-                StatelessDataManager.clear_generic_actions_history(doc_type)
-                session_data = get_session_data()  # Rafraîchir après purge
-                logging.info(f"Historique filtré pour nouveau document de type {doc_type}")
-            except Exception as e:
-                logging.warning(f"Erreur lors du nettoyage de l'historique: {e}")
+                logging.warning(f"⚠️ Erreur lors du nettoyage de l'historique: {e}")
                 # Continuer même si le nettoyage échoue
         
         # Ajouter à l'historique
