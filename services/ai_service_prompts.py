@@ -70,43 +70,39 @@ def generate_generic_service(service_id, cv_content, job_content="", questionnai
 # === FONCTIONS UTILITAIRES AVEC BASE DE DONNÉES ===
 
 def get_all_prompts():
-    """Retourne la configuration complète des prompts depuis la base de données."""
+    """Retourne la configuration complète des prompts depuis la base de données Supabase."""
     try:
-        # Essayer d'abord la base de données
         prompts = get_prompts_from_database()
         if prompts:
             return prompts
         else:
-            # Fallback vers le fichier JSON
-            print("⚠️ Base de données non disponible, utilisation du fichier JSON")
-            return get_prompts_from_json()
+            print("❌ Aucun prompt trouvé dans Supabase")
+            return {}
     except Exception as e:
-        print(f"⚠️ Erreur base de données: {e}, utilisation du fichier JSON")
-        return get_prompts_from_json()
+        print(f"❌ Erreur base de données Supabase: {e}")
+        return {}
 
 def get_prompt(service_id):
-    """Retourne le prompt d'un service donné depuis la base de données."""
+    """Retourne le prompt d'un service donné depuis la base de données Supabase."""
     try:
-        # Essayer d'abord la base de données
         prompt = get_prompt_from_database(service_id)
         if prompt:
             return prompt
         else:
-            # Fallback vers le fichier JSON
-            return get_prompt_from_json(service_id)
+            print(f"❌ Service {service_id} non trouvé dans Supabase")
+            return None
     except Exception as e:
-        print(f"⚠️ Erreur base de données: {e}, utilisation du fichier JSON")
-        return get_prompt_from_json(service_id)
+        print(f"❌ Erreur base de données Supabase: {e}")
+        return None
 
 def reload_prompts_from_file():
-    """Recharge les prompts depuis la base de données ou le fichier JSON"""
+    """Recharge les prompts depuis la base de données Supabase"""
     try:
-        # Essayer d'abord la base de données
         prompts = get_prompts_from_database()
         if prompts:
             AI_PROMPTS.clear()
             AI_PROMPTS.update(prompts)
-            print(f"✅ Prompts rechargés depuis la base de données: {len(prompts)} services")
+            print(f"✅ Prompts rechargés depuis Supabase: {len(prompts)} services")
             return True
         else:
             # Si pas de prompts en DB, essayer de créer la table
@@ -117,46 +113,28 @@ def reload_prompts_from_file():
                 if prompts:
                     AI_PROMPTS.clear()
                     AI_PROMPTS.update(prompts)
-                    print(f"✅ Prompts rechargés depuis la base de données: {len(prompts)} services")
+                    print(f"✅ Prompts rechargés depuis Supabase: {len(prompts)} services")
                     return True
             
-            # Fallback vers le fichier JSON
-            prompts = get_prompts_from_json()
-            if prompts:
-                AI_PROMPTS.clear()
-                AI_PROMPTS.update(prompts)
-                print(f"✅ Prompts rechargés depuis le fichier JSON: {len(prompts)} services")
-                return True
-            else:
-                print("❌ Aucun prompt trouvé (ni DB ni JSON)")
-                return False
+            print("❌ Aucun prompt trouvé dans Supabase")
+            return False
     except Exception as e:
         print(f"❌ Erreur lors du rechargement des prompts: {e}")
         return False
 
 def update_prompt(service_id, new_prompt):
-    """Met à jour le contenu du prompt pour un service dans la base de données."""
+    """Met à jour le contenu du prompt pour un service dans la base de données Supabase."""
     try:
-        # Essayer d'abord la base de données
         success = update_prompt_in_database(service_id, new_prompt)
         if success:
             # Mettre à jour en mémoire
             if service_id in AI_PROMPTS:
                 AI_PROMPTS[service_id]["prompt"] = new_prompt
-            print(f"✅ Prompt mis à jour dans la base de données pour {service_id}")
+            print(f"✅ Prompt mis à jour dans Supabase pour {service_id}")
             return True
         else:
-            # Fallback vers le fichier JSON
-            success = update_prompt_in_json(service_id, new_prompt)
-            if success:
-                # Mettre à jour en mémoire
-                if service_id in AI_PROMPTS:
-                    AI_PROMPTS[service_id]["prompt"] = new_prompt
-                print(f"✅ Prompt mis à jour dans le fichier JSON pour {service_id}")
-                return True
-            else:
-                print(f"❌ Impossible de mettre à jour le prompt pour {service_id}")
-                return False
+            print(f"❌ Service {service_id} non trouvé dans Supabase")
+            return False
     except Exception as e:
         print(f"❌ Erreur lors de la mise à jour du prompt: {e}")
         return False
@@ -277,90 +255,37 @@ def insert_default_prompts():
             print("⚠️ Supabase non disponible")
             return False
         
-        # Récupérer les prompts depuis le fichier JSON
-        prompts = get_prompts_from_json()
+        # Prompts par défaut intégrés
+        default_prompts = {
+            'analyze_cv': {
+                'service_id': 'analyze_cv',
+                'title': 'Analyse de CV',
+                'description': 'Analyse approfondie d\'un CV avec synthèse, points forts, axes d\'amélioration et recommandations',
+                'prompt': 'ANALYSE APPROFONDIE DE CV - FORMAT JSON\n\nAnalyse ce CV de manière professionnelle et détaillée. Retourne UNIQUEMENT un objet JSON valide avec cette structure exacte :\n\n{\n  "synthesis": "Synthèse du profil en 2-3 phrases maximum",\n  "strengths": [\n    "Point fort 1",\n    "Point fort 2", \n    "Point fort 3",\n    "Point fort 4",\n    "Point fort 5"\n  ],\n  "improvements": [\n    "Axe d\'amélioration 1",\n    "Axe d\'amélioration 2",\n    "Axe d\'amélioration 3",\n    "Axe d\'amélioration 4",\n    "Axe d\'amélioration 5"\n  ],\n  "recommendations": [\n    "Recommandation concrète 1",\n    "Recommandation concrète 2", \n    "Recommandation concrète 3",\n    "Recommandation concrète 4",\n    "Recommandation concrète 5"\n  ],\n  "globalScore": 7,\n  "estimatedTime": "10 min"\n}\n\nRÈGLES IMPORTANTES :\n- Retourne UNIQUEMENT le JSON, sans texte avant ou après\n- Le globalScore doit être un nombre entre 1 et 10\n- Chaque liste doit contenir exactement 5 éléments\n- Utilise un ton professionnel et bienveillant\n- Sois précis et actionnable dans les recommandations\n- La synthèse doit être concise mais informative\n- Analyse le CV en profondeur pour identifier les vrais points forts et axes d\'amélioration\n- Les recommandations doivent être concrètes et applicables immédiatement',
+                'requires_cv': True,
+                'requires_job_offer': False,
+                'requires_questionnaire': False
+            }
+        }
         
-        if prompts:
-            for service_id, prompt_data in prompts.items():
-                _supabase_storage.client.table('ai_prompts').upsert({
-                    'service_id': service_id,
-                    'title': prompt_data.get('title', ''),
-                    'description': prompt_data.get('description', ''),
-                    'prompt': prompt_data.get('prompt', ''),
-                    'requires_cv': prompt_data.get('requires_cv', False),
-                    'requires_job_offer': prompt_data.get('requires_job_offer', False),
-                    'requires_questionnaire': prompt_data.get('requires_questionnaire', False)
-                }).execute()
-            
-            print(f"✅ {len(prompts)} prompts par défaut insérés dans Supabase")
-            return True
+        for service_id, prompt_data in default_prompts.items():
+            _supabase_storage.client.table('ai_prompts').upsert({
+                'service_id': service_id,
+                'title': prompt_data.get('title', ''),
+                'description': prompt_data.get('description', ''),
+                'prompt': prompt_data.get('prompt', ''),
+                'requires_cv': prompt_data.get('requires_cv', False),
+                'requires_job_offer': prompt_data.get('requires_job_offer', False),
+                'requires_questionnaire': prompt_data.get('requires_questionnaire', False)
+            }).execute()
         
-        return False
+        print(f"✅ {len(default_prompts)} prompts par défaut insérés dans Supabase")
+        return True
         
     except Exception as e:
         print(f"❌ Erreur lors de l'insertion des prompts par défaut: {e}")
         return False
 
-# === FONCTIONS FICHIER JSON (FALLBACK) ===
-
-def get_prompts_from_json():
-    """Récupère tous les prompts depuis le fichier JSON (fallback)"""
-    try:
-        import json
-        import os
-        
-        prompts_file = os.path.join(os.path.dirname(__file__), 'ai_service_prompts.json')
-        
-        if os.path.exists(prompts_file):
-            with open(prompts_file, 'r', encoding='utf-8') as f:
-                prompts = json.load(f)
-                print(f"📁 Prompts chargés depuis le fichier JSON: {len(prompts)} services")
-                return prompts
-        else:
-            print("⚠️ Fichier JSON non trouvé")
-            return {}
-            
-    except Exception as e:
-        print(f"❌ Erreur lors du chargement du fichier JSON: {e}")
-        return {}
-
-def get_prompt_from_json(service_id):
-    """Récupère un prompt spécifique depuis le fichier JSON (fallback)"""
-    prompts = get_prompts_from_json()
-    return prompts.get(service_id)
-
-def update_prompt_in_json(service_id, new_prompt):
-    """Met à jour un prompt dans le fichier JSON (fallback)"""
-    try:
-        import json
-        import os
-        
-        prompts_file = os.path.join(os.path.dirname(__file__), 'ai_service_prompts.json')
-        
-        if os.path.exists(prompts_file):
-            with open(prompts_file, 'r', encoding='utf-8') as f:
-                prompts = json.load(f)
-        else:
-            prompts = {}
-        
-        # Mettre à jour le prompt
-        if service_id in prompts:
-            prompts[service_id]["prompt"] = new_prompt
-            
-            # Sauvegarder la configuration mise à jour
-            with open(prompts_file, 'w', encoding='utf-8') as f:
-                json.dump(prompts, f, ensure_ascii=False, indent=2)
-            
-            print(f"📁 Prompt mis à jour dans le fichier JSON pour {service_id}")
-            return True
-        else:
-            print(f"❌ Service {service_id} non trouvé dans le fichier JSON")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Erreur lors de la mise à jour du fichier JSON: {e}")
-        return False
-
 # Charger les prompts au démarrage
-print("🔄 Chargement des prompts depuis la base de données...")
+print("🔄 Chargement des prompts depuis Supabase...")
 reload_prompts_from_file()
