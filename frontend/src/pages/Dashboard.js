@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import CVAnalysisDashboard from '../components/Analysis/CVAnalysisDashboard';
 import { 
   FiMessageSquare, 
   FiFileText, 
@@ -717,18 +718,34 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-          {/* Analyse de CV automatique */}
-          {cvAnalysis && (
-            <div style={{ margin: '2rem 0' }}>
-              <h3 className="revolutionary-section-title" style={{ fontSize: '1.3rem', marginBottom: 12, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <LogoIcon size={32} />
-                Analyse automatique de votre CV
-              </h3>
-              <SimpleMarkdownRenderer content={cvAnalysis} serviceType="analyze_cv" />
-            </div>
+          {/* Analyse de CV avec nouveau dashboard */}
+          {cvAnalysis && documentStatus.cv?.uploaded && (
+            <CVAnalysisDashboard 
+              analysisData={cvAnalysis}
+              loading={cvAnalysisLoading}
+              error={cvAnalysisError}
+              onStartNextStep={() => {
+                // Logique pour passer à l'étape suivante
+                console.log('Démarrage de l\'étape suivante');
+              }}
+            />
           )}
-          {cvAnalysisLoading && documentStatus.cv?.uploaded && <div>Analyse en cours...</div>}
-          {cvAnalysisError && documentStatus.cv?.uploaded && <div style={{ color: '#dc2626' }}>{cvAnalysisError}</div>}
+          {cvAnalysisLoading && documentStatus.cv?.uploaded && !cvAnalysis && (
+            <CVAnalysisDashboard 
+              analysisData={null}
+              loading={true}
+              error={null}
+              onStartNextStep={() => {}}
+            />
+          )}
+          {cvAnalysisError && documentStatus.cv?.uploaded && !cvAnalysis && (
+            <CVAnalysisDashboard 
+              analysisData={null}
+              loading={false}
+              error={cvAnalysisError}
+              onStartNextStep={() => {}}
+            />
+          )}
 
           {/* Analyse de compatibilité */}
           {compatAnalysis && documentStatus.cv?.uploaded && documentStatus.offre_emploi?.uploaded && (
