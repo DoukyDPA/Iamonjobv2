@@ -4,7 +4,7 @@ import logging
 import hashlib
 from datetime import datetime
 from services.stateless_manager import StatelessDataManager
-from services.ai_service import get_or_create_cv_analysis
+# Import supprimé - utilise maintenant le système Mistral via ai_service_prompts
 
 class CVAnalysisPersistence:
     @staticmethod
@@ -23,8 +23,9 @@ class CVAnalysisPersistence:
                     'timestamp': existing['timestamp']
                 }
             
-            # Utiliser la fonction existante
-            analysis_result = get_or_create_cv_analysis(cv_content)
+            # Utiliser le système Mistral via ai_service_prompts
+            from services.ai_service_prompts import execute_ai_service
+            analysis_result = execute_ai_service("analyze_cv", cv_content, force_new=force_new)
             
             # Sauvegarder en cache
             cache_data = {
@@ -44,9 +45,12 @@ class CVAnalysisPersistence:
             
         except Exception as e:
             logging.error(f"Erreur persistance: {e}")
+            # En cas d'erreur, utiliser directement le système Mistral
+            from services.ai_service_prompts import execute_ai_service
+            analysis_result = execute_ai_service("analyze_cv", cv_content, force_new=force_new)
             return {
                 'success': True,
-                'analysis': get_or_create_cv_analysis(cv_content),
+                'analysis': analysis_result,
                 'cached': False,
                 'error': str(e)
             } 
