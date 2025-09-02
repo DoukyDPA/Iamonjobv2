@@ -24,7 +24,7 @@ def call_mistral_api(prompt: str, context: Optional[str] = None, service_id: str
         mistral_api_key = os.environ.get("MISTRAL_API_KEY")
         
         if not mistral_api_key:
-            return _fallback_response(prompt, service_id=service_id)
+            raise Exception("MISTRAL_API_KEY non configurée")
         
         # Construction du prompt complet
         full_prompt = _build_prompt(prompt, context)
@@ -64,7 +64,17 @@ def call_mistral_api(prompt: str, context: Optional[str] = None, service_id: str
         
         if response.status_code == 200:
             response_data = response.json()
+            print(f"🔍 Réponse Mistral brute: {response_data}")
+            
+            if 'choices' not in response_data or len(response_data['choices']) == 0:
+                print(f"❌ Aucun choix dans la réponse Mistral")
+                raise Exception("Réponse Mistral vide - aucun choix disponible")
+            
             ai_response = response_data['choices'][0]['message']['content']
+            
+            if not ai_response or ai_response.strip() == "":
+                print(f"❌ Réponse Mistral vide ou nulle")
+                raise Exception("Réponse Mistral vide - contenu nul")
             
             # === CALCUL DES TOKENS CONSOMMÉS ===
             usage = response_data.get('usage', {})
@@ -74,6 +84,7 @@ def call_mistral_api(prompt: str, context: Optional[str] = None, service_id: str
             
             print(f"✅ Réponse Mistral reçue: {len(ai_response)} caractères")
             print(f"🔢 Tokens consommés: {total_tokens} (entrée: {input_tokens}, sortie: {output_tokens})")
+            print(f"📝 Aperçu réponse: {ai_response[:200]}...")
             
             # === ENREGISTREMENT DES TOKENS ===
             try:
@@ -110,14 +121,14 @@ def call_mistral_api(prompt: str, context: Optional[str] = None, service_id: str
         else:
             print(f"❌ Erreur API Mistral: {response.status_code}")
             print(f"📋 Réponse complète: {response.text}")
-            return _fallback_response(prompt)
+            raise Exception(f"Erreur API Mistral {response.status_code}: {response.text}")
             
     except Exception as e:
         print(f"❌ Erreur appel Mistral: {e}")
         print(f"🔍 Type d'erreur: {type(e).__name__}")
         import traceback
         traceback.print_exc()
-        return _fallback_response(prompt)
+        raise e
 
 def _build_prompt(prompt: str, context: Optional[str] = None) -> str:
     """Construit le prompt complet avec contexte"""
