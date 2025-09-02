@@ -543,7 +543,7 @@ const Dashboard = () => {
             </button>
           </div>
 
-          {/* Barre de progression compacte intégrée dans l'en-tête */}
+          {/* Barre de progression compacte avec boutons d'upload */}
           <div className="mini-progress-bar">
             <div className="mini-progress-info">
               <span className="mini-progress-text">Progression: {documentsCount}/3 documents</span>
@@ -556,6 +556,71 @@ const Dashboard = () => {
                 className="mini-progress-fill"
                 style={{ width: `${(documentsCount / 3) * 100}%` }}
               />
+            </div>
+            
+            {/* Boutons d'upload compacts */}
+            <div className="mini-upload-buttons">
+              <div className="mini-doc-item">
+                <div className="mini-doc-icon" style={{ backgroundColor: documentStatus.cv?.uploaded ? '#0a6b79' : '#e5e7eb' }}>
+                  <FiFileText style={{ color: documentStatus.cv?.uploaded ? 'white' : '#9ca3af', fontSize: '14px' }} />
+                </div>
+                <span className="mini-doc-label">CV</span>
+                {!documentStatus.cv?.uploaded && (
+                  <button 
+                    className="mini-upload-btn"
+                    onClick={() => document.getElementById('cv-upload')?.click()}
+                    title="Uploader un CV"
+                  >
+                    <FiUpload style={{ fontSize: '12px' }} />
+                  </button>
+                )}
+                <input
+                  id="cv-upload"
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={(e) => handleFileUpload(e, 'cv')}
+                  style={{ display: 'none' }}
+                />
+              </div>
+
+              <div className="mini-doc-item">
+                <div className="mini-doc-icon" style={{ backgroundColor: documentStatus.questionnaire?.uploaded ? '#f59e0b' : '#e5e7eb' }}>
+                  <FiUser style={{ color: documentStatus.questionnaire?.uploaded ? 'white' : '#9ca3af', fontSize: '14px' }} />
+                </div>
+                <span className="mini-doc-label">Questionnaire</span>
+                {!documentStatus.questionnaire?.uploaded && (
+                  <button 
+                    className="mini-upload-btn"
+                    onClick={() => setShowQuestionnaireModal(true)}
+                    title="Remplir le questionnaire"
+                  >
+                    <FiEdit3 style={{ fontSize: '12px' }} />
+                  </button>
+                )}
+              </div>
+
+              <div className="mini-doc-item">
+                <div className="mini-doc-icon" style={{ backgroundColor: documentStatus.offre_emploi?.uploaded ? '#22c55e' : '#e5e7eb' }}>
+                  <FiTarget style={{ color: documentStatus.offre_emploi?.uploaded ? 'white' : '#9ca3af', fontSize: '14px' }} />
+                </div>
+                <span className="mini-doc-label">Offre</span>
+                {!documentStatus.offre_emploi?.uploaded && (
+                  <button 
+                    className="mini-upload-btn"
+                    onClick={() => document.getElementById('offre-upload')?.click()}
+                    title="Uploader une offre d'emploi"
+                  >
+                    <FiUpload style={{ fontSize: '12px' }} />
+                  </button>
+                )}
+                <input
+                  id="offre-upload"
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={(e) => handleFileUpload(e, 'offre_emploi')}
+                  style={{ display: 'none' }}
+                />
+              </div>
             </div>
           </div>
           {/* Analyse de CV automatique */}
