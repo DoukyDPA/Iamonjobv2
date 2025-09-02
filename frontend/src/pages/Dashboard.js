@@ -544,9 +544,9 @@ const Dashboard = () => {
                   borderRadius: '12px',
                   border: 'none',
                   background: activeTab === tab.id 
-                    ? 'rgba(255, 255, 255, 0.2)' 
+                    ? 'white' 
                     : 'rgba(255, 255, 255, 0.1)',
-                  color: 'white',
+                  color: activeTab === tab.id ? '#0a6b79' : 'white',
                   fontWeight: '600',
                   fontSize: '0.8rem',
                   cursor: 'pointer',
@@ -555,12 +555,14 @@ const Dashboard = () => {
                 }}
                 onMouseEnter={(e) => {
                   if (activeTab !== tab.id) {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.15)';
+                    e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                    e.target.style.color = 'white';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (activeTab !== tab.id) {
                     e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                    e.target.style.color = 'white';
                   }
                 }}
               >
@@ -585,7 +587,8 @@ const Dashboard = () => {
         padding: '2rem',
         background: 'transparent'
       }}>
-        {/* Section Documents harmonisée */}
+        {/* Section Documents harmonisée - onglet documents */}
+        {activeTab === 'documents' && (
         <div style={{
           background: 'rgba(255, 255, 255, 0.05)',
           borderRadius: '20px',
@@ -629,38 +632,7 @@ const Dashboard = () => {
             </button>
           </div>
 
-          {/* Barre de progression */}
-          <div style={{ marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '0.9rem', fontWeight: '500' }}>
-                Progression: {documentsCount}/3 documents
-              </span>
-              <div style={{ 
-                backgroundColor: documentsCount === 3 ? '#22c55e' : '#c7356c',
-                color: 'white',
-                padding: '0.25rem 0.75rem',
-                borderRadius: '12px',
-                fontSize: '0.8rem',
-                fontWeight: '600'
-              }}>
-                {documentsCount === 3 ? '✅ Complet' : `${documentsCount}/3`}
-              </div>
-            </div>
-            <div style={{
-              width: '100%',
-              height: '8px',
-              background: 'rgba(255, 255, 255, 0.1)',
-              borderRadius: '4px',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                height: '100%',
-                background: 'linear-gradient(90deg, #0a6b79 0%, #14b8a6 100%)',
-                width: `${(documentsCount / 3) * 100}%`,
-                transition: 'width 0.3s ease'
-              }}></div>
-            </div>
-          </div>
+          
 
           {/* Boutons d'upload opérationnels */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
@@ -1090,6 +1062,7 @@ const Dashboard = () => {
             <PartnerJobs />
           </div>
         </div>
+        )}
 
         {/* Autres onglets avec le même style */}
         {activeTab === 'evaluate' && (
