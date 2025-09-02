@@ -927,6 +927,40 @@ body {
   color: white;
 }
 
+/* ===== STYLES POUR LA RÉINITIALISATION DE MOT DE PASSE ===== */
+.revolutionary-auth-success {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.revolutionary-success-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #0a6b79 0%, #22c55e 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  color: white;
+  font-size: 2rem;
+}
+
+.revolutionary-auth-success p {
+  margin-bottom: 1rem;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.revolutionary-auth-help {
+  font-size: 0.875rem;
+  color: #6b7280;
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #0a6b79;
+}
+
 .revolutionary-checkbox-custom svg {
   width: 14px;
   height: 14px;
