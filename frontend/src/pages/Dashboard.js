@@ -569,6 +569,19 @@ const Dashboard = () => {
                   className="mini-upload-btn"
                   onClick={() => document.getElementById('cv-upload')?.click()}
                   title={documentStatus.cv?.uploaded ? "Remplacer le CV" : "Uploader un CV"}
+                  style={{
+                    background: '#c7356c',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '0.25rem',
+                    cursor: 'pointer',
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
                 >
                   <FiUpload style={{ fontSize: '12px' }} />
                 </button>
@@ -590,6 +603,19 @@ const Dashboard = () => {
                   className="mini-upload-btn"
                   onClick={() => setShowQuestionnaireModal(true)}
                   title={documentStatus.questionnaire?.uploaded ? "Modifier le questionnaire" : "Remplir le questionnaire"}
+                  style={{
+                    background: '#c7356c',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '0.25rem',
+                    cursor: 'pointer',
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
                 >
                   <FiEdit3 style={{ fontSize: '12px' }} />
                 </button>
@@ -604,6 +630,19 @@ const Dashboard = () => {
                   className="mini-upload-btn"
                   onClick={() => document.getElementById('offre-upload')?.click()}
                   title={documentStatus.offre_emploi?.uploaded ? "Remplacer l'offre d'emploi" : "Uploader une offre d'emploi"}
+                  style={{
+                    background: '#c7356c',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '0.25rem',
+                    cursor: 'pointer',
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
                 >
                   <FiUpload style={{ fontSize: '12px' }} />
                 </button>
