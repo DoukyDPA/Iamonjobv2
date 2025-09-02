@@ -957,7 +957,7 @@ const Dashboard = () => {
               <LogoIcon size={24} />
               Améliorer mon CV
             </h2>
-            <ServicesGrid filterTheme="optimize_profile" />
+            <ServicesGrid filterTheme="improve_cv" />
           </div>
         )}
 
@@ -1003,7 +1003,7 @@ const Dashboard = () => {
               <LogoIcon size={24} />
               Préparer l'entretien
             </h2>
-            <ServicesGrid filterTheme="interview_tips" />
+            <ServicesGrid filterTheme="interview_prep" />
           </div>
         )}
 
@@ -1026,7 +1026,7 @@ const Dashboard = () => {
               <LogoIcon size={24} />
               Tout changer
             </h2>
-            <ServicesGrid filterTheme="career_development" />
+            <ServicesGrid filterTheme="career_project" />
           </div>
         )}
       </div>
