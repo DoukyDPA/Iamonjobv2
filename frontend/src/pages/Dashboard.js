@@ -521,7 +521,7 @@ const Dashboard = () => {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
             <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0 }}>
               <LogoIcon size={36} />
-              Mes Documents - pour personnaliser l'analyse
+              Vos Documents pour personnaliser l'analyse
             </h2>
             <button 
               onClick={() => setShowAdviceModal(true)}
