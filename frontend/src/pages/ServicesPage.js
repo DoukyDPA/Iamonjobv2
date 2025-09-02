@@ -53,7 +53,7 @@ const ServicesPage = () => {
           services: [
             {
               id: 'analyze_cv',
-              title: 'Évaluer mon CV',
+              title: 'Évaluez votre CV',
               coachAdvice: 'Obtenez une évaluation professionnelle de votre CV avec des recommandations concrètes pour l\'optimiser.',
               slug: 'analyze-cv',
               requiresCV: true,
@@ -63,7 +63,7 @@ const ServicesPage = () => {
             },
             {
               id: 'cv_ats_optimization',
-              title: 'Optimiser pour les ATS',
+              title: 'Optimisez votre CV pour les ATS',
               coachAdvice: 'Adaptez votre CV pour qu\'il soit parfaitement lisible par les systèmes de tri automatiques des entreprises.',
               slug: 'cv-ats-optimization',
               requiresCV: true,
@@ -88,7 +88,7 @@ const ServicesPage = () => {
             },
             {
               id: 'professional_pitch',
-              title: 'Pitch professionnel',
+              title: 'Présentez-vous en 30 secondes chrono',
               coachAdvice: 'Développez un pitch percutant pour vous présenter efficacement en entretien ou en networking.',
               slug: 'professional-pitch',
               requiresCV: true,
@@ -103,7 +103,7 @@ const ServicesPage = () => {
           services: [
             {
               id: 'reconversion_analysis',
-              title: 'Évaluer une reconversion',
+              title: 'Découvrez des pistes de reconversion',
               coachAdvice: 'Explorez une reconversion professionnelle avec une analyse détaillée des étapes et opportunités.',
               slug: 'reconversion-analysis',
               requiresCV: true,
