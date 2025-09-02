@@ -106,89 +106,31 @@ const CVAnalysisDashboard = ({ analysisData, loading, error, onStartNextStep }) 
         ))}
       </div>
 
-      {/* Contenu principal */}
+      {/* Bilan rapide centré */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '2rem',
+        display: 'flex',
+        justifyContent: 'center',
         marginBottom: '2rem'
       }}>
-        {/* Section documents (gauche) */}
         <div style={{
           background: 'white',
-          padding: '1.5rem',
-          borderRadius: '12px',
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-        }}>
-          <h3 style={{ margin: '0 0 1rem 0', color: '#1f2937', fontSize: '1.1rem', fontWeight: '600' }}>
-            Vos documents pour personnaliser l'analyse
-          </h3>
-          <button style={{
-            width: '100%',
-            padding: '0.75rem',
-            background: '#0a6b79',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: '500',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            marginBottom: '1rem'
-          }}>
-            📄 Ajouter un document
-          </button>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#6b7280', fontWeight: '500' }}>
-              Progression
-            </label>
-            <div style={{
-              width: '100%',
-              height: '8px',
-              background: '#e5e7eb',
-              borderRadius: '4px',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                height: '100%',
-                background: '#0a6b79',
-                width: '40%',
-                transition: 'width 0.3s ease'
-              }}></div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-              <div style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', background: '#fef2f2', color: '#dc2626', fontSize: '1.2rem' }}>📄</div>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <span style={{ fontWeight: '500', color: '#1f2937', fontSize: '0.9rem' }}>CV_Camille.pdf</span>
-                <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>164 Ko</span>
-              </div>
-              <button style={{ padding: '0.5rem 0.75rem', background: 'white', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.8rem', cursor: 'pointer' }}>Ouvrir</button>
-            </div>
-          </div>
-        </div>
-
-        {/* Bilan rapide (droite) */}
-        <div style={{
-          background: 'white',
-          padding: '1.5rem',
-          borderRadius: '12px',
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+          padding: '2rem',
+          borderRadius: '16px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          textAlign: 'center'
+          textAlign: 'center',
+          maxWidth: '400px',
+          width: '100%'
         }}>
-          <h3 style={{ margin: '0 0 1.5rem 0', color: '#1f2937', fontSize: '1.1rem', fontWeight: '600' }}>
+          <h3 style={{ margin: '0 0 1.5rem 0', color: '#1f2937', fontSize: '1.3rem', fontWeight: '600' }}>
             ✩ Bilan rapide
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.5rem' }}>
             <div style={{
-              width: '80px',
-              height: '80px',
+              width: '100px',
+              height: '100px',
               borderRadius: '50%',
               background: 'linear-gradient(135deg, #0a6b79, #14b8a6)',
               display: 'flex',
@@ -200,20 +142,20 @@ const CVAnalysisDashboard = ({ analysisData, loading, error, onStartNextStep }) 
             }}>
               <div style={{
                 position: 'absolute',
-                inset: '4px',
+                inset: '6px',
                 borderRadius: '50%',
                 background: 'white',
                 zIndex: 1
               }}></div>
-              <span style={{ fontSize: '1.8rem', fontWeight: '700', color: '#0a6b79', zIndex: 2, position: 'relative' }}>
+              <span style={{ fontSize: '2.2rem', fontWeight: '700', color: '#0a6b79', zIndex: 2, position: 'relative' }}>
                 {parsedData.globalScore || 7}
               </span>
-              <span style={{ fontSize: '0.9rem', color: '#6b7280', zIndex: 2, position: 'relative' }}>/10</span>
+              <span style={{ fontSize: '1rem', color: '#6b7280', zIndex: 2, position: 'relative' }}>/10</span>
             </div>
-            <span style={{ fontSize: '0.9rem', color: '#6b7280', fontWeight: '500' }}>Note globale</span>
+            <span style={{ fontSize: '1rem', color: '#6b7280', fontWeight: '500' }}>Note globale</span>
           </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <p style={{ margin: 0, color: '#374151', lineHeight: '1.5' }}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <p style={{ margin: 0, color: '#374151', lineHeight: '1.6', fontSize: '1rem' }}>
               Votre profil est solide. Quelques ajustements peuvent faire la différence.
             </p>
           </div>
@@ -222,17 +164,19 @@ const CVAnalysisDashboard = ({ analysisData, loading, error, onStartNextStep }) 
           </div>
           <button style={{
             width: '100%',
-            padding: '0.75rem',
-            background: '#0a6b79',
+            padding: '1rem',
+            background: 'linear-gradient(135deg, #0a6b79, #14b8a6)',
             color: 'white',
             border: 'none',
-            borderRadius: '8px',
-            fontWeight: '500',
+            borderRadius: '12px',
+            fontWeight: '600',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '0.5rem'
+            gap: '0.5rem',
+            fontSize: '1rem',
+            transition: 'all 0.2s ease'
           }}>
             ▶️ Commencer maintenant
           </button>
@@ -362,31 +306,7 @@ const CVAnalysisDashboard = ({ analysisData, loading, error, onStartNextStep }) 
           </div>
         </div>
 
-        {/* Petits indicateurs */}
-        <div style={{
-          background: 'white',
-          borderRadius: '12px',
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            padding: '1rem 1.5rem',
-            background: '#f9fafb',
-            borderBottom: '1px solid #e5e7eb'
-          }}>
-            <h4 style={{ margin: 0, color: '#1f2937', fontSize: '1rem', fontWeight: '600' }}>Petits indicateurs</h4>
-          </div>
-          <div style={{ padding: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0', borderBottom: '1px solid #f3f4f6' }}>
-              <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>Profil complété</span>
-              <span style={{ color: '#0a6b79', fontWeight: '600', fontSize: '0.9rem' }}>40%</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0' }}>
-              <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>Recommandations suivies</span>
-              <span style={{ color: '#0a6b79', fontWeight: '600', fontSize: '0.9rem' }}>2/5</span>
-            </div>
-          </div>
-        </div>
+
       </div>
     </div>
   );
