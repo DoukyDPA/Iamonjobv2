@@ -1,389 +1,308 @@
-# services/ai_service_mistral.py - Service IA avec vraie API Mistral
-import os
-import requests
-import json
-import logging
-from typing import Optional
+# FICHIER : services/ai_service_prompts.py
+# SYSTÈME HYBRIDE : Base de données + JSON en fallback
 
-# Importer les nouveaux services
-# (aucun import global de execute_ai_service ou AI_PROMPTS)
-# Si besoin, fais l'import local dans la fonction concernée.
+# Dictionnaire vide qui sera rempli depuis la base de données ou le JSON
+AI_PROMPTS = {}
 
-def call_mistral_api(prompt: str, context: Optional[str] = None, service_id: str = None) -> str:
-    """
-    Appelle l'API Mistral pour obtenir une réponse IA avec tracking des tokens
-    
-    Args:
-        prompt: Question/demande à l'IA
-        context: Contexte optionnel (contenu CV, offre, etc.)
-    
-    Returns:
-        str: Réponse de Mistral IA
-    """
+# Chargement automatique des prompts au démarrage
+print("🔄 Chargement des prompts depuis la base de données...")
+try:
+    reload_prompts_from_file()
+except Exception as e:
+    print(f"⚠️ Erreur lors du chargement initial des prompts: {e}")
+
+def execute_ai_service(service_id, cv_content, job_content="", questionnaire_content="", user_notes="", force_new=False):
+    """Fonction générique pour exécuter un service IA selon l'identifiant"""
     try:
-        mistral_api_key = os.environ.get("MISTRAL_API_KEY")
+        from services.ai_service_mistral import call_mistral_api
         
-        if not mistral_api_key:
-            raise Exception("MISTRAL_API_KEY non configurée")
-        
-        # Construction du prompt complet
-        full_prompt = _build_prompt(prompt, context)
-        
-        # Configuration de l'appel API
-        url = "https://api.mistral.ai/v1/chat/completions"
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {mistral_api_key}"
-        }
-        
-        payload = {
-            "model": "mistral-small-latest",  # Modèle rapide et efficace
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "Tu es un expert en ressources humaines et coaching emploi. Tu aides les candidats à optimiser leur recherche d'emploi avec des conseils précis et actionnables. Réponds toujours en français avec un ton professionnel mais bienveillant."
-                },
-                {
-                    "role": "user", 
-                    "content": full_prompt
-                }
-            ],
-            "max_tokens": 1000,
-            "temperature": 0.7,
-            "top_p": 1,
-            "stream": False
-        }
-        
-        print(f"🤖 Appel Mistral API...")
-        
-        # === TRACKING DES TOKENS ===
-        # Estimer les tokens d'entrée (prompt + contexte)
-        estimated_input_tokens = len(full_prompt.split()) * 1.3  # Estimation approximative
-        
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
-        
-        if response.status_code == 200:
-            response_data = response.json()
-            ai_response = response_data['choices'][0]['message']['content']
-            
-            # === CALCUL DES TOKENS CONSOMMÉS ===
-            usage = response_data.get('usage', {})
-            input_tokens = usage.get('prompt_tokens', estimated_input_tokens)
-            output_tokens = usage.get('completion_tokens', 0)
-            total_tokens = usage.get('total_tokens', input_tokens + output_tokens)
-            
-            print(f"✅ Réponse Mistral reçue: {len(ai_response)} caractères")
-            print(f"🔢 Tokens consommés: {total_tokens} (entrée: {input_tokens}, sortie: {output_tokens})")
-            
-            # === ENREGISTREMENT DES TOKENS ===
-            try:
-                # Récupérer l'email de l'utilisateur depuis le contexte Flask
-                from flask import request
-                if hasattr(request, 'current_user') and request.current_user:
-                    user_email = request.current_user.email
-                    
-                    # Importer et utiliser le token tracker
-                    from services.token_tracker import record_tokens
-                    
-                    # Enregistrer la consommation de tokens
-                    service_name = "mistral_api_call"
-                    if "cv" in prompt.lower():
-                        service_name = "cv_analysis"
-                    elif "compatibilite" in prompt.lower() or "matching" in prompt.lower():
-                        service_name = "compatibility_check"
-                    elif "lettre" in prompt.lower():
-                        service_name = "letter_generation"
-                    elif "entretien" in prompt.lower():
-                        service_name = "interview_prep"
-                    
-                    success = record_tokens(user_email, int(total_tokens), service_name)
-                    if success:
-                        print(f"✅ Tokens enregistrés pour {user_email}: {total_tokens} tokens")
-                    else:
-                        print(f"⚠️ Échec enregistrement tokens pour {user_email}")
-                        
-            except Exception as token_error:
-                print(f"⚠️ Erreur tracking tokens: {token_error}")
-                # Ne pas faire échouer l'appel principal pour une erreur de tracking
-            
-            return ai_response
+        # Récupérer le prompt depuis le dictionnaire centralisé
+        if service_id in AI_PROMPTS:
+            service_config = AI_PROMPTS[service_id]
+            prompt_template = service_config["prompt"]
         else:
-            print(f"❌ Erreur API Mistral: {response.status_code}")
-            print(f"📋 Réponse complète: {response.text}")
-            raise Exception(f"Erreur API Mistral {response.status_code}: {response.text}")
+            # Si le service n'est pas dans AI_PROMPTS, essayer de recharger
+            print(f"⚠️ Service {service_id} non trouvé dans AI_PROMPTS, tentative de rechargement...")
+            try:
+                reload_prompts_from_file()
+                if service_id in AI_PROMPTS:
+                    service_config = AI_PROMPTS[service_id]
+                    prompt_template = service_config["prompt"]
+                else:
+                    raise Exception(f"Service {service_id} non trouvé dans AI_PROMPTS après rechargement")
+            except Exception as e:
+                print(f"❌ Erreur lors du rechargement des prompts: {e}")
+                raise Exception(f"Impossible de charger le service {service_id}: {e}")
+        
+        # Pour l'analyse CV, utiliser le système de cache avec force_new
+        if service_id == "analyze_cv" and cv_content:
+            from services.cv_analysis_persistence import CVAnalysisPersistence
+            cache_result = CVAnalysisPersistence.get_persistent_analysis(cv_content, force_new=force_new)
+            if cache_result['success']:
+                print(f"📄 Analyse CV {'(cache)' if cache_result['cached'] else '(nouvelle)'}")
+                return cache_result['analysis']
             
+            print(f"🔍 DEBUG execute_ai_service pour {service_id}:")
+            print(f"   Prompt template: {prompt_template[:200]}...")
+            print(f"   CV content length: {len(cv_content or '')}")
+            print(f"   Job content length: {len(job_content or '')}")
+            print(f"   Questionnaire content length: {len(questionnaire_content or '')}")
+            
+            # Remplacer les variables de contexte dans le prompt
+            print(f"🔍 AVANT REMPLACEMENT - Prompt template: {prompt_template[:200]}...")
+            print(f"🔍 Variables disponibles:")
+            print(f"   cv_content: {len(cv_content or '')} caractères")
+            print(f"   job_content: {len(job_content or '')} caractères") 
+            print(f"   questionnaire_content: {len(questionnaire_content or '')} caractères")
+            print(f"   user_notes: {len(user_notes or '')} caractères")
+            
+            prompt = prompt_template.replace("{cv_content}", cv_content or "CV non disponible")
+            prompt = prompt.replace("{job_content}", job_content or "Offre d'emploi non disponible")
+            prompt = prompt.replace("{questionnaire_content}", questionnaire_content or "Questionnaire non disponible")
+            prompt = prompt.replace("{user_notes}", user_notes or "")
+            
+            print(f"🔍 APRÈS REMPLACEMENT - Prompt final: {prompt[:200]}...")
+            
+            # Remplacer les placeholders dans le prompt
+            prompt = prompt.replace("{questionnaire_instruction}", 
+                "Analysez le profil personnel fourni pour personnaliser l'analyse." if questionnaire_content else 
+                "Analysez le CV et l'offre d'emploi fournis.")
+            
+            prompt = prompt.replace("{questionnaire_context}", 
+                f"\n\nCONTEXTE PERSONNEL:\n{questionnaire_content}" if questionnaire_content else "")
+            
+            print(f"   Prompt final length: {len(prompt)}")
+            print(f"   Prompt final preview: {prompt[:300]}...")
+            
+            # Appeler l'API avec le prompt personnalisé (sans contexte séparé)
+            return call_mistral_api(prompt, service_id=service_id)
+        else:
+            # Fallback pour les services non configurés
+            prompt = f"SERVICE: {service_id}\nCV:\n{cv_content}\n\nOFFRE:\n{job_content}\n\nQUESTIONNAIRE:\n{questionnaire_content}\n\nNOTES:\n{user_notes}"
+            return call_mistral_api(prompt, service_id=service_id)
+            
+    except ImportError as e:
+        raise Exception(f"Import error pour {service_id}: {e}")
     except Exception as e:
-        print(f"❌ Erreur appel Mistral: {e}")
-        print(f"🔍 Type d'erreur: {type(e).__name__}")
-        import traceback
-        traceback.print_exc()
+        raise Exception(f"Erreur lors de l'exécution du service {service_id}: {str(e)}")
+
+def generate_generic_service(service_id, cv_content, job_content="", questionnaire_content="", user_notes=""):
+    """Fonction générique pour tous les services"""
+    return execute_ai_service(
+        service_id=service_id,
+        cv_content=cv_content,
+        job_content=job_content,
+        questionnaire_content=questionnaire_content,
+        user_notes=user_notes
+    )
+
+# === FONCTIONS UTILITAIRES AVEC BASE DE DONNÉES ===
+
+def get_all_prompts():
+    """Retourne la configuration complète des prompts depuis Supabase uniquement."""
+    return get_prompts_from_database()
+
+def get_prompt(service_id):
+    """Retourne le prompt d'un service donné depuis Supabase uniquement."""
+    return get_prompt_from_database(service_id)
+
+def reload_prompts_from_file():
+    """Recharge les prompts depuis la base de données ou le fichier JSON"""
+    try:
+        # Essayer d'abord la base de données
+        prompts = get_prompts_from_database()
+        if prompts:
+            AI_PROMPTS.clear()
+            AI_PROMPTS.update(prompts)
+            print(f"✅ Prompts rechargés depuis la base de données: {len(prompts)} services")
+            return True
+        else:
+            # Si pas de prompts en DB, essayer de créer la table
+            print("⚠️ Aucun prompt en base, tentative de création de la table...")
+            if create_prompts_table():
+                # Réessayer de récupérer les prompts
+                prompts = get_prompts_from_database()
+                if prompts:
+                    AI_PROMPTS.clear()
+                    AI_PROMPTS.update(prompts)
+                    print(f"✅ Prompts rechargés depuis la base de données: {len(prompts)} services")
+                    return True
+            
+            raise Exception("Aucun prompt trouvé dans Supabase")
+    except Exception as e:
+        print(f"❌ Erreur lors du rechargement des prompts: {e}")
         raise e
 
-def _build_prompt(prompt: str, context: Optional[str] = None) -> str:
-    """Construit le prompt complet avec contexte"""
-    
-    if context:
-        return f"""CONTEXTE:
-{context}
+def update_prompt(service_id, new_prompt):
+    """Met à jour le contenu du prompt pour un service dans la base de données."""
+    try:
+        # Essayer d'abord la base de données
+        success = update_prompt_in_database(service_id, new_prompt)
+        if success:
+            # Mettre à jour en mémoire
+            if service_id in AI_PROMPTS:
+                AI_PROMPTS[service_id]["prompt"] = new_prompt
+            print(f"✅ Prompt mis à jour dans la base de données pour {service_id}")
+            return True
+        else:
+            # Fallback vers le fichier JSON
+            success = update_prompt_in_json(service_id, new_prompt)
+            if success:
+                # Mettre à jour en mémoire
+                if service_id in AI_PROMPTS:
+                    AI_PROMPTS[service_id]["prompt"] = new_prompt
+                print(f"✅ Prompt mis à jour dans le fichier JSON pour {service_id}")
+                return True
+            else:
+                print(f"❌ Impossible de mettre à jour le prompt pour {service_id}")
+                return False
+    except Exception as e:
+        print(f"❌ Erreur lors de la mise à jour du prompt: {e}")
+        return False
 
-DEMANDE:
-{prompt}
+# === FONCTIONS BASE DE DONNÉES ===
 
-Analyse le contexte fourni et réponds de manière détaillée et structurée."""
-    else:
-        return prompt
-
-def _fallback_response(prompt: str, service_id: str = None) -> str:
-    """Réponse de fallback si l'API Mistral n'est pas disponible"""
-    
-    prompt_lower = prompt.lower()
-    
-    # Priorité 0 : Services identifiés par leur ID (plus spécifique)
-    if service_id:
-        service_id_lower = service_id.lower()
+def get_prompts_from_database():
+    """Récupère tous les prompts depuis la base de données Supabase"""
+    try:
+        # Importer la connexion à Supabase
+        from services.supabase_storage import _supabase_storage
         
-        # Services de lettre de motivation
-        if "cover_letter" in service_id_lower or "letter" in service_id_lower:
-            return """✉️ **Génération de lettre de motivation** (Service temporairement indisponible)
-
-La génération de lettre de motivation nécessite une configuration API.
-
-💡 **Pour obtenir une lettre complète :**
-- Contactez l'administrateur pour configurer l'API Mistral
-- Vos documents ont été enregistrés et seront utilisés dès que le service sera disponible
-
-*Fonctionnalité temporairement désactivée.*"""
+        if not _supabase_storage or not _supabase_storage.is_available():
+            print("⚠️ Supabase non disponible")
+            return None
         
-        # Services ATS
-        elif "ats" in service_id_lower:
-            return """🎯 **Optimisation ATS** (Service temporairement indisponible)
+        # Récupérer tous les prompts
+        response = _supabase_storage.client.table('ai_prompts').select('*').execute()
+        
+        if response.data:
+            prompts = {}
+            for row in response.data:
+                prompts[row['service_id']] = {
+                    "id": row['service_id'],
+                    "title": row['title'],
+                    "description": row['description'],
+                    "prompt": row['prompt'],
+                    "requires_cv": bool(row['requires_cv']),
+                    "requires_job_offer": bool(row['requires_job_offer']),
+                    "requires_questionnaire": bool(row['requires_questionnaire'])
+                }
+            return prompts
+        else:
+            print("⚠️ Aucun prompt trouvé dans la base de données")
+            return None
+        
+    except Exception as e:
+        print(f"❌ Erreur base de données Supabase: {e}")
+        return None
 
-L'optimisation ATS de votre CV nécessite une configuration API.
+def get_prompt_from_database(service_id):
+    """Récupère un prompt spécifique depuis la base de données Supabase"""
+    try:
+        from services.supabase_storage import _supabase_storage
+        
+        if not _supabase_storage or not _supabase_storage.is_available():
+            print("⚠️ Supabase non disponible")
+            return None
+        
+        response = _supabase_storage.client.table('ai_prompts').select('*').eq('service_id', service_id).execute()
+        
+        if response.data and len(response.data) > 0:
+            row = response.data[0]
+            return {
+                "id": row['service_id'],
+                "title": row['title'],
+                "description": row['description'],
+                "prompt": row['prompt'],
+                "requires_cv": bool(row['requires_cv']),
+                "requires_job_offer": bool(row['requires_job_offer']),
+                "requires_questionnaire": bool(row['requires_questionnaire'])
+            }
+        return None
+        
+    except Exception as e:
+        print(f"❌ Erreur base de données Supabase: {e}")
+        return None
 
-💡 **Pour obtenir une optimisation complète :**
-- Contactez l'administrateur pour configurer l'API Mistral
-- Votre CV a été enregistré et sera optimisé dès que le service sera disponible
+def update_prompt_in_database(service_id, new_prompt):
+    """Met à jour un prompt dans la base de données Supabase"""
+    try:
+        from services.supabase_storage import _supabase_storage
+        
+        if not _supabase_storage or not _supabase_storage.is_available():
+            print("⚠️ Supabase non disponible")
+            return False
+        
+        response = _supabase_storage.client.table('ai_prompts').update({
+            'prompt': new_prompt,
+            'updated_at': 'now()'
+        }).eq('service_id', service_id).execute()
+        
+        success = len(response.data) > 0
+        return success
+        
+    except Exception as e:
+        print(f"❌ Erreur base de données Supabase: {e}")
+        return False
 
-*Fonctionnalité temporairement désactivée.*"""
-    
-    # Priorité 1 : Services de compatibilité/matching (plus spécifique)
-    if ("compatibilit" in prompt_lower or "matching" in prompt_lower or 
-        ("offre" in prompt_lower and "emploi" in prompt_lower)):
-        return """🎯 **Analyse de compatibilité** (Service temporairement indisponible)
+def create_prompts_table():
+    """Crée la table ai_prompts dans Supabase si elle n'existe pas"""
+    try:
+        from services.supabase_storage import _supabase_storage
+        
+        if not _supabase_storage or not _supabase_storage.is_available():
+            print("⚠️ Supabase non disponible")
+            return False
+        
+        # Vérifier si la table existe en essayant de récupérer un prompt
+        response = _supabase_storage.client.table('ai_prompts').select('service_id').limit(1).execute()
+        
+        if not response.data:
+            print("⚠️ Table ai_prompts vide, insertion des prompts par défaut...")
+            insert_default_prompts()
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Erreur lors de la création de la table: {e}")
+        return False
 
-L'analyse de compatibilité nécessite une configuration API.
+def insert_default_prompts():
+    """Insère les prompts par défaut dans Supabase"""
+    try:
+        from services.supabase_storage import _supabase_storage
+        
+        if not _supabase_storage or not _supabase_storage.is_available():
+            print("⚠️ Supabase non disponible")
+            return False
+        
+        # Pas de prompts par défaut - ils doivent être créés dans Supabase
+        prompts = {}
+        
+        if prompts:
+            for service_id, prompt_data in prompts.items():
+                _supabase_storage.client.table('ai_prompts').upsert({
+                    'service_id': service_id,
+                    'title': prompt_data.get('title', ''),
+                    'description': prompt_data.get('description', ''),
+                    'prompt': prompt_data.get('prompt', ''),
+                    'requires_cv': prompt_data.get('requires_cv', False),
+                    'requires_job_offer': prompt_data.get('requires_job_offer', False),
+                    'requires_questionnaire': prompt_data.get('requires_questionnaire', False)
+                }).execute()
+            
+            print(f"✅ {len(prompts)} prompts par défaut insérés dans Supabase")
+            return True
+        
+        return False
+        
+    except Exception as e:
+        print(f"❌ Erreur lors de l'insertion des prompts par défaut: {e}")
+        return False
 
-💡 **Pour obtenir une analyse complète :**
-- Contactez l'administrateur pour configurer l'API Mistral
-- Vos documents ont été enregistrés et seront analysés dès que le service sera disponible
+# === PROMPTS EXCLUSIVEMENT SUR SUPABASE ===
+# Tous les prompts sont gérés via Supabase, pas de fallback JSON
 
-*Fonctionnalité temporairement désactivée.*"""
-
-    # Priorité 2 : Services de lettre de motivation (AVANT CV générique)
-    elif ("lettre" in prompt_lower or "motivation" in prompt_lower) or "cover_letter" in prompt_lower:
-        return """✉️ **Génération de lettre de motivation** (Service temporairement indisponible)
-
-La génération de lettre de motivation nécessite une configuration API.
-
-💡 **Pour obtenir une lettre complète :**
-- Contactez l'administrateur pour configurer l'API Mistral
-- Vos documents ont été enregistrés et seront utilisés dès que le service sera disponible
-
-*Fonctionnalité temporairement désactivée.*"""
-
-    # Priorité 3 : Services d'entretien
-    elif ("entretien" in prompt_lower or "interview" in prompt_lower):
-        return """🎤 **Préparation à l'entretien** (Service temporairement indisponible)
-
-La préparation à l'entretien nécessite une configuration API.
-
-💡 **Pour obtenir une préparation complète :**
-- Contactez l'administrateur pour configurer l'API Mistral
-- Vos documents ont été enregistrés et seront utilisés dès que le service sera disponible
-
-*Fonctionnalité temporairement désactivée.*"""
-
-    # Priorité 4 : Services de CV (moins spécifique)
-    elif "cv" in prompt_lower or "curriculum" in prompt_lower:
-        return """📄 **Analyse de CV** (Service temporairement indisponible)
-
-L'analyse de votre CV nécessite une configuration API.
-
-💡 **Pour obtenir une analyse complète :**
-- Contactez l'administrateur pour configurer l'API Mistral
-- Votre CV a été enregistré et sera analysé dès que le service sera disponible
-
-*Fonctionnalité temporairement désactivée.*"""
-
-    else:
-        return f"""🤖 **Assistant IA emploi** (Service temporairement indisponible)
-
-L'intelligence artificielle nécessite une configuration API.
-
-💡 **Services disponibles une fois configuré :**
-- 📄 Analyse de CV personnalisée
-- 🎯 Compatibilité avec les offres d'emploi
-- ✉️ Rédaction de lettres de motivation
-- 🎤 Préparation aux entretiens
-
-*Contactez l'administrateur pour activer l'API Mistral.*"""
-
-# === FONCTIONS SPÉCIALISÉES ===
-
-def analyze_cv_with_ai(cv_content: str) -> str:
-    """Analyse un CV avec l'IA Mistral"""
-    
-    prompt = """ANALYSE APPROFONDIE DE CV
-
-Analyse ce CV de manière professionnelle et détaillée. Fournis :
-
-1. **SYNTHÈSE** (3-4 lignes de résumé du profil)
-
-2. **POINTS FORTS** (5 éléments maximum)
-   - Forces principales identifiées
-   - Atouts compétitifs
-
-3. **AXES D'AMÉLIORATION** (5 éléments maximum)  
-   - Points faibles à corriger
-   - Manques identifiés
-
-4. **RECOMMANDATIONS CONCRÈTES**
-   - Actions précises à mener
-   - Optimisations suggérées
-
-5. **NOTE GLOBALE** /10 avec justification
-
-Utilise un ton professionnel et bienveillant. Sois précis et actionnable."""
-
-    return call_mistral_api(prompt, cv_content)
-
-
-
-def generate_cover_letter_enhanced(cv_content: str, job_content: str, questionnaire_content: str = "", user_notes: str = "") -> str:
-    """Génère une lettre de motivation personnalisée avec CV + Questionnaire + Offre"""
-    
-    # Construction du contexte enrichi
-    context_parts = [f"=== CV DU CANDIDAT ===\n{cv_content}"]
-    
-    # Ajouter le questionnaire s'il est disponible
-    if questionnaire_content:
-        context_parts.append(f"=== PROFIL PERSONNEL ET ASPIRATIONS ===\n{questionnaire_content}")
-    
-    context_parts.append(f"=== OFFRE D'EMPLOI ===\n{job_content}")
-    
-    if user_notes:
-        context_parts.append(f"=== NOTES PERSONNELLES ===\n{user_notes}")
-    
-    context = "\n\n".join(context_parts)
-    
-    # Prompt adapté selon la disponibilité du questionnaire
-    questionnaire_instruction = ""
-    if questionnaire_content:
-        questionnaire_instruction = """
-IMPORTANT : Utilise OBLIGATOIREMENT les informations du profil personnel pour :
-- Personnaliser la motivation et les valeurs
-- Adapter le discours aux aspirations du candidat  
-- Créer une cohérence entre le profil personnel et la candidature
-- Montrer l'alignement entre les objectifs personnels et le poste"""
-    else:
-        questionnaire_instruction = """
-NOTE : Seuls le CV et l'offre sont disponibles. Base-toi uniquement sur ces éléments."""
-    
-    prompt = f"""GÉNÉRATION DE LETTRE DE MOTIVATION PERSONNALISÉE
-
-À partir des éléments fournis, rédige une lettre de motivation structurée, authentique et persuasive.
-
-{questionnaire_instruction}
-
-STRUCTURE DEMANDÉE :
-
-**[EN-TÊTE]**
-[Vos coordonnées]
-[Coordonnées entreprise]
-[Date]
-
-**OBJET :** Candidature pour le poste de [Titre exact du poste]
-
-**[INTRODUCTION - Accroche personnalisée]**
-- Référence précise à l'offre
-- Motivation authentique pour ce poste PRÉCIS
-- {f"Lien avec vos aspirations personnelles" if questionnaire_content else "Accroche basée sur le CV"}
-
-**[DÉVELOPPEMENT - Paragraphe 1 : VOS ATOUTS]**
-- Compétences clés en lien direct avec les exigences
-- Expériences pertinentes avec résultats concrets
-- {f"Qualités personnelles en phase avec vos valeurs" if questionnaire_content else "Soft skills déduites du CV"}
-
-**[DÉVELOPPEMENT - Paragraphe 2 : VOTRE PROJET]**
-- Ce que vous apportez concrètement à l'entreprise
-- {f"Cohérence avec vos objectifs de carrière" if questionnaire_content else "Projection professionnelle basée sur le CV"}
-- Valeur ajoutée spécifique pour ce poste
-
-**[CONCLUSION]**
-- Disponibilité et motivation pour un entretien
-- Formule de politesse professionnelle
-
-CONSIGNES DE RÉDACTION :
-✅ Personnalisez selon l'entreprise et ses valeurs
-✅ Utilisez les mots-clés exacts de l'offre d'emploi
-✅ Ton professionnel mais authentique et enthousiaste
-✅ Longueur : 1 page maximum (300-400 mots)
-✅ {f"Intégrez naturellement les éléments du profil personnel" if questionnaire_content else "Restez factuel basé sur le CV"}
-✅ Évitez les clichés et formules toutes faites
-✅ Montrez votre connaissance de l'entreprise
-
-Fournis la lettre complète, prête à envoyer et parfaitement adaptée au candidat."""
-
-    return call_mistral_api(prompt, context)
-
-# Fonction de fallback pour compatibilité avec l'existant
-def generate_cover_letter(cv_content: str, job_content: str, user_notes: str = "") -> str:
-    """Version de compatibilité - utilise la version enhanced"""
-    return generate_cover_letter_enhanced(cv_content, job_content, "", user_notes)
-
-def prepare_interview(cv_content: str, job_content: str) -> str:
-    """Prépare un candidat à l'entretien d'embauche"""
-    
-    prompt = """PRÉPARATION À L'ENTRETIEN D'EMBAUCHE
-
-À partir du CV et de l'offre fournis, prépare le candidat à l'entretien.
-
-FOURNIS :
-
-1. **QUESTIONS PROBABLES** (10 questions types)
-   - Questions sur le parcours
-   - Questions techniques
-   - Questions comportementales
-
-2. **RÉPONSES SUGGÉRÉES**
-   - Structure STAR pour les exemples
-   - Points clés à mentionner
-   - Exemples concrets du CV
-
-3. **QUESTIONS À POSER**
-   - Sur le poste et les missions
-   - Sur l'équipe et l'entreprise
-   - Sur l'évolution
-
-4. **CONSEILS PRATIQUES**
-   - Préparation matérielle
-   - Attitude et communication
-   - Gestion du stress
-
-Format clair et actionnable pour une préparation efficace."""
-
-    context = f"CV:\n{cv_content}\n\nOFFRE:\n{job_content}"
-    return call_mistral_api(prompt, context)
-
-# === FONCTION PRINCIPALE POUR APP.PY ===
-
-def chat_avec_ia(message: str, context: Optional[str] = None) -> str:
-    """
-    Fonction principale d'interaction avec l'IA
-    Compatible avec l'interface existante
-    """
-    return call_mistral_api(message, context)
-
-def chat_avec_ia_action_rapide_optimized(action: str) -> str:
-    """Exécute une action rapide avec Mistral IA"""
-    return call_mistral_api(f"Action rapide: {action}")
+# Charger les prompts au démarrage
+print("🔄 Chargement des prompts depuis la base de données...")
+reload_prompts_from_file()
