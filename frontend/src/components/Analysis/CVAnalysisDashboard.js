@@ -50,61 +50,7 @@ const CVAnalysisDashboard = ({ analysisData, loading, error, onStartNextStep }) 
       minHeight: '100vh',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
-      {/* Header avec navigation des étapes */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        marginBottom: '2rem',
-        padding: '1rem',
-        background: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-      }}>
-        {[1, 2, 3, 4, 5, 6].map((step) => (
-          <div key={step} style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.5rem',
-            borderRadius: '8px',
-            transition: 'all 0.2s ease',
-            cursor: 'pointer',
-            ...(step === 1 ? {
-              background: '#0a6b79',
-              color: 'white'
-            } : {})
-          }}>
-            <div style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              background: step === 1 ? 'white' : '#e5e7eb',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: '600',
-              fontSize: '0.9rem',
-              color: step === 1 ? '#0a6b79' : '#6b7280'
-            }}>
-              {step}
-            </div>
-            <span style={{
-              fontSize: '0.8rem',
-              fontWeight: '500',
-              textAlign: 'center',
-              whiteSpace: 'nowrap'
-            }}>
-              {step === 1 && 'Mes documents'}
-              {step === 2 && 'Évaluer une offre'}
-              {step === 3 && 'Améliorer mon CV'}
-              {step === 4 && 'Candidater'}
-              {step === 5 && 'Préparer l\'entretien'}
-              {step === 6 && 'Tout changer'}
-            </span>
-          </div>
-        ))}
-      </div>
+
 
       {/* Bilan rapide et Synthèse côte à côte */}
       <div style={{
