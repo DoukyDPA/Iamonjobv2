@@ -307,7 +307,10 @@ const Dashboard = () => {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
               },
-              body: JSON.stringify({ service_id: 'analyze_cv' })
+              body: JSON.stringify({ 
+                service_id: 'analyze_cv',
+                force_new: true  // Forcer une nouvelle analyse
+              })
             });
             const data = await response.json();
             if (response.ok && data.success && (data.analysis || data.result || data.content)) {
