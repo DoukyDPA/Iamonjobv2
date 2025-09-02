@@ -533,10 +533,40 @@ def favicon():
     return send_from_directory('frontend/public', 'favicon.ico')
 
 # ====================================
+# INITIALISATION AU DÉMARRAGE
+# ====================================
+
+@app.before_first_request
+def load_prompts_on_startup():
+    """Charge les prompts depuis Supabase au premier démarrage"""
+    try:
+        from services.ai_service_prompts import reload_prompts_from_file
+        print("🔄 Chargement des prompts au premier démarrage...")
+        success = reload_prompts_from_file()
+        if success:
+            print("✅ Prompts chargés avec succès depuis Supabase")
+        else:
+            print("⚠️ Échec du chargement des prompts depuis Supabase")
+    except Exception as e:
+        print(f"❌ Erreur lors du chargement des prompts: {e}")
+
+# ====================================
 # POINT D'ENTRÉE
 # ====================================
 
 if __name__ == '__main__':
+    # Charger les prompts au démarrage
+    try:
+        from services.ai_service_prompts import reload_prompts_from_file
+        print("🔄 Chargement des prompts au démarrage...")
+        success = reload_prompts_from_file()
+        if success:
+            print("✅ Prompts chargés avec succès")
+        else:
+            print("⚠️ Échec du chargement des prompts")
+    except Exception as e:
+        print(f"❌ Erreur lors du chargement des prompts: {e}")
+    
     # Développement local uniquement
     port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port, debug=False)
