@@ -221,7 +221,7 @@ export const SERVICES_CONFIG = {
     title: 'Découvrez des pistes de reconversion',
     shortTitle: 'Reconversion',
     icon: '🔄',
-    coachAdvice: "Iamonjob va identifier des pistes de reconversion cohérentes avec votre profil. C'est votre carte des possibles, pas une boule de cristal et pas LA Vérité absolue ! Confrontez ces idées à VOS contraintes réelles (budget, famille, mobilité). Pour chaque compétence manquante, identifiez comment l'acquérir rapidement : formation courte, bénévolat, projet personnel. Surtout, TESTEZ avant de sauter : stage d'observation, mission freelance, immersion d'une journée. L'IA suggère des chemins mais ne vivra pas les conséquences de vos choix. Une reconversion réussie se teste avant de se lancer. Rêver c'est bien, tester c'est mieux.",
+    coachAdvice: "Commencez par indiquer dans l'espace ci-dessous la recounversion qui vous inspirerait le plus. Iamonjob va identifier des pistes de reconversion cohérentes avec votre profil. C'est votre carte des possibles, pas une boule de cristal et pas LA Vérité absolue ! Confrontez ces idées à VOS contraintes réelles (budget, famille, mobilité). Pour chaque compétence manquante, identifiez comment l'acquérir rapidement : formation courte, bénévolat, projet personnel. Surtout, TESTEZ avant de sauter : stage d'observation, mission freelance, immersion d'une journée. L'IA suggère des chemins mais ne vivra pas les conséquences de vos choix. Une reconversion réussie se teste avant de se lancer. Rêver c'est bien, tester c'est mieux.",
     requiresCV: true,
     requiresJobOffer: false,
     requiresQuestionnaire: true,
