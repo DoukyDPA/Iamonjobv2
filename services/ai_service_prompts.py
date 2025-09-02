@@ -4,12 +4,7 @@
 # Dictionnaire vide qui sera rempli depuis la base de données ou le JSON
 AI_PROMPTS = {}
 
-# Chargement automatique des prompts au démarrage
-print("🔄 Chargement des prompts depuis la base de données...")
-try:
-    reload_prompts_from_file()
-except Exception as e:
-    print(f"⚠️ Erreur lors du chargement initial des prompts: {e}")
+# Chargement automatique des prompts au démarrage - déplacé à la fin du fichier
 
 def execute_ai_service(service_id, cv_content, job_content="", questionnaire_content="", user_notes="", force_new=False):
     """Fonction générique pour exécuter un service IA selon l'identifiant"""
@@ -305,4 +300,7 @@ def insert_default_prompts():
 
 # Charger les prompts au démarrage
 print("🔄 Chargement des prompts depuis la base de données...")
-reload_prompts_from_file()
+try:
+    reload_prompts_from_file()
+except Exception as e:
+    print(f"⚠️ Erreur lors du chargement initial des prompts: {e}")
