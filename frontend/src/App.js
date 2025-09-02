@@ -27,6 +27,7 @@ import ForgotPassword from './pages/ForgotPassword';
 // Pages protégées
 import Dashboard from './pages/Dashboard';
 import ServicesGrid from './components/Services/ServicesGrid';
+import GenericDocumentProcessor from './components/Common/GenericDocumentProcessor';
 
 // Pages d'administration
 import AdminServicesPage from './pages/AdminServicesPage';
@@ -102,8 +103,14 @@ function App() {
                     </PrivateRoute>
                   } />
                   
-                  {/* Route dynamique pour tous les services IA */}
-                  {/* ServiceRouteWrapper supprimé - composant inutilisé */}
+                  {/* Routes dynamiques pour tous les services IA */}
+                  <Route path="/:serviceId" element={
+                    <PrivateRoute>
+                      <Layout>
+                        <GenericDocumentProcessor />
+                      </Layout>
+                    </PrivateRoute>
+                  } />
                 
                   {/* Routes d'administration */}
                   <Route path="/admin/services" element={
