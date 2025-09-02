@@ -18,16 +18,29 @@ class TokenTracker:
                 logging.warning("Supabase indisponible pour tracking tokens")
                 return False
             
-            # Insérer dans token_usage
-            response = self.supabase.client.table('token_usage').insert({
+            # Utiliser upsert pour éviter les erreurs de contrainte unique
+            date = datetime.now().date().isoformat()
+            
+            # Récupérer l'usage actuel pour cette date
+            current_response = self.supabase.client.table('token_usage').select('tokens_used').eq(
+                'user_email', user_email
+            ).eq('date', date).execute()
+            
+            current_tokens = 0
+            if current_response.data:
+                current_tokens = current_response.data[0].get('tokens_used', 0)
+            
+            # Upsert avec addition des tokens
+            response = self.supabase.client.table('token_usage').upsert({
                 'user_email': user_email,
-                'tokens_used': tokens_used,
+                'date': date,
+                'tokens_used': current_tokens + tokens_used,
                 'service_name': service_name or 'unknown',
                 'created_at': datetime.now().isoformat()
-            }).execute()
+            }, on_conflict='user_email,date').execute()
             
             if response.data:
-                logging.info(f"✅ Tokens enregistrés: {user_email} - {tokens_used} tokens pour {service_name}")
+                logging.info(f"✅ Tokens enregistrés: {user_email} - {tokens_used} tokens pour {service_name} (total: {current_tokens + tokens_used})")
                 return True
             else:
                 logging.error(f"❌ Échec enregistrement tokens: {user_email}")
