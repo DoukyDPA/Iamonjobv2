@@ -191,8 +191,14 @@ def handle_generic_service(service_id, request):
         
         documents = user_data.get('documents', {})
         
-        print(f"Documents disponibles: {list(documents.keys())}")
-        print(f"Documents détaillés: {documents}")
+        print(f"📊 User data complet: {user_data}")
+        print(f"📊 Documents disponibles: {list(documents.keys())}")
+        print(f"📊 Documents détaillés: {documents}")
+        
+        # Test spécifique pour reconversion_analysis
+        if service_id == "reconversion_analysis":
+            print(f"🔍 TEST RECONVERSION - CV: {documents.get('cv', {}).get('content', 'VIDE')[:100]}")
+            print(f"🔍 TEST RECONVERSION - Questionnaire: {documents.get('questionnaire', {}).get('content', 'VIDE')[:100]}")
         
         # Récupérer les documents selon la configuration
         cv_data = documents.get('cv', {}) if config['requires_cv'] else {}
@@ -200,13 +206,16 @@ def handle_generic_service(service_id, request):
         questionnaire_data = documents.get('questionnaire', {}) if config['requires_questionnaire'] else {}
         
         # Debug détaillé des données récupérées
-        print(f"🔍 Debug des données récupérées:")
+        print(f"🔍 Debug des données récupérées pour {service_id}:")
         print(f"   CV data: {cv_data}")
         print(f"   Job data: {job_data}")
         print(f"   Questionnaire data: {questionnaire_data}")
         print(f"   CV content: '{cv_data.get('content', '')[:100] if cv_data.get('content') else 'VIDE'}...'")
         print(f"   Job content: '{job_data.get('content', '')[:100] if job_data.get('content') else 'VIDE'}...'")
         print(f"   Questionnaire content: '{questionnaire_data.get('content', '')[:100] if questionnaire_data.get('content') else 'VIDE'}...'")
+        print(f"   User data complet: {user_data}")
+        print(f"   Documents disponibles: {list(documents.keys())}")
+        print(f"   Config requirements: CV={config['requires_cv']}, Job={config['requires_job']}, Questionnaire={config['requires_questionnaire']}")
         
         # Vérifications des documents obligatoires
         if config['requires_cv'] and not cv_data.get('content'):
