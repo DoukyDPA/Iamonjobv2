@@ -543,74 +543,20 @@ const Dashboard = () => {
             </button>
           </div>
 
-          {/* Barre de progression optimisée - masquée en mobile */}
-          <div className="revolutionary-progress-panel desktop-only">
-            <div className="revolutionary-progress-header">
-              <h3 className="revolutionary-progress-title">🎯 Progression de votre profil</h3>
-              <span className="revolutionary-progress-badge">
-                {documentsCount}/3 documents
-              </span>
+          {/* Barre de progression compacte intégrée dans l'en-tête */}
+          <div className="mini-progress-bar">
+            <div className="mini-progress-info">
+              <span className="mini-progress-text">Progression: {documentsCount}/3 documents</span>
+              <div className="mini-progress-badge" style={{ backgroundColor: documentsCount === 3 ? '#22c55e' : '#c7356c' }}>
+                {documentsCount === 3 ? '✅ Complet' : `${documentsCount}/3`}
+              </div>
             </div>
-            <div className="revolutionary-progress-bar-container">
+            <div className="mini-progress-track">
               <div 
-                className="revolutionary-progress-bar"
+                className="mini-progress-fill"
                 style={{ width: `${(documentsCount / 3) * 100}%` }}
               />
             </div>
-            <p className="revolutionary-progress-message">
-              {documentsCount === 0 && "🚀 Commencez par votre CV pour débloquer toutes les fonctionnalités"}
-              {documentsCount === 1 && "👍 Excellent ! Ajoutez une offre d'emploi pour l'analyse de compatibilité"}
-              {documentsCount === 2 && "🎉 Presque fini ! Le questionnaire enrichira votre profil"}
-              {documentsCount === 3 && "✨ Félicitations ! Votre profil est complet"}
-            </p>
-          </div>
-
-          {/* Grille magazine : Desktop 3 pavés + conseils, Mobile 2 pavés par ligne */}
-          <div className="dashboard-grid">
-            <div style={{ gridArea: 'cv' }}>
-              <DocumentCard
-                type="cv"
-                title="Mon CV"
-                icon={<FiFileText />}
-                color="#0a6b79"
-                uploaded={!!documentStatus.cv?.uploaded}
-                fileName={documentStatus.cv?.name}
-                onFileUpload={(e) => handleFileUpload(e, 'cv')}
-                onTextClick={() => setShowTextModal('cv')}
-                isTextOnly={false}
-                isUploading={loading}
-              />
-            </div>
-            <div style={{ gridArea: 'questionnaire' }}>
-              <DocumentCard
-                type="questionnaire"
-                title="Questionnaire personnel"
-                icon={<FiUser />}
-                color="#f59e0b"
-                uploaded={!!documentStatus.questionnaire?.uploaded}
-                fileName={documentStatus.questionnaire?.name}
-                onFileUpload={undefined}
-                onTextClick={() => setShowQuestionnaireModal(true)}
-                isTextOnly={true}
-                isUploading={loading}
-              />
-            </div>
-            <div style={{ gridArea: 'offre' }}>
-              <DocumentCard
-                type="offre_emploi"
-                title="Offre d'emploi"
-                icon={<FiTarget />}
-                color="#22c55e"
-                uploaded={!!documentStatus.offre_emploi?.uploaded}
-                fileName={documentStatus.offre_emploi?.name}
-                onFileUpload={(e) => handleFileUpload(e, 'offre_emploi')}
-                onTextClick={() => setShowTextModal('offre_emploi')}
-                isTextOnly={false}
-                isUploading={loading}
-              />
-            </div>
-
-
           </div>
           {/* Analyse de CV automatique */}
           {cvAnalysis && (
@@ -747,7 +693,6 @@ const Dashboard = () => {
               <LogoIcon size={32} />
               Tout changer
             </h2>
-            <p className="revolutionary-section-description">Explorez de nouvelles opportunités de carrière</p>
             <ServicesGrid filterTheme="career_project" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
