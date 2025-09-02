@@ -101,7 +101,7 @@ export const SERVICES_CONFIG = {
     outputType: 'advice',
     storageKey: 'iamonjob_cover_advice',
     actionType: 'cover_letter_advice_response',
-    apiEndpoint: '/api/cover-letter/advice',
+    apiEndpoint: '/api/services/execute/cover_letter_advice',
     tabs: [
       { id: 'structure', label: 'Structure', icon: '📋' },
       { id: 'examples', label: 'Exemples', icon: '💡' },
@@ -122,7 +122,7 @@ export const SERVICES_CONFIG = {
     outputType: 'cover_letter',
     storageKey: 'iamonjob_cover_letter',
     actionType: 'cover_letter_generate_response',
-    apiEndpoint: '/api/cover-letter/generate',
+    apiEndpoint: '/api/services/execute/cover_letter_generate',
     tabs: [
       { id: 'letter', label: 'Lettre', icon: '✉️' },
       { id: 'alternatives', label: 'Variantes', icon: '🔄' },
@@ -143,7 +143,7 @@ export const SERVICES_CONFIG = {
     outputType: 'pitch',
     storageKey: 'iamonjob_pitch',
     actionType: 'professional_pitch_response',
-    apiEndpoint: '/api/pitch/generate',
+    apiEndpoint: '/api/services/execute/professional_pitch',
     tabs: [
       { id: 'pitch', label: 'Pitch', icon: '🎤' },
       { id: 'variants', label: 'Variantes', icon: '🔄' },
@@ -164,7 +164,7 @@ export const SERVICES_CONFIG = {
     outputType: 'interview_prep',
     storageKey: 'iamonjob_interview_prep',
     actionType: 'interview_prep_response',
-    apiEndpoint: '/api/interview/prepare',
+    apiEndpoint: '/api/services/execute/interview_prep',
     tabs: [
       { id: 'questions', label: 'Questions', icon: '❓' },
       { id: 'answers', label: 'Réponses', icon: '💬' },
@@ -185,7 +185,7 @@ export const SERVICES_CONFIG = {
     outputType: 'email',
     storageKey: 'iamonjob_follow_up',
     actionType: 'follow_up_email_response',
-    apiEndpoint: '/api/follow-up/generate',
+    apiEndpoint: '/api/services/execute/follow_up_email',
     tabs: [
       { id: 'email', label: 'Email', icon: '📧' },
       { id: 'variants', label: 'Variantes', icon: '🔄' },
@@ -207,7 +207,7 @@ export const SERVICES_CONFIG = {
     outputType: 'skills_analysis',
     storageKey: 'iamonjob_skills_analysis',
     actionType: 'skills_analysis_response',
-    apiEndpoint: '/api/skills/analyze',
+    apiEndpoint: '/api/services/execute/skills_analysis',
     tabs: [
       { id: 'summary', label: 'Synthèse', icon: '📊' },
       { id: 'skills', label: 'Compétences', icon: '🎯' },
@@ -229,7 +229,7 @@ export const SERVICES_CONFIG = {
     outputType: 'reconversion',
     storageKey: 'iamonjob_reconversion',
     actionType: 'reconversion_analysis_response',
-    apiEndpoint: '/api/reconversion/analyze',
+    apiEndpoint: '/api/services/execute/reconversion_analysis',
     tabs: [
       { id: 'analysis', label: 'Analyse', icon: '🔍' },
       { id: 'roadmap', label: 'Feuille de route', icon: '🗺️' },
@@ -251,7 +251,7 @@ export const SERVICES_CONFIG = {
     outputType: 'career_orientation',
     storageKey: 'iamonjob_career_orientation',
     actionType: 'career_transition_response',
-    apiEndpoint: '/api/career/orientation',
+    apiEndpoint: '/api/services/execute/career_transition',
     tabs: [
       { id: 'summary', label: 'Synthèse', icon: '📊' },
       { id: 'table', label: 'Tableau comparatif', icon: '📋' }
@@ -271,7 +271,7 @@ export const SERVICES_CONFIG = {
     outputType: 'salary_negotiation',
     storageKey: 'iamonjob_salary_negotiation',
     actionType: 'salary_negotiation_response',
-    apiEndpoint: '/api/salary/prepare',
+    apiEndpoint: '/api/services/execute/salary_negotiation',
     tabs: [
       { id: 'arguments', label: 'Arguments', icon: '💬' },
       { id: 'range', label: 'Fourchette', icon: '📊' },
@@ -292,7 +292,7 @@ export const SERVICES_CONFIG = {
     outputType: 'industry_orientation',
     storageKey: 'iamonjob_industry_orientation',
     actionType: 'industry_orientation_response',
-    apiEndpoint: '/api/industry/orientation',
+    apiEndpoint: '/api/services/execute/industry_orientation',
     tabs: [
       { id: 'summary', label: 'Synthèse', icon: '📊' },
       { id: 'table', label: 'Tableau comparatif', icon: '📋' }
