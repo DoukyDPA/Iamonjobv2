@@ -18,6 +18,7 @@ import {
   FiUser,
   FiRefreshCw,
   FiArrowRight,
+  FiMessageCircle,
   FiArrowLeft,
   FiSave,
   FiX,
@@ -494,7 +495,7 @@ const Dashboard = () => {
       <div style={{ 
         paddingTop: '4rem',
         paddingBottom: '2rem',
-        background: 'linear-gradient(135deg, rgba(10, 107, 121, 0.1) 0%, rgba(20, 184, 166, 0.05) 100%)',
+        background: 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)',
         borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
@@ -502,18 +503,20 @@ const Dashboard = () => {
             <h1 style={{ 
               fontSize: '2.5rem',
               fontWeight: '700',
-              background: 'linear-gradient(135deg, #ffffff 0%, #0a6b79 50%, #14b8a6 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
+              color: 'white',
               margin: '0 0 0.5rem 0',
-              textShadow: '0 4px 12px rgba(0,0,0,0.3)'
+              textShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '1rem'
             }}>
-              🚀 Bienvenue dans votre espace de carrière
+              <LogoIcon size={48} />
+              Bienvenue dans votre espace de carrière
             </h1>
             <p style={{ 
               fontSize: '1.2rem',
-              color: 'rgba(255, 255, 255, 0.8)',
+              color: 'rgba(255, 255, 255, 0.9)',
               margin: '0',
               fontWeight: '400'
             }}>
@@ -521,7 +524,57 @@ const Dashboard = () => {
             </p>
           </div>
 
-
+          {/* Barre d'onglets en haut */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            marginTop: '2rem'
+          }}>
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: activeTab === tab.id 
+                    ? 'rgba(255, 255, 255, 0.2)' 
+                    : 'rgba(255, 255, 255, 0.1)',
+                  color: 'white',
+                  fontWeight: '600',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  minWidth: '80px'
+                }}
+                onMouseEnter={(e) => {
+                  if (activeTab !== tab.id) {
+                    e.target.style.background = 'rgba(255, 255, 255, 0.15)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeTab !== tab.id) {
+                    e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                  }
+                }}
+              >
+                <span style={{ fontSize: '1.2rem' }}>{tab.icon}</span>
+                <span style={{ 
+                  fontSize: '0.7rem',
+                  textAlign: 'center',
+                  lineHeight: '1.2'
+                }}>
+                  {window.innerWidth > 768 ? tab.label : tab.mobileLabel}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -529,7 +582,7 @@ const Dashboard = () => {
       <div style={{ 
         maxWidth: '1200px', 
         margin: '0 auto', 
-        padding: '2rem 2rem 8rem 2rem', // Padding en bas pour la barre d'onglets fixe
+        padding: '2rem',
         background: 'transparent'
       }}>
         {/* Section Documents harmonisée */}
@@ -618,19 +671,20 @@ const Dashboard = () => {
               padding: '1.5rem',
               border: '1px solid rgba(255, 255, 255, 0.1)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                <div style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  background: documentStatus.cv?.uploaded ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' : 'rgba(255, 255, 255, 0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.5rem'
-                }}>
-                  📄
-                </div>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+           <div style={{
+             width: '48px',
+             height: '48px',
+             borderRadius: '12px',
+             background: documentStatus.cv?.uploaded ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' : 'rgba(255, 255, 255, 0.1)',
+             display: 'flex',
+             alignItems: 'center',
+             justifyContent: 'center',
+             fontSize: '1.5rem',
+             color: 'white'
+           }}>
+             <FiMessageCircle />
+           </div>
                 <div>
                   <h3 style={{ color: 'white', margin: '0 0 0.25rem 0', fontSize: '1.1rem', fontWeight: '600' }}>CV</h3>
                   <p style={{ color: 'rgba(255, 255, 255, 0.6)', margin: 0, fontSize: '0.9rem' }}>
@@ -691,19 +745,20 @@ const Dashboard = () => {
               padding: '1.5rem',
               border: '1px solid rgba(255, 255, 255, 0.1)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                <div style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  background: documentStatus.offre_emploi?.uploaded ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' : 'rgba(255, 255, 255, 0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.5rem'
-                }}>
-                  🎯
-                </div>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+           <div style={{
+             width: '48px',
+             height: '48px',
+             borderRadius: '12px',
+             background: documentStatus.offre_emploi?.uploaded ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' : 'rgba(255, 255, 255, 0.1)',
+             display: 'flex',
+             alignItems: 'center',
+             justifyContent: 'center',
+             fontSize: '1.5rem',
+             color: 'white'
+           }}>
+             <FiMessageCircle />
+           </div>
                 <div>
                   <h3 style={{ color: 'white', margin: '0 0 0.25rem 0', fontSize: '1.1rem', fontWeight: '600' }}>Offre d'emploi</h3>
                   <p style={{ color: 'rgba(255, 255, 255, 0.6)', margin: 0, fontSize: '0.9rem' }}>
@@ -764,19 +819,20 @@ const Dashboard = () => {
               padding: '1.5rem',
               border: '1px solid rgba(255, 255, 255, 0.1)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                <div style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  background: documentStatus.questionnaire?.uploaded ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' : 'rgba(255, 255, 255, 0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.5rem'
-                }}>
-                  📝
-                </div>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+           <div style={{
+             width: '48px',
+             height: '48px',
+             borderRadius: '12px',
+             background: documentStatus.questionnaire?.uploaded ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' : 'rgba(255, 255, 255, 0.1)',
+             display: 'flex',
+             alignItems: 'center',
+             justifyContent: 'center',
+             fontSize: '1.5rem',
+             color: 'white'
+           }}>
+             <FiMessageCircle />
+           </div>
                 <div>
                   <h3 style={{ color: 'white', margin: '0 0 0.25rem 0', fontSize: '1.1rem', fontWeight: '600' }}>Questionnaire</h3>
                   <p style={{ color: 'rgba(255, 255, 255, 0.6)', margin: 0, fontSize: '0.9rem' }}>
@@ -1172,72 +1228,7 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* Barre d'onglets en bas */}
-      <div style={{
-        position: 'fixed',
-        bottom: '0',
-        left: '0',
-        right: '0',
-        background: 'rgba(15, 23, 42, 0.95)',
-        backdropFilter: 'blur(10px)',
-        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-        padding: '1rem 0',
-        zIndex: 1000
-      }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '0.5rem'
-          }}>
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: activeTab === tab.id 
-                    ? 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)' 
-                    : 'rgba(255, 255, 255, 0.05)',
-                  color: activeTab === tab.id ? 'white' : 'rgba(255, 255, 255, 0.7)',
-                  fontWeight: '600',
-                  fontSize: '0.8rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  minWidth: '80px'
-                }}
-                onMouseEnter={(e) => {
-                  if (activeTab !== tab.id) {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.1)';
-                    e.target.style.color = 'rgba(255, 255, 255, 0.9)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeTab !== tab.id) {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.05)';
-                    e.target.style.color = 'rgba(255, 255, 255, 0.7)';
-                  }
-                }}
-              >
-                <span style={{ fontSize: '1.2rem' }}>{tab.icon}</span>
-                <span style={{ 
-                  fontSize: '0.7rem',
-                  textAlign: 'center',
-                  lineHeight: '1.2'
-                }}>
-                  {window.innerWidth > 768 ? tab.label : tab.mobileLabel}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+
 
       {/* Modal Questionnaire */}
       {showQuestionnaireModal && (
