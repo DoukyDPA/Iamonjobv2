@@ -7,7 +7,7 @@ AI_PROMPTS = {}
 # Dictionnaire vide qui sera rempli depuis la base de données ou le JSON
 AI_PROMPTS = {}
 
-def execute_ai_service(service_id, cv_content, job_content="", questionnaire_content="", user_notes=""):
+def execute_ai_service(service_id, cv_content, job_content="", questionnaire_content="", user_notes="", force_new=False):
     """Fonction générique pour exécuter un service IA selon l'identifiant"""
     try:
         from services.ai_service_mistral import call_mistral_api
@@ -16,6 +16,14 @@ def execute_ai_service(service_id, cv_content, job_content="", questionnaire_con
         if service_id in AI_PROMPTS:
             service_config = AI_PROMPTS[service_id]
             prompt_template = service_config["prompt"]
+            
+            # Pour l'analyse CV, utiliser le système de cache avec force_new
+            if service_id == "analyze_cv" and cv_content:
+                from services.cv_analysis_persistence import CVAnalysisPersistence
+                cache_result = CVAnalysisPersistence.get_persistent_analysis(cv_content, force_new=force_new)
+                if cache_result['success']:
+                    print(f"📄 Analyse CV {'(cache)' if cache_result['cached'] else '(nouvelle)'}")
+                    return cache_result['analysis']
             
             print(f"🔍 DEBUG execute_ai_service pour {service_id}:")
             print(f"   Prompt template: {prompt_template[:200]}...")
