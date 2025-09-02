@@ -293,6 +293,14 @@ def register_blueprints():
         print("✅ Auth API enregistrée")
     except ImportError as e:
         print(f"❌ Erreur import auth_api: {e}")
+    
+    # Auth Routes (forgot password, etc.)
+    try:
+        from backend.routes.auth import auth_bp
+        app.register_blueprint(auth_bp, url_prefix='/api/auth')
+        print("✅ Auth Routes enregistrées")
+    except ImportError as e:
+        print(f"❌ Erreur import auth_bp: {e}")
 
     # Chat API
     try:
