@@ -11,12 +11,15 @@ HAS_AI_SERVICE = True  # Toujours True, import différé
 def execute_ai_service(*args, **kwargs):
     """Import différé pour éviter le circular import"""
     try:
+        print(f"🔍 Wrapper execute_ai_service - Début appel avec args: {args}, kwargs: {kwargs}")
         from services.ai_service_prompts import execute_ai_service as real_execute_ai_service
+        print(f"🔍 Wrapper execute_ai_service - Import réussi, appel de la vraie fonction...")
         result = real_execute_ai_service(*args, **kwargs)
         print(f"🔍 Wrapper execute_ai_service - Résultat: {result[:100] if result else 'None'}...")
         return result
     except Exception as e:
         print(f"❌ Erreur dans wrapper execute_ai_service: {e}")
+        print(f"❌ Type d'erreur: {type(e).__name__}")
         import traceback
         traceback.print_exc()
         raise e
