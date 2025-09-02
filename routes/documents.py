@@ -95,6 +95,13 @@ def api_documents_upload():
                 # Utiliser la nouvelle fonction centralisée avec individualisation
                 user_email = request.current_user.email
                 StatelessDataManager.clear_generic_actions_history(document_type, user_email)
+                
+                # Nettoyage spécifique du cache CV si c'est un CV
+                if document_type == 'cv':
+                    from services.cv_analysis_persistence import CVAnalysisPersistence
+                    CVAnalysisPersistence.clear_cache(user_email)
+                    print(f"🗑️ Cache CV spécifique effacé pour {user_email}")
+                
                 print(f"✅ Cache purgé automatiquement pour nouveau {document_type} de {user_email}")
                 
             except Exception as e:
@@ -174,6 +181,13 @@ def api_documents_upload_text():
                 # Utiliser la nouvelle fonction centralisée avec individualisation
                 user_email = request.current_user.email
                 StatelessDataManager.clear_generic_actions_history(document_type, user_email)
+                
+                # Nettoyage spécifique du cache CV si c'est un CV
+                if document_type == 'cv':
+                    from services.cv_analysis_persistence import CVAnalysisPersistence
+                    CVAnalysisPersistence.clear_cache(user_email)
+                    print(f"🗑️ Cache CV spécifique effacé pour {user_email}")
+                
                 print(f"✅ Cache purgé automatiquement pour nouveau {document_type} de {user_email}")
                 
             except Exception as e:
