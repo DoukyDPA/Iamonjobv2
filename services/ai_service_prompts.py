@@ -4,9 +4,10 @@
 # Dictionnaire vide qui sera rempli depuis la base de données ou le JSON
 AI_PROMPTS = {}
 
-# Chargement automatique des prompts au démarrage - déplacé à la fin du fichier
+# Dictionnaire vide qui sera rempli depuis la base de données ou le JSON
+AI_PROMPTS = {}
 
-def execute_ai_service(service_id, cv_content, job_content="", questionnaire_content="", user_notes="", force_new=False):
+def execute_ai_service(service_id, cv_content, job_content="", questionnaire_content="", user_notes=""):
     """Fonction générique pour exécuter un service IA selon l'identifiant"""
     try:
         from services.ai_service_mistral import call_mistral_api
@@ -15,35 +16,6 @@ def execute_ai_service(service_id, cv_content, job_content="", questionnaire_con
         if service_id in AI_PROMPTS:
             service_config = AI_PROMPTS[service_id]
             prompt_template = service_config["prompt"]
-            print(f"✅ Service {service_id} trouvé dans AI_PROMPTS")
-        else:
-            # Debug : afficher les services disponibles
-            print(f"⚠️ Service {service_id} non trouvé dans AI_PROMPTS")
-            print(f"🔍 Services disponibles: {list(AI_PROMPTS.keys())}")
-            
-            # Si le service n'est pas dans AI_PROMPTS, essayer de recharger
-            print(f"🔄 Tentative de rechargement...")
-            try:
-                reload_prompts_from_file()
-                if service_id in AI_PROMPTS:
-                    service_config = AI_PROMPTS[service_id]
-                    prompt_template = service_config["prompt"]
-                    print(f"✅ Service {service_id} trouvé après rechargement")
-                else:
-                    print(f"❌ Service {service_id} toujours non trouvé après rechargement")
-                    print(f"🔍 Services disponibles après rechargement: {list(AI_PROMPTS.keys())}")
-                    raise Exception(f"Service {service_id} non trouvé dans AI_PROMPTS après rechargement")
-            except Exception as e:
-                print(f"❌ Erreur lors du rechargement des prompts: {e}")
-                raise Exception(f"Impossible de charger le service {service_id}: {e}")
-        
-        # Pour l'analyse CV, utiliser le système de cache avec force_new
-        if service_id == "analyze_cv" and cv_content:
-            from services.cv_analysis_persistence import CVAnalysisPersistence
-            cache_result = CVAnalysisPersistence.get_persistent_analysis(cv_content, force_new=force_new)
-            if cache_result['success']:
-                print(f"📄 Analyse CV {'(cache)' if cache_result['cached'] else '(nouvelle)'}")
-                return cache_result['analysis']
             
             print(f"🔍 DEBUG execute_ai_service pour {service_id}:")
             print(f"   Prompt template: {prompt_template[:200]}...")
@@ -52,19 +24,10 @@ def execute_ai_service(service_id, cv_content, job_content="", questionnaire_con
             print(f"   Questionnaire content length: {len(questionnaire_content or '')}")
             
             # Remplacer les variables de contexte dans le prompt
-            print(f"🔍 AVANT REMPLACEMENT - Prompt template: {prompt_template[:200]}...")
-            print(f"🔍 Variables disponibles:")
-            print(f"   cv_content: {len(cv_content or '')} caractères")
-            print(f"   job_content: {len(job_content or '')} caractères") 
-            print(f"   questionnaire_content: {len(questionnaire_content or '')} caractères")
-            print(f"   user_notes: {len(user_notes or '')} caractères")
-            
             prompt = prompt_template.replace("{cv_content}", cv_content or "CV non disponible")
             prompt = prompt.replace("{job_content}", job_content or "Offre d'emploi non disponible")
             prompt = prompt.replace("{questionnaire_content}", questionnaire_content or "Questionnaire non disponible")
             prompt = prompt.replace("{user_notes}", user_notes or "")
-            
-            print(f"🔍 APRÈS REMPLACEMENT - Prompt final: {prompt[:200]}...")
             
             # Remplacer les placeholders dans le prompt
             prompt = prompt.replace("{questionnaire_instruction}", 
@@ -79,11 +42,15 @@ def execute_ai_service(service_id, cv_content, job_content="", questionnaire_con
             
             # Appeler l'API avec le prompt personnalisé (sans contexte séparé)
             return call_mistral_api(prompt, service_id=service_id)
+        else:
+            # Fallback pour les services non configurés
+            prompt = f"SERVICE: {service_id}\nCV:\n{cv_content}\n\nOFFRE:\n{job_content}\n\nQUESTIONNAIRE:\n{questionnaire_content}\n\nNOTES:\n{user_notes}"
+            return call_mistral_api(prompt, service_id=service_id)
             
-    except ImportError as e:
-        raise Exception(f"Import error pour {service_id}: {e}")
+    except ImportError:
+        return f"Service IA temporairement indisponible pour {service_id}"
     except Exception as e:
-        raise Exception(f"Erreur lors de l'exécution du service {service_id}: {str(e)}")
+        return f"Erreur lors de l'exécution du service {service_id}: {str(e)}"
 
 def generate_generic_service(service_id, cv_content, job_content="", questionnaire_content="", user_notes=""):
     """Fonction générique pour tous les services"""
@@ -98,12 +65,33 @@ def generate_generic_service(service_id, cv_content, job_content="", questionnai
 # === FONCTIONS UTILITAIRES AVEC BASE DE DONNÉES ===
 
 def get_all_prompts():
-    """Retourne la configuration complète des prompts depuis Supabase uniquement."""
-    return get_prompts_from_database()
+    """Retourne la configuration complète des prompts depuis la base de données."""
+    try:
+        # Essayer d'abord la base de données
+        prompts = get_prompts_from_database()
+        if prompts:
+            return prompts
+        else:
+            # Fallback vers le fichier JSON
+            print("⚠️ Base de données non disponible, utilisation du fichier JSON")
+            return get_prompts_from_json()
+    except Exception as e:
+        print(f"⚠️ Erreur base de données: {e}, utilisation du fichier JSON")
+        return get_prompts_from_json()
 
 def get_prompt(service_id):
-    """Retourne le prompt d'un service donné depuis Supabase uniquement."""
-    return get_prompt_from_database(service_id)
+    """Retourne le prompt d'un service donné depuis la base de données."""
+    try:
+        # Essayer d'abord la base de données
+        prompt = get_prompt_from_database(service_id)
+        if prompt:
+            return prompt
+        else:
+            # Fallback vers le fichier JSON
+            return get_prompt_from_json(service_id)
+    except Exception as e:
+        print(f"⚠️ Erreur base de données: {e}, utilisation du fichier JSON")
+        return get_prompt_from_json(service_id)
 
 def reload_prompts_from_file():
     """Recharge les prompts depuis la base de données ou le fichier JSON"""
@@ -127,10 +115,19 @@ def reload_prompts_from_file():
                     print(f"✅ Prompts rechargés depuis la base de données: {len(prompts)} services")
                     return True
             
-            raise Exception("Aucun prompt trouvé dans Supabase")
+            # Fallback vers le fichier JSON
+            prompts = get_prompts_from_json()
+            if prompts:
+                AI_PROMPTS.clear()
+                AI_PROMPTS.update(prompts)
+                print(f"✅ Prompts rechargés depuis le fichier JSON: {len(prompts)} services")
+                return True
+            else:
+                print("❌ Aucun prompt trouvé (ni DB ni JSON)")
+                return False
     except Exception as e:
         print(f"❌ Erreur lors du rechargement des prompts: {e}")
-        raise e
+        return False
 
 def update_prompt(service_id, new_prompt):
     """Met à jour le contenu du prompt pour un service dans la base de données."""
@@ -275,8 +272,8 @@ def insert_default_prompts():
             print("⚠️ Supabase non disponible")
             return False
         
-        # Pas de prompts par défaut - ils doivent être créés dans Supabase
-        prompts = {}
+        # Récupérer les prompts depuis le fichier JSON
+        prompts = get_prompts_from_json()
         
         if prompts:
             for service_id, prompt_data in prompts.items():
@@ -299,12 +296,66 @@ def insert_default_prompts():
         print(f"❌ Erreur lors de l'insertion des prompts par défaut: {e}")
         return False
 
-# === PROMPTS EXCLUSIVEMENT SUR SUPABASE ===
-# Tous les prompts sont gérés via Supabase, pas de fallback JSON
+# === FONCTIONS FICHIER JSON (FALLBACK) ===
+
+def get_prompts_from_json():
+    """Récupère tous les prompts depuis le fichier JSON (fallback)"""
+    try:
+        import json
+        import os
+        
+        prompts_file = os.path.join(os.path.dirname(__file__), 'ai_service_prompts.json')
+        
+        if os.path.exists(prompts_file):
+            with open(prompts_file, 'r', encoding='utf-8') as f:
+                prompts = json.load(f)
+                print(f"📁 Prompts chargés depuis le fichier JSON: {len(prompts)} services")
+                return prompts
+        else:
+            print("⚠️ Fichier JSON non trouvé")
+            return {}
+            
+    except Exception as e:
+        print(f"❌ Erreur lors du chargement du fichier JSON: {e}")
+        return {}
+
+def get_prompt_from_json(service_id):
+    """Récupère un prompt spécifique depuis le fichier JSON (fallback)"""
+    prompts = get_prompts_from_json()
+    return prompts.get(service_id)
+
+def update_prompt_in_json(service_id, new_prompt):
+    """Met à jour un prompt dans le fichier JSON (fallback)"""
+    try:
+        import json
+        import os
+        
+        prompts_file = os.path.join(os.path.dirname(__file__), 'ai_service_prompts.json')
+        
+        if os.path.exists(prompts_file):
+            with open(prompts_file, 'r', encoding='utf-8') as f:
+                prompts = json.load(f)
+        else:
+            prompts = {}
+        
+        # Mettre à jour le prompt
+        if service_id in prompts:
+            prompts[service_id]["prompt"] = new_prompt
+            
+            # Sauvegarder la configuration mise à jour
+            with open(prompts_file, 'w', encoding='utf-8') as f:
+                json.dump(prompts, f, ensure_ascii=False, indent=2)
+            
+            print(f"📁 Prompt mis à jour dans le fichier JSON pour {service_id}")
+            return True
+        else:
+            print(f"❌ Service {service_id} non trouvé dans le fichier JSON")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Erreur lors de la mise à jour du fichier JSON: {e}")
+        return False
 
 # Charger les prompts au démarrage
 print("🔄 Chargement des prompts depuis la base de données...")
-try:
-    reload_prompts_from_file()
-except Exception as e:
-    print(f"⚠️ Erreur lors du chargement initial des prompts: {e}")
+reload_prompts_from_file()
