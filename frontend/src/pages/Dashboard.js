@@ -1,3 +1,4 @@
+
 // REMPLACER frontend/src/pages/Dashboard.js
 
 import React, { useState } from 'react';
@@ -429,12 +430,12 @@ const Dashboard = () => {
   };
 
   const tabs = [
-    { id: 'documents', label: 'Mes documents', mobileLabel: 'Docs', icon: <FiFileText /> },
-    { id: 'evaluate', label: 'Évaluer une offre', mobileLabel: 'Offre', icon: <FiTarget /> },
-    { id: 'improve', label: 'Améliorer mon CV', mobileLabel: 'CV', icon: <FiTrendingUp /> },
-    { id: 'apply', label: 'Candidater', mobileLabel: 'Candidature', icon: <FiMail /> },
-    { id: 'interview', label: "Préparer l'entretien", mobileLabel: 'Entretien', icon: <FiMic /> },
-    { id: 'change', label: 'Tout changer', mobileLabel: 'Reconversion', icon: <FiRefreshCw /> }
+    { id: 'documents', label: 'Mes documents', mobileLabel: 'Docs', icon: <FiFileText />, route: null },
+    { id: 'evaluate', label: 'Évaluer une offre', mobileLabel: 'Offre', icon: <FiTarget />, route: '/matching-cv-offre' },
+    { id: 'improve', label: 'Améliorer mon CV', mobileLabel: 'CV', icon: <FiTrendingUp />, route: '/analyze-cv' },
+    { id: 'apply', label: 'Candidater', mobileLabel: 'Candidature', icon: <FiMail />, route: '/cover-letter-generate' },
+    { id: 'interview', label: "Préparer l'entretien", mobileLabel: 'Entretien', icon: <FiMic />, route: '/interview-prep' },
+    { id: 'change', label: 'Tout changer', mobileLabel: 'Reconversion', icon: <FiRefreshCw />, route: '/career-orientation' }
   ];
 
   // États pour l'analyse de CV
@@ -539,7 +540,13 @@ const Dashboard = () => {
               {tabs.map(tab => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    if (tab.route) {
+                      navigate(tab.route);
+                    } else {
+                      setActiveTab(tab.id);
+                    }
+                  }}
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
