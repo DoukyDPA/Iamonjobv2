@@ -521,80 +521,7 @@ const Dashboard = () => {
             </p>
           </div>
 
-          {/* Navigation par onglets moderne */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            background: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: '16px',
-            padding: '0.5rem',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
-          }}>
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '1rem 1.5rem',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: activeTab === tab.id 
-                    ? 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)' 
-                    : 'transparent',
-                  color: activeTab === tab.id ? 'white' : 'rgba(255, 255, 255, 0.7)',
-                  fontWeight: '600',
-                  fontSize: '0.95rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
-                onMouseEnter={(e) => {
-                  if (activeTab !== tab.id) {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.1)';
-                    e.target.style.color = 'rgba(255, 255, 255, 0.9)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeTab !== tab.id) {
-                    e.target.style.background = 'transparent';
-                    e.target.style.color = 'rgba(255, 255, 255, 0.7)';
-                  }
-                }}
-              >
-                <span style={{ fontSize: '1.1rem' }}>{tab.icon}</span>
-                <span style={{ 
-                  display: window.innerWidth > 768 ? 'inline' : 'none' 
-                }}>
-                  {tab.label}
-                </span>
-                <span style={{ 
-                  display: window.innerWidth <= 768 ? 'inline' : 'none',
-                  fontSize: '0.85rem'
-                }}>
-                  {tab.mobileLabel}
-                </span>
-                {activeTab === tab.id && (
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '0',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: '20px',
-                    height: '3px',
-                    background: 'white',
-                    borderRadius: '2px',
-                    boxShadow: '0 0 8px rgba(255, 255, 255, 0.5)'
-                  }}></div>
-                )}
-              </button>
-            ))}
-          </div>
+
         </div>
       </div>
 
@@ -602,27 +529,33 @@ const Dashboard = () => {
       <div style={{ 
         maxWidth: '1200px', 
         margin: '0 auto', 
-        padding: '2rem',
+        padding: '2rem 2rem 8rem 2rem', // Padding en bas pour la barre d'onglets fixe
         background: 'transparent'
       }}>
-        {/* Documents visibles UNIQUEMENT dans l'onglet Documents */}
-        {activeTab === 'documents' && (
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: '20px',
-            padding: '2rem',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
-          }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-            <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0 }}>
-              <LogoIcon size={36} />
-              Vos Documents pour personnaliser l'analyse
+        {/* Section Documents harmonisée */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '20px',
+          padding: '2rem',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+          marginBottom: '2rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
+            <h2 style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.75rem', 
+              margin: 0,
+              color: 'white',
+              fontSize: '1.5rem',
+              fontWeight: '600'
+            }}>
+              📄 Vos Documents pour personnaliser l'analyse
             </h2>
             <button 
               onClick={() => setShowAdviceModal(true)}
-              className="revolutionary-btn-advice"
               style={{
                 background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
                 color: '#92400e',
@@ -641,6 +574,238 @@ const Dashboard = () => {
               <FiHelpCircle />
               Conseils pour optimiser mon profil
             </button>
+          </div>
+
+          {/* Barre de progression */}
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '0.9rem', fontWeight: '500' }}>
+                Progression: {documentsCount}/3 documents
+              </span>
+              <div style={{ 
+                backgroundColor: documentsCount === 3 ? '#22c55e' : '#c7356c',
+                color: 'white',
+                padding: '0.25rem 0.75rem',
+                borderRadius: '12px',
+                fontSize: '0.8rem',
+                fontWeight: '600'
+              }}>
+                {documentsCount === 3 ? '✅ Complet' : `${documentsCount}/3`}
+              </div>
+            </div>
+            <div style={{
+              width: '100%',
+              height: '8px',
+              background: 'rgba(255, 255, 255, 0.1)',
+              borderRadius: '4px',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                height: '100%',
+                background: 'linear-gradient(90deg, #0a6b79 0%, #14b8a6 100%)',
+                width: `${(documentsCount / 3) * 100}%`,
+                transition: 'width 0.3s ease'
+              }}></div>
+            </div>
+          </div>
+
+          {/* Boutons d'upload opérationnels */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+            {/* CV */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '12px',
+                  background: documentStatus.cv?.uploaded ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' : 'rgba(255, 255, 255, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem'
+                }}>
+                  📄
+                </div>
+                <div>
+                  <h3 style={{ color: 'white', margin: '0 0 0.25rem 0', fontSize: '1.1rem', fontWeight: '600' }}>CV</h3>
+                  <p style={{ color: 'rgba(255, 255, 255, 0.6)', margin: 0, fontSize: '0.9rem' }}>
+                    {documentStatus.cv?.uploaded ? 'Document chargé' : 'Aucun document'}
+                  </p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button 
+                  onClick={() => document.getElementById('cv-upload')?.click()}
+                  style={{
+                    flex: 1,
+                    background: '#c7356c',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.75rem',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <FiUpload />
+                  Télécharger
+                </button>
+                <button 
+                  onClick={() => setShowTextModal('cv')}
+                  style={{
+                    flex: 1,
+                    background: '#0a6b79',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.75rem',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <FiEdit3 />
+                  Copier/Coller
+                </button>
+              </div>
+            </div>
+
+            {/* Offre d'emploi */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '12px',
+                  background: documentStatus.offre_emploi?.uploaded ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' : 'rgba(255, 255, 255, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem'
+                }}>
+                  🎯
+                </div>
+                <div>
+                  <h3 style={{ color: 'white', margin: '0 0 0.25rem 0', fontSize: '1.1rem', fontWeight: '600' }}>Offre d'emploi</h3>
+                  <p style={{ color: 'rgba(255, 255, 255, 0.6)', margin: 0, fontSize: '0.9rem' }}>
+                    {documentStatus.offre_emploi?.uploaded ? 'Document chargé' : 'Aucun document'}
+                  </p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button 
+                  onClick={() => document.getElementById('offre-upload')?.click()}
+                  style={{
+                    flex: 1,
+                    background: '#c7356c',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.75rem',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <FiUpload />
+                  Télécharger
+                </button>
+                <button 
+                  onClick={() => setShowTextModal('offre_emploi')}
+                  style={{
+                    flex: 1,
+                    background: '#0a6b79',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.75rem',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <FiEdit3 />
+                  Copier/Coller
+                </button>
+              </div>
+            </div>
+
+            {/* Questionnaire */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '12px',
+                  background: documentStatus.questionnaire?.uploaded ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' : 'rgba(255, 255, 255, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem'
+                }}>
+                  📝
+                </div>
+                <div>
+                  <h3 style={{ color: 'white', margin: '0 0 0.25rem 0', fontSize: '1.1rem', fontWeight: '600' }}>Questionnaire</h3>
+                  <p style={{ color: 'rgba(255, 255, 255, 0.6)', margin: 0, fontSize: '0.9rem' }}>
+                    {documentStatus.questionnaire?.uploaded ? 'Réponses enregistrées' : 'Non rempli'}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowQuestionnaireModal(true)}
+                style={{
+                  width: '100%',
+                  background: '#f59e0b',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.75rem',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  fontWeight: '500',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                <FiEdit3 />
+                Remplir le questionnaire
+              </button>
+            </div>
           </div>
 
           {/* Barre de progression compacte avec boutons d'upload */}
@@ -869,7 +1034,6 @@ const Dashboard = () => {
             <PartnerJobs />
           </div>
         </div>
-        )}
 
         {/* Autres onglets avec le même style */}
         {activeTab === 'evaluate' && (
@@ -1006,6 +1170,73 @@ const Dashboard = () => {
             <ServicesGrid filterTheme="career_project" />
           </div>
         )}
+      </div>
+
+      {/* Barre d'onglets en bas */}
+      <div style={{
+        position: 'fixed',
+        bottom: '0',
+        left: '0',
+        right: '0',
+        background: 'rgba(15, 23, 42, 0.95)',
+        backdropFilter: 'blur(10px)',
+        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+        padding: '1rem 0',
+        zIndex: 1000
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '0.5rem'
+          }}>
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: activeTab === tab.id 
+                    ? 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)' 
+                    : 'rgba(255, 255, 255, 0.05)',
+                  color: activeTab === tab.id ? 'white' : 'rgba(255, 255, 255, 0.7)',
+                  fontWeight: '600',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  minWidth: '80px'
+                }}
+                onMouseEnter={(e) => {
+                  if (activeTab !== tab.id) {
+                    e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                    e.target.style.color = 'rgba(255, 255, 255, 0.9)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeTab !== tab.id) {
+                    e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+                    e.target.style.color = 'rgba(255, 255, 255, 0.7)';
+                  }
+                }}
+              >
+                <span style={{ fontSize: '1.2rem' }}>{tab.icon}</span>
+                <span style={{ 
+                  fontSize: '0.7rem',
+                  textAlign: 'center',
+                  lineHeight: '1.2'
+                }}>
+                  {window.innerWidth > 768 ? tab.label : tab.mobileLabel}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Modal Questionnaire */}
