@@ -77,6 +77,11 @@ ADMIN_USERNAME=admin
 ADMIN_PASSWORD=mot_de_passe_securise
 ```
 
+Ces variables sont chargées par le gestionnaire centralisé `config/config_manager.py`.
+En production sur [Railway](https://railway.app), les clés Supabase sont
+définies comme variables d'environnement dans le tableau de bord du
+projet et ne sont jamais commit dans le dépôt.
+
 ### Installation Backend
 
 ```bash
@@ -85,6 +90,9 @@ pip install -r requirements.txt
 
 # Démarrage du serveur Flask
 python app.py
+
+# Démarrage en production avec Gunicorn et sa configuration
+gunicorn -c gunicorn.conf.py app:app
 ```
 
 Le serveur backend démarre sur `http://localhost:8080`

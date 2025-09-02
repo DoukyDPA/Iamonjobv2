@@ -9,6 +9,8 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 import json
 
+from config.config_manager import get_config
+
 # Configuration du logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -21,51 +23,27 @@ class SupabaseServicesManager:
         self._init_supabase()
     
     def _init_supabase(self):
-        """Initialise la connexion Supabase"""
+        """Initialise la connexion Supabase via ConfigManager"""
         try:
-            # Utiliser config.py directement (plus simple et fiable)
-            try:
-                import sys
-                import os
-                
-                # Importer config.py directement depuis le répertoire racine
-                current_dir = os.path.dirname(__file__)
-                root_dir = os.path.dirname(os.path.dirname(current_dir))
-                config_path = os.path.join(root_dir, 'config.py')
-                
-                if os.path.exists(config_path):
-                    import importlib.util
-                    spec = importlib.util.spec_from_file_location("config", config_path)
-                    config_module = importlib.util.module_from_spec(spec)
-                    spec.loader.exec_module(config_module)
-                    
-                    supabase_url = config_module.MIGRATION_CONFIG.get('SUPABASE_URL')
-                    supabase_key = config_module.MIGRATION_CONFIG.get('SUPABASE_ANON_KEY')
-                else:
-                    logger.warning(f"⚠️ Fichier config.py non trouvé: {config_path}")
-                    supabase_url = None
-                    supabase_key = None
-                
-                if supabase_url and supabase_key:
-                    from supabase import create_client, Client
-                    self.supabase_client = create_client(supabase_url, supabase_key)
-                    logger.info("✅ Connexion Supabase établie via config.py")
-                    
-                    # Test de connexion
-                    try:
-                        response = self.supabase_client.table('admin_services_config').select('service_id').limit(1).execute()
-                        logger.info("✅ Test de connexion Supabase réussi")
-                    except Exception as test_error:
-                        logger.warning(f"⚠️ Test de connexion échoué: {test_error}")
-                        
-                else:
-                    logger.warning("⚠️ Variables Supabase manquantes dans config.py")
-                    self.supabase_client = None
-                    
-            except ImportError as e:
-                logger.warning(f"⚠️ Import config.py échoué: {e}")
+            from supabase import create_client
+
+            supabase_url = get_config('SUPABASE_URL')
+            supabase_key = get_config('SUPABASE_ANON_KEY')
+
+            if supabase_url and supabase_key:
+                self.supabase_client = create_client(supabase_url, supabase_key)
+                logger.info("✅ Connexion Supabase établie via ConfigManager")
+
+                # Test de connexion
+                try:
+                    response = self.supabase_client.table('admin_services_config').select('service_id').limit(1).execute()
+                    logger.info("✅ Test de connexion Supabase réussi")
+                except Exception as test_error:
+                    logger.warning(f"⚠️ Test de connexion échoué: {test_error}")
+            else:
+                logger.warning("⚠️ Variables Supabase manquantes")
                 self.supabase_client = None
-                
+
         except Exception as e:
             logger.error(f"❌ Erreur initialisation Supabase: {e}")
             self.supabase_client = None

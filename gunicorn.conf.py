@@ -3,7 +3,8 @@ import os
 
 # Serveur
 bind = f"0.0.0.0:{os.environ.get('PORT', 8080)}"
-workers = 2
+workers = 3
+threads = 3
 worker_class = "sync"
 worker_connections = 1000
 timeout = 120

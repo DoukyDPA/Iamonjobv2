@@ -1,11 +1,14 @@
-# services/supabase_storage.py
-import os
+"""Supabase storage service using environment configuration."""
+
 import json
 import logging
 from datetime import datetime
 from typing import Dict, Any, Optional
+
 from supabase import create_client, Client
 from flask import session
+
+from config.config_manager import get_config
 
 class SupabaseStorage:
     """
@@ -13,62 +16,37 @@ class SupabaseStorage:
     """
     
     def __init__(self):
-        # Essayer d'abord config.py, puis os.environ
-        try:
-            import sys
-            import os
-            
-            # Importer config.py depuis le répertoire racine
-            current_dir = os.path.dirname(__file__)
-            root_dir = os.path.dirname(current_dir)
-            config_path = os.path.join(root_dir, 'config.py')
-            
-            if os.path.exists(config_path):
-                import importlib.util
-                spec = importlib.util.spec_from_file_location("config", config_path)
-                config_module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(config_module)
-                
-                url = config_module.MIGRATION_CONFIG.get('SUPABASE_URL')
-                key = config_module.MIGRATION_CONFIG.get('SUPABASE_ANON_KEY')
-                logging.info("✅ Configuration chargée depuis config.py")
-            else:
-                # Fallback vers os.environ
-                url = os.getenv('SUPABASE_URL')
-                key = os.getenv('SUPABASE_ANON_KEY')
-                logging.info("✅ Configuration chargée depuis os.environ")
-        except Exception as e:
-            # Fallback vers os.environ en cas d'erreur
-            url = os.getenv('SUPABASE_URL')
-            key = os.getenv('SUPABASE_ANON_KEY')
-            logging.warning(f"⚠️ Erreur chargement config.py, fallback os.environ: {e}")
-        
-        logging.info(f"🔧 Initialisation Supabase - URL: {url[:50] if url else 'None'}...")
-        logging.info(f"🔑 Clé: {key[:20] if key else 'None'}...")
-        
+        """Initialise le client Supabase à partir du ConfigManager."""
+        url = get_config('SUPABASE_URL')
+        key = get_config('SUPABASE_ANON_KEY')
+
+        logging.info("🔧 Initialisation Supabase via ConfigManager")
+        if url and key:
+            logging.info("✅ Variables Supabase détectées")
+        else:
+            logging.warning("⚠️ Variables Supabase manquantes")
+
         if not url or not key:
-            # Au lieu de crasher, marquer comme non disponible
             self.available = False
             self.client = None
             self.cache = {}
             logging.error("❌ SUPABASE_URL et SUPABASE_ANON_KEY manquants - mode dégradé")
             return
-        
+
         try:
-            self.client: Client = create_client(url, key)
+            self.client = create_client(url, key)
             self.cache = {}  # Cache local 1 minute
             self.available = True
             logging.info("✅ Supabase Storage initialisé avec succès")
-            
+
             # Test de connexion
             try:
-                # Test simple de connexion
                 response = self.client.table('partners').select('id').limit(1).execute()
                 logging.info("✅ Test de connexion Supabase réussi")
             except Exception as test_error:
                 logging.warning(f"⚠️ Test de connexion échoué: {test_error}")
                 # Ne pas marquer comme indisponible pour un test échoué
-                
+
         except Exception as e:
             logging.error(f"❌ Erreur init Supabase: {e}")
             self.available = False
