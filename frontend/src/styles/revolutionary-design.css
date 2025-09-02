@@ -129,12 +129,12 @@
 /* ===== GRID DASHBOARD RESPONSIVE ===== */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 
   grid-template-rows: auto auto;
   grid-template-areas:
-    "cv questionnaire offre metier"
-    "conseils conseils conseils conseils";
+    "cv questionnaire offre"
+    "conseils conseils conseils";
   gap: 2rem;
   margin-bottom: 2rem;
   align-items: start;
@@ -147,7 +147,7 @@
     grid-template-rows: auto auto auto;
     grid-template-areas: 
       "cv questionnaire"
-      "offre metier"
+      "offre ."
       "conseils conseils";
     gap: 1rem;
   }
