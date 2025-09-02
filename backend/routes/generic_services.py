@@ -12,10 +12,14 @@ def execute_ai_service(*args, **kwargs):
     """Import différé pour éviter le circular import"""
     try:
         from services.ai_service_prompts import execute_ai_service as real_execute_ai_service
-        return real_execute_ai_service(*args, **kwargs)
-    except ImportError as e:
-        print(f"❌ Erreur import execute_ai_service: {e}")
-        return "Service IA temporairement indisponible"
+        result = real_execute_ai_service(*args, **kwargs)
+        print(f"🔍 Wrapper execute_ai_service - Résultat: {result[:100] if result else 'None'}...")
+        return result
+    except Exception as e:
+        print(f"❌ Erreur dans wrapper execute_ai_service: {e}")
+        import traceback
+        traceback.print_exc()
+        raise e
 
 # Configuration des services - SUPPRIMÉE
 # La configuration est maintenant centralisée dans frontend/src/services/servicesConfig.js
