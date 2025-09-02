@@ -485,40 +485,136 @@ const Dashboard = () => {
   // ou lorsque l'utilisateur supprime réellement son CV. L'analyse persiste sinon.
 
   return (
-    <div className="revolutionary-dashboard" style={{ background: 'var(--primary-color)', minHeight: '100vh' }}>
-      {/* Header */}
-      <div className="dashboard-header" style={{ marginTop: '3.5rem' }}>
-        <h1 style={{ 
-          background: 'linear-gradient(135deg, #ffffff 0%, #86efac 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          textShadow: '0 2px 8px rgba(0,0,0,0.10)'
-        }}>
-          👋 Bienvenue dans votre espace personnel
-        </h1>
-      </div>
+    <div style={{ 
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)', 
+      minHeight: '100vh',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
+      {/* Header moderne */}
+      <div style={{ 
+        paddingTop: '4rem',
+        paddingBottom: '2rem',
+        background: 'linear-gradient(135deg, rgba(10, 107, 121, 0.1) 0%, rgba(20, 184, 166, 0.05) 100%)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <h1 style={{ 
+              fontSize: '2.5rem',
+              fontWeight: '700',
+              background: 'linear-gradient(135deg, #ffffff 0%, #0a6b79 50%, #14b8a6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              margin: '0 0 0.5rem 0',
+              textShadow: '0 4px 12px rgba(0,0,0,0.3)'
+            }}>
+              🚀 Bienvenue dans votre espace de carrière
+            </h1>
+            <p style={{ 
+              fontSize: '1.2rem',
+              color: 'rgba(255, 255, 255, 0.8)',
+              margin: '0',
+              fontWeight: '400'
+            }}>
+              Transformez votre profil professionnel avec l'intelligence artificielle
+            </p>
+          </div>
 
-      {/* Navigation par onglets */}
-      <div className="revolutionary-tabs-container">
-        <div className="revolutionary-tabs">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`revolutionary-tab-button${activeTab === tab.id ? ' active' : ''}`}
-            >
-              <span className="revolutionary-tab-icon desktop-only">{tab.icon}</span>
-              <span className="revolutionary-tab-label desktop-only">{tab.label}</span>
-              <span className="revolutionary-tab-label-mobile">{tab.mobileLabel}</span>
-            </button>
-          ))}
+          {/* Navigation par onglets moderne */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '16px',
+            padding: '0.5rem',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+          }}>
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '1rem 1.5rem',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: activeTab === tab.id 
+                    ? 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)' 
+                    : 'transparent',
+                  color: activeTab === tab.id ? 'white' : 'rgba(255, 255, 255, 0.7)',
+                  fontWeight: '600',
+                  fontSize: '0.95rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+                onMouseEnter={(e) => {
+                  if (activeTab !== tab.id) {
+                    e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                    e.target.style.color = 'rgba(255, 255, 255, 0.9)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeTab !== tab.id) {
+                    e.target.style.background = 'transparent';
+                    e.target.style.color = 'rgba(255, 255, 255, 0.7)';
+                  }
+                }}
+              >
+                <span style={{ fontSize: '1.1rem' }}>{tab.icon}</span>
+                <span style={{ 
+                  display: window.innerWidth > 768 ? 'inline' : 'none' 
+                }}>
+                  {tab.label}
+                </span>
+                <span style={{ 
+                  display: window.innerWidth <= 768 ? 'inline' : 'none',
+                  fontSize: '0.85rem'
+                }}>
+                  {tab.mobileLabel}
+                </span>
+                {activeTab === tab.id && (
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '0',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '20px',
+                    height: '3px',
+                    background: 'white',
+                    borderRadius: '2px',
+                    boxShadow: '0 0 8px rgba(255, 255, 255, 0.5)'
+                  }}></div>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Documents visibles UNIQUEMENT dans l'onglet Documents */}
-      {activeTab === 'documents' && (
-        <div className="revolutionary-tab-content">
+      {/* Contenu principal */}
+      <div style={{ 
+        maxWidth: '1200px', 
+        margin: '0 auto', 
+        padding: '2rem',
+        background: 'transparent'
+      }}>
+        {/* Documents visibles UNIQUEMENT dans l'onglet Documents */}
+        {activeTab === 'documents' && (
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '20px',
+            padding: '2rem',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+          }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
             <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0 }}>
               <LogoIcon size={36} />
@@ -773,114 +869,141 @@ const Dashboard = () => {
             <PartnerJobs />
           </div>
         </div>
-      )}
+        )}
 
-      {/* Contenu des onglets */}
-      <div>
-
-
+        {/* Autres onglets avec le même style */}
         {activeTab === 'evaluate' && (
-          <div className="revolutionary-tab-content">
-            <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <LogoIcon size={32} />
-              Évaluer une offre
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '20px',
+            padding: '2rem',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+          }}>
+            <h2 style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.75rem',
+              color: 'white',
+              fontSize: '1.5rem',
+              fontWeight: '600',
+              marginBottom: '2rem'
+            }}>
+              🎯 Évaluer une offre
             </h2>
             <ServicesGrid filterTheme="evaluate_offer" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
-                          <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <LogoIcon size={36} />
-              Testez votre compatibilité avec les métiers de nos partenaires
-            </h2>
-              <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
-              Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
-              </p>
+              <h2 style={{ 
+                marginBottom: '1.5rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.75rem',
+                color: 'white',
+                fontSize: '1.5rem',
+                fontWeight: '600'
+              }}>
+                🤝 Testez votre compatibilité avec les métiers de nos partenaires
+              </h2>
               <PartnerJobs />
             </div>
           </div>
         )}
 
         {activeTab === 'improve' && (
-          <div className="revolutionary-tab-content">
-            <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <LogoIcon size={32} />
-              Améliorer son CV
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '20px',
+            padding: '2rem',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+          }}>
+            <h2 style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.75rem',
+              color: 'white',
+              fontSize: '1.5rem',
+              fontWeight: '600',
+              marginBottom: '2rem'
+            }}>
+              📄 Améliorer mon CV
             </h2>
             <ServicesGrid filterTheme="improve_cv" />
-            {/* Section partenaires */}
-            <div style={{ margin: '2.5rem 0' }}>
-              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <LogoIcon size={36} />
-                Testez votre compatibilité avec les métiers de nos partenaires
-              </h2>
-              <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
-              Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
-              </p>
-              <PartnerJobs />
-            </div>
           </div>
         )}
 
         {activeTab === 'apply' && (
-          <div className="revolutionary-tab-content">
-            <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <LogoIcon size={32} />
-              Candidater
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '20px',
+            padding: '2rem',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+          }}>
+            <h2 style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.75rem',
+              color: 'white',
+              fontSize: '1.5rem',
+              fontWeight: '600',
+              marginBottom: '2rem'
+            }}>
+              ✉️ Candidater
             </h2>
             <ServicesGrid filterTheme="apply_jobs" />
-            {/* Section partenaires */}
-            <div style={{ margin: '2.5rem 0' }}>
-              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <LogoIcon size={36} />
-                Testez votre compatibilité avec les métiers de nos partenaires
-              </h2>
-              <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
-              Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
-              </p>
-              <PartnerJobs />
-            </div>
           </div>
         )}
 
         {activeTab === 'interview' && (
-          <div className="revolutionary-tab-content">
-            <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <LogoIcon size={32} />
-              Préparer l'entretien
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '20px',
+            padding: '2rem',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+          }}>
+            <h2 style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.75rem',
+              color: 'white',
+              fontSize: '1.5rem',
+              fontWeight: '600',
+              marginBottom: '2rem'
+            }}>
+              🎤 Préparer l'entretien
             </h2>
             <ServicesGrid filterTheme="interview_prep" />
-            {/* Section partenaires */}
-            <div style={{ margin: '2.5rem 0' }}>
-              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <LogoIcon size={36} />
-                Testez votre compatibilité avec les métiers de nos partenaires
-              </h2>
-              <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
-              Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
-              </p>
-              <PartnerJobs />
-            </div>
           </div>
         )}
 
         {activeTab === 'change' && (
-          <div className="revolutionary-tab-content">
-            <h2 className="revolutionary-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <LogoIcon size={32} />
-              Tout changer
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '20px',
+            padding: '2rem',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+          }}>
+            <h2 style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.75rem',
+              color: 'white',
+              fontSize: '1.5rem',
+              fontWeight: '600',
+              marginBottom: '2rem'
+            }}>
+              🔄 Tout changer
             </h2>
             <ServicesGrid filterTheme="career_project" />
-            {/* Section partenaires */}
-            <div style={{ margin: '2.5rem 0' }}>
-              <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <LogoIcon size={36} />
-                Testez votre compatibilité avec les métiers de nos partenaires
-              </h2>
-              <p style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', lineHeight: '1.5' }}>
-              Sélectionnez un des métiers que recrutent nos partenaires, il est peut-être fait pour vous! Iamonjob va tester votre compatibilité et vous préparer à candidater.
-              </p>
-              <PartnerJobs />
-            </div>
           </div>
         )}
       </div>
