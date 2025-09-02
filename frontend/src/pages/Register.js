@@ -112,7 +112,7 @@ const Register = () => {
           <div className="revolutionary-auth-header">
             <div className="revolutionary-auth-logo">
               <img 
-                src={`${process.env.PUBLIC_URL}/logo_iamonjob.png`}
+                src={`${process.env.PUBLIC_URL}/LOGO-COUL-IAMONJOB.png`}
                 alt="IAMONJOB" 
                 className="revolutionary-auth-logo-image"
               />
