@@ -113,36 +113,10 @@ def get_service(service_id):
 def execute_service(service_id):
     """Endpoint générique pour exécuter n'importe quel service"""
     try:
-        data = request.get_json()
-        user_id = request.headers.get("Authorization", "").split(" ")[-1] if request.headers.get("Authorization") else None
-
-        # Récupérer le prompt pour ce service
-        from backend.admin.ai_prompts_manager import get_all_ai_prompts
-        prompts = get_all_ai_prompts()
+        # Utiliser le système générique existant
+        from backend.routes.generic_services import handle_generic_service
+        return handle_generic_service(service_id, request)
         
-        # Chercher le prompt par service_id ou par titre
-        service_prompt = None
-        for prompt in prompts.values():
-            if prompt.get('service_id') == service_id or prompt.get('title', '').lower() in service_id.lower():
-                service_prompt = prompt
-                break
-        
-        if not service_prompt:
-            return jsonify({"error": f"Service {service_id} non disponible"}, 500)
-
-        # Appeler le service AI
-        from backend.services.ai_service import ai_service
-        result = ai_service.process_service_request(
-            service_id=service_id,
-            user_id=user_id,
-            prompt_template=service_prompt.get('prompt', ''),
-            input_data=data
-        )
-        return jsonify({
-            "success": True,
-            "result": result,
-            "service": service_prompt.get('title', service_id)
-        })
     except Exception as e:
         logging.error(f"Erreur service {service_id}: %s", e)
         return jsonify({"error": f"Erreur lors du service {service_id}"}, 500)
@@ -154,29 +128,51 @@ def analyse_emploi():
     """Service: Analyse d'offre d'emploi (route spécifique pour compatibilité)"""
     try:
         data = request.get_json()
-        user_id = request.headers.get("Authorization", "").split(" ")[-1] if request.headers.get("Authorization") else None
-
-        # Récupérer le prompt pour ce service
-        from backend.admin.ai_prompts_manager import get_all_ai_prompts
-        prompts = get_all_ai_prompts()
         
-        # Chercher le prompt analyse_emploi
-        service_prompt = None
-        for prompt in prompts.values():
-            if 'analyse' in prompt.get('title', '').lower() and 'offre' in prompt.get('title', '').lower():
-                service_prompt = prompt
-                break
+        # Récupérer l'email de l'utilisateur depuis le token JWT
+        user_email = None
+        try:
+            auth_header = request.headers.get('Authorization')
+            if auth_header and auth_header.startswith('Bearer '):
+                token = auth_header.split(' ')[1]
+                import jwt
+                from config.app_config import JWT_SECRET_KEY
+                payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=['HS256'])
+                user_email = payload.get('email')
+        except Exception as e:
+            print(f"⚠️ Erreur récupération email utilisateur: {e}")
+
+        # Récupérer le prompt pour ce service depuis Supabase
+        from services.ai_service_prompts import get_prompt
+        service_prompt = get_prompt('analyse_emploi')
         
         if not service_prompt:
             return jsonify({"error": "Service analyse_emploi non disponible"}, 500)
 
-        # Appeler le service AI
-        from backend.services.ai_service import ai_service
-        result = ai_service.process_service_request(
+        # Appeler le service AI via le système unifié
+        from services.ai_service_prompts import execute_ai_service
+        
+        # Récupérer les documents de l'utilisateur
+        from services.stateless_manager import StatelessDataManager
+        user_data = StatelessDataManager.get_user_data_by_email(user_email) if user_email else StatelessDataManager.get_user_data()
+        documents = user_data.get('documents', {})
+        
+        print(f"🔍 Debug analyse_emploi:")
+        print(f"   User email: {user_email}")
+        print(f"   Documents disponibles: {list(documents.keys())}")
+        print(f"   CV content length: {len(documents.get('cv', {}).get('content', ''))}")
+        print(f"   Job content length: {len(documents.get('offre_emploi', {}).get('content', ''))}")
+        
+        cv_content = documents.get('cv', {}).get('content', '')
+        job_content = documents.get('offre_emploi', {}).get('content', '')
+        questionnaire_content = documents.get('questionnaire', {}).get('content', '')
+        
+        result = execute_ai_service(
             service_id='analyse_emploi',
-            user_id=user_id,
-            prompt_template=service_prompt.get('prompt', ''),
-            input_data=data
+            cv_content=cv_content,
+            job_content=job_content,
+            questionnaire_content=questionnaire_content,
+            user_notes=data.get('notes', '')
         )
         return jsonify({
             "success": True,
@@ -196,27 +192,31 @@ def follow_up_email():
         data = request.get_json()
         user_id = request.headers.get("Authorization", "").split(" ")[-1] if request.headers.get("Authorization") else None
 
-        # Récupérer le prompt pour ce service
-        from backend.admin.ai_prompts_manager import get_all_ai_prompts
-        prompts = get_all_ai_prompts()
-        
-        # Chercher le prompt follow_up_email
-        service_prompt = None
-        for prompt in prompts.values():
-            if 'follow' in prompt.get('title', '').lower() or 'relance' in prompt.get('title', '').lower():
-                service_prompt = prompt
-                break
+        # Récupérer le prompt pour ce service depuis Supabase
+        from services.ai_service_prompts import get_prompt
+        service_prompt = get_prompt('follow_up_email')
         
         if not service_prompt:
             return jsonify({"error": "Service follow-up non disponible"}, 500)
 
-        # Appeler le service AI
-        from backend.services.ai_service import ai_service
-        result = ai_service.process_service_request(
+        # Appeler le service AI via le système unifié
+        from services.ai_service_prompts import execute_ai_service
+        
+        # Récupérer les documents de l'utilisateur
+        from services.stateless_manager import StatelessDataManager
+        user_data = StatelessDataManager.get_user_data_by_email(user_email) if user_email else StatelessDataManager.get_user_data()
+        documents = user_data.get('documents', {})
+        
+        cv_content = documents.get('cv', {}).get('content', '')
+        job_content = documents.get('offre_emploi', {}).get('content', '')
+        questionnaire_content = documents.get('questionnaire', {}).get('content', '')
+        
+        result = execute_ai_service(
             service_id='follow_up_email',
-            user_id=user_id,
-            prompt_template=service_prompt.get('prompt', ''),
-            input_data=data
+            cv_content=cv_content,
+            job_content=job_content,
+            questionnaire_content=questionnaire_content,
+            user_notes=data.get('notes', '')
         )
         return jsonify({
             "success": True,
