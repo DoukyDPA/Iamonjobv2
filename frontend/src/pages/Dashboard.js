@@ -559,32 +559,55 @@ const Dashboard = () => {
             </div>
             
             {/* Boutons d'upload compacts */}
-            <div className="mini-upload-buttons" style={{ border: '2px solid red', padding: '10px' }}>
-              <div className="mini-doc-item" style={{ border: '1px solid blue', margin: '5px' }}>
+            <div className="mini-upload-buttons">
+              {/* CV */}
+              <div className="mini-doc-item">
                 <div className="mini-doc-icon" style={{ backgroundColor: documentStatus.cv?.uploaded ? '#0a6b79' : '#e5e7eb' }}>
                   <FiFileText style={{ color: documentStatus.cv?.uploaded ? 'white' : '#9ca3af', fontSize: '14px' }} />
                 </div>
                 <span className="mini-doc-label">CV</span>
-                <button 
-                  className="mini-upload-btn"
-                  onClick={() => document.getElementById('cv-upload')?.click()}
-                  title={documentStatus.cv?.uploaded ? "Remplacer le CV" : "Uploader un CV"}
-                  style={{
-                    background: '#c7356c',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '0.25rem',
-                    cursor: 'pointer',
-                    width: '20px',
-                    height: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <FiUpload style={{ fontSize: '12px' }} />
-                </button>
+                <div className="mini-doc-buttons">
+                  <button 
+                    className="mini-upload-btn"
+                    onClick={() => document.getElementById('cv-upload')?.click()}
+                    title="Télécharger un CV"
+                    style={{
+                      background: '#c7356c',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '0.2rem 0.4rem',
+                      cursor: 'pointer',
+                      fontSize: '10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.2rem'
+                    }}
+                  >
+                    <FiUpload style={{ fontSize: '10px' }} />
+                    Télécharger
+                  </button>
+                  <button 
+                    className="mini-upload-btn"
+                    onClick={() => setShowTextModal('cv')}
+                    title="Copier/coller un CV"
+                    style={{
+                      background: '#0a6b79',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '0.2rem 0.4rem',
+                      cursor: 'pointer',
+                      fontSize: '10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.2rem'
+                    }}
+                  >
+                    <FiEdit3 style={{ fontSize: '10px' }} />
+                    Copier/coller
+                  </button>
+                </div>
                 <input
                   id="cv-upload"
                   type="file"
@@ -594,58 +617,84 @@ const Dashboard = () => {
                 />
               </div>
 
+              {/* Questionnaire */}
               <div className="mini-doc-item">
                 <div className="mini-doc-icon" style={{ backgroundColor: documentStatus.questionnaire?.uploaded ? '#f59e0b' : '#e5e7eb' }}>
                   <FiUser style={{ color: documentStatus.questionnaire?.uploaded ? 'white' : '#9ca3af', fontSize: '14px' }} />
                 </div>
                 <span className="mini-doc-label">Questionnaire</span>
-                <button 
-                  className="mini-upload-btn"
-                  onClick={() => setShowQuestionnaireModal(true)}
-                  title={documentStatus.questionnaire?.uploaded ? "Modifier le questionnaire" : "Remplir le questionnaire"}
-                  style={{
-                    background: '#c7356c',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '0.25rem',
-                    cursor: 'pointer',
-                    width: '20px',
-                    height: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <FiEdit3 style={{ fontSize: '12px' }} />
-                </button>
+                <div className="mini-doc-buttons">
+                  <button 
+                    className="mini-upload-btn"
+                    onClick={() => setShowQuestionnaireModal(true)}
+                    title="Remplir le questionnaire"
+                    style={{
+                      background: '#c7356c',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '0.2rem 0.4rem',
+                      cursor: 'pointer',
+                      fontSize: '10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.2rem'
+                    }}
+                  >
+                    <FiEdit3 style={{ fontSize: '10px' }} />
+                    Remplir
+                  </button>
+                </div>
               </div>
 
+              {/* Offre d'emploi */}
               <div className="mini-doc-item">
                 <div className="mini-doc-icon" style={{ backgroundColor: documentStatus.offre_emploi?.uploaded ? '#22c55e' : '#e5e7eb' }}>
                   <FiTarget style={{ color: documentStatus.offre_emploi?.uploaded ? 'white' : '#9ca3af', fontSize: '14px' }} />
                 </div>
                 <span className="mini-doc-label">Offre</span>
-                <button 
-                  className="mini-upload-btn"
-                  onClick={() => document.getElementById('offre-upload')?.click()}
-                  title={documentStatus.offre_emploi?.uploaded ? "Remplacer l'offre d'emploi" : "Uploader une offre d'emploi"}
-                  style={{
-                    background: '#c7356c',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '0.25rem',
-                    cursor: 'pointer',
-                    width: '20px',
-                    height: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <FiUpload style={{ fontSize: '12px' }} />
-                </button>
+                <div className="mini-doc-buttons">
+                  <button 
+                    className="mini-upload-btn"
+                    onClick={() => document.getElementById('offre-upload')?.click()}
+                    title="Télécharger une offre"
+                    style={{
+                      background: '#c7356c',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '0.2rem 0.4rem',
+                      cursor: 'pointer',
+                      fontSize: '10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.2rem'
+                    }}
+                  >
+                    <FiUpload style={{ fontSize: '10px' }} />
+                    Télécharger
+                  </button>
+                  <button 
+                    className="mini-upload-btn"
+                    onClick={() => setShowTextModal('offre_emploi')}
+                    title="Copier/coller une offre"
+                    style={{
+                      background: '#0a6b79',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '0.2rem 0.4rem',
+                      cursor: 'pointer',
+                      fontSize: '10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.2rem'
+                    }}
+                  >
+                    <FiEdit3 style={{ fontSize: '10px' }} />
+                    Copier/coller
+                  </button>
+                </div>
                 <input
                   id="offre-upload"
                   type="file"
