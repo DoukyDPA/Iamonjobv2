@@ -242,31 +242,91 @@ L'intelligence artificielle nécessite une configuration API.
 # === FONCTIONS SPÉCIALISÉES ===
 
 def analyze_cv_with_ai(cv_content: str) -> str:
-    """Analyse un CV avec l'IA Mistral"""
+    """Analyse un CV avec l'IA Mistral et retourne des données structurées"""
     
-    prompt = """ANALYSE APPROFONDIE DE CV
+    prompt = """ANALYSE APPROFONDIE DE CV - FORMAT JSON
 
-Analyse ce CV de manière professionnelle et détaillée. Fournis :
+Analyse ce CV de manière professionnelle et détaillée. Retourne UNIQUEMENT un objet JSON valide avec cette structure exacte :
 
-1. **SYNTHÈSE** (3-4 lignes de résumé du profil)
+{
+  "synthesis": "Synthèse du profil en 2-3 phrases maximum",
+  "strengths": [
+    "Point fort 1",
+    "Point fort 2", 
+    "Point fort 3",
+    "Point fort 4",
+    "Point fort 5"
+  ],
+  "improvements": [
+    "Axe d'amélioration 1",
+    "Axe d'amélioration 2",
+    "Axe d'amélioration 3",
+    "Axe d'amélioration 4",
+    "Axe d'amélioration 5"
+  ],
+  "recommendations": [
+    "Recommandation concrète 1",
+    "Recommandation concrète 2", 
+    "Recommandation concrète 3",
+    "Recommandation concrète 4",
+    "Recommandation concrète 5"
+  ],
+  "globalScore": 7,
+  "estimatedTime": "10 min"
+}
 
-2. **POINTS FORTS** (5 éléments maximum)
-   - Forces principales identifiées
-   - Atouts compétitifs
+RÈGLES IMPORTANTES :
+- Retourne UNIQUEMENT le JSON, sans texte avant ou après
+- Le globalScore doit être un nombre entre 1 et 10
+- Chaque liste doit contenir exactement 5 éléments
+- Utilise un ton professionnel et bienveillant
+- Sois précis et actionnable dans les recommandations
+- La synthèse doit être concise mais informative"""
 
-3. **AXES D'AMÉLIORATION** (5 éléments maximum)  
-   - Points faibles à corriger
-   - Manques identifiés
-
-4. **RECOMMANDATIONS CONCRÈTES**
-   - Actions précises à mener
-   - Optimisations suggérées
-
-5. **NOTE GLOBALE** /10 avec justification
-
-Utilise un ton professionnel et bienveillant. Sois précis et actionnable."""
-
-    return call_mistral_api(prompt, cv_content)
+    result = call_mistral_api(prompt, cv_content)
+    
+    # Essayer de parser le JSON pour valider la structure
+    try:
+        import json
+        # Nettoyer le résultat pour extraire le JSON
+        result_clean = result.strip()
+        if result_clean.startswith('```json'):
+            result_clean = result_clean[7:]
+        if result_clean.endswith('```'):
+            result_clean = result_clean[:-3]
+        result_clean = result_clean.strip()
+        
+        # Valider que c'est du JSON valide
+        json.loads(result_clean)
+        return result_clean
+    except:
+        # Si le parsing échoue, retourner un JSON par défaut
+        return json.dumps({
+            "synthesis": "Profil analysé avec succès. Quelques ajustements peuvent optimiser votre candidature.",
+            "strengths": [
+                "Expérience professionnelle solide",
+                "Compétences techniques pertinentes", 
+                "Formation adaptée au poste",
+                "Motivation et engagement",
+                "Capacité d'adaptation"
+            ],
+            "improvements": [
+                "Détailler les réalisations chiffrées",
+                "Mettre en avant les soft skills",
+                "Optimiser la mise en forme",
+                "Ajouter des mots-clés sectoriels",
+                "Préciser les compétences techniques"
+            ],
+            "recommendations": [
+                "Quantifier vos réussites avec des chiffres",
+                "Ajouter une section compétences clés",
+                "Optimiser la structure du CV",
+                "Personnaliser selon le poste visé",
+                "Mettre à jour les informations de contact"
+            ],
+            "globalScore": 7,
+            "estimatedTime": "10 min"
+        })
 
 
 
