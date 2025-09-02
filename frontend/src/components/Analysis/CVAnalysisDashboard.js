@@ -106,12 +106,14 @@ const CVAnalysisDashboard = ({ analysisData, loading, error, onStartNextStep }) 
         ))}
       </div>
 
-      {/* Bilan rapide centré */}
+      {/* Bilan rapide et Synthèse côte à côte */}
       <div style={{
-        display: 'flex',
-        justifyContent: 'center',
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '2rem',
         marginBottom: '2rem'
       }}>
+        {/* Bilan rapide */}
         <div style={{
           background: 'white',
           padding: '2rem',
@@ -120,9 +122,7 @@ const CVAnalysisDashboard = ({ analysisData, loading, error, onStartNextStep }) 
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          textAlign: 'center',
-          maxWidth: '400px',
-          width: '100%'
+          textAlign: 'center'
         }}>
           <h3 style={{ margin: '0 0 1.5rem 0', color: '#1f2937', fontSize: '1.3rem', fontWeight: '600' }}>
             ✩ Bilan rapide
@@ -181,6 +181,27 @@ const CVAnalysisDashboard = ({ analysisData, loading, error, onStartNextStep }) 
             ▶️ Commencer maintenant
           </button>
         </div>
+
+        {/* Synthèse */}
+        <div style={{
+          background: 'white',
+          padding: '2rem',
+          borderRadius: '16px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+        }}>
+          <h3 style={{ margin: '0 0 1.5rem 0', color: '#1f2937', fontSize: '1.3rem', fontWeight: '600' }}>
+            📋 Synthèse
+          </h3>
+          <div style={{ 
+            color: '#374151', 
+            lineHeight: '1.6', 
+            fontSize: '1rem',
+            maxHeight: '300px',
+            overflowY: 'auto'
+          }}>
+            {parsedData.synthesis || "Aucune synthèse disponible pour le moment."}
+          </div>
+        </div>
       </div>
 
       {/* Sections d'analyse */}
@@ -189,30 +210,7 @@ const CVAnalysisDashboard = ({ analysisData, loading, error, onStartNextStep }) 
         gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
         gap: '1.5rem'
       }}>
-        {/* Synthèse */}
-        <div style={{
-          background: 'white',
-          borderRadius: '12px',
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: '1rem 1.5rem',
-            background: '#f9fafb',
-            borderBottom: '1px solid #e5e7eb'
-          }}>
-            <span style={{ color: '#0a6b79', fontSize: '1.2rem' }}>📈</span>
-            <h4 style={{ margin: 0, color: '#1f2937', fontSize: '1rem', fontWeight: '600' }}>Synthèse</h4>
-          </div>
-          <div style={{ padding: '1.5rem' }}>
-            <p style={{ margin: 0, color: '#374151', lineHeight: '1.6' }}>
-              {parsedData.synthesis || "Synthèse du profil en cours..."}
-            </p>
-          </div>
-        </div>
+
 
         {/* Points forts */}
         <div style={{
