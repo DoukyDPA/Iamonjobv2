@@ -206,13 +206,7 @@ const Dashboard = () => {
       icon: <FiUser />,
       color: '#f59e0b'
     },
-    {
-      id: 'metier_souhaite',
-      title: 'Métier de reconversion',
-      description: 'Explorez un nouveau domaine',
-      icon: <FiRefreshCw />,
-      color: '#8b5cf6'
-    }
+
   ];
 
   // Actions rapides
@@ -553,25 +547,24 @@ const Dashboard = () => {
             <div className="revolutionary-progress-header">
               <h3 className="revolutionary-progress-title">🎯 Progression de votre profil</h3>
               <span className="revolutionary-progress-badge">
-                {documentsCount}/4 documents
+                {documentsCount}/3 documents
               </span>
             </div>
             <div className="revolutionary-progress-bar-container">
               <div 
                 className="revolutionary-progress-bar"
-                style={{ width: `${(documentsCount / 4) * 100}%` }}
+                style={{ width: `${(documentsCount / 3) * 100}%` }}
               />
             </div>
             <p className="revolutionary-progress-message">
               {documentsCount === 0 && "🚀 Commencez par votre CV pour débloquer toutes les fonctionnalités"}
               {documentsCount === 1 && "👍 Excellent ! Ajoutez une offre d'emploi pour l'analyse de compatibilité"}
               {documentsCount === 2 && "🎉 Presque fini ! Le questionnaire enrichira votre profil"}
-              {documentsCount === 3 && "🔥 Parfait ! Un métier de reconversion pour explorer de nouveaux horizons ?"}
-              {documentsCount === 4 && "✨ Félicitations ! Votre profil est complet"}
+              {documentsCount === 3 && "✨ Félicitations ! Votre profil est complet"}
             </p>
           </div>
 
-          {/* Grille magazine : Desktop 3 pavés + métier + conseils, Mobile 2 pavés par ligne */}
+          {/* Grille magazine : Desktop 3 pavés + conseils, Mobile 2 pavés par ligne */}
           <div className="dashboard-grid">
             <div style={{ gridArea: 'cv' }}>
               <DocumentCard
@@ -615,20 +608,7 @@ const Dashboard = () => {
                 isUploading={loading}
               />
             </div>
-            <div style={{ gridArea: 'metier' }}>
-              <DocumentCard
-                type="metier_souhaite"
-                title="Métier de reconversion"
-                icon={<FiRefreshCw />}
-                color="#8b5cf6"
-                uploaded={!!documentStatus.metier_souhaite?.uploaded}
-                fileName={documentStatus.metier_souhaite?.name}
-                onFileUpload={undefined}
-                onTextClick={() => setShowTextModal('metier_souhaite')}
-                isTextOnly={true}
-                isUploading={loading}
-              />
-            </div>
+
 
           </div>
           {/* Analyse de CV automatique */}
