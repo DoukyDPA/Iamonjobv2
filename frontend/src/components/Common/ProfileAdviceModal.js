@@ -8,23 +8,23 @@ const ProfileAdviceModal = ({ isOpen, onClose }) => {
   const adviceItems = [
     {
       icon: <FiTarget />,
-      title: "Définir vos objectifs",
+      title: "Définissez vos objectifs",
       description: "Clarifiez vos aspirations professionnelles et vos objectifs de carrière à court et long terme."
     },
     {
       icon: <FiTrendingUp />,
-      title: "Optimiser votre CV",
-      description: "Adaptez votre CV en fonction des postes visés et mettez en avant vos compétences clés."
+      title: "Optimisez votre CV",
+      description: "Adaptez votre CV en fonction des postes visés et mettez en avant vos compétences clés. Aujourd'hui on ne peut plus se contenter d'un seul CV. Il faut à minima un CV par type de poste visé."
     },
     {
       icon: <FiCheckCircle />,
-      title: "Valider vos compétences",
-      description: "Identifiez et développez les compétences recherchées dans votre secteur d'activité."
+      title: "Anonymisez votre CV pour l'IA",
+      description: "Les données sont traitées par une intelligence artificielle (en l'occurence Mistral) qui va les traiter sur ses serveurs. Pour garantir la confidentialités de vos informations, pensez à retirer vos coordonnées du CV que vous allez utiliser pour l'analyse"
     },
     {
       icon: <FiHelpCircle />,
-      title: "Développer votre réseau",
-      description: "Construisez et entretenez un réseau professionnel pour accéder à de nouvelles opportunités."
+      title: "Développez votre réseau",
+      description: "L'IA c'est bien, mais c'est le réseau humain qui fait souvent la différenceonstruisez et entretenez un réseau professionnel pour accéder à de nouvelles opportunités."
     }
   ];
 
