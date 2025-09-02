@@ -3,12 +3,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { FiArrowLeft, FiDownload, FiCopy, FiUser, FiFileText, FiBriefcase } from 'react-icons/fi';
 import { LogoIcon } from '../icons/ModernIcons';
 import toast from 'react-hot-toast';
 import MatchingAnalysis from '../Analysis/MatchingAnalysis';
 import SimpleMarkdownRenderer from './SimpleMarkdownRenderer';
+import { getServiceConfig, URL_TO_SERVICE_MAPPING } from '../../services/servicesConfig';
 
 // Utilitaires pour accéder au localStorage sans casser l'exécution
 const safeGetStorageItem = (key) => {
@@ -62,12 +63,31 @@ const StatusTile = ({ title, icon, uploaded }) => (
   </Link>
 );
 
-const GenericDocumentProcessor = ({ serviceConfig }) => {
+const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
   const { documentStatus, loading } = useApp();
+  const { serviceId } = useParams();
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [userNotes, setUserNotes] = useState('');
   const [serviceLoading, setServiceLoading] = useState(false);
+  const [serviceConfig, setServiceConfig] = useState(null);
+
+  // Récupérer la configuration du service depuis l'URL
+  useEffect(() => {
+    if (propServiceConfig) {
+      // Si la config est passée en prop (ancien usage)
+      setServiceConfig(propServiceConfig);
+    } else if (serviceId) {
+      // Si on récupère depuis l'URL
+      const mappedServiceId = URL_TO_SERVICE_MAPPING[serviceId] || serviceId;
+      const config = getServiceConfig(mappedServiceId);
+      if (config) {
+        setServiceConfig(config);
+      } else {
+        setError(`Service "${serviceId}" non trouvé`);
+      }
+    }
+  }, [serviceId, propServiceConfig]);
 
   // Charger un résultat déjà sauvegardé le cas échéant
   useEffect(() => {
@@ -173,6 +193,29 @@ const GenericDocumentProcessor = ({ serviceConfig }) => {
       toast.success('Téléchargement terminé !');
     }
   };
+
+  // Afficher un message d'erreur si le service n'est pas trouvé
+  if (error) {
+    return (
+      <div style={{ padding: '2rem', textAlign: 'center' }}>
+        <h2>🚧 Service non trouvé</h2>
+        <p>{error}</p>
+        <p>
+          <Link to="/" style={{ color: '#0a6b79' }}>← Retour à l'accueil</Link>
+        </p>
+      </div>
+    );
+  }
+
+  // Afficher un loading si la configuration n'est pas encore chargée
+  if (!serviceConfig) {
+    return (
+      <div style={{ padding: '2rem', textAlign: 'center' }}>
+        <h2>🔄 Chargement du service...</h2>
+        <p>Veuillez patienter...</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
