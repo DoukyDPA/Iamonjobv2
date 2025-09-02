@@ -1,4 +1,3 @@
-
 // REMPLACER frontend/src/pages/Dashboard.js
 
 import React, { useState } from 'react';
@@ -158,6 +157,7 @@ const DocumentCard = ({
 const Dashboard = () => {
   const { user } = useAuth();
   const { documentStatus, loading, uploadDocument, uploadText, executeQuickAction } = useApp();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('documents');
   
   // États questionnaire simple
