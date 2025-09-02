@@ -213,31 +213,48 @@
   flex: 1;
 }
 
+.mini-doc-buttons {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
 .mini-upload-btn {
   background: #c7356c;
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 0.25rem;
+  border-radius: 4px;
+  padding: 0.2rem 0.4rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  font-size: 10px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
+  gap: 0.2rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
   flex-shrink: 0;
 }
 
 .mini-upload-btn:hover {
   background: #a91e4a;
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 @media (max-width: 768px) {
   .mini-upload-buttons {
     flex-direction: column;
     gap: 0.25rem;
+  }
+  
+  .mini-doc-buttons {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  
+  .mini-upload-btn {
+    font-size: 9px;
+    padding: 0.15rem 0.3rem;
   }
   
   .mini-doc-item {
