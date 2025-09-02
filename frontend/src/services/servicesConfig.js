@@ -114,7 +114,7 @@ export const SERVICES_CONFIG = {
     title: 'Rédigez votre lettre de motivation',
     shortTitle: 'Générer lettre',
     icon: '✉️',
-    coachAdvice: "L'IA crée une lettre personnalisée. Personnalisez chaque phrase avec VOS exemples concrets. Remplacez les formulations génériques par vos vraies expériences. Une lettre générique = candidature ignorée. Une lettre personnalisée = entretien garanti.",
+    coachAdvice: "L'IA vous propose une structure efficace et les bons arguments pour ce poste. C'est votre point de départ, pas votre point d'arrivée. Enrichissez chaque paragraphe avec VOS histoires concrètes. Remplacez "j'ai de l'expérience en gestion de projet" par "j'ai coordonné une équipe de 5 personnes sur le projet X, livré dans les délais". Iamonjob structure vos idées mais ne peut raconter votre parcours unique. Une lettre sans exemples personnels risque fort de finir à la poubelle. La meilleure lettre est celle qui vous ressemble, pas celle qui ressemble à toutes les autres._",
     requiresCV: true,
     requiresJobOffer: true,
     requiresQuestionnaire: true,
