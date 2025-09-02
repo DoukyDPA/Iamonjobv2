@@ -5,6 +5,8 @@ Service de synchronisation de SERVICES_CONFIG avec la base de données
 import logging
 from typing import Dict, Any
 
+from config.config_manager import get_config
+
 logger = logging.getLogger(__name__)
 
 class ServicesConfigSync:
@@ -15,46 +17,19 @@ class ServicesConfigSync:
         self._init_supabase()
     
     def _init_supabase(self):
-        """Initialise la connexion Supabase"""
+        """Initialise la connexion Supabase via ConfigManager"""
         try:
-            # Essayer d'abord la méthode config.py
-            try:
-                import sys
-                import os
-                
-                # Importer config.py directement depuis le répertoire racine
-                current_dir = os.path.dirname(__file__)
-                root_dir = os.path.dirname(os.path.dirname(current_dir))
-                config_path = os.path.join(root_dir, 'config.py')
-                
-                if os.path.exists(config_path):
-                    import importlib.util
-                    spec = importlib.util.spec_from_file_location("config", config_path)
-                    config_module = importlib.util.module_from_spec(spec)
-                    spec.loader.exec_module(config_module)
-                    
-                    supabase_url = config_module.MIGRATION_CONFIG.get('SUPABASE_URL')
-                    supabase_key = config_module.MIGRATION_CONFIG.get('SUPABASE_ANON_KEY')
-                else:
-                    logger.warning(f"⚠️ Fichier config.py non trouvé: {config_path}")
-                    supabase_url = None
-                    supabase_key = None
-                
-                if supabase_url and supabase_key:
-                    from supabase import create_client, Client
-                    self.supabase_client = create_client(supabase_url, supabase_key)
-                    logger.info("✅ Connexion Supabase établie via config.py")
-                else:
-                    raise ImportError("Variables Supabase manquantes dans config.py")
-                    
-            except Exception as e:
-                logger.warning(f"⚠️ Fallback vers services.supabase_storage: {e}")
-                # Fallback vers l'ancien système
-                from services.supabase_storage import SupabaseStorage
-                supabase_storage = SupabaseStorage()
-                self.supabase_client = supabase_storage.client
-                logger.info("✅ Connexion Supabase établie via supabase_storage")
-                
+            from supabase import create_client
+
+            supabase_url = get_config('SUPABASE_URL')
+            supabase_key = get_config('SUPABASE_ANON_KEY')
+
+            if supabase_url and supabase_key:
+                self.supabase_client = create_client(supabase_url, supabase_key)
+                logger.info("✅ Connexion Supabase établie via ConfigManager")
+            else:
+                raise ValueError("Variables Supabase manquantes")
+
         except Exception as e:
             logger.error(f"❌ Erreur connexion Supabase: {e}")
             self.supabase_client = None

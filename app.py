@@ -24,8 +24,10 @@ FRONTEND_BUILD_DIR = os.path.join(BASE_DIR, 'frontend', 'build')
 
 # Configuration Supabase sécurisée - Variables d'environnement uniquement
 print("🔧 Configuration Supabase depuis variables d'environnement")
-print(f"   URL: {os.getenv('SUPABASE_URL', 'Non défini')[:50]}...")
-print(f"   Clé: {os.getenv('SUPABASE_ANON_KEY', 'Non défini')[:20]}...")
+if os.getenv('SUPABASE_URL') and os.getenv('SUPABASE_ANON_KEY'):
+    print("   Variables Supabase détectées")
+else:
+    print("   ⚠️ Variables Supabase manquantes")
 
 # Vérification de sécurité
 if not os.getenv('SUPABASE_URL') or not os.getenv('SUPABASE_ANON_KEY'):
@@ -51,8 +53,10 @@ except ImportError as e:
 
 # Afficher la configuration finale
 print(f"\n🔧 Configuration finale Supabase:")
-print(f"   URL: {os.getenv('SUPABASE_URL', 'Non défini')[:50]}...")
-print(f"   Clé: {os.getenv('SUPABASE_ANON_KEY', 'Non défini')[:20]}...")
+url_present = 'définie' if os.getenv('SUPABASE_URL') else 'non définie'
+key_present = 'définie' if os.getenv('SUPABASE_ANON_KEY') else 'non définie'
+print(f"   URL: {url_present}")
+print(f"   Clé: {key_present}")
 
 # Création de l'application Flask
 app = Flask(__name__, static_folder='frontend/build')
@@ -79,20 +83,17 @@ def debug_environment():
         "supabase_test": False,
         "method": "legacy"
     }
-    
+
     # Variables critiques
     critical_vars = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_KEY', 'FLASK_SECRET_KEY']
     for var in critical_vars:
         value = os.environ.get(var)
-        debug_info["critical_vars"][var] = {
-            "exists": bool(value),
-            "value": value[:50] + "..." if value and len(value) > 50 else value
-        }
-    
+        debug_info["critical_vars"][var] = {"exists": bool(value)}
+
     # Toutes les variables d'environnement
     for key, value in os.environ.items():
         if any(keyword in key.upper() for keyword in ['SUPABASE', 'REDIS', 'FLASK']):
-            debug_info["all_env_vars"][key] = value[:50] + "..." if len(value) > 50 else value
+            debug_info["all_env_vars"][key] = bool(value)
     
     # Test Supabase
     try:
@@ -122,10 +123,10 @@ def debug_environment_v2():
                 "fully_configured": config.is_fully_configured(),
                 "cache_available": config.has_cache(),
                 "config_details": {
-                    "SUPABASE_URL": config.get('SUPABASE_URL', 'Non défini')[:50] + "..." if config.get('SUPABASE_URL') else 'Non défini',
-                    "SUPABASE_ANON_KEY": "Défini" if config.get('SUPABASE_ANON_KEY') else 'Non défini',
-                    "FLASK_SECRET_KEY": "Défini" if config.get('FLASK_SECRET_KEY') else 'Non défini',
-                    "MISTRAL_API_KEY": "Défini" if config.get('MISTRAL_API_KEY') else 'Non défini',
+                    "SUPABASE_URL": "Définie" if config.get('SUPABASE_URL') else 'Non définie',
+                    "SUPABASE_ANON_KEY": "Définie" if config.get('SUPABASE_ANON_KEY') else 'Non définie',
+                    "FLASK_SECRET_KEY": "Définie" if config.get('FLASK_SECRET_KEY') else 'Non définie',
+                    "MISTRAL_API_KEY": "Définie" if config.get('MISTRAL_API_KEY') else 'Non définie',
                 }
             })
             
@@ -250,7 +251,6 @@ try:
     from services.supabase_storage import init_supabase_service
     storage_service = init_supabase_service(app)
     print("✅ Supabase service initialisé avec succès")
-    print(f"🔗 Supabase URL: {os.environ.get('SUPABASE_URL', 'Not set')[:50]}...")
 except Exception as e:
     print(f"❌ Erreur initialisation Supabase: {e}")
     print("🔄 Mode fallback Flask session activé")
