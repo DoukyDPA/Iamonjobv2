@@ -241,9 +241,10 @@ def handle_generic_service(service_id, request):
         job_content = job_data.get('content', '') if config['requires_job'] else ''
         questionnaire_content = questionnaire_data.get('content', '') if config['requires_questionnaire'] else ''
         
-        # Récupérer les notes personnelles
+        # Récupérer les notes personnelles et paramètres
         data = request.get_json() or {}
         user_notes = data.get('notes', '') if config['allows_notes'] else ''
+        force_new = data.get('force_new', False)
         
         print(f"CV content length: {len(cv_content)}")
         print(f"Job content length: {len(job_content)}")
@@ -264,7 +265,8 @@ def handle_generic_service(service_id, request):
                     cv_content=cv_content,
                     job_content=job_content,
                     questionnaire_content=questionnaire_content,
-                    user_notes=user_notes
+                    user_notes=user_notes,
+                    force_new=force_new
                 )
             else:
                 # Appel générique pour les autres services
@@ -273,7 +275,8 @@ def handle_generic_service(service_id, request):
                     cv_content=cv_content,
                     job_content=job_content,
                     questionnaire_content=questionnaire_content,
-                    user_notes=user_notes
+                    user_notes=user_notes,
+                    force_new=force_new
                 )
             
             print(f"🔍 Résultat IA brut: {repr(result)}")
