@@ -15,15 +15,23 @@ def execute_ai_service(service_id, cv_content, job_content="", questionnaire_con
         if service_id in AI_PROMPTS:
             service_config = AI_PROMPTS[service_id]
             prompt_template = service_config["prompt"]
+            print(f"✅ Service {service_id} trouvé dans AI_PROMPTS")
         else:
+            # Debug : afficher les services disponibles
+            print(f"⚠️ Service {service_id} non trouvé dans AI_PROMPTS")
+            print(f"🔍 Services disponibles: {list(AI_PROMPTS.keys())}")
+            
             # Si le service n'est pas dans AI_PROMPTS, essayer de recharger
-            print(f"⚠️ Service {service_id} non trouvé dans AI_PROMPTS, tentative de rechargement...")
+            print(f"🔄 Tentative de rechargement...")
             try:
                 reload_prompts_from_file()
                 if service_id in AI_PROMPTS:
                     service_config = AI_PROMPTS[service_id]
                     prompt_template = service_config["prompt"]
+                    print(f"✅ Service {service_id} trouvé après rechargement")
                 else:
+                    print(f"❌ Service {service_id} toujours non trouvé après rechargement")
+                    print(f"🔍 Services disponibles après rechargement: {list(AI_PROMPTS.keys())}")
                     raise Exception(f"Service {service_id} non trouvé dans AI_PROMPTS après rechargement")
             except Exception as e:
                 print(f"❌ Erreur lors du rechargement des prompts: {e}")
@@ -70,10 +78,6 @@ def execute_ai_service(service_id, cv_content, job_content="", questionnaire_con
             print(f"   Prompt final preview: {prompt[:300]}...")
             
             # Appeler l'API avec le prompt personnalisé (sans contexte séparé)
-            return call_mistral_api(prompt, service_id=service_id)
-        else:
-            # Fallback pour les services non configurés
-            prompt = f"SERVICE: {service_id}\nCV:\n{cv_content}\n\nOFFRE:\n{job_content}\n\nQUESTIONNAIRE:\n{questionnaire_content}\n\nNOTES:\n{user_notes}"
             return call_mistral_api(prompt, service_id=service_id)
             
     except ImportError as e:
