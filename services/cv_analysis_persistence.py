@@ -23,9 +23,9 @@ class CVAnalysisPersistence:
                     'timestamp': existing['timestamp']
                 }
             
-            # Utiliser le système Mistral via ai_service_prompts
-            from services.ai_service_prompts import execute_ai_service
-            analysis_result = execute_ai_service("analyze_cv", cv_content, force_new=force_new)
+            # Utiliser directement Mistral pour éviter la récursion
+            from services.ai_service_mistral import analyze_cv_with_ai
+            analysis_result = analyze_cv_with_ai(cv_content)
             
             # Sauvegarder en cache
             cache_data = {
@@ -45,9 +45,9 @@ class CVAnalysisPersistence:
             
         except Exception as e:
             logging.error(f"Erreur persistance: {e}")
-            # En cas d'erreur, utiliser directement le système Mistral
-            from services.ai_service_prompts import execute_ai_service
-            analysis_result = execute_ai_service("analyze_cv", cv_content, force_new=force_new)
+            # En cas d'erreur, utiliser directement Mistral
+            from services.ai_service_mistral import analyze_cv_with_ai
+            analysis_result = analyze_cv_with_ai(cv_content)
             return {
                 'success': True,
                 'analysis': analysis_result,
