@@ -491,91 +491,97 @@ const Dashboard = () => {
       minHeight: '100vh',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
-      {/* Header moderne */}
+      {/* Header moderne dans un pavé vert */}
       <div style={{ 
-        paddingTop: '4rem',
-        paddingBottom: '2rem',
-        background: 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+        paddingTop: '2rem',
+        paddingBottom: '2rem'
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <h1 style={{ 
-              fontSize: '3rem',
-              fontWeight: '700',
-              color: 'white',
-              margin: '0 0 1.5rem 0',
-              lineHeight: '1.2',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '1rem'
-            }}>
-              <LogoIcon size={48} />
-              Bienvenue dans votre espace de carrière
-            </h1>
-            <p style={{ 
-              fontSize: '1.2rem',
-              color: 'rgba(255, 255, 255, 0.9)',
-              margin: '0',
-              fontWeight: '400'
-            }}>
-              Transformez votre profil professionnel avec l'intelligence artificielle
-            </p>
-          </div>
-
-          {/* Barre d'onglets en haut */}
           <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            marginTop: '2rem'
+            background: 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)',
+            borderRadius: '20px',
+            padding: '2rem',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+            marginBottom: '2rem'
           }}>
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: activeTab === tab.id 
-                    ? 'white' 
-                    : 'rgba(255, 255, 255, 0.1)',
-                  color: activeTab === tab.id ? '#0a6b79' : 'white',
-                  fontWeight: '600',
-                  fontSize: '0.8rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  minWidth: '80px'
-                }}
-                onMouseEnter={(e) => {
-                  if (activeTab !== tab.id) {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.2)';
-                    e.target.style.color = 'white';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeTab !== tab.id) {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.1)';
-                    e.target.style.color = 'white';
-                  }
-                }}
-              >
-                <span style={{ fontSize: '1.2rem' }}>{tab.icon}</span>
-                <span style={{ 
-                  fontSize: '0.7rem',
-                  textAlign: 'center',
-                  lineHeight: '1.2'
-                }}>
-                  {window.innerWidth > 768 ? tab.label : tab.mobileLabel}
-                </span>
-              </button>
-            ))}
+            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              <h1 style={{ 
+                fontSize: '3rem',
+                fontWeight: '700',
+                color: 'white',
+                margin: '0 0 1.5rem 0',
+                lineHeight: '1.2',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '1rem'
+              }}>
+                <LogoIcon size={48} />
+                Bienvenue dans votre espace de carrière
+              </h1>
+              <p style={{ 
+                fontSize: '1.2rem',
+                color: 'rgba(255, 255, 255, 0.9)',
+                margin: '0',
+                fontWeight: '400'
+              }}>
+                Transformez votre profil professionnel avec l'intelligence artificielle
+              </p>
+            </div>
+
+            {/* Barre d'onglets en haut */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              marginTop: '2rem'
+            }}>
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: activeTab === tab.id 
+                      ? 'white' 
+                      : 'rgba(255, 255, 255, 0.1)',
+                    color: activeTab === tab.id ? '#0a6b79' : 'white',
+                    fontWeight: '600',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    minWidth: '80px'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (activeTab !== tab.id) {
+                      e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                      e.target.style.color = 'white';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (activeTab !== tab.id) {
+                      e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                      e.target.style.color = 'white';
+                    }
+                  }}
+                >
+                  <span style={{ fontSize: '1.2rem' }}>{tab.icon}</span>
+                  <span style={{ 
+                    fontSize: '0.7rem',
+                    textAlign: 'center',
+                    lineHeight: '1.2'
+                  }}>
+                    {window.innerWidth > 768 ? tab.label : tab.mobileLabel}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -951,7 +957,7 @@ const Dashboard = () => {
               <LogoIcon size={24} />
               Améliorer mon CV
             </h2>
-            <ServicesGrid filterTheme="improve_cv" />
+            <ServicesGrid filterTheme="optimize_profile" />
           </div>
         )}
 
@@ -997,7 +1003,7 @@ const Dashboard = () => {
               <LogoIcon size={24} />
               Préparer l'entretien
             </h2>
-            <ServicesGrid filterTheme="interview_prep" />
+            <ServicesGrid filterTheme="interview_tips" />
           </div>
         )}
 
@@ -1020,7 +1026,7 @@ const Dashboard = () => {
               <LogoIcon size={24} />
               Tout changer
             </h2>
-            <ServicesGrid filterTheme="career_project" />
+            <ServicesGrid filterTheme="career_development" />
           </div>
         )}
       </div>
