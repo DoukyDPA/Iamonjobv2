@@ -24,10 +24,19 @@ def execute_ai_service(service_id, cv_content, job_content="", questionnaire_con
             print(f"   Questionnaire content length: {len(questionnaire_content or '')}")
             
             # Remplacer les variables de contexte dans le prompt
+            print(f"🔍 AVANT REMPLACEMENT - Prompt template: {prompt_template[:200]}...")
+            print(f"🔍 Variables disponibles:")
+            print(f"   cv_content: {len(cv_content or '')} caractères")
+            print(f"   job_content: {len(job_content or '')} caractères") 
+            print(f"   questionnaire_content: {len(questionnaire_content or '')} caractères")
+            print(f"   user_notes: {len(user_notes or '')} caractères")
+            
             prompt = prompt_template.replace("{cv_content}", cv_content or "CV non disponible")
             prompt = prompt.replace("{job_content}", job_content or "Offre d'emploi non disponible")
             prompt = prompt.replace("{questionnaire_content}", questionnaire_content or "Questionnaire non disponible")
             prompt = prompt.replace("{user_notes}", user_notes or "")
+            
+            print(f"🔍 APRÈS REMPLACEMENT - Prompt final: {prompt[:200]}...")
             
             # Remplacer les placeholders dans le prompt
             prompt = prompt.replace("{questionnaire_instruction}", 
