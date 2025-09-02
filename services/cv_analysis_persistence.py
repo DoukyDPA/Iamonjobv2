@@ -8,6 +8,20 @@ from services.stateless_manager import StatelessDataManager
 
 class CVAnalysisPersistence:
     @staticmethod
+    def clear_cache(user_email=None):
+        """Efface le cache d'analyse CV"""
+        try:
+            user_data = StatelessDataManager.get_user_data()
+            if 'cv_analysis_cache' in user_data:
+                del user_data['cv_analysis_cache']
+                StatelessDataManager.save_user_data(user_data)
+                logging.info("🗑️ Cache CV effacé")
+                return True
+        except Exception as e:
+            logging.error(f"❌ Erreur effacement cache CV: {e}")
+            return False
+    
+    @staticmethod
     def get_persistent_analysis(cv_content: str, force_new: bool = False):
         try:
             user_data = StatelessDataManager.get_user_data()
