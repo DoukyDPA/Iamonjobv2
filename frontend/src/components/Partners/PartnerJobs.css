@@ -1,427 +1,532 @@
-"""
-Service de gestion des documents
-"""
-import os
-import logging
-import PyPDF2
-from docx import Document as DocxDocument
-from werkzeug.utils import secure_filename
-from flask import current_app
-from services.supabase_storage import SupabaseStorage
+/* PartnerJobs.css - Styles pour les partenaires et leurs métiers */
 
-# Fonctions de compatibilité
-def get_session_data():
-    supabase = SupabaseStorage()
-    return supabase.get_session_data()
+.partner-jobs-container {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
 
-def save_session_data(data):
-    supabase = SupabaseStorage()
-    return supabase.save_session_data(data)
-from services.ai_service import chat_avec_ia, analyze_job_offer, analyze_metier, generate_document_summary
-from datetime import datetime
+.partner-jobs-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
 
-def extraire_texte_pdf(path):
-    """
-    Extrait le texte d'un fichier PDF
-    
-    Args:
-        path: Chemin du fichier PDF
-        
-    Returns:
-        str: Texte extrait
-    """
-    text = ""
-    try:
-        with open(path, 'rb') as f:
-            reader = PyPDF2.PdfReader(f)
-            for page in reader.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    text += page_text + "\n"
-        if not text.strip():
-            return "Aucun texte (PDF scanné?)."
-        return text
-    except Exception as e:
-        logging.error(f"Erreur extraction PDF: {e}")
-        return f"Erreur PDF: {e}"
+.partner-jobs-header h3 {
+  color: #1f2937;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
 
-def extraire_texte_fichier(path):
-    """
-    Extrait le texte d'un fichier selon son type
-    
-    Args:
-        path: Chemin du fichier
-        
-    Returns:
-        str: Texte extrait
-    """
-    if not os.path.exists(path):
-        return f"Erreur: Fichier {path} introuvable."
+.partner-jobs-header p {
+  color: #6b7280;
+  font-size: 1rem;
+}
 
-    ext = os.path.splitext(path)[1].lower()
-    if ext == '.pdf':
-        return extraire_texte_pdf(path)
-    elif ext == '.txt':
-        # Essais d'encodage
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                return f.read()
-        except UnicodeDecodeError:
-            try:
-                with open(path, 'r', encoding='latin-1') as f:
-                    return f.read()
-            except Exception as e:
-                logging.error(f"Erreur d'encodage: {e}")
-                return f"Erreur encodage .txt: {e}"
-        except Exception as e:
-            logging.error(f"Erreur lecture TXT: {e}")
-            return f"Erreur fichier TXT: {e}"
-    elif ext in ['.docx', '.doc']:
-        try:
-            doc = DocxDocument(path)
-            return "\n".join([paragraph.text for paragraph in doc.paragraphs])
-        except Exception as e:
-            logging.error(f"Erreur lecture Word: {e}")
-            return f"Erreur fichier Word: {e}"
-    else:
-        return f"Type de fichier non pris en charge: {ext}"
+/* Grille des partenaires - 3 par ligne sur desktop */
+.partners-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 1.25rem !important;
+  margin-bottom: 2rem;
+  max-width: 100%;
+}
 
-def process_uploaded_document(file, doc_type):
-    """
-    Traite un document téléchargé
-    
-    Args:
-        file: Objet fichier téléchargé
-        doc_type: Type de document (cv, offre_emploi)
-        
-    Returns:
-        tuple: (success, message, document_text)
-    """
-    try:
-        if not file.filename:
-            return False, "Fichier sans nom", None
+/* Sur desktop, forcer 3 colonnes */
+@media (min-width: 1024px) {
+  .partners-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1.25rem !important;
+  }
+}
 
-        # Vérifier la taille du fichier (max 10MB)
-        if file.content_length and file.content_length > 10 * 1024 * 1024:
-            return False, "Le fichier est trop volumineux (max 10MB)", None
+/* Sur écran moyen, forcer aussi 3 colonnes */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .partners-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1rem !important;
+  }
+}
 
-        # Vérifier le type de fichier
-        allowed_types = ['application/pdf', 'application/msword', 
-                          'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
-                          'text/plain']
-        
-        if file.content_type not in allowed_types:
-            return False, "Type de fichier non supporté. Formats acceptés : PDF, DOC, DOCX, TXT", None
+/* Sur très grand écran, optimiser l'espacement */
+@media (min-width: 1280px) {
+  .partners-grid {
+    gap: 1.5rem !important;
+  }
+}
 
-        # Sauvegarder le fichier
-        filename = secure_filename(file.filename)
-        upload_folder = current_app.config['UPLOAD_FOLDER']
-        
-        if not os.path.exists(upload_folder):
-            os.makedirs(upload_folder, exist_ok=True)
-            
-        file_path = os.path.join(upload_folder, filename)
-        file.save(file_path)
-        
-        # Extraire le texte
-        document_text = extraire_texte_fichier(file_path)
-        
-        if document_text.startswith("Erreur"):
-            return False, document_text, None
-            
-        return True, f"Le document {filename} a été téléchargé avec succès", document_text
-        
-    except Exception as e:
-        logging.error(f"Erreur lors du traitement du document: {e}")
-        return False, f"Erreur lors du traitement du document: {str(e)}", None
+/* Carte partenaire compacte */
+.partner-card.compact {
+  background: linear-gradient(135deg, #0a6b79 0%, #22c55e 100%);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 180px;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
 
+.partner-card.compact:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -3px rgba(10, 107, 121, 0.25), 0 4px 6px -2px rgba(10, 107, 121, 0.15);
+}
 
+.partner-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex: 1;
+}
 
-def handle_document_upload(file=None, text_content=None, doc_type="inconnu"):
-    """
-    Gère le téléchargement d'un document (fichier ou texte) de manière unifiée
-    
-    Args:
-        file: Objet fichier téléchargé (optionnel)
-        text_content: Texte du document (optionnel)
-        doc_type: Type de document (cv, offre_emploi, metier_souhaite, questionnaire)
-        
-    Returns:
-        dict: Résultat du téléchargement avec réponse AI
-    """
-    try:
-        # Initialiser les variables
-        texte = ""
-        document_name = ""
-        
-        # Vérifier si c'est un upload de fichier ou de texte
-        if file and file.filename:
-            # Cas d'un fichier téléchargé
-            success, message, texte = process_uploaded_document(file, doc_type)
-            if not success:
-                return {"success": False, "response": message}
-                
-            document_name = file.filename
-            logging.info(f"Fichier traité avec succès: {document_name}, type: {doc_type}")
-            
-        elif text_content and text_content.strip():
-            # Cas d'un texte collé
-            texte = text_content
-            
-            # Pour l'historique, utiliser un nom générique selon le type
-            if doc_type == "cv":
-                document_name = "CV collé"
-            elif doc_type == "offre_emploi":
-                document_name = "Offre d'emploi collée"
-            elif doc_type == "metier_souhaite":
-                document_name = "Métier souhaité"
-            elif doc_type == "questionnaire":
-                document_name = "Questionnaire personnel"
-            else:
-                document_name = "Document collé"
-                
-            logging.info(f"Texte collé reçu pour document de type {doc_type}")
-        else:
-            return {"success": False, "response": "Aucun fichier ou texte envoyé"}
+/* Logo partenaire - plus grand et visible */
+.partner-logo {
+  width: 70px;
+  height: 70px;
+  margin-right: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
 
-        # Vérifier si on a bien le texte et le nom du document
-        if not texte or not document_name:
-            logging.error("Impossible de récupérer le contenu ou le nom du document")
-            return {"success": False, "response": "Impossible de récupérer le contenu du document"}
+.partner-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
 
-        # Tronquer pour économiser des tokens - optimisation importante
-        max_lengths = {
-            "cv": 3000,  # Réduit de 4000 à 3000
-            "offre_emploi": 3000,  # Réduit de 4000 à 3000
-            "metier_souhaite": 400,  # Réduit de 500 à 400
-            "questionnaire": 6000,  # Réduit de 8000 à 6000
-            "inconnu": 1500  # Réduit de 2000 à 1500
-        }
-        maxlen = max_lengths.get(doc_type, 1500)
-        
-        text_tronque = texte[:maxlen]
-        if len(texte) > maxlen:
-            text_tronque += "\n[...document tronqué...]"
-        
-        # Préparer le message pour l'ajout à l'historique
-        user_msg = f"Document téléchargé - {doc_type}: {document_name}\n\nContenu:\n\n{text_tronque}"
-        
-        # Récupérer les données de session
-        session_data = get_session_data()
+.partner-initial {
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 2rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
 
-        # Nettoyer l'historique des actions lorsqu'un nouveau CV est téléchargé
-        if doc_type == "cv":
-            try:
-                from services.stateless_manager import StatelessDataManager
-                StatelessDataManager.clear_generic_actions_history("cv")
-                session_data = get_session_data()  # Rafraîchir après purge
-                logging.info("Historique filtré pour nouveau CV")
-            except Exception as e:
-                logging.warning(f"Erreur lors du nettoyage de l'historique: {e}")
-                # Continuer même si le nettoyage échoue
-        elif doc_type in ["offre_emploi", "metier_souhaite", "questionnaire"] and session_data.get('documents', {}).get(doc_type, False):
-            # Un document de ce type existe déjà, utiliser la fonction centralisée
-            try:
-                from services.stateless_manager import StatelessDataManager
-                StatelessDataManager.clear_generic_actions_history(doc_type)
-                session_data = get_session_data()  # Rafraîchir après purge
-                logging.info(f"Historique filtré pour nouveau document de type {doc_type}")
-            except Exception as e:
-                logging.warning(f"Erreur lors du nettoyage de l'historique: {e}")
-                # Continuer même si le nettoyage échoue
-        
-        # Ajouter à l'historique
-        if 'chat_history' not in session_data:
-            session_data['chat_history'] = []
-        session_data['chat_history'].append({"role": "user", "content": user_msg})
-        
-        # Mettre à jour le statut des documents
-        if 'documents' not in session_data:
-            session_data['documents'] = {}
-        session_data['documents'][doc_type] = True
+.partner-info {
+  flex: 1;
+}
 
-        # Stocker explicitement le contenu du document pour un accès facile
-        if 'document_contents' not in session_data:
-            session_data['document_contents'] = {}
-        session_data['document_contents'][doc_type] = {
-            "filename": document_name,
-            "content": text_tronque,
-            "type": doc_type,
-            "timestamp": datetime.now().isoformat()
-        }
+.partner-info h4 {
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.2;
+}
 
-        # Sauvegarder les données de session
-        save_session_data(session_data)
-        
-        logging.info(f"Document ajouté à l'historique: {doc_type}, {len(session_data['chat_history'])} messages")
+.partner-website {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: color 0.2s ease;
+}
 
-        # Extraire le titre du job si c'est une offre d'emploi (pour l'analyse de compatibilité)
-        if doc_type == "offre_emploi":
-            try:
-                # Tentative d'extraction du titre
-                job_title = extract_job_title(text_tronque)
-                if job_title:
-                    session_data['job_title'] = job_title
-                    save_session_data(session_data)
-                    logging.info(f"Titre du poste extrait: {job_title}")
-            except Exception as e:
-                logging.warning(f"Erreur lors de l'extraction du titre du poste: {e}")
+.partner-website:hover {
+  color: white;
+}
 
-        # Traitement selon le type de document
-        if doc_type == "cv":
-            # Utiliser le système unifié avec prompts Supabase
-            from services.ai_service_prompts import execute_ai_service
-            reponse_ia = execute_ai_service("analyze_cv", texte)
-            response = {
-                "success": True, 
-                "response": reponse_ia, 
-                "cached": False,
-                "compatibility_triggered": False
-            }
-            
+.partner-actions {
+  margin-top: auto;
+}
 
-                    
-            return response
-            
-        elif doc_type == "offre_emploi":
-            # Vérifier si un CV est disponible pour analyse comparative
-            cv_disponible = session_data['documents'].get('cv', False)
-            
-            # Utiliser la fonction d'analyse d'offre d'emploi
-            reponse_ia = analyze_job_offer(texte)
-            response = {
-                "success": True, 
-                "response": reponse_ia,
-                "compatibility_triggered": False,
-                "job_title": session_data.get('job_title', "")
-            }
-            
+.view-offers-btn {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  color: #0f172a;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
 
-                    
-            return response
-            
-        elif doc_type == "metier_souhaite":
-            # Vérifier si un CV est disponible pour analyse comparative
-            cv_disponible = session_data['documents'].get('cv', False)
-            
-            # Utiliser la fonction d'analyse de métier
-            reponse_ia = analyze_metier(texte)
-            return {
-                "success": True, 
-                "response": reponse_ia
-            }
-            
-        elif doc_type == "questionnaire":
-            # Stocker le questionnaire dans la session pour une utilisation future
-            session_data['questionnaire_data'] = texte
-            save_session_data(session_data)
-            
-            # Informer l'utilisateur
-            return {
-                "success": True,
-                "response": "Votre questionnaire personnel a été enregistré avec succès. Ces informations seront prises en compte avec votre CV lors des analyses."
-            }
-            
-        else:
-            return {
-                "success": True,
-                "response": "Document reçu, mais le type n'est pas reconnu pour une analyse automatique."
-            }
-    except Exception as e:
-        logging.error(f"Erreur lors de la gestion de l'upload: {e}")
-        return {"success": False, "response": f"Erreur lors de la gestion de l'upload: {str(e)}"}
+.view-offers-btn:hover {
+  background: white;
+  transform: translateY(-1px);
+}
 
+/* Modal des métiers */
+.partner-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
 
-def extract_job_title(text):
-    """
-    Extrait le titre du poste depuis le texte d'une offre d'emploi
-    
-    Args:
-        text: Texte de l'offre d'emploi
-        
-    Returns:
-        str: Titre du poste extrait ou None si non trouvé
-    """
-    try:
-        # Recherche du titre dans les premières lignes
-        lines = text.split('\n')
-        
-        # Motifs courants pour les titres de poste
-        title_patterns = [
-            r"TITRE DU POSTE:\s*([^\n]+)",
-            r"INTITULÉ DU POSTE:\s*([^\n]+)",
-            r"POSTE:\s*([^\n]+)",
-            r"OFFRE D'EMPLOI.*?([^:]+?)\n",
-            r"([^:]+?)\n"  # Capture la première ligne non vide
-        ]
-        
-        # Tester chaque motif
-        for pattern in title_patterns:
-            for line in lines[:10]:  # Examiner uniquement les 10 premières lignes
-                if line.strip():
-                    import re
-                    match = re.search(pattern, line, re.IGNORECASE)
-                    if match:
-                        title = match.group(1).strip()
-                        if 3 < len(title) < 100:  # Vérifier que le titre a une longueur raisonnable
-                            return title
-        
-        # Si aucun motif ne correspond, utiliser une approche simple
-        for line in lines[:10]:
-            line = line.strip()
-            if line and 3 < len(line) < 100 and not line.startswith("OFFRE D'EMPLOI"):
-                return line
-                
-        return None
-    except Exception as e:
-        logging.warning(f"Erreur lors de l'extraction du titre: {e}")
-        return None
-        
-def delete_document(doc_type):
-    """
-    Supprime un document de la session
-    
-    Args:
-        doc_type: Type de document à supprimer
-        
-    Returns:
-        dict: Résultat de la suppression
-    """
-    try:
-        # Récupérer les données de session
-        session_data = get_session_data()
-        
-        # Vérifier si le document existe
-        if doc_type not in session_data['documents'] or not session_data['documents'][doc_type]:
-            logging.warning(f"Document de type {doc_type} non trouvé ou déjà supprimé")
-            return {"success": False, "message": "Document non trouvé ou déjà supprimé"}
-        
-        # Mettre à jour le statut du document
-        session_data['documents'][doc_type] = False
-        
-        # Filtrer l'historique pour retirer les mentions du document supprimé
-        new_history = []
-        for msg in session_data.get('chat_history', []):
-            # Conserver les messages qui ne sont pas liés au document supprimé
-            if msg["role"] == "user" and "Document téléchargé" in msg.get("content", "") and doc_type in msg.get("content", ""):
-                # Ne pas inclure ce message dans le nouvel historique
-                pass
-            else:
-                new_history.append(msg)
-        
-        # Mettre à jour l'historique
-        session_data['chat_history'] = new_history
-        
-        # Sauvegarder les données de session
-        save_session_data(session_data)
-        
-        logging.info(f"Document supprimé: {doc_type}")
-        
-        # Informer l'utilisateur de la suppression
-        return {
-            "success": True, 
-            "message": f"Document de type {doc_type} supprimé avec succès"
-        }
-    except Exception as e:
-        logging.error(f"Erreur lors de la suppression du document: {e}")
-        return {"success": False, "message": f"Erreur: {str(e)}"}
+.partner-modal {
+  background: white;
+  border-radius: 16px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.partner-modal-header {
+  background: linear-gradient(135deg, #0a6b79 0%, #22c55e 100%);
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.partner-modal-header h4 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.partner-modal-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.partner-modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.partner-modal-body {
+  padding: 1.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Liste des métiers */
+.offers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.offer-item {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.offer-item:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.offer-content h6 {
+  color: #1f2937;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+}
+
+.offer-type {
+  display: inline-block;
+  background: #e0f2fe;
+  color: #075985;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.offer-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.details-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  flex: 1;
+}
+
+.details-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.test-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  flex: 1;
+}
+
+.test-btn:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+/* Modal de détails du métier */
+.offer-details-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  padding: 1rem;
+}
+
+.offer-details-modal {
+  background: white;
+  border-radius: 16px;
+  max-width: 700px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.offer-details-header {
+  background: linear-gradient(135deg, #0a6b79 0%, #22c55e 100%);
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.offer-details-header h4 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.offer-details-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.offer-details-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.offer-details-body {
+  padding: 1.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.offer-details-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.offer-meta {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.offer-type-badge {
+  background: #e0f2fe;
+  color: #075985;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.partner-name-badge {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.offer-description h5 {
+  color: #1f2937;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+}
+
+.offer-description p {
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.offer-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.test-compatibility-btn {
+  background: linear-gradient(135deg, #0a6b79 0%, #22c55e 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+  min-width: 200px;
+}
+
+.test-compatibility-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -3px rgba(16, 185, 129, 0.3);
+}
+
+/* États de chargement et d'erreur */
+.loading-container {
+  text-align: center;
+  padding: 3rem;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-container {
+  text-align: center;
+  padding: 2rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  color: #dc2626;
+}
+
+.retry-btn {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background 0.2s ease;
+}
+
+.retry-btn:hover {
+  background: #b91c1c;
+}
+
+.no-partners {
+  text-align: center;
+  padding: 3rem;
+  color: #6b7280;
+}
+
+.no-offers {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .partners-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .partner-card.compact {
+    min-height: 180px;
+    padding: 1.25rem;
+  }
+  
+  .partner-logo {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .partner-info h4 {
+    font-size: 1.125rem;
+  }
+  
+  .offer-actions {
+    flex-direction: column;
+  }
+  
+  .partner-modal,
+  .offer-details-modal {
+    margin: 1rem;
+    max-height: 90vh;
+  }
+}
