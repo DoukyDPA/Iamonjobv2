@@ -559,8 +559,8 @@ const Dashboard = () => {
             </div>
             
             {/* Boutons d'upload compacts */}
-            <div className="mini-upload-buttons">
-              <div className="mini-doc-item">
+            <div className="mini-upload-buttons" style={{ border: '2px solid red', padding: '10px' }}>
+              <div className="mini-doc-item" style={{ border: '1px solid blue', margin: '5px' }}>
                 <div className="mini-doc-icon" style={{ backgroundColor: documentStatus.cv?.uploaded ? '#0a6b79' : '#e5e7eb' }}>
                   <FiFileText style={{ color: documentStatus.cv?.uploaded ? 'white' : '#9ca3af', fontSize: '14px' }} />
                 </div>
