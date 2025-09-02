@@ -22,11 +22,11 @@ import Home from './pages/Home';
 import Features from './pages/Features';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
 
 // Pages protégées
 import Dashboard from './pages/Dashboard';
 import ServicesGrid from './components/Services/ServicesGrid';
-import ServiceRouteWrapper from './components/Common/ServiceRouteWrapper';
 
 // Pages d'administration
 import AdminServicesPage from './pages/AdminServicesPage';
@@ -77,6 +77,12 @@ function App() {
                       <Register />
                     </Layout>
                   } />
+                  
+                  <Route path="/forgot-password" element={
+                    <Layout>
+                      <ForgotPassword />
+                    </Layout>
+                  } />
 
                   {/* Routes protégées */}
                   <Route path="/dashboard" element={
@@ -97,13 +103,7 @@ function App() {
                   } />
                   
                   {/* Route dynamique pour tous les services IA */}
-                  <Route path="/:serviceId" element={
-                    <PrivateRoute>
-                      <Layout>
-                        <ServiceRouteWrapper />
-                      </Layout>
-                    </PrivateRoute>
-                  } />
+                  {/* ServiceRouteWrapper supprimé - composant inutilisé */}
                 
                   {/* Routes d'administration */}
                   <Route path="/admin/services" element={
