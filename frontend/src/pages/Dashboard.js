@@ -42,6 +42,8 @@ import ServicesGrid from '../components/Services/ServicesGrid';
 import ProfileAdviceModal from '../components/Common/ProfileAdviceModal';
 import { LogoIcon } from '../components/icons/ModernIcons';
 
+
+
 const ServiceCard = ({ title, description, icon, route, color = '#0a6b79', disabled = false, requiredDocs = [], documentStatus }) => {
   const navigate = useNavigate();
   const missingDocs = requiredDocs.filter(doc => !documentStatus[doc]?.uploaded);
@@ -431,11 +433,11 @@ const Dashboard = () => {
 
   const tabs = [
     { id: 'documents', label: 'Mes documents', mobileLabel: 'Docs', icon: <FiFileText />, route: null },
-    { id: 'evaluate', label: 'Évaluer une offre', mobileLabel: 'Offre', icon: <FiTarget />, route: '/matching-cv-offre' },
-    { id: 'improve', label: 'Améliorer mon CV', mobileLabel: 'CV', icon: <FiTrendingUp />, route: '/analyze-cv' },
-    { id: 'apply', label: 'Candidater', mobileLabel: 'Candidature', icon: <FiMail />, route: '/cover-letter-generate' },
-    { id: 'interview', label: "Préparer l'entretien", mobileLabel: 'Entretien', icon: <FiMic />, route: '/interview-prep' },
-    { id: 'change', label: 'Tout changer', mobileLabel: 'Reconversion', icon: <FiRefreshCw />, route: '/career-orientation' }
+    { id: 'evaluate', label: 'Évaluer une offre', mobileLabel: 'Offre', icon: <FiTarget />, route: null },
+    { id: 'improve', label: 'Améliorer mon CV', mobileLabel: 'CV', icon: <FiTrendingUp />, route: null },
+    { id: 'apply', label: 'Candidater', mobileLabel: 'Candidature', icon: <FiMail />, route: null },
+    { id: 'interview', label: "Préparer l'entretien", mobileLabel: 'Entretien', icon: <FiMic />, route: null },
+    { id: 'change', label: 'Tout changer', mobileLabel: 'Reconversion', icon: <FiRefreshCw />, route: null }
   ];
 
   // États pour l'analyse de CV
@@ -526,7 +528,7 @@ const Dashboard = () => {
                 margin: '0',
                 fontWeight: '400'
               }}>
-                Transformez votre profil professionnel avec l'intelligence artificielle
+                Trouvez l'emploi de vos rêves avec votre coach IA
               </p>
             </div>
 
@@ -541,11 +543,7 @@ const Dashboard = () => {
                 <button
                   key={tab.id}
                   onClick={() => {
-                    if (tab.route) {
-                      navigate(tab.route);
-                    } else {
-                      setActiveTab(tab.id);
-                    }
+                    setActiveTab(tab.id);
                   }}
                   style={{
                     display: 'flex',
