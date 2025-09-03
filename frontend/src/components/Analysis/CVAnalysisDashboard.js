@@ -526,7 +526,7 @@ const Dashboard = () => {
                 margin: '0',
                 fontWeight: '400'
               }}>
-                Transformez votre profil professionnel avec l'intelligence artificielle
+                Trouvez l'emploi de vos rêves avec votre coach IA
               </p>
             </div>
 
