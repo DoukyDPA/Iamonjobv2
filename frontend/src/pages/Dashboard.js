@@ -655,7 +655,15 @@ const Dashboard = () => {
               padding: '1.5rem',
               border: '1px solid rgba(255, 255, 255, 0.1)'
             }}>
-                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+              {/* Input caché pour l'upload de CV */}
+              <input
+                type="file"
+                id="cv-upload"
+                accept=".pdf,.doc,.docx"
+                style={{ display: 'none' }}
+                onChange={e => handleFileUpload(e, 'cv')}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
            <div style={{
              width: '48px',
              height: '48px',
@@ -729,7 +737,15 @@ const Dashboard = () => {
               padding: '1.5rem',
               border: '1px solid rgba(255, 255, 255, 0.1)'
             }}>
-                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+              {/* Input caché pour l'upload d'offre d'emploi */}
+              <input
+                type="file"
+                id="offre-upload"
+                accept=".pdf,.doc,.docx,.txt"
+                style={{ display: 'none' }}
+                onChange={e => handleFileUpload(e, 'offre_emploi')}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
            <div style={{
              width: '48px',
              height: '48px',
