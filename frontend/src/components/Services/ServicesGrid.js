@@ -101,9 +101,18 @@ const ServicesGrid = ({ filterTheme = null }) => {
     return {
       evaluate_offer: [
         {
-          id: 'cv_offer_compatibility',
+          id: 'matching_cv_offre',
           title: 'Compatibilité CV-Offre',
           coachAdvice: 'Découvrez votre taux de compatibilité avec une offre d\'emploi',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: true,
+          requiresQuestionnaire: false
+        },
+        {
+          id: 'analyse_emploi',
+          title: 'Analysez une offre d\'emploi',
+          coachAdvice: 'Décryptez les offres d\'emploi pour mieux candidater',
           icon: <LogoIcon size={20} />,
           requiresCV: true,
           requiresJobOffer: true,
@@ -161,38 +170,38 @@ const ServicesGrid = ({ filterTheme = null }) => {
           requiresQuestionnaire: false
         },
         {
-          id: 'optimize_ats',
-          title: 'Optimiser pour ATS',
+          id: 'cv_ats_optimization',
+          title: 'Optimisez votre CV pour les ATS',
           coachAdvice: 'Améliorez votre CV pour passer les systèmes de recrutement automatisés',
           icon: <LogoIcon size={20} />,
           requiresCV: true,
-          requiresJobOffer: false,
+          requiresJobOffer: true,
           requiresQuestionnaire: false
         }
       ],
       interview_prep: [
         {
-          id: 'interview_tips',
+          id: 'interview_prep',
           title: 'Conseils entretien',
           coachAdvice: 'Préparez-vous efficacement pour vos entretiens d\'embauche',
           icon: <LogoIcon size={20} />,
-          requiresCV: false,
-          requiresJobOffer: false,
-          requiresQuestionnaire: true
+          requiresCV: true,
+          requiresJobOffer: true,
+          requiresQuestionnaire: false
         },
         {
           id: 'salary_negotiation',
-          title: 'Négocier salaire',
+          title: 'Négociez votre salaire',
           coachAdvice: 'Apprenez les techniques pour négocier votre salaire efficacement',
           icon: <LogoIcon size={20} />,
-          requiresCV: false,
+          requiresCV: true,
           requiresJobOffer: true,
           requiresQuestionnaire: true
         }
       ],
       career_project: [
         {
-          id: 'career_orientation',
+          id: 'career_transition',
           title: 'Vers quel métier ?',
           coachAdvice: 'Découvrez les métiers qui correspondent à votre profil',
           icon: <LogoIcon size={20} />,
@@ -201,7 +210,7 @@ const ServicesGrid = ({ filterTheme = null }) => {
           requiresQuestionnaire: true
         },
         {
-          id: 'career_change',
+          id: 'reconversion_analysis',
           title: 'Idées de reconversion',
           coachAdvice: 'Explorez les possibilités de reconversion professionnelle',
           icon: <LogoIcon size={20} />,
@@ -210,7 +219,7 @@ const ServicesGrid = ({ filterTheme = null }) => {
           requiresQuestionnaire: true
         },
         {
-          id: 'skills_assessment',
+          id: 'skills_analysis',
           title: 'Évaluer compétences',
           coachAdvice: 'Évaluez vos compétences et identifiez vos points forts',
           icon: <LogoIcon size={20} />,
