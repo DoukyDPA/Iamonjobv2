@@ -11,12 +11,18 @@ export const URL_TO_SERVICE_MAPPING = {
   'professional-pitch': 'professional_pitch',
   'presentation-slides': 'presentation_slides',
   'salary-prepare': 'salary_negotiation',
+  'salary-negotiation': 'salary_negotiation',
   'reconversion-analyze': 'reconversion_analysis',
+  'reconversion-analysis': 'reconversion_analysis',
   'career-orientation': 'career_transition',
+  'career-transition': 'career_transition',
   'industry-orientation': 'industry_orientation',
   'cv-ats-optimize': 'cv_ats_optimization',
+  'cv-ats-optimization': 'cv_ats_optimization',
   'matching-cv-offre': 'matching_cv_offre',
-  'analyze-cv': 'analyze_cv'
+  'analyze-cv': 'analyze_cv',
+  'analyse-emploi': 'analyse_emploi',
+  'skills-analysis': 'skills_analysis'
 };
 
 // Configuration des services basée sur l'admin
