@@ -37,23 +37,37 @@ export const AuthProvider = ({ children }) => {
               email: response.data.user.email,
               isAdmin: response.data.user.is_admin || false
             });
+            console.log('✅ Token valide, utilisateur connecté');
           } else {
-            // Token invalide
+            // Token invalide - déconnecter l'utilisateur
+            console.log('Token invalide, déconnexion...');
             localStorage.removeItem('token');
             localStorage.removeItem('user_email');
             setToken(null);
             setUser(null);
+            toast.error('Session expirée. Veuillez vous reconnecter.');
           }
         } catch (error) {
           console.error('Erreur vérification token:', error);
-          // En cas d'erreur réseau, garder l'utilisateur avec l'email stocké
-          const storedEmail = localStorage.getItem('user_email');
-          if (storedEmail && token) {
-            setUser({
-              id: 'offline',
-              email: storedEmail,
-              isAdmin: false
-            });
+          
+          // Si c'est une erreur 401 (token expiré), déconnecter l'utilisateur
+          if (error.status === 401 || error.message?.includes('Token expiré')) {
+            console.log('Token expiré détecté, déconnexion...');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user_email');
+            setToken(null);
+            setUser(null);
+            toast.error('Session expirée. Veuillez vous reconnecter.');
+          } else {
+            // En cas d'erreur réseau, garder l'utilisateur avec l'email stocké
+            const storedEmail = localStorage.getItem('user_email');
+            if (storedEmail && token) {
+              setUser({
+                id: 'offline',
+                email: storedEmail,
+                isAdmin: false
+              });
+            }
           }
         }
       }
