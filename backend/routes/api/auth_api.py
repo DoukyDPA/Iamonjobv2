@@ -432,6 +432,50 @@ def verify_token():
     finally:
         print("=== DEBUG VERIFY TOKEN END ===")
 
+@auth_api.route('/refresh-token', methods=['POST'])
+def refresh_token():
+    """Renouvelle un token JWT pour un utilisateur connecté"""
+    try:
+        data = request.get_json()
+        if not data or not data.get('token'):
+            return jsonify({"success": False, "error": "Token manquant"}), 400
+        
+        # Vérifier le token actuel (même s'il est expiré, on peut extraire l'user_id)
+        secret_key = os.environ.get('FLASK_SECRET_KEY') or 'dev_secret_key'
+        
+        try:
+            # Décoder le token même s'il est expiré pour récupérer l'user_id
+            payload = jwt.decode(data['token'], secret_key, algorithms=['HS256'], options={"verify_exp": False})
+            user_id = payload.get('user_id')
+            
+            if not user_id:
+                return jsonify({"success": False, "error": "Token invalide"}), 401
+            
+            # Vérifier que l'utilisateur existe toujours
+            user = User.get(user_id)
+            if not user:
+                return jsonify({"success": False, "error": "Utilisateur non trouvé"}), 404
+            
+            # Générer un nouveau token
+            new_token = generate_token(user_id)
+            
+            return jsonify({
+                "success": True,
+                "token": new_token,
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "is_admin": user.is_admin
+                }
+            }), 200
+            
+        except jwt.InvalidTokenError:
+            return jsonify({"success": False, "error": "Token invalide"}), 401
+            
+    except Exception as e:
+        print(f"Erreur lors du renouvellement du token: {e}")
+        return jsonify({"success": False, "error": "Erreur lors du renouvellement du token"}), 500
+
 @auth_api.route('/check-session', methods=['GET'])
 def check_session():
     """Vérifier si l'utilisateur est connecté et récupérer ses données"""
