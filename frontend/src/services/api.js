@@ -3,13 +3,48 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
   ? 'https://iamonjob-production.up.railway.app'
   : 'http://localhost:8080';
 
+// Fonction pour renouveler automatiquement le token
+const refreshToken = async () => {
+  try {
+    const currentToken = localStorage.getItem('token');
+    if (!currentToken) return false;
+    
+    const response = await fetch(`${API_BASE_URL}/api/auth/refresh-token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token: currentToken }),
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && data.token) {
+        localStorage.setItem('token', data.token);
+        console.log('✅ Token renouvelé automatiquement');
+        // Notification discrète pour l'utilisateur
+        if (window.toast) {
+          window.toast.success('Session renouvelée automatiquement', { 
+            duration: 2000,
+            position: 'top-right'
+          });
+        }
+        return data.token;
+      }
+    }
+  } catch (error) {
+    console.error('Erreur lors du renouvellement du token:', error);
+  }
+  return false;
+};
+
 const api = {
   get: async (url) => {
     const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
     console.log('API GET:', fullUrl);
     
     // Récupérer le token depuis localStorage
-    const token = localStorage.getItem('token');
+    let token = localStorage.getItem('token');
     
     try {
       const response = await fetch(fullUrl, {
@@ -21,6 +56,38 @@ const api = {
       });
       
       if (!response.ok) {
+        // Gérer spécifiquement les erreurs de token expiré
+        if (response.status === 401) {
+          const responseData = await response.json();
+          if (responseData.error?.includes('Token expiré')) {
+            console.log('Token expiré détecté dans API GET, tentative de renouvellement...');
+            
+            // Essayer de renouveler le token
+            const newToken = await refreshToken();
+            if (newToken) {
+              // Retry avec le nouveau token
+              const retryResponse = await fetch(fullUrl, {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${newToken}`,
+                },
+              });
+              
+              if (retryResponse.ok) {
+                const data = await retryResponse.json();
+                return { data };
+              }
+            }
+            
+            // Si le renouvellement échoue, déconnecter l'utilisateur
+            console.log('Impossible de renouveler le token, déconnexion...');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user_email');
+            window.location.href = '/login';
+            return;
+          }
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
@@ -37,7 +104,7 @@ const api = {
     console.log('API POST:', fullUrl, data);
     
     // Récupérer le token depuis localStorage
-    const token = localStorage.getItem('token');
+    let token = localStorage.getItem('token');
     
     try {
       const response = await fetch(fullUrl, {
@@ -53,6 +120,37 @@ const api = {
       const responseData = await response.json();
       
       if (!response.ok) {
+        // Gérer spécifiquement les erreurs de token expiré
+        if (response.status === 401 && responseData.error?.includes('Token expiré')) {
+          console.log('Token expiré détecté dans API POST, tentative de renouvellement...');
+          
+          // Essayer de renouveler le token
+          const newToken = await refreshToken();
+          if (newToken) {
+            // Retry avec le nouveau token
+            const retryResponse = await fetch(fullUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${newToken}`,
+              },
+              body: JSON.stringify(data),
+            });
+            
+            if (retryResponse.ok) {
+              const retryData = await retryResponse.json();
+              return { data: retryData };
+            }
+          }
+          
+          // Si le renouvellement échoue, déconnecter l'utilisateur
+          console.log('Impossible de renouveler le token, déconnexion...');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user_email');
+          window.location.href = '/login';
+          return;
+        }
+        
         // Créer une erreur avec le message du serveur
         const errorMessage = responseData.error || `HTTP error! status: ${response.status}`;
         const error = new Error(errorMessage);
