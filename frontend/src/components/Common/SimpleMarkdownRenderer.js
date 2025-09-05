@@ -2,6 +2,36 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import './SimpleMarkdownRenderer.css';
 
+const markdownComponents = {
+  h1: ({ children }) => <h1 className="markdown-h1">{children}</h1>,
+  h2: ({ children }) => <h2 className="markdown-h2">{children}</h2>,
+  h3: ({ children }) => <h3 className="markdown-h3">{children}</h3>,
+  p: ({ children }) => <p className="markdown-p">{children}</p>,
+  ul: ({ children }) => <ul className="markdown-ul">{children}</ul>,
+  ol: ({ children }) => <ol className="markdown-ol">{children}</ol>,
+  li: ({ children }) => <li className="markdown-li">{children}</li>,
+  strong: ({ children }) => <strong className="markdown-strong">{children}</strong>,
+  em: ({ children }) => <em className="markdown-em">{children}</em>,
+  code: ({ children, className }) => {
+    const isInline = !className;
+    return isInline ? (
+      <code className="markdown-code-inline">{children}</code>
+    ) : (
+      <pre className="markdown-code-block">
+        <code>{children}</code>
+      </pre>
+    );
+  },
+  blockquote: ({ children }) => (
+    <blockquote className="markdown-blockquote">{children}</blockquote>
+  ),
+  a: ({ children, href }) => (
+    <a href={href} className="markdown-link" target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  ),
+};
+
 const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
   if (!content) return null;
 
@@ -11,55 +41,15 @@ const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
   if (hasTable) {
     // Convertir les tableaux en Markdown valide
     const processedContent = convertAnyTableToMarkdown(content);
-    
-    // Utiliser ReactMarkdown pour les tableaux
+    const segments = splitMarkdownByTables(processedContent);
+
     return (
       <div className={`markdown-renderer ${serviceType}`}>
-        <ReactMarkdown
-          components={{
-            table: ({ children }) => (
-              <div className="table-wrapper">
-                <table className={`markdown-table ${serviceType === 'reconversion_analysis' ? 'metiers-table' : ''}`}>
-                  {children}
-                </table>
-              </div>
-            ),
-            thead: ({ children }) => <thead>{children}</thead>,
-            tbody: ({ children }) => <tbody>{children}</tbody>,
-            tr: ({ children }) => <tr>{children}</tr>,
-            th: ({ children }) => <th className="markdown-th">{children}</th>,
-            td: ({ children }) => <td className="markdown-td">{children}</td>,
-            h1: ({ children }) => <h1 className="markdown-h1">{children}</h1>,
-            h2: ({ children }) => <h2 className="markdown-h2">{children}</h2>,
-            h3: ({ children }) => <h3 className="markdown-h3">{children}</h3>,
-            p: ({ children }) => <p className="markdown-p">{children}</p>,
-            ul: ({ children }) => <ul className="markdown-ul">{children}</ul>,
-            ol: ({ children }) => <ol className="markdown-ol">{children}</ol>,
-            li: ({ children }) => <li className="markdown-li">{children}</li>,
-            strong: ({ children }) => <strong className="markdown-strong">{children}</strong>,
-            em: ({ children }) => <em className="markdown-em">{children}</em>,
-            code: ({ children, className }) => {
-              const isInline = !className;
-              return isInline ? (
-                <code className="markdown-code-inline">{children}</code>
-              ) : (
-                <pre className="markdown-code-block">
-                  <code>{children}</code>
-                </pre>
-              );
-            },
-            blockquote: ({ children }) => (
-              <blockquote className="markdown-blockquote">{children}</blockquote>
-            ),
-            a: ({ children, href }) => (
-              <a href={href} className="markdown-link" target="_blank" rel="noopener noreferrer">
-                {children}
-              </a>
-            ),
-          }}
-        >
-          {processedContent}
-        </ReactMarkdown>
+        {segments.map((segment, index) =>
+          segment.type === 'table'
+            ? renderTableSegment(segment.lines, serviceType, index)
+            : <ReactMarkdown key={index} components={markdownComponents}>{segment.content}</ReactMarkdown>
+        )}
       </div>
     );
   }
@@ -343,6 +333,84 @@ const convertTableToMarkdown = (headers, rows) => {
   result.push('');
   
   return result.join('\n');
+};
+
+const splitMarkdownByTables = (content) => {
+  const lines = content.split('\n');
+  const segments = [];
+  let i = 0;
+  while (i < lines.length) {
+    if (isTableRow(lines[i]) && i + 1 < lines.length && isTableSeparator(lines[i + 1])) {
+      const tableLines = [lines[i], lines[i + 1]];
+      i += 2;
+      while (i < lines.length && isTableRow(lines[i])) {
+        tableLines.push(lines[i]);
+        i++;
+      }
+      segments.push({ type: 'table', lines: tableLines });
+    } else {
+      const textLines = [lines[i]];
+      i++;
+      while (
+        i < lines.length &&
+        !(isTableRow(lines[i]) && i + 1 < lines.length && isTableSeparator(lines[i + 1]))
+      ) {
+        textLines.push(lines[i]);
+        i++;
+      }
+      segments.push({ type: 'text', content: textLines.join('\n') });
+    }
+  }
+  return segments;
+};
+
+const isTableRow = (line) => /^\s*\|.*\|\s*$/.test(line);
+const isTableSeparator = (line) => /^\s*\|?(?:\s*-+\s*\|)+\s*$/.test(line);
+
+const parseMarkdownTable = (lines) => {
+  const [headerLine, , ...rowLines] = lines;
+  const headers = headerLine.split('|').slice(1, -1).map((h) => h.trim());
+  const rows = rowLines.map((row) =>
+    row
+      .split('|')
+      .slice(1, -1)
+      .map((cell) => cell.trim())
+  );
+  return { headers, rows };
+};
+
+const renderTableSegment = (lines, serviceType, key) => {
+  const { headers, rows } = parseMarkdownTable(lines);
+  return (
+    <div key={key} className="table-wrapper">
+      <table
+        className={`markdown-table ${
+          serviceType === 'reconversion_analysis' ? 'metiers-table' : ''
+        }`}
+      >
+        <thead>
+          <tr>
+            {headers.map((h, i) => (
+              <th key={i} className="markdown-th">
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, rowIndex) => (
+            <tr key={rowIndex}>
+              {row.map((cell, cellIndex) => (
+                <td key={cellIndex} className="markdown-td">
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 };
 
 export default SimpleMarkdownRenderer;
