@@ -74,7 +74,7 @@ const ServicesGrid = ({ filterTheme = null }) => {
         requiresJobOffer: service.requires_job_offer,
         requiresQuestionnaire: service.requires_questionnaire,
         difficulty: service.difficulty,
-        durationMinutes: service.duration_minutes,
+        // durationMinutes removed - not needed
         visible: service.visible,
         featured: service.featured
       }));
