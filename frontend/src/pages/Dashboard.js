@@ -948,6 +948,7 @@ const Dashboard = () => {
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '0.75rem',
+                color: 'white',
                 fontSize: '1.5rem',
                 fontWeight: '600'
               }}>
