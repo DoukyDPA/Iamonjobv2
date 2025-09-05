@@ -24,7 +24,7 @@ const AdminServicesPage = () => {
   const [newService, setNewService] = useState({
     id: '', title: '', coach_advice: '', theme: 'evaluate_offer',
     requires_cv: false, requires_job_offer: false, requires_questionnaire: false,
-    difficulty: 'beginner', duration_minutes: 5, prompt: ''
+    difficulty: 'beginner', prompt: ''
   });
 
   // Charger les données depuis l'API
@@ -303,7 +303,7 @@ const AdminServicesPage = () => {
         setNewService({
           id: '', title: '', coach_advice: '', theme: 'evaluate_offer',
           requires_cv: false, requires_job_offer: false, requires_questionnaire: false,
-          difficulty: 'beginner', duration_minutes: 5, prompt: ''
+          difficulty: 'beginner', prompt: ''
         });
         loadServicesData();
       } else {
@@ -769,15 +769,7 @@ const AdminServicesPage = () => {
                       {difficultyLabels[service.difficulty]}
                     </span>
                     
-                    <span style={{
-                      background: '#f3f4f6',
-                      padding: '0.25rem 0.5rem',
-                      borderRadius: '4px',
-                      fontSize: '0.75rem',
-                      color: '#374151'
-                    }}>
-                      ⏱️ {service.duration_minutes}min
-                    </span>
+                    {/* Durée supprimée - pas nécessaire */}
                     
                     {service.requires_cv && (
                       <span style={{
