@@ -3,12 +3,24 @@
    Corrections spécifiques pour améliorer l'expérience mobile
    ================================================================== */
 
-/* ===== CORRECTIONS GÉNÉRALES MOBILE ===== */
+  /* ===== CORRECTIONS GÉNÉRALES MOBILE ===== */
 @media (max-width: 768px) {
   /* Améliorer la lisibilité générale */
   body {
     font-size: 16px; /* Éviter le zoom automatique sur iOS */
     line-height: 1.5;
+  }
+
+  /* ===== CORRECTIONS DES TEXTES SUR FOND COLORÉ ===== */
+  
+  /* Textes de description sur fond coloré - forcer en blanc */
+  .hero-subtitle,
+  .revolutionary-hero-subtitle,
+  .dashboard-header p,
+  .revolutionary-dashboard-content p,
+  .section-description,
+  .revolutionary-section-description {
+    color: white !important;
   }
 
   /* Conteneurs principaux */
@@ -591,6 +603,91 @@
     border-bottom: none !important;
   }
 
+  /* ===== CORRECTIONS DES LISTES À PUCES ===== */
+  
+  /* Listes à puces - éviter les débordements */
+  ul,
+  ol {
+    padding-left: 1.5rem !important;
+    margin: 0.5rem 0 !important;
+  }
+
+  li {
+    margin-bottom: 0.5rem !important;
+    line-height: 1.4 !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Puces personnalisées pour les checklists */
+  .checklist,
+  .analysis-checklist,
+  .cv-analysis-checklist {
+    list-style: none !important;
+    padding-left: 0 !important;
+  }
+
+  .checklist li,
+  .analysis-checklist li,
+  .cv-analysis-checklist li {
+    position: relative !important;
+    padding-left: 2rem !important;
+    margin-bottom: 0.75rem !important;
+    line-height: 1.4 !important;
+  }
+
+  .checklist li::before,
+  .analysis-checklist li::before,
+  .cv-analysis-checklist li::before {
+    content: "■" !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    color: #0a6b79 !important;
+    font-size: 0.8rem !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Colonnes d'analyse CV - responsive */
+  .analysis-columns,
+  .cv-analysis-columns {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+
+  .analysis-column,
+  .cv-analysis-column {
+    flex: 1 !important;
+    min-width: 0 !important;
+    padding: 1rem !important;
+    background: white !important;
+    border-radius: 8px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .analysis-column h3,
+  .cv-analysis-column h3 {
+    font-size: 1rem !important;
+    margin-bottom: 0.75rem !important;
+    color: #1f2937 !important;
+    font-weight: 600 !important;
+  }
+
+  .analysis-column ul,
+  .cv-analysis-column ul {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .analysis-column li,
+  .cv-analysis-column li {
+    font-size: 0.875rem !important;
+    line-height: 1.4 !important;
+    color: #4b5563 !important;
+    margin-bottom: 0.5rem !important;
+  }
+
   /* ===== CORRECTIONS DES FORMS ===== */
   
   /* Form groups */
@@ -781,7 +878,7 @@
     font-size: 1.125rem !important;
     line-height: 1.4 !important;
     margin-bottom: 2rem !important;
-    color: #6b7280 !important;
+    color: white !important;
   }
 
   /* ===== CORRECTIONS DES FEATURES ===== */
