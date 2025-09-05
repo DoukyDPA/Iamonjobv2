@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { FiUser, FiBot, FiCopy, FiClock } from 'react-icons/fi';
 import './MessageList.css';
 import '../Common/SimpleMarkdownRenderer.css';
@@ -88,6 +89,7 @@ const MessageList = ({ messages }) => {
               ? renderTableSegment(segment.lines, index)
               : <ReactMarkdown key={index} components={markdownComponents}>{segment.content}</ReactMarkdown>
           )}
+
         </div>
       );
     }
@@ -354,6 +356,7 @@ const renderTableSegment = (lines, key) => {
             {headers.map((h, i) => (
               <th key={i} className="markdown-th">
                 <ReactMarkdown components={tableCellComponents}>{h}</ReactMarkdown>
+
               </th>
             ))}
           </tr>

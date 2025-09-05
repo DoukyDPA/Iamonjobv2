@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import './SimpleMarkdownRenderer.css';
 
 const markdownComponents = {
@@ -31,7 +32,6 @@ const markdownComponents = {
     </a>
   ),
 };
-
 // Composants pour analyser le markdown à l'intérieur des cellules de tableau
 const tableCellComponents = {
   ...markdownComponents,
@@ -402,6 +402,7 @@ const renderTableSegment = (lines, serviceType, key) => {
             {headers.map((h, i) => (
               <th key={i} className="markdown-th">
                 <ReactMarkdown components={tableCellComponents}>{h}</ReactMarkdown>
+
               </th>
             ))}
           </tr>
@@ -412,6 +413,7 @@ const renderTableSegment = (lines, serviceType, key) => {
               {row.map((cell, cellIndex) => (
                 <td key={cellIndex} className="markdown-td">
                   <ReactMarkdown components={tableCellComponents}>{cell}</ReactMarkdown>
+
                 </td>
               ))}
             </tr>
