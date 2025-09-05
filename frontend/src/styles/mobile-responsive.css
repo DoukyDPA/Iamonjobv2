@@ -1300,4 +1300,5 @@
   .font-semibold { font-weight: 600 !important; }
   .font-bold { font-weight: 700 !important; }
   .font-extrabold { font-weight: 800 !important; }
-  .font-black { font-weight: 900 !
+  .font-black { font-weight: 900 !important; }
+}
