@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { FiUser, FiBot, FiCopy, FiClock } from 'react-icons/fi';
 import './MessageList.css';
 import '../Common/SimpleMarkdownRenderer.css';
@@ -48,6 +49,7 @@ const MessageList = ({ messages }) => {
       return (
         <div className="markdown-content">
           <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
             components={{
               table: ({ children }) => (
                 <div className="table-wrapper">

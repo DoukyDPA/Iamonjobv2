@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import './SimpleMarkdownRenderer.css';
 
 const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
@@ -16,6 +17,7 @@ const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
     return (
       <div className={`markdown-renderer ${serviceType}`}>
         <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
           components={{
             table: ({ children }) => (
               <div className="table-wrapper">
