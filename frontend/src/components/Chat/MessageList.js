@@ -38,19 +38,12 @@ const MessageList = ({ messages }) => {
   const renderMessageContent = (content, role) => {
     if (!content) return null;
 
-    // Détection des tableaux dans le contenu (Markdown et format texte)
-    const hasMarkdownTable = content.includes('|') && content.includes('\n|');
-    const hasTextTable = detectTextTable(content);
-    const hasHybridTable = detectHybridTable(content);
+    // Détection des tableaux dans le contenu
+    const hasTable = detectAnyTable(content);
     
-    if (hasMarkdownTable || hasTextTable || hasHybridTable) {
-      // Convertir les tableaux texte ou hybrides en Markdown si nécessaire
-      let processedContent = content;
-      if (hasTextTable) {
-        processedContent = convertTextTableToMarkdown(content);
-      } else if (hasHybridTable) {
-        processedContent = convertHybridTableToMarkdown(content);
-      }
+    if (hasTable) {
+      // Convertir les tableaux en Markdown valide
+      const processedContent = convertAnyTableToMarkdown(content);
       // Utiliser ReactMarkdown pour les tableaux
       return (
         <div className="markdown-content">
@@ -183,127 +176,84 @@ const MessageList = ({ messages }) => {
   );
 };
 
-// Fonction de détection des tableaux texte
-const detectTextTable = (content) => {
+// Fonction de détection unifiée des tableaux
+const detectAnyTable = (content) => {
   const lines = content.split('\n');
-  let tableLines = 0;
-  let separatorLines = 0;
-  let potentialTableBlocks = 0;
+  let hasVerticalBars = false;
+  let hasTableStructure = false;
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const trimmed = line.trim();
     
-    // Détecter les lignes de séparateurs avec des tirets (plus flexible)
-    if (trimmed.match(/^-{3,}/) || trimmed.match(/^-+\s*$/) || trimmed.match(/^_{3,}/) || 
-        trimmed.match(/^-{10,}/) || trimmed.match(/^_{10,}/)) {
-      separatorLines++;
+    // Détecter les lignes avec des barres verticales
+    if (trimmed.includes('|')) {
+      hasVerticalBars = true;
+      
+      // Vérifier si c'est une ligne de tableau (au moins 2 barres)
+      const barCount = (trimmed.match(/\|/g) || []).length;
+      if (barCount >= 2) {
+        hasTableStructure = true;
+      }
     }
     
-    // Détecter les lignes de contenu de tableau (plus flexible)
-    if (trimmed.length > 0 && 
-        (trimmed.includes('  ') || 
-         trimmed.match(/^[A-Za-z].*\s{2,}[A-Za-z]/) ||
-         trimmed.match(/^[A-Za-z].*\s{2,}[A-Za-z].*\s{2,}[A-Za-z]/) ||
-         trimmed.match(/^[A-Za-z].*\s{3,}[A-Za-z]/))) {
-      tableLines++;
-    }
-    
-    // Détecter les blocs de tableau potentiels (ligne avec tirets suivie de lignes avec espaces)
-    if (trimmed.match(/^-{3,}/) || trimmed.match(/^_{3,}/)) {
-      // Vérifier les lignes suivantes pour voir si c'est un tableau
-      let hasTableContent = false;
-      for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
-        const nextLine = lines[j].trim();
-        if (nextLine.length > 0 && 
-            (nextLine.includes('  ') || nextLine.match(/^[A-Za-z].*\s{2,}[A-Za-z]/))) {
-          hasTableContent = true;
-          break;
-        }
-      }
-      if (hasTableContent) {
-        potentialTableBlocks++;
-      }
+    // Détecter les séparateurs de tableau (tirets longs)
+    if (trimmed.match(/^-{10,}/) || trimmed.match(/^_{10,}/)) {
+      hasTableStructure = true;
     }
   }
   
-  // Un tableau texte a des séparateurs ET du contenu structuré
-  return (separatorLines >= 1 && tableLines >= 2) || potentialTableBlocks >= 1;
+  return hasVerticalBars && hasTableStructure;
 };
 
-// Fonction de conversion des tableaux texte en Markdown
-const convertTextTableToMarkdown = (content) => {
+// Fonction de conversion unifiée des tableaux en Markdown
+const convertAnyTableToMarkdown = (content) => {
   const lines = content.split('\n');
   const result = [];
   let inTable = false;
-  let tableLines = [];
+  let tableRows = [];
   let headers = [];
-  let isFirstTable = true;
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const trimmed = line.trim();
     
-    // Détecter le début d'un tableau (plus flexible)
-    if (trimmed.match(/^-{3,}/) || trimmed.match(/^-+\s*$/) || trimmed.match(/^_{3,}/) ||
-        trimmed.match(/^-{10,}/) || trimmed.match(/^_{10,}/)) {
+    // Détecter le début d'un tableau (ligne avec des barres verticales)
+    if (trimmed.includes('|') && (trimmed.match(/\|/g) || []).length >= 2) {
       if (!inTable) {
         inTable = true;
-        // Chercher la ligne d'en-tête avant le séparateur
-        for (let j = i - 1; j >= 0; j--) {
-          const prevLine = lines[j].trim();
-          if (prevLine.length > 0 && 
-              !prevLine.match(/^-+$/) && 
-              !prevLine.match(/^_{3,}$/) &&
-              !prevLine.match(/^-{3,}/) &&
-              !prevLine.match(/^_{3,}/)) {
-            // Essayer différents séparateurs pour les en-têtes
-            headers = prevLine.split(/\s{2,}/).filter(h => h.trim().length > 0);
-            if (headers.length < 2) {
-              // Essayer avec des espaces simples si pas assez de colonnes
-              headers = prevLine.split(/\s+/).filter(h => h.trim().length > 0);
-            }
-            break;
-          }
-        }
-        tableLines = [];
+        // Extraire les en-têtes de la ligne actuelle
+        headers = trimmed.split('|').map(h => h.trim()).filter(h => h.length > 0);
+        tableRows = [];
         continue;
       }
     }
     
-    // Détecter la fin d'un tableau
-    if (inTable && (trimmed.length === 0 || 
-        (i < lines.length - 1 && lines[i + 1].trim().length > 0 && 
-         !lines[i + 1].trim().match(/^-+$/) && 
-         !lines[i + 1].trim().match(/^_{3,}$/) &&
-         !lines[i + 1].trim().match(/^-{3,}/) &&
-         !lines[i + 1].trim().match(/^_{3,}/) &&
-         !lines[i + 1].trim().includes('  ')))) {
-      
-      if (tableLines.length > 0) {
-        // Convertir le tableau en Markdown
-        result.push(convertTableToMarkdown(headers, tableLines, isFirstTable));
-        isFirstTable = false;
-      }
-      
-      inTable = false;
-      headers = [];
-      tableLines = [];
+    // Détecter les séparateurs de tableau (lignes de tirets)
+    if (inTable && (trimmed.match(/^-{10,}/) || trimmed.match(/^_{10,}/))) {
+      continue; // Ignorer les lignes de séparateurs
     }
     
-    if (inTable && trimmed.length > 0 && 
-        !trimmed.match(/^-+$/) && 
-        !trimmed.match(/^_{3,}$/) &&
-        !trimmed.match(/^-{3,}/) &&
-        !trimmed.match(/^_{3,}/)) {
-      // Ligne de données du tableau
-      let cells = trimmed.split(/\s{2,}/).filter(cell => cell.trim().length > 0);
-      if (cells.length < 2) {
-        // Essayer avec des espaces simples si pas assez de colonnes
-        cells = trimmed.split(/\s+/).filter(cell => cell.trim().length > 0);
+    // Détecter la fin d'un tableau
+    if (inTable && trimmed.length === 0) {
+      // Ligne vide = fin du tableau
+      if (tableRows.length > 0) {
+        result.push(convertTableToMarkdown(headers, tableRows));
       }
-      if (cells.length > 1) {
-        tableLines.push(cells);
+      inTable = false;
+      headers = [];
+      tableRows = [];
+      result.push(line); // Garder la ligne vide
+      continue;
+    }
+    
+    if (inTable && trimmed.length > 0) {
+      // Ligne de données du tableau
+      if (trimmed.includes('|')) {
+        const cells = trimmed.split('|').map(cell => cell.trim()).filter(cell => cell.length > 0);
+        if (cells.length > 1) {
+          tableRows.push(cells);
+        }
       }
     } else if (!inTable) {
       result.push(line);
@@ -311,15 +261,15 @@ const convertTextTableToMarkdown = (content) => {
   }
   
   // Traiter le dernier tableau s'il y en a un
-  if (inTable && tableLines.length > 0) {
-    result.push(convertTableToMarkdown(headers, tableLines, isFirstTable));
+  if (inTable && tableRows.length > 0) {
+    result.push(convertTableToMarkdown(headers, tableRows));
   }
   
   return result.join('\n');
 };
 
 // Fonction pour convertir un tableau en format Markdown
-const convertTableToMarkdown = (headers, rows, isFirstTable) => {
+const convertTableToMarkdown = (headers, rows) => {
   if (headers.length === 0 || rows.length === 0) return '';
   
   const result = [];
@@ -346,119 +296,6 @@ const convertTableToMarkdown = (headers, rows, isFirstTable) => {
   
   // Ajouter un espace après le tableau pour la lisibilité
   result.push('');
-  
-  return result.join('\n');
-};
-
-// Fonction de détection des tableaux hybrides (avec | mais séparateurs malformés)
-const detectHybridTable = (content) => {
-  const lines = content.split('\n');
-  let hasVerticalBars = false;
-  let hasMalformedSeparators = false;
-  let tableRows = 0;
-  
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const trimmed = line.trim();
-    
-    // Détecter les lignes avec des barres verticales
-    if (trimmed.includes('|')) {
-      hasVerticalBars = true;
-      
-      // Compter les barres verticales pour voir si c'est un tableau
-      const barCount = (trimmed.match(/\|/g) || []).length;
-      if (barCount >= 2) {
-        tableRows++;
-      }
-    }
-    
-    // Détecter les séparateurs malformés (lignes de tirets avec une seule barre)
-    if (trimmed.match(/^-{10,}.*\|.*-{10,}$/) || 
-        trimmed.match(/^-{20,}.*\|.*-{20,}$/) ||
-        (trimmed.match(/^-{10,}/) && trimmed.includes('|') && trimmed.match(/-{10,}$/))) {
-      hasMalformedSeparators = true;
-    }
-  }
-  
-  // Un tableau hybride a des barres verticales ET des séparateurs malformés
-  return hasVerticalBars && hasMalformedSeparators && tableRows >= 2;
-};
-
-// Fonction de conversion des tableaux hybrides en Markdown
-const convertHybridTableToMarkdown = (content) => {
-  const lines = content.split('\n');
-  const result = [];
-  let inTable = false;
-  let tableLines = [];
-  let headers = [];
-  let isFirstTable = true;
-  
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const trimmed = line.trim();
-    
-    // Détecter le début d'un tableau hybride
-    if (trimmed.includes('|') && 
-        (trimmed.match(/^-{10,}.*\|.*-{10,}$/) || 
-         trimmed.match(/^-{20,}.*\|.*-{20,}$/) ||
-         (trimmed.match(/^-{10,}/) && trimmed.includes('|') && trimmed.match(/-{10,}$/)))) {
-      if (!inTable) {
-        inTable = true;
-        // Chercher la ligne d'en-tête avant le séparateur
-        for (let j = i - 1; j >= 0; j--) {
-          const prevLine = lines[j].trim();
-          if (prevLine.length > 0 && 
-              !prevLine.match(/^-+$/) && 
-              !prevLine.match(/^_{3,}$/) &&
-              !prevLine.match(/^-{3,}/) &&
-              !prevLine.match(/^_{3,}/) &&
-              prevLine.includes('|')) {
-            // Extraire les en-têtes des barres verticales
-            headers = prevLine.split('|').map(h => h.trim()).filter(h => h.length > 0);
-            break;
-          }
-        }
-        tableLines = [];
-        continue;
-      }
-    }
-    
-    // Détecter la fin d'un tableau
-    if (inTable && (trimmed.length === 0 || 
-        (i < lines.length - 1 && lines[i + 1].trim().length > 0 && 
-         !lines[i + 1].trim().includes('|')))) {
-      
-      if (tableLines.length > 0) {
-        // Convertir le tableau en Markdown
-        result.push(convertTableToMarkdown(headers, tableLines, isFirstTable));
-        isFirstTable = false;
-      }
-      
-      inTable = false;
-      headers = [];
-      tableLines = [];
-    }
-    
-    if (inTable && trimmed.length > 0 && 
-        !trimmed.match(/^-+$/) && 
-        !trimmed.match(/^_{3,}$/) &&
-        !trimmed.match(/^-{3,}/) &&
-        !trimmed.match(/^_{3,}/) &&
-        trimmed.includes('|')) {
-      // Ligne de données du tableau
-      const cells = trimmed.split('|').map(cell => cell.trim()).filter(cell => cell.length > 0);
-      if (cells.length > 1) {
-        tableLines.push(cells);
-      }
-    } else if (!inTable) {
-      result.push(line);
-    }
-  }
-  
-  // Traiter le dernier tableau s'il y en a un
-  if (inTable && tableLines.length > 0) {
-    result.push(convertTableToMarkdown(headers, tableLines, isFirstTable));
-  }
   
   return result.join('\n');
 };
