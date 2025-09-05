@@ -45,7 +45,6 @@ import CookiesPolicy from './pages/CookiesPolicy';
 import FAQ from './pages/FAQ';
 
 import './App.css';
-import './styles/mobile-responsive.css';
 
 function App() {
   return (
