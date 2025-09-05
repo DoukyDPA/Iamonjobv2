@@ -225,7 +225,7 @@ const PartnerJobs = () => {
         <div className="partner-modal-overlay" onClick={closeOffersModal}>
           <div className="partner-modal" onClick={(e) => e.stopPropagation()}>
             <div className="partner-modal-header">
-              <h4>🎯 Opportunités disponibles</h4>
+              <h4 className="revolutionary-section-title">Opportunités disponibles</h4>
               <button className="partner-modal-close" onClick={closeOffersModal}>×</button>
             </div>
             <div className="partner-modal-body">
@@ -242,13 +242,13 @@ const PartnerJobs = () => {
                           onClick={() => openOfferDetails(offer)}
                           className="details-btn"
                         >
-                          📖 En savoir plus
+                          En savoir plus
                         </button>
                         <button 
                           onClick={() => testCompatibility(offer, selectedPartner)}
                           className="test-btn"
                         >
-                          🧪 Tester ma compatibilité
+                          Tester ma compatibilité
                         </button>
                       </div>
                     </div>
