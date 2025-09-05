@@ -12,6 +12,9 @@ import DataSync from './components/Common/DataSync';
 // Composant d'individualisation des utilisateurs
 import UserIndividualization from './components/Common/UserIndividualization';
 
+// Composant de test responsive
+import MobileResponsiveTest from './components/TestAccess/MobileResponsiveTest';
+
 // Layout et protection
 import Layout from './components/Layout/Layout';
 import PrivateRoute from './components/Auth/PrivateRoute';
@@ -42,6 +45,7 @@ import CookiesPolicy from './pages/CookiesPolicy';
 import FAQ from './pages/FAQ';
 
 import './App.css';
+import './styles/mobile-responsive.css';
 
 function App() {
   return (
@@ -154,7 +158,8 @@ function App() {
                         <p>✅ Pages Home et Features</p>
                         <p>✅ Authentification Login/Register</p>
                         <p>✅ Page d'administration des utilisateurs</p>
-                        <p>Étape 5/5 terminée</p>
+                        <p>✅ Corrections responsive mobile</p>
+                        <p>Étape 6/6 terminée</p>
                         
                         <div style={{ marginTop: '2rem' }}>
                           <h3>🎯 Navigation disponible :</h3>
@@ -166,9 +171,17 @@ function App() {
                             <a href="/dashboard" style={{ margin: '0 1rem', color: '#0a6b79' }}>🎯 Dashboard</a>
                             <a href="/admin/users" style={{ margin: '0 1rem', color: '#0a6b79' }}>👥 Admin Users</a>
                             <a href="/test" style={{ margin: '0 1rem', color: '#0a6b79' }}>🔧 Test</a>
+                            <a href="/test-responsive" style={{ margin: '0 1rem', color: '#0a6b79' }}>📱 Test Mobile</a>
                           </p>
                         </div>
                       </div>
+                    </Layout>
+                  } />
+
+                  {/* Page de test responsive mobile */}
+                  <Route path="/test-responsive" element={
+                    <Layout>
+                      <MobileResponsiveTest />
                     </Layout>
                   } />
 
