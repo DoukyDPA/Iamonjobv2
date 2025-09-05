@@ -178,6 +178,97 @@
   }
 }
 
+/* === TABLEAUX === */
+.table-wrapper {
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: white;
+}
+
+.markdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  min-width: 400px;
+}
+
+.markdown-th {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  font-weight: 600;
+  text-align: left;
+  padding: 1rem 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+  color: #1e293b;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.markdown-td {
+  padding: 0.875rem 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.markdown-table tr:hover {
+  background: #f8fafc;
+}
+
+.markdown-table tr:last-child .markdown-td {
+  border-bottom: none;
+}
+
+/* Styles spéciaux pour les tableaux de métiers */
+.markdown-table.metiers-table .markdown-th {
+  background: linear-gradient(135deg, #0a6b79 0%, #0d7f8e 100%);
+  color: white;
+  border-bottom-color: #0a6b79;
+}
+
+.markdown-table.metiers-table .markdown-td {
+  border-bottom-color: #e0f2fe;
+}
+
+.markdown-table.metiers-table tr:hover {
+  background: #f0f9fa;
+}
+
+/* Responsive pour les tableaux */
+@media (max-width: 768px) {
+  .markdown-table {
+    font-size: 0.8rem;
+    min-width: 300px;
+  }
+  
+  .markdown-th,
+  .markdown-td {
+    padding: 0.5rem 0.4rem;
+  }
+  
+  .markdown-th {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .markdown-table {
+    min-width: 250px;
+  }
+  
+  .markdown-th,
+  .markdown-td {
+    padding: 0.4rem 0.3rem;
+  }
+}
+
 /* === THÈMES DE COULEUR === */
 .markdown-renderer.theme-matching {
   border-color: #0ea5e9;
