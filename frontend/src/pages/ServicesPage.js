@@ -44,7 +44,7 @@ const ServicesPage = () => {
               requiresCV: true,
               requiresJobOffer: true,
               difficulty: 'intermediate',
-              duration: '5-10 min'
+              // duration removed - not needed
             }
           ]
         },
@@ -59,7 +59,7 @@ const ServicesPage = () => {
               requiresCV: true,
               requiresJobOffer: false,
               difficulty: 'beginner',
-              duration: '3-5 min'
+              // duration removed - not needed
             },
             {
               id: 'cv_ats_optimization',
@@ -69,7 +69,7 @@ const ServicesPage = () => {
               requiresCV: true,
               requiresJobOffer: true,
               difficulty: 'intermediate',
-              duration: '5-7 min'
+              // duration removed - not needed
             }
           ]
         },
@@ -84,7 +84,7 @@ const ServicesPage = () => {
               requiresCV: true,
               requiresJobOffer: true,
               difficulty: 'beginner',
-              duration: '3-5 min'
+              // duration removed - not needed
             },
             {
               id: 'professional_pitch',
@@ -94,7 +94,7 @@ const ServicesPage = () => {
               requiresCV: true,
               requiresJobOffer: false,
               difficulty: 'intermediate',
-              duration: '6-10 min'
+              // duration removed - not needed
             }
           ]
         },
@@ -109,7 +109,7 @@ const ServicesPage = () => {
               requiresCV: true,
               requiresJobOffer: false,
               difficulty: 'advanced',
-              duration: '15-20 min'
+              // duration removed - not needed
             },
             {
               id: 'career_transition',
@@ -119,7 +119,7 @@ const ServicesPage = () => {
               requiresCV: true,
               requiresJobOffer: false,
               difficulty: 'intermediate',
-              duration: '10-15 min'
+              // duration removed - not needed
             },
             {
               id: 'industry_orientation',
@@ -129,7 +129,7 @@ const ServicesPage = () => {
               requiresCV: true,
               requiresJobOffer: false,
               difficulty: 'intermediate',
-              duration: '10-15 min'
+              // duration removed - not needed
             }
           ]
         }
@@ -267,11 +267,8 @@ const ServicesPage = () => {
                         )}
                       </div>
                     </div>
-                    {/* Footer avec durée et statut */}
+                    {/* Footer avec statut */}
                     <div className="service-card-footer">
-                      <div className="service-duration">
-                        ⏱️ {service.duration}
-                      </div>
                       <div className={`service-status${canExecute ? ' available' : ' missing-docs'}`}>
                         {canExecute ? '🚀 Disponible' : `📋 ${missingDocs.join(', ')} requis`}
                       </div>
