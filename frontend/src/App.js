@@ -133,20 +133,13 @@ function App() {
                     </PrivateRoute>
                   } />
                   
-                              <Route path="/admin/users" element={
-              <PrivateRoute>
-                <Layout>
-                  <AdminUsersPage />
-                </Layout>
-              </PrivateRoute>
-            } />
-            <Route path="/admin/partners" element={
-              <PrivateRoute>
-                <Layout>
-                  <AdminPartnersPage />
-                </Layout>
-              </PrivateRoute>
-            } />
+                  <Route path="/admin/users" element={
+                    <PrivateRoute>
+                      <Layout>
+                        <AdminUsersPage />
+                      </Layout>
+                    </PrivateRoute>
+                  } />
                   
                   {/* Page de test progression */}
                   <Route path="/test" element={
