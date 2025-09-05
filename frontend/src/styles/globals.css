@@ -314,6 +314,10 @@ a:hover {
   .hero-subtitle,
   .dashboard-header p,
   .section-description,
+  .revolutionary-section-title {
+    color: white !important;
+  }
+  
   .revolutionary-section-title,
   .revolutionary-dashboard-content h2,
   .revolutionary-dashboard-content h3,
