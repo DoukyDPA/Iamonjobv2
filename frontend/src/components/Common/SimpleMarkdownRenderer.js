@@ -32,6 +32,12 @@ const markdownComponents = {
     </a>
   ),
 };
+// Composants pour analyser le markdown à l'intérieur des cellules de tableau
+const tableCellComponents = {
+  ...markdownComponents,
+  // Éviter d'envelopper le contenu des cellules dans des balises <p>
+  p: ({ children }) => <>{children}</>,
+};
 
 const SimpleMarkdownRenderer = ({ content, serviceType = 'default' }) => {
   if (!content) return null;
@@ -371,12 +377,14 @@ const isTableSeparator = (line) => /^\s*\|?(?:\s*-+\s*\|)+\s*$/.test(line);
 const parseMarkdownTable = (lines) => {
   const [headerLine, , ...rowLines] = lines;
   const headers = headerLine.split('|').slice(1, -1).map((h) => h.trim());
-  const rows = rowLines.map((row) =>
-    row
-      .split('|')
-      .slice(1, -1)
-      .map((cell) => cell.trim())
-  );
+  const rows = rowLines
+    .filter((row) => !isTableSeparator(row))
+    .map((row) =>
+      row
+        .split('|')
+        .slice(1, -1)
+        .map((cell) => cell.trim())
+    );
   return { headers, rows };
 };
 
@@ -393,7 +401,8 @@ const renderTableSegment = (lines, serviceType, key) => {
           <tr>
             {headers.map((h, i) => (
               <th key={i} className="markdown-th">
-                {h}
+                <ReactMarkdown components={tableCellComponents}>{h}</ReactMarkdown>
+
               </th>
             ))}
           </tr>
@@ -403,7 +412,8 @@ const renderTableSegment = (lines, serviceType, key) => {
             <tr key={rowIndex}>
               {row.map((cell, cellIndex) => (
                 <td key={cellIndex} className="markdown-td">
-                  {cell}
+                  <ReactMarkdown components={tableCellComponents}>{cell}</ReactMarkdown>
+
                 </td>
               ))}
             </tr>
