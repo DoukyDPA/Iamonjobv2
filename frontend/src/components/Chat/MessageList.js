@@ -182,26 +182,47 @@ const detectTextTable = (content) => {
   const lines = content.split('\n');
   let tableLines = 0;
   let separatorLines = 0;
+  let potentialTableBlocks = 0;
   
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     const trimmed = line.trim();
     
-    // Détecter les lignes de séparateurs avec des tirets
-    if (trimmed.match(/^-{3,}$/) || trimmed.match(/^-+\s*$/) || trimmed.match(/^_{3,}$/)) {
+    // Détecter les lignes de séparateurs avec des tirets (plus flexible)
+    if (trimmed.match(/^-{3,}/) || trimmed.match(/^-+\s*$/) || trimmed.match(/^_{3,}/) || 
+        trimmed.match(/^-{10,}/) || trimmed.match(/^_{10,}/)) {
       separatorLines++;
     }
     
-    // Détecter les lignes de contenu de tableau (avec des espaces multiples ou des tirets)
+    // Détecter les lignes de contenu de tableau (plus flexible)
     if (trimmed.length > 0 && 
         (trimmed.includes('  ') || 
          trimmed.match(/^[A-Za-z].*\s{2,}[A-Za-z]/) ||
-         trimmed.match(/^[A-Za-z].*\s{2,}[A-Za-z].*\s{2,}[A-Za-z]/))) {
+         trimmed.match(/^[A-Za-z].*\s{2,}[A-Za-z].*\s{2,}[A-Za-z]/) ||
+         trimmed.match(/^[A-Za-z].*\s{3,}[A-Za-z]/))) {
       tableLines++;
+    }
+    
+    // Détecter les blocs de tableau potentiels (ligne avec tirets suivie de lignes avec espaces)
+    if (trimmed.match(/^-{3,}/) || trimmed.match(/^_{3,}/)) {
+      // Vérifier les lignes suivantes pour voir si c'est un tableau
+      let hasTableContent = false;
+      for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
+        const nextLine = lines[j].trim();
+        if (nextLine.length > 0 && 
+            (nextLine.includes('  ') || nextLine.match(/^[A-Za-z].*\s{2,}[A-Za-z]/))) {
+          hasTableContent = true;
+          break;
+        }
+      }
+      if (hasTableContent) {
+        potentialTableBlocks++;
+      }
     }
   }
   
-  // Un tableau texte a généralement plusieurs lignes de séparateurs et de contenu
-  return separatorLines >= 2 && tableLines >= 3;
+  // Un tableau texte a des séparateurs ET du contenu structuré
+  return (separatorLines >= 1 && tableLines >= 2) || potentialTableBlocks >= 1;
 };
 
 // Fonction de conversion des tableaux texte en Markdown
@@ -217,15 +238,25 @@ const convertTextTableToMarkdown = (content) => {
     const line = lines[i];
     const trimmed = line.trim();
     
-    // Détecter le début d'un tableau
-    if (trimmed.match(/^-{3,}$/) || trimmed.match(/^-+\s*$/) || trimmed.match(/^_{3,}$/)) {
+    // Détecter le début d'un tableau (plus flexible)
+    if (trimmed.match(/^-{3,}/) || trimmed.match(/^-+\s*$/) || trimmed.match(/^_{3,}/) ||
+        trimmed.match(/^-{10,}/) || trimmed.match(/^_{10,}/)) {
       if (!inTable) {
         inTable = true;
         // Chercher la ligne d'en-tête avant le séparateur
         for (let j = i - 1; j >= 0; j--) {
           const prevLine = lines[j].trim();
-          if (prevLine.length > 0 && !prevLine.match(/^-+$/) && !prevLine.match(/^_{3,}$/)) {
+          if (prevLine.length > 0 && 
+              !prevLine.match(/^-+$/) && 
+              !prevLine.match(/^_{3,}$/) &&
+              !prevLine.match(/^-{3,}/) &&
+              !prevLine.match(/^_{3,}/)) {
+            // Essayer différents séparateurs pour les en-têtes
             headers = prevLine.split(/\s{2,}/).filter(h => h.trim().length > 0);
+            if (headers.length < 2) {
+              // Essayer avec des espaces simples si pas assez de colonnes
+              headers = prevLine.split(/\s+/).filter(h => h.trim().length > 0);
+            }
             break;
           }
         }
@@ -239,6 +270,8 @@ const convertTextTableToMarkdown = (content) => {
         (i < lines.length - 1 && lines[i + 1].trim().length > 0 && 
          !lines[i + 1].trim().match(/^-+$/) && 
          !lines[i + 1].trim().match(/^_{3,}$/) &&
+         !lines[i + 1].trim().match(/^-{3,}/) &&
+         !lines[i + 1].trim().match(/^_{3,}/) &&
          !lines[i + 1].trim().includes('  ')))) {
       
       if (tableLines.length > 0) {
@@ -252,9 +285,17 @@ const convertTextTableToMarkdown = (content) => {
       tableLines = [];
     }
     
-    if (inTable && trimmed.length > 0 && !trimmed.match(/^-+$/) && !trimmed.match(/^_{3,}$/)) {
+    if (inTable && trimmed.length > 0 && 
+        !trimmed.match(/^-+$/) && 
+        !trimmed.match(/^_{3,}$/) &&
+        !trimmed.match(/^-{3,}/) &&
+        !trimmed.match(/^_{3,}/)) {
       // Ligne de données du tableau
-      const cells = trimmed.split(/\s{2,}/).filter(cell => cell.trim().length > 0);
+      let cells = trimmed.split(/\s{2,}/).filter(cell => cell.trim().length > 0);
+      if (cells.length < 2) {
+        // Essayer avec des espaces simples si pas assez de colonnes
+        cells = trimmed.split(/\s+/).filter(cell => cell.trim().length > 0);
+      }
       if (cells.length > 1) {
         tableLines.push(cells);
       }
