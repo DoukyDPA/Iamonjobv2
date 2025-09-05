@@ -262,21 +262,71 @@ const PartnerJobs = () => {
               {selectedPartner.offers && selectedPartner.offers.length > 0 ? (
                 <div className="offers-list">
                   {selectedPartner.offers.map((offer) => (
-                    <div key={offer.id} className="offer-item">
+                    <div key={offer.id} className="offer-item" style={{
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '12px',
+                      padding: '1.5rem',
+                      marginBottom: '1rem',
+                      backdropFilter: 'blur(10px)',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}>
                       <div className="offer-content">
-                        <h6>{offer.title}</h6>
-                        <span className="offer-type">{offer.offer_type}</span>
+                        <h6 style={{ 
+                          color: 'white', 
+                          fontSize: '1.1rem', 
+                          fontWeight: '600', 
+                          margin: '0 0 0.5rem 0' 
+                        }}>{offer.title}</h6>
+                        <span className="offer-type" style={{
+                          background: 'linear-gradient(135deg, #27a2b4 0%, #0a6b79 100%)',
+                          color: 'white',
+                          padding: '0.25rem 0.75rem',
+                          borderRadius: '20px',
+                          fontSize: '0.8rem',
+                          fontWeight: '500',
+                          border: '1px solid rgba(255, 255, 255, 0.2)'
+                        }}>{offer.offer_type}</span>
                       </div>
-                      <div className="offer-actions">
+                      <div className="offer-actions" style={{
+                        display: 'flex',
+                        gap: '1rem',
+                        marginTop: '1rem'
+                      }}>
                         <button 
                           onClick={() => openOfferDetails(offer)}
                           className="details-btn"
+                          style={{
+                            background: 'linear-gradient(135deg, #0a6b79 0%, #27a2b4 100%)',
+                            color: 'white',
+                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                            padding: '0.75rem 1.5rem',
+                            borderRadius: '8px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            backdropFilter: 'blur(10px)',
+                            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+                            transition: 'all 0.3s ease'
+                          }}
                         >
                           En savoir plus
                         </button>
                         <button 
                           onClick={() => testCompatibility(offer, selectedPartner)}
                           className="test-btn"
+                          style={{
+                            background: 'linear-gradient(135deg, #27a2b4 0%, #0a6b79 100%)',
+                            color: 'white',
+                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                            padding: '0.75rem 1.5rem',
+                            borderRadius: '8px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            backdropFilter: 'blur(10px)',
+                            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+                            transition: 'all 0.3s ease'
+                          }}
                         >
                           Tester ma compatibilité
                         </button>
