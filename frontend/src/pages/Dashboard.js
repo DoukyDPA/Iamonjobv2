@@ -617,7 +617,7 @@ const Dashboard = () => {
               fontSize: '1.5rem',
               fontWeight: '600'
             }}>
-              <LogoIcon size={24} />
+              <LogoIcon size={32} />
               Vos Documents pour personnaliser l'analyse
             </h2>
             <button 
