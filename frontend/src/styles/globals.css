@@ -532,3 +532,357 @@ a:hover {
   color: var(--error-color);
   font-size: 1.1rem;
 }
+
+/* ===== PAGES D'AUTHENTIFICATION ===== */
+.revolutionary-auth-page {
+  min-height: calc(100vh - 200px);
+  display: flex;
+  align-items: center;
+  padding: 2rem 0;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+}
+
+.revolutionary-auth-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  align-items: center;
+}
+
+.revolutionary-auth-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 2.5rem;
+}
+
+.revolutionary-auth-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.revolutionary-auth-logo {
+  margin-bottom: 1rem;
+}
+
+.revolutionary-auth-logo-image {
+  height: 60px;
+  width: auto;
+}
+
+.revolutionary-auth-header h1 {
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.revolutionary-auth-header p {
+  color: var(--text-light);
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.revolutionary-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.revolutionary-form-group {
+  margin-bottom: 1.25rem;
+}
+
+.revolutionary-form-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+.revolutionary-form-icon {
+  font-size: 1rem;
+  color: var(--text-light);
+}
+
+.revolutionary-form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text-color);
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast);
+}
+
+.revolutionary-form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(10, 107, 121, 0.1);
+}
+
+.revolutionary-form-input.error {
+  border-color: var(--error-color);
+}
+
+.revolutionary-form-error {
+  color: var(--error-color);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.revolutionary-password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.revolutionary-password-wrapper .revolutionary-form-input {
+  padding-right: 3rem;
+}
+
+.revolutionary-password-toggle {
+  position: absolute;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+}
+
+.revolutionary-password-toggle:hover {
+  color: var(--text-color);
+}
+
+.revolutionary-password-strength {
+  margin-top: 0.5rem;
+}
+
+.revolutionary-password-strength-bar {
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.25rem;
+}
+
+.revolutionary-password-strength-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.revolutionary-password-strength-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.revolutionary-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.revolutionary-checkbox-label input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+}
+
+.revolutionary-checkbox-custom {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: var(--transition-fast);
+  margin-top: 2px;
+}
+
+.revolutionary-checkbox-label input[type="checkbox"]:checked + .revolutionary-checkbox-custom {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.revolutionary-checkbox-custom svg {
+  font-size: 0.75rem;
+}
+
+.revolutionary-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.revolutionary-auth-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+  transition: var(--transition-fast);
+}
+
+.revolutionary-auth-link:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+.revolutionary-auth-btn {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+}
+
+.revolutionary-auth-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--primary-hover) 0%, var(--primary-color) 100%);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.revolutionary-auth-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.revolutionary-loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.revolutionary-auth-footer {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.revolutionary-auth-footer p {
+  margin: 0;
+  color: var(--text-light);
+}
+
+.revolutionary-auth-info {
+  padding: 2rem;
+}
+
+.revolutionary-auth-info h2 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.revolutionary-auth-info p {
+  color: var(--text-light);
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.revolutionary-auth-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.revolutionary-auth-info li {
+  padding: 0.75rem 0;
+  color: var(--text-color);
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.revolutionary-auth-info li::before {
+  content: "✓";
+  color: var(--success-color);
+  font-weight: bold;
+}
+
+.revolutionary-auth-info-footer {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: rgba(10, 107, 121, 0.1);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.revolutionary-auth-info-footer p {
+  margin: 0;
+  color: var(--primary-color);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.revolutionary-alert-error {
+  background: var(--error-bg);
+  color: var(--error-text);
+  border: 1px solid var(--error-border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+/* Responsive pour les pages d'auth */
+@media (max-width: 992px) {
+  .revolutionary-auth-container {
+    grid-template-columns: 1fr;
+    max-width: 500px;
+  }
+  
+  .revolutionary-auth-info {
+    display: none;
+  }
+}
+
+@media (max-width: 576px) {
+  .revolutionary-auth-page {
+    padding: 1rem 0;
+  }
+  
+  .revolutionary-auth-card {
+    padding: 1.5rem;
+    box-shadow: none;
+    border-radius: 0;
+  }
+  
+  .revolutionary-auth-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .revolutionary-form-input {
+    font-size: 16px; /* Éviter le zoom sur iOS */
+  }
+}
