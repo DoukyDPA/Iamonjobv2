@@ -41,10 +41,16 @@ const MessageList = ({ messages }) => {
     // Détection des tableaux dans le contenu (Markdown et format texte)
     const hasMarkdownTable = content.includes('|') && content.includes('\n|');
     const hasTextTable = detectTextTable(content);
+    const hasHybridTable = detectHybridTable(content);
     
-    if (hasMarkdownTable || hasTextTable) {
-      // Convertir les tableaux texte en Markdown si nécessaire
-      const processedContent = hasTextTable ? convertTextTableToMarkdown(content) : content;
+    if (hasMarkdownTable || hasTextTable || hasHybridTable) {
+      // Convertir les tableaux texte ou hybrides en Markdown si nécessaire
+      let processedContent = content;
+      if (hasTextTable) {
+        processedContent = convertTextTableToMarkdown(content);
+      } else if (hasHybridTable) {
+        processedContent = convertHybridTableToMarkdown(content);
+      }
       // Utiliser ReactMarkdown pour les tableaux
       return (
         <div className="markdown-content">
@@ -340,6 +346,119 @@ const convertTableToMarkdown = (headers, rows, isFirstTable) => {
   
   // Ajouter un espace après le tableau pour la lisibilité
   result.push('');
+  
+  return result.join('\n');
+};
+
+// Fonction de détection des tableaux hybrides (avec | mais séparateurs malformés)
+const detectHybridTable = (content) => {
+  const lines = content.split('\n');
+  let hasVerticalBars = false;
+  let hasMalformedSeparators = false;
+  let tableRows = 0;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    
+    // Détecter les lignes avec des barres verticales
+    if (trimmed.includes('|')) {
+      hasVerticalBars = true;
+      
+      // Compter les barres verticales pour voir si c'est un tableau
+      const barCount = (trimmed.match(/\|/g) || []).length;
+      if (barCount >= 2) {
+        tableRows++;
+      }
+    }
+    
+    // Détecter les séparateurs malformés (lignes de tirets avec une seule barre)
+    if (trimmed.match(/^-{10,}.*\|.*-{10,}$/) || 
+        trimmed.match(/^-{20,}.*\|.*-{20,}$/) ||
+        (trimmed.match(/^-{10,}/) && trimmed.includes('|') && trimmed.match(/-{10,}$/))) {
+      hasMalformedSeparators = true;
+    }
+  }
+  
+  // Un tableau hybride a des barres verticales ET des séparateurs malformés
+  return hasVerticalBars && hasMalformedSeparators && tableRows >= 2;
+};
+
+// Fonction de conversion des tableaux hybrides en Markdown
+const convertHybridTableToMarkdown = (content) => {
+  const lines = content.split('\n');
+  const result = [];
+  let inTable = false;
+  let tableLines = [];
+  let headers = [];
+  let isFirstTable = true;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    
+    // Détecter le début d'un tableau hybride
+    if (trimmed.includes('|') && 
+        (trimmed.match(/^-{10,}.*\|.*-{10,}$/) || 
+         trimmed.match(/^-{20,}.*\|.*-{20,}$/) ||
+         (trimmed.match(/^-{10,}/) && trimmed.includes('|') && trimmed.match(/-{10,}$/)))) {
+      if (!inTable) {
+        inTable = true;
+        // Chercher la ligne d'en-tête avant le séparateur
+        for (let j = i - 1; j >= 0; j--) {
+          const prevLine = lines[j].trim();
+          if (prevLine.length > 0 && 
+              !prevLine.match(/^-+$/) && 
+              !prevLine.match(/^_{3,}$/) &&
+              !prevLine.match(/^-{3,}/) &&
+              !prevLine.match(/^_{3,}/) &&
+              prevLine.includes('|')) {
+            // Extraire les en-têtes des barres verticales
+            headers = prevLine.split('|').map(h => h.trim()).filter(h => h.length > 0);
+            break;
+          }
+        }
+        tableLines = [];
+        continue;
+      }
+    }
+    
+    // Détecter la fin d'un tableau
+    if (inTable && (trimmed.length === 0 || 
+        (i < lines.length - 1 && lines[i + 1].trim().length > 0 && 
+         !lines[i + 1].trim().includes('|')))) {
+      
+      if (tableLines.length > 0) {
+        // Convertir le tableau en Markdown
+        result.push(convertTableToMarkdown(headers, tableLines, isFirstTable));
+        isFirstTable = false;
+      }
+      
+      inTable = false;
+      headers = [];
+      tableLines = [];
+    }
+    
+    if (inTable && trimmed.length > 0 && 
+        !trimmed.match(/^-+$/) && 
+        !trimmed.match(/^_{3,}$/) &&
+        !trimmed.match(/^-{3,}/) &&
+        !trimmed.match(/^_{3,}/) &&
+        trimmed.includes('|')) {
+      // Ligne de données du tableau
+      const cells = trimmed.split('|').map(cell => cell.trim()).filter(cell => cell.length > 0);
+      if (cells.length > 1) {
+        tableLines.push(cells);
+      }
+    } else if (!inTable) {
+      result.push(line);
+    }
+  }
+  
+  // Traiter le dernier tableau s'il y en a un
+  if (inTable && tableLines.length > 0) {
+    result.push(convertTableToMarkdown(headers, tableLines, isFirstTable));
+  }
   
   return result.join('\n');
 };
