@@ -951,7 +951,8 @@ const Dashboard = () => {
                 fontSize: '1.5rem',
                 fontWeight: '600'
               }}>
-                🤝 Testez votre compatibilité avec les métiers de nos partenaires
+                <LogoIcon size={24} />
+                Testez votre compatibilité avec les métiers de nos partenaires
               </h2>
               <PartnerJobs />
             </div>
