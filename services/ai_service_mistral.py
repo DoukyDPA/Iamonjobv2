@@ -48,7 +48,7 @@ def call_mistral_api(prompt: str, context: Optional[str] = None, service_id: str
                     "content": full_prompt
                 }
             ],
-            "max_tokens": 1000,
+            "max_tokens": 2000,
             "temperature": 0.7,
             "top_p": 1,
             "stream": False
