@@ -223,12 +223,42 @@ const PartnerJobs = () => {
       {/* Modal des métiers */}
       {showModal && selectedPartner && (
         <div className="partner-modal-overlay" onClick={closeOffersModal}>
-          <div className="partner-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="partner-modal-header">
-              <h4 className="revolutionary-section-title">Opportunités disponibles</h4>
-              <button className="partner-modal-close" onClick={closeOffersModal}>×</button>
+          <div className="partner-modal" onClick={(e) => e.stopPropagation()} style={{
+            background: 'linear-gradient(135deg, #0a6b79 0%, #0d4b56 100%)',
+            borderRadius: '20px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)'
+          }}>
+            <div className="partner-modal-header" style={{
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%)',
+              color: 'white',
+              padding: '2rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <h4 className="revolutionary-section-title" style={{ color: 'white', margin: 0, fontSize: '1.5rem', fontWeight: '700' }}>Opportunités disponibles</h4>
+              <button className="partner-modal-close" onClick={closeOffersModal} style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: 'white',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                fontSize: '1.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>×</button>
             </div>
-            <div className="partner-modal-body">
+            <div className="partner-modal-body" style={{
+              padding: '2rem',
+              maxHeight: '60vh',
+              overflowY: 'auto',
+              background: 'transparent'
+            }}>
               {selectedPartner.offers && selectedPartner.offers.length > 0 ? (
                 <div className="offers-list">
                   {selectedPartner.offers.map((offer) => (
