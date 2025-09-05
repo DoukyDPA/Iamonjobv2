@@ -1,5 +1,5 @@
-/* ===================================================================
-   📱 IAMONJOB - CORRECTIONS RESPONSIVE MOBILE
+    /* ===================================================================
+   �� IAMONJOB - CORRECTIONS RESPONSIVE MOBILE
    Corrections spécifiques pour améliorer l'expérience mobile
    ================================================================== */
 
@@ -34,77 +34,63 @@
     margin-bottom: 1rem !important;
   }
 
-  /* Espacement réduit */
-  .dashboard,
-  .revolutionary-dashboard {
-    padding: 1rem 0 !important;
+  /* ===== CORRECTIONS SPÉCIFIQUES AUX MÉTIERS ===== */
+  
+  /* Titres de métiers - éviter le débordement */
+  .action-title,
+  .service-title,
+  .action-card h3,
+  .service-card h3 {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    hyphens: auto !important;
+    max-width: 100% !important;
+    line-height: 1.3 !important;
+    font-size: 1.1rem !important;
   }
-}
 
-/* ===== CORRECTIONS GRILLES DE SERVICES ===== */
-@media (max-width: 768px) {
-  /* Grille de services - 1 colonne sur mobile */
+  /* Gestion des titres très longs */
+  .action-card h3,
+  .service-card h3 {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 3 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* ===== CORRECTIONS DES GRILLES DE SERVICES ===== */
+  
+  /* Grilles de services - une colonne sur mobile */
   .services-grid,
   .action-services-grid,
   .revolutionary-services-grid {
     grid-template-columns: 1fr !important;
     gap: 1rem !important;
-    padding: 0 !important;
+    padding: 0 16px !important;
   }
 
   /* Cartes de services */
   .action-card,
   .service-card,
-  .document-tile {
+  .revolutionary-service-card {
     padding: 1.5rem !important;
+    margin-bottom: 1rem !important;
     min-height: auto !important;
-    margin-bottom: 1rem;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
-  /* Titres de services - éviter le débordement */
-  .action-card-title,
-  .service-title,
-  .revolutionary-service-title {
-    font-size: 1.1rem !important;
-    line-height: 1.3 !important;
-    word-wrap: break-word !important;
-    overflow-wrap: break-word !important;
-    hyphens: auto !important;
-    margin-bottom: 0.75rem !important;
-  }
-
-  /* Descriptions de services */
-  .action-description,
-  .service-description,
-  .revolutionary-service-description {
-    font-size: 0.9rem !important;
-    line-height: 1.4 !important;
-    margin-bottom: 1rem !important;
-  }
-
-  /* Icônes de services */
-  .action-icon,
-  .service-icon,
-  .revolutionary-service-icon {
-    width: 50px !important;
-    height: 50px !important;
-    font-size: 1.5rem !important;
-    margin-bottom: 1rem !important;
-  }
-}
-
-/* ===== CORRECTIONS ONGLETS MOBILE ===== */
-@media (max-width: 768px) {
-  /* Onglets - scroll horizontal */
+  /* ===== CORRECTIONS DES ONGLETS ===== */
+  
+  /* Onglets - scroll horizontal sur mobile */
   .dashboard-tabs,
   .revolutionary-tabs {
     display: flex !important;
     overflow-x: auto !important;
-    overflow-y: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
-    padding: 0.5rem !important;
+    padding: 0 16px !important;
     gap: 0.5rem !important;
     flex-wrap: nowrap !important;
   }
@@ -114,588 +100,1204 @@
     display: none !important;
   }
 
-  /* Boutons d'onglets */
   .tab-button,
   .revolutionary-tab-button {
     flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    min-width: 120px !important;
+    text-align: center !important;
     padding: 0.75rem 1rem !important;
     font-size: 0.9rem !important;
-    white-space: nowrap !important;
-    min-width: auto !important;
   }
 
-  /* Labels des onglets sur mobile */
-  .revolutionary-tab-label {
-    display: none !important;
+  /* ===== CORRECTIONS DES BOUTONS ===== */
+  
+  /* Boutons - taille tactile suffisante */
+  .action-button,
+  .service-button,
+  .btn,
+  button {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.9rem !important;
+    touch-action: manipulation !important;
   }
 
-  .revolutionary-tab-label-mobile {
-    display: block !important;
-    font-size: 0.8rem !important;
-    margin-top: 0.25rem !important;
+  /* Boutons dans les cartes */
+  .action-card button,
+  .service-card button {
+    width: 100% !important;
+    margin-top: 1rem !important;
   }
-}
 
-/* ===== CORRECTIONS CARTES DE DOCUMENTS ===== */
-@media (max-width: 768px) {
-  /* Grille de documents - 1 colonne */
+  /* ===== CORRECTIONS DES ICÔNES ===== */
+  
+  /* Icônes - taille appropriée pour mobile */
+  .action-icon,
+  .service-icon,
+  .revolutionary-icon {
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 1.5rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  /* ===== CORRECTIONS DES DESCRIPTIONS ===== */
+  
+  /* Descriptions - lisibilité améliorée */
+  .action-description,
+  .service-description,
+  .revolutionary-description {
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+    color: #6b7280 !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* ===== CORRECTIONS DES BADGES ET TAGS ===== */
+  
+  /* Badges de difficulté et durée */
+  .difficulty-badge,
+  .duration-badge,
+  .service-badge {
+    font-size: 0.75rem !important;
+    padding: 0.25rem 0.5rem !important;
+    margin: 0.25rem !important;
+    display: inline-block !important;
+  }
+
+  /* ===== CORRECTIONS DES FORMULAIRES ===== */
+  
+  /* Champs de formulaire */
+  input,
+  textarea,
+  select {
+    font-size: 16px !important; /* Éviter le zoom sur iOS */
+    padding: 0.75rem !important;
+    border-radius: 6px !important;
+    border: 1px solid #d1d5db !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* ===== CORRECTIONS DES MODALES ===== */
+  
+  /* Modales - pleine largeur sur mobile */
+  .modal,
+  .revolutionary-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    height: 100vh !important;
+  }
+
+  .modal-content,
+  .revolutionary-modal-content {
+    padding: 1rem !important;
+    height: 100% !important;
+    overflow-y: auto !important;
+  }
+
+  /* ===== CORRECTIONS DES NAVIGATIONS ===== */
+  
+  /* Navigation mobile */
+  .mobile-nav,
+  .revolutionary-mobile-nav {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: white !important;
+    border-top: 1px solid #e5e7eb !important;
+    padding: 0.5rem !important;
+    z-index: 1000 !important;
+  }
+
+  /* ===== CORRECTIONS DES STATISTIQUES ===== */
+  
+  /* Grilles de statistiques */
+  .stats-grid,
+  .revolutionary-stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+    padding: 0 16px !important;
+  }
+
+  .stat-card,
+  .revolutionary-stat-card {
+    padding: 1.5rem !important;
+    text-align: center !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+
+  /* ===== CORRECTIONS DES DOCUMENTS ===== */
+  
+  /* Grilles de documents */
   .document-types,
   .revolutionary-document-types {
     grid-template-columns: 1fr !important;
     gap: 1rem !important;
+    padding: 0 16px !important;
   }
 
-  /* Cartes de documents */
-  .document-type-card,
-  .revolutionary-document-card {
-    padding: 1.25rem !important;
-    min-height: auto !important;
-  }
-
-  /* Headers de documents */
-  .document-header,
-  .revolutionary-document-header {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 0.75rem !important;
-    margin-bottom: 1rem !important;
-  }
-
-  /* Icônes de documents */
-  .document-icon,
-  .revolutionary-document-icon {
-    width: 40px !important;
-    height: 40px !important;
-    font-size: 1.25rem !important;
-  }
-
-  /* Titres de documents */
-  .document-title,
-  .revolutionary-document-info h4 {
-    font-size: 1rem !important;
-    line-height: 1.3 !important;
-    margin-bottom: 0.25rem !important;
-  }
-
-  /* Sous-titres de documents */
-  .document-subtitle,
-  .revolutionary-document-info p {
-    font-size: 0.8rem !important;
-    line-height: 1.3 !important;
-  }
-
-  /* Actions de documents */
-  .document-actions,
-  .revolutionary-document-actions {
-    margin-top: 1rem !important;
-  }
-
-  /* Boutons d'upload */
-  .btn-upload,
-  .revolutionary-btn-upload,
-  .revolutionary-btn-text,
-  .revolutionary-btn-questionnaire {
-    width: 100% !important;
-    padding: 0.75rem 1rem !important;
-    font-size: 0.9rem !important;
-    min-height: 44px !important; /* Taille tactile recommandée */
-  }
-}
-
-/* ===== CORRECTIONS BADGES ET ÉTATS ===== */
-@media (max-width: 768px) {
-  /* Badges de prérequis */
-  .requirements-badges {
-    flex-direction: column !important;
-    gap: 0.5rem !important;
-  }
-
-  .requirement-badge {
-    align-self: flex-start !important;
-    padding: 0.5rem 0.75rem !important;
-    font-size: 0.8rem !important;
-  }
-
-  /* Badges de statut */
-  .document-status-badge,
-  .revolutionary-document-status {
-    width: 32px !important;
-    height: 32px !important;
-    font-size: 0.9rem !important;
-  }
-
-  /* Badges de difficulté */
-  .service-difficulty {
-    font-size: 0.75rem !important;
-    padding: 0.25rem 0.5rem !important;
-  }
-}
-
-/* ===== CORRECTIONS MODALES MOBILE ===== */
-@media (max-width: 768px) {
-  .modal-overlay,
-  .dashboard-modal-overlay {
-    padding: 1rem !important;
-  }
-
-  .modal-content,
-  .dashboard-modal-content {
-    margin: 0 !important;
-    max-height: calc(100vh - 2rem) !important;
-    border-radius: 1rem !important;
-  }
-
-  .modal-header,
-  .modal-body,
-  .modal-footer,
-  .dashboard-modal-header,
-  .dashboard-modal-body,
-  .dashboard-modal-actions {
-    padding: 1rem !important;
-  }
-
-  .modal-footer,
-  .dashboard-modal-actions {
-    flex-direction: column !important;
-    gap: 0.75rem !important;
-  }
-
-  .btn-navigation,
-  .dashboard-modal-btn {
-    width: 100% !important;
-    padding: 0.75rem 1rem !important;
-    min-height: 44px !important;
-  }
-}
-
-/* ===== CORRECTIONS FORMULAIRES MOBILE ===== */
-@media (max-width: 768px) {
-  /* Inputs et textareas */
-  .form-input,
-  .form-textarea,
-  .form-select,
-  .text-input,
-  .question-input,
-  .dashboard-modal-textarea,
-  .dashboard-modal-textarea-large {
-    font-size: 16px !important; /* Éviter le zoom sur iOS */
-    padding: 0.75rem !important;
-    min-height: 44px !important;
-  }
-
-  .form-textarea,
-  .text-input,
-  .question-input,
-  .dashboard-modal-textarea-large {
-    min-height: 120px !important;
-  }
-
-  /* Groupes de formulaires */
-  .form-group,
-  .revolutionary-form-group {
-    margin-bottom: 1.5rem !important;
-  }
-
-  /* Labels */
-  .form-label,
-  .revolutionary-form-label {
-    font-size: 0.9rem !important;
-    margin-bottom: 0.5rem !important;
-  }
-
-  /* Actions de formulaire */
-  .text-actions,
-  .form-actions {
-    flex-direction: column !important;
-    gap: 0.75rem !important;
-  }
-
-  .btn-text-save,
-  .btn-text-cancel {
-    width: 100% !important;
-    padding: 0.75rem 1rem !important;
-    min-height: 44px !important;
-  }
-}
-
-/* ===== CORRECTIONS NAVIGATION MOBILE ===== */
-@media (max-width: 768px) {
-  /* Header */
-  .header-content {
-    padding: 0.75rem 1rem !important;
-    min-height: 60px !important;
-  }
-
-  .logo-image {
-    height: 35px !important;
-  }
-
-  .logo-text {
-    font-size: 1.1rem !important;
-  }
-
-  /* Navigation mobile */
-  .mobile-menu-button {
-    padding: 0.5rem !important;
-    min-width: 44px !important;
-    min-height: 44px !important;
-  }
-
-  .mobile-menu-icon {
-    width: 20px !important;
-    height: 20px !important;
-  }
-
-  /* Menu utilisateur mobile */
-  .nav-user-button {
-    padding: 0.5rem 0.75rem !important;
-    font-size: 0.8rem !important;
-  }
-
-  .user-avatar {
-    width: 28px !important;
-    height: 28px !important;
-    font-size: 0.8rem !important;
-  }
-}
-
-/* ===== CORRECTIONS FOOTER MOBILE ===== */
-@media (max-width: 768px) {
-  .footer-content {
-    grid-template-columns: 1fr !important;
-    gap: 2rem !important;
-    padding: 0 1rem !important;
-  }
-
-  .footer-section h3 {
-    font-size: 1.1rem !important;
-    margin-bottom: 1rem !important;
-  }
-
-  .footer-section p,
-  .footer-section a {
-    font-size: 0.9rem !important;
-    line-height: 1.5 !important;
-  }
-}
-
-/* ===== CORRECTIONS SPÉCIFIQUES AUX MÉTIERS ===== */
-@media (max-width: 768px) {
-  /* Éviter le débordement des noms de métiers */
-  .service-title,
-  .action-card-title,
-  .job-title,
-  .partner-job-title {
-    word-break: break-word !important;
-    overflow-wrap: break-word !important;
-    hyphens: auto !important;
-    max-width: 100% !important;
-  }
-
-  /* Descriptions de métiers */
-  .service-description,
-  .action-description,
-  .job-description,
-  .partner-job-description {
-    word-break: break-word !important;
-    overflow-wrap: break-word !important;
-    line-height: 1.4 !important;
-  }
-
-  /* Détails de jobs partenaires */
-  .job-details,
-  .partner-job-details {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 0.5rem !important;
-  }
-
-  .job-detail-item,
-  .partner-job-detail-item {
-    font-size: 0.8rem !important;
-  }
-}
-
-/* ===== CORRECTIONS CHAT ET INTERFACES ===== */
-@media (max-width: 768px) {
-  .chat-container {
-    margin: 1rem 0 !important;
-    border-radius: 1rem !important;
-  }
-
-  .chat-header {
-    padding: 1rem !important;
-    font-size: 0.9rem !important;
-  }
-
-  .chat-messages {
-    max-height: 300px !important;
-    padding: 1rem !important;
-  }
-
-  .chat-input-container {
-    padding: 1rem !important;
-  }
-
-  .chat-input {
-    font-size: 16px !important; /* Éviter le zoom sur iOS */
-    padding: 0.75rem !important;
-    min-height: 44px !important;
-  }
-}
-
-/* ===== CORRECTIONS BOUTONS ET ACTIONS ===== */
-@media (max-width: 768px) {
-  /* Boutons principaux */
-  .btn,
-  .btn-primary,
-  .btn-secondary,
-  .btn-success,
-  .btn-outline {
-    min-height: 44px !important;
-    padding: 0.75rem 1rem !important;
-    font-size: 0.9rem !important;
-    border-radius: 0.5rem !important;
-  }
-
-  /* Boutons d'action */
-  .action-button,
-  .btn-action {
-    width: 100% !important;
-    padding: 0.75rem 1rem !important;
-    font-size: 0.9rem !important;
-    min-height: 44px !important;
-  }
-
-  /* Boutons de navigation */
-  .btn-navigation {
-    width: 100% !important;
-    padding: 0.75rem 1rem !important;
-    min-height: 44px !important;
-  }
-}
-
-/* ===== CORRECTIONS PROGRESSION ET STATS ===== */
-@media (max-width: 768px) {
-  /* Barre de progression */
-  .upload-progress-stats,
-  .revolutionary-progress-panel {
-    padding: 1.5rem !important;
-    margin-bottom: 2rem !important;
-  }
-
-  .progress-header,
-  .revolutionary-progress-header {
-    flex-direction: column !important;
-    gap: 1rem !important;
-    text-align: center !important;
-  }
-
-  .progress-title,
-  .revolutionary-progress-title {
-    font-size: 1.2rem !important;
-  }
-
-  .progress-counter,
-  .revolutionary-progress-badge {
-    font-size: 0.9rem !important;
-    padding: 0.5rem 1rem !important;
-  }
-
-  /* Grille de stats */
-  .stats-grid {
-    grid-template-columns: 1fr !important;
-    gap: 1rem !important;
-  }
-
-  .stat-card {
-    flex-direction: column !important;
-    text-align: center !important;
-    padding: 1.5rem !important;
-    gap: 1rem !important;
-  }
-
-  .stat-icon {
-    width: 60px !important;
-    height: 60px !important;
-    font-size: 1.5rem !important;
-  }
-
-  .stat-title {
-    font-size: 1.1rem !important;
-  }
-
-  .stat-description {
-    font-size: 0.9rem !important;
-  }
-}
-
-/* ===== CORRECTIONS SPÉCIFIQUES TRÈS PETITS ÉCRANS ===== */
-@media (max-width: 480px) {
-  /* Conteneurs encore plus compacts */
-  .container,
-  .dashboard-content,
-  .revolutionary-dashboard-content {
-    padding: 0 12px !important;
-  }
-
-  /* Titres encore plus petits */
-  .dashboard-header h1,
-  .revolutionary-hero-title {
-    font-size: 1.75rem !important;
-  }
-
-  .section-title,
-  .revolutionary-section-title {
-    font-size: 1.3rem !important;
-  }
-
-  /* Cartes encore plus compactes */
-  .action-card,
-  .service-card,
   .document-tile,
-  .document-type-card,
-  .revolutionary-document-card {
-    padding: 1rem !important;
-  }
-
-  /* Boutons plus petits mais toujours tactiles */
-  .btn,
-  .btn-primary,
-  .btn-secondary,
-  .action-button,
-  .btn-action {
-    padding: 0.6rem 0.8rem !important;
-    font-size: 0.85rem !important;
-    min-height: 40px !important;
-  }
-
-  /* Onglets plus compacts */
-  .tab-button,
-  .revolutionary-tab-button {
-    padding: 0.6rem 0.8rem !important;
-    font-size: 0.8rem !important;
-  }
-
-  /* Icônes plus petites */
-  .action-icon,
-  .service-icon,
-  .document-icon,
-  .stat-icon {
-    width: 40px !important;
-    height: 40px !important;
-    font-size: 1.25rem !important;
-  }
-}
-
-/* ===== AMÉLIORATIONS D'ACCESSIBILITÉ MOBILE ===== */
-@media (max-width: 768px) {
-  /* Focus visible sur mobile */
-  .btn:focus,
-  .tab-button:focus,
-  .action-button:focus,
-  .form-input:focus,
-  .form-textarea:focus {
-    outline: 2px solid #0a6b79 !important;
-    outline-offset: 2px !important;
-  }
-
-  /* Éviter les zones de clic trop petites */
-  .mobile-menu-button,
-  .nav-user-button,
-  .modal-close,
-  .dashboard-modal-close {
-    min-width: 44px !important;
-    min-height: 44px !important;
-  }
-
-  /* Améliorer la lisibilité des liens */
-  a {
-    text-decoration: underline !important;
-  }
-
-  /* Améliorer le contraste des textes */
-  .text-light,
-  .text-muted {
-    color: #4b5563 !important;
-  }
-}
-
-/* ===== CORRECTIONS SPÉCIFIQUES AUX PROBLÈMES IDENTIFIÉS ===== */
-
-/* Correction du débordement des métiers */
-@media (max-width: 768px) {
-  .service-title,
-  .action-card-title,
-  .revolutionary-service-title {
-    max-width: 100% !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-  }
-
-  /* Pour les titres longs, permettre le retour à la ligne */
-  .service-title.long-title,
-  .action-card-title.long-title {
-    white-space: normal !important;
-    line-height: 1.3 !important;
-    max-height: 2.6em !important;
-    overflow: hidden !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
-    -webkit-box-orient: vertical !important;
-  }
-}
-
-/* Amélioration de la visibilité des éléments sur mobile */
-@media (max-width: 768px) {
-  /* Augmenter la taille des éléments interactifs */
-  .requirement-badge,
-  .service-doc-tag,
-  .badge {
-    min-height: 32px !important;
-    padding: 0.5rem 0.75rem !important;
-    font-size: 0.8rem !important;
-  }
-
-  /* Améliorer la visibilité des icônes */
-  .revolutionary-service-icon,
-  .action-icon,
-  .service-icon {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
-  }
-
-  /* Améliorer la lisibilité des descriptions */
-  .service-description,
-  .action-description,
-  .coach-advice {
-    background: rgba(248, 250, 252, 0.8) !important;
-    padding: 0.75rem !important;
-    border-radius: 0.5rem !important;
-    border-left: 3px solid #0a6b79 !important;
-  }
-}
-
-/* ===== CORRECTIONS FINALES POUR LA LISIBILITÉ ===== */
-@media (max-width: 768px) {
-  /* Assurer un espacement suffisant entre les éléments */
-  .services-grid > *,
-  .action-services-grid > *,
-  .document-types > * {
+  .revolutionary-document-tile {
+    padding: 1.5rem !important;
     margin-bottom: 1rem !important;
   }
 
-  /* Améliorer la séparation visuelle */
-  .services-theme,
-  .revolutionary-documents-group {
-    margin-bottom: 2rem !important;
-    padding-bottom: 1rem !important;
+  /* ===== CORRECTIONS DES PARTENAIRES ===== */
+  
+  /* Grilles de partenaires */
+  .partners-grid,
+  .revolutionary-partners-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+    padding: 0 16px !important;
+  }
+
+  .partner-card,
+  .revolutionary-partner-card {
+    padding: 1.5rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* ===== CORRECTIONS DES FOOTERS ===== */
+  
+  /* Footers */
+  .footer,
+  .revolutionary-footer {
+    padding: 2rem 1rem !important;
+    text-align: center !important;
+  }
+
+  .footer-content,
+  .revolutionary-footer-content {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+
+  /* ===== CORRECTIONS DES HEADERS ===== */
+  
+  /* Headers */
+  .header,
+  .revolutionary-header {
+    padding: 1rem !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+
+  .header-nav,
+  .revolutionary-header-nav {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+
+  /* ===== CORRECTIONS DES SIDEBARS ===== */
+  
+  /* Sidebars - masquées sur mobile */
+  .sidebar,
+  .revolutionary-sidebar {
+    display: none !important;
+  }
+
+  /* ===== CORRECTIONS DES TABLES ===== */
+  
+  /* Tables - scroll horizontal */
+  .table-container,
+  .revolutionary-table-container {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  table,
+  .revolutionary-table {
+    min-width: 600px !important;
+  }
+
+  /* ===== CORRECTIONS DES CARROUSELS ===== */
+  
+  /* Carrousels */
+  .carousel,
+  .revolutionary-carousel {
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .carousel-item,
+  .revolutionary-carousel-item {
+    scroll-snap-align: start !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* ===== CORRECTIONS DES TOOLTIPS ===== */
+  
+  /* Tooltips - désactivés sur mobile */
+  .tooltip,
+  .revolutionary-tooltip {
+    display: none !important;
+  }
+
+  /* ===== CORRECTIONS DES DROPDOWNS ===== */
+  
+  /* Dropdowns */
+  .dropdown,
+  .revolutionary-dropdown {
+    position: relative !important;
+    width: 100% !important;
+  }
+
+  .dropdown-menu,
+  .revolutionary-dropdown-menu {
+    position: static !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 6px !important;
+  }
+
+  /* ===== CORRECTIONS DES ALERTES ===== */
+  
+  /* Alertes */
+  .alert,
+  .revolutionary-alert {
+    margin: 1rem !important;
+    padding: 1rem !important;
+    border-radius: 6px !important;
+  }
+
+  /* ===== CORRECTIONS DES PROGRESS BARS ===== */
+  
+  /* Barres de progression */
+  .progress,
+  .revolutionary-progress {
+    height: 8px !important;
+    border-radius: 4px !important;
+  }
+
+  .progress-bar,
+  .revolutionary-progress-bar {
+    height: 100% !important;
+    border-radius: 4px !important;
+  }
+
+  /* ===== CORRECTIONS DES LOADERS ===== */
+  
+  /* Loaders */
+  .loader,
+  .revolutionary-loader {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  /* ===== CORRECTIONS DES PAGINATIONS ===== */
+  
+  /* Paginations */
+  .pagination,
+  .revolutionary-pagination {
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+
+  .pagination-item,
+  .revolutionary-pagination-item {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* ===== CORRECTIONS DES ACCORDÉONS ===== */
+  
+  /* Accordéons */
+  .accordion,
+  .revolutionary-accordion {
+    border: 1px solid #e5e7eb !important;
+    border-radius: 6px !important;
+  }
+
+  .accordion-item,
+  .revolutionary-accordion-item {
     border-bottom: 1px solid #e5e7eb !important;
   }
 
-  /* Dernière section sans bordure */
-  .services-theme:last-child,
-  .revolutionary-documents-group:last-child {
+  .accordion-header,
+  .revolutionary-accordion-header {
+    padding: 1rem !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .accordion-content,
+  .revolutionary-accordion-content {
+    padding: 0 1rem 1rem 1rem !important;
+  }
+
+  /* ===== CORRECTIONS DES TABS ===== */
+  
+  /* Tabs */
+  .tabs,
+  .revolutionary-tabs {
+    border-bottom: 1px solid #e5e7eb !important;
+  }
+
+  .tab-list,
+  .revolutionary-tab-list {
+    display: flex !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  .tab-list::-webkit-scrollbar,
+  .revolutionary-tab-list::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .tab-item,
+  .revolutionary-tab-item {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    min-width: 120px !important;
+    padding: 0.75rem 1rem !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .tab-content,
+  .revolutionary-tab-content {
+    padding: 1rem !important;
+  }
+
+  /* ===== CORRECTIONS DES RATINGS ===== */
+  
+  /* Ratings */
+  .rating,
+  .revolutionary-rating {
+    display: flex !important;
+    gap: 0.25rem !important;
+    justify-content: center !important;
+  }
+
+  .rating-star,
+  .revolutionary-rating-star {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+  }
+
+  /* ===== CORRECTIONS DES BREADCRUMBS ===== */
+  
+  /* Breadcrumbs */
+  .breadcrumb,
+  .revolutionary-breadcrumb {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    padding: 1rem !important;
+  }
+
+  .breadcrumb-item,
+  .revolutionary-breadcrumb-item {
+    font-size: 0.9rem !important;
+    color: #6b7280 !important;
+  }
+
+  .breadcrumb-separator,
+  .revolutionary-breadcrumb-separator {
+    color: #d1d5db !important;
+  }
+
+  /* ===== CORRECTIONS DES BADGES ===== */
+  
+  /* Badges */
+  .badge,
+  .revolutionary-badge {
+    font-size: 0.75rem !important;
+    padding: 0.25rem 0.5rem !important;
+    border-radius: 4px !important;
+    display: inline-block !important;
+  }
+
+  /* ===== CORRECTIONS DES AVATARS ===== */
+  
+  /* Avatars */
+  .avatar,
+  .revolutionary-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+  }
+
+  /* ===== CORRECTIONS DES CARDS ===== */
+  
+  /* Cards */
+  .card,
+  .revolutionary-card {
+    margin-bottom: 1rem !important;
+    border-radius: 8px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .card-header,
+  .revolutionary-card-header {
+    padding: 1rem !important;
+    border-bottom: 1px solid #e5e7eb !important;
+  }
+
+  .card-body,
+  .revolutionary-card-body {
+    padding: 1rem !important;
+  }
+
+  .card-footer,
+  .revolutionary-card-footer {
+    padding: 1rem !important;
+    border-top: 1px solid #e5e7eb !important;
+  }
+
+  /* ===== CORRECTIONS DES LISTS ===== */
+  
+  /* Lists */
+  .list,
+  .revolutionary-list {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .list-item,
+  .revolutionary-list-item {
+    padding: 1rem !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .list-item:last-child,
+  .revolutionary-list-item:last-child {
     border-bottom: none !important;
   }
-}
+
+  /* ===== CORRECTIONS DES FORMS ===== */
+  
+  /* Form groups */
+  .form-group,
+  .revolutionary-form-group {
+    margin-bottom: 1rem !important;
+  }
+
+  .form-label,
+  .revolutionary-form-label {
+    display: block !important;
+    margin-bottom: 0.5rem !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+  }
+
+  .form-control,
+  .revolutionary-form-control {
+    width: 100% !important;
+    padding: 0.75rem !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+    font-size: 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  .form-control:focus,
+  .revolutionary-form-control:focus {
+    outline: none !important;
+    border-color: #0a6b79 !important;
+    box-shadow: 0 0 0 3px rgba(10, 107, 121, 0.1) !important;
+  }
+
+  .form-error,
+  .revolutionary-form-error {
+    color: #dc2626 !important;
+    font-size: 0.875rem !important;
+    margin-top: 0.25rem !important;
+  }
+
+  .form-help,
+  .revolutionary-form-help {
+    color: #6b7280 !important;
+    font-size: 0.875rem !important;
+    margin-top: 0.25rem !important;
+  }
+
+  /* ===== CORRECTIONS DES BUTTONS ===== */
+  
+  /* Button groups */
+  .button-group,
+  .revolutionary-button-group {
+    display: flex !important;
+    gap: 0.5rem !important;
+    flex-wrap: wrap !important;
+  }
+
+  .button-group .btn,
+  .revolutionary-button-group .btn {
+    flex: 1 !important;
+    min-width: 120px !important;
+  }
+
+  /* ===== CORRECTIONS DES MODALS ===== */
+  
+  /* Modal overlays */
+  .modal-overlay,
+  .revolutionary-modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    z-index: 1000 !important;
+  }
+
+  /* ===== CORRECTIONS DES TOASTS ===== */
+  
+  /* Toasts */
+  .toast,
+  .revolutionary-toast {
+    position: fixed !important;
+    top: 1rem !important;
+    right: 1rem !important;
+    left: 1rem !important;
+    z-index: 1001 !important;
+    max-width: none !important;
+  }
+
+  /* ===== CORRECTIONS DES SPINNERS ===== */
+  
+  /* Spinners */
+  .spinner,
+  .revolutionary-spinner {
+    width: 40px !important;
+    height: 40px !important;
+    border: 4px solid #f3f4f6 !important;
+    border-top: 4px solid #0a6b79 !important;
+    border-radius: 50% !important;
+    animation: spin 1s linear infinite !important;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* ===== CORRECTIONS DES PROGRESS ===== */
+  
+  /* Progress indicators */
+  .progress-indicator,
+  .revolutionary-progress-indicator {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+  }
+
+  .progress-step,
+  .revolutionary-progress-step {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+  }
+
+  /* ===== CORRECTIONS DES TIMELINES ===== */
+  
+  /* Timelines */
+  .timeline,
+  .revolutionary-timeline {
+    position: relative !important;
+    padding-left: 2rem !important;
+  }
+
+  .timeline-item,
+  .revolutionary-timeline-item {
+    position: relative !important;
+    margin-bottom: 2rem !important;
+    padding-left: 1rem !important;
+  }
+
+  .timeline-item::before,
+  .revolutionary-timeline-item::before {
+    content: '' !important;
+    position: absolute !important;
+    left: -1.5rem !important;
+    top: 0 !important;
+    width: 12px !important;
+    height: 12px !important;
+    border-radius: 50% !important;
+    background: #0a6b79 !important;
+  }
+
+  /* ===== CORRECTIONS DES CARDS ===== */
+  
+  /* Card grids */
+  .card-grid,
+  .revolutionary-card-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+    padding: 0 16px !important;
+  }
+
+  /* ===== CORRECTIONS DES HEROES ===== */
+  
+  /* Hero sections */
+  .hero,
+  .revolutionary-hero {
+    padding: 2rem 1rem !important;
+    text-align: center !important;
+  }
+
+  .hero-title,
+  .revolutionary-hero-title {
+    font-size: 2rem !important;
+    line-height: 1.2 !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .hero-subtitle,
+  .revolutionary-hero-subtitle {
+    font-size: 1.125rem !important;
+    line-height: 1.4 !important;
+    margin-bottom: 2rem !important;
+    color: #6b7280 !important;
+  }
+
+  /* ===== CORRECTIONS DES FEATURES ===== */
+  
+  /* Feature grids */
+  .feature-grid,
+  .revolutionary-feature-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
+    padding: 0 16px !important;
+  }
+
+  .feature-item,
+  .revolutionary-feature-item {
+    text-align: center !important;
+    padding: 1.5rem !important;
+  }
+
+  .feature-icon,
+  .revolutionary-feature-icon {
+    width: 60px !important;
+    height: 60px !important;
+    margin: 0 auto 1rem auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #f3f4f6 !important;
+    border-radius: 12px !important;
+    font-size: 1.5rem !important;
+    color: #0a6b79 !important;
+  }
+
+  .feature-title,
+  .revolutionary-feature-title {
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.5rem !important;
+    color: #1f2937 !important;
+  }
+
+  .feature-description,
+  .revolutionary-feature-description {
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+    color: #6b7280 !important;
+  }
+
+  /* ===== CORRECTIONS DES TESTIMONIALS ===== */
+  
+  /* Testimonial grids */
+  .testimonial-grid,
+  .revolutionary-testimonial-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+    padding: 0 16px !important;
+  }
+
+  .testimonial-item,
+  .revolutionary-testimonial-item {
+    background: white !important;
+    padding: 1.5rem !important;
+    border-radius: 8px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    text-align: center !important;
+  }
+
+  .testimonial-text,
+  .revolutionary-testimonial-text {
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+    color: #4b5563 !important;
+    margin-bottom: 1rem !important;
+    font-style: italic !important;
+  }
+
+  .testimonial-author,
+  .revolutionary-testimonial-author {
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #1f2937 !important;
+  }
+
+  /* ===== CORRECTIONS DES PRICING ===== */
+  
+  /* Pricing grids */
+  .pricing-grid,
+  .revolutionary-pricing-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+    padding: 0 16px !important;
+  }
+
+  .pricing-card,
+  .revolutionary-pricing-card {
+    background: white !important;
+    padding: 2rem 1.5rem !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+    text-align: center !important;
+    border: 2px solid #e5e7eb !important;
+  }
+
+  .pricing-card.featured,
+  .revolutionary-pricing-card.featured {
+    border-color: #0a6b79 !important;
+    transform: scale(1.05) !important;
+  }
+
+  .pricing-title,
+  .revolutionary-pricing-title {
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.5rem !important;
+    color: #1f2937 !important;
+  }
+
+  .pricing-price,
+  .revolutionary-pricing-price {
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+    color: #0a6b79 !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .pricing-period,
+  .revolutionary-pricing-period {
+    font-size: 0.875rem !important;
+    color: #6b7280 !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .pricing-features,
+  .revolutionary-pricing-features {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 0 2rem 0 !important;
+  }
+
+  .pricing-feature,
+  .revolutionary-pricing-feature {
+    padding: 0.5rem 0 !important;
+    font-size: 0.9rem !important;
+    color: #4b5563 !important;
+    border-bottom: 1px solid #f3f4f6 !important;
+  }
+
+  .pricing-feature:last-child,
+  .revolutionary-pricing-feature:last-child {
+    border-bottom: none !important;
+  }
+
+  .pricing-button,
+  .revolutionary-pricing-button {
+    width: 100% !important;
+    padding: 0.75rem 1.5rem !important;
+    background: #0a6b79 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    min-height: 44px !important;
+  }
+
+  .pricing-button:hover,
+  .revolutionary-pricing-button:hover {
+    background: #0d5a66 !important;
+  }
+
+  /* ===== CORRECTIONS DES FAQ ===== */
+  
+  /* FAQ sections */
+  .faq-section,
+  .revolutionary-faq-section {
+    padding: 2rem 1rem !important;
+  }
+
+  .faq-item,
+  .revolutionary-faq-item {
+    margin-bottom: 1rem !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+  }
+
+  .faq-question,
+  .revolutionary-faq-question {
+    padding: 1rem !important;
+    background: #f9fafb !important;
+    border: none !important;
+    width: 100% !important;
+    text-align: left !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    color: #1f2937 !important;
+    cursor: pointer !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .faq-answer,
+  .revolutionary-faq-answer {
+    padding: 1rem !important;
+    font-size: 0.875rem !important;
+    line-height: 1.4 !important;
+    color: #4b5563 !important;
+    background: white !important;
+  }
+
+  /* ===== CORRECTIONS DES CONTACT ===== */
+  
+  /* Contact forms */
+  .contact-form,
+  .revolutionary-contact-form {
+    padding: 1.5rem !important;
+    background: white !important;
+    border-radius: 8px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .contact-info,
+  .revolutionary-contact-info {
+    padding: 1.5rem !important;
+    background: #f9fafb !important;
+    border-radius: 8px !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .contact-item,
+  .revolutionary-contact-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    margin-bottom: 1rem !important;
+    font-size: 0.9rem !important;
+    color: #4b5563 !important;
+  }
+
+  .contact-icon,
+  .revolutionary-contact-icon {
+    width: 20px !important;
+    height: 20px !important;
+    color: #0a6b79 !important;
+  }
+
+  /* ===== CORRECTIONS DES FOOTERS ===== */
+  
+  /* Footer sections */
+  .footer-section,
+  .revolutionary-footer-section {
+    padding: 2rem 1rem !important;
+    background: #1f2937 !important;
+    color: white !important;
+  }
+
+  .footer-content,
+  .revolutionary-footer-content {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
+    text-align: center !important;
+  }
+
+  .footer-column,
+  .revolutionary-footer-column {
+    margin-bottom: 1.5rem !important;
+  }
+
+  .footer-title,
+  .revolutionary-footer-title {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 1rem !important;
+    color: white !important;
+  }
+
+  .footer-link,
+  .revolutionary-footer-link {
+    display: block !important;
+    padding: 0.5rem 0 !important;
+    color: #d1d5db !important;
+    text-decoration: none !important;
+    font-size: 0.875rem !important;
+  }
+
+  .footer-link:hover,
+  .revolutionary-footer-link:hover {
+    color: white !important;
+  }
+
+  .footer-bottom,
+  .revolutionary-footer-bottom {
+    padding: 1rem !important;
+    border-top: 1px solid #374151 !important;
+    text-align: center !important;
+    font-size: 0.875rem !important;
+    color: #9ca3af !important;
+  }
+
+  /* ===== CORRECTIONS DES HEADERS ===== */
+  
+  /* Header sections */
+  .header-section,
+  .revolutionary-header-section {
+    padding: 1rem !important;
+    background: white !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
+  }
+
+  .header-content,
+  .revolutionary-header-content {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 1rem !important;
+  }
+
+  .header-logo,
+  .revolutionary-header-logo {
+    height: 40px !important;
+    width: auto !important;
+  }
+
+  .header-nav,
+  .revolutionary-header-nav {
+    display: none !important;
+  }
+
+  .header-mobile-menu,
+  .revolutionary-header-mobile-menu {
+    display: block !important;
+  }
+
+  .mobile-menu-button,
+  .revolutionary-mobile-menu-button {
+    background: none !important;
+    border: none !important;
+    padding: 0.5rem !important;
+    cursor: pointer !important;
+    color: #374151 !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .mobile-menu,
+  .revolutionary-mobile-menu {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 0 0 8px 8px !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+    z-index: 1000 !important;
+  }
+
+  .mobile-menu-item,
+  .revolutionary-mobile-menu-item {
+    display: block !important;
+    padding: 1rem !important;
+    color: #374151 !important;
+    text-decoration: none !important;
+    border-bottom: 1px solid #f3f4f6 !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .mobile-menu-item:last-child,
+  .revolutionary-mobile-menu-item:last-child {
+    border-bottom: none !important;
+  }
+
+  .mobile-menu-item:hover,
+  .revolutionary-mobile-menu-item:hover {
+    background: #f9fafb !important;
+    color: #0a6b79 !important;
+  }
+
+  /* ===== CORRECTIONS DES SIDEBARS ===== */
+  
+  /* Sidebar sections */
+  .sidebar-section,
+  .revolutionary-sidebar-section {
+    display: none !important;
+  }
+
+  /* ===== CORRECTIONS DES MAIN CONTENT ===== */
+  
+  /* Main content */
+  .main-content,
+  .revolutionary-main-content {
+    padding: 1rem !important;
+    min-height: calc(100vh - 80px) !important;
+  }
+
+  /* ===== CORRECTIONS DES CONTAINERS ===== */
+  
+  /* Containers */
+  .container,
+  .revolutionary-container {
+    max-width: 100% !important;
+    padding: 0 16px !important;
+    margin: 0 auto !important;
+  }
+
+  .container-fluid,
+  .revolutionary-container-fluid {
+    width: 100% !important;
+    padding: 0 16px !important;
+  }
+
+  /* ===== CORRECTIONS DES ROWS ===== */
+  
+  /* Rows */
+  .row,
+  .revolutionary-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+    margin: 0 !important;
+  }
+
+  .col,
+  .revolutionary-col {
+    flex: 1 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* ===== CORRECTIONS DES SPACING ===== */
+  
+  /* Spacing utilities */
+  .p-0 { padding: 0 !important; }
+  .p-1 { padding: 0.25rem !important; }
+  .p-2 { padding: 0.5rem !important; }
+  .p-3 { padding: 0.75rem !important; }
+  .p-4 { padding: 1rem !important; }
+  .p-5 { padding: 1.25rem !important; }
+  .p-6 { padding: 1.5rem !important; }
+
+  .m-0 { margin: 0 !important; }
+  .m-1 { margin: 0.25rem !important; }
+  .m-2 { margin: 0.5rem !important; }
+  .m-3 { margin: 0.75rem !important; }
+  .m-4 { margin: 1rem !important; }
+  .m-5 { margin: 1.25rem !important; }
+  .m-6 { margin: 1.5rem !important; }
+
+  .px-0 { padding-left: 0 !important; padding-right: 0 !important; }
+  .px-1 { padding-left: 0.25rem !important; padding-right: 0.25rem !important; }
+  .px-2 { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+  .px-3 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+  .px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
+  .px-5 { padding-left: 1.25rem !important; padding-right: 1.25rem !important; }
+  .px-6 { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
+
+  .py-0 { padding-top: 0 !important; padding-bottom: 0 !important; }
+  .py-1 { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
+  .py-2 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+  .py-3 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+  .py-4 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+  .py-5 { padding-top: 1.25rem !important; padding-bottom: 1.25rem !important; }
+  .py-6 { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+
+  .mx-0 { margin-left: 0 !important; margin-right: 0 !important; }
+  .mx-1 { margin-left: 0.25rem !important; margin-right: 0.25rem !important; }
+  .mx-2 { margin-left: 0.5rem !important; margin-right: 0.5rem !important; }
+  .mx-3 { margin-left: 0.75rem !important; margin-right: 0.75rem !important; }
+  .mx-4 { margin-left: 1rem !important; margin-right: 1rem !important; }
+  .mx-5 { margin-left: 1.25rem !important; margin-right: 1.25rem !important; }
+  .mx-6 { margin-left: 1.5rem !important; margin-right: 1.5rem !important; }
+
+  .my-0 { margin-top: 0 !important; margin-bottom: 0 !important; }
+  .my-1 { margin-top: 0.25rem !important; margin-bottom: 0.25rem !important; }
+  .my-2 { margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
+  .my-3 { margin-top: 0.75rem !important; margin-bottom: 0.75rem !important; }
+  .my-4 { margin-top: 1rem !important; margin-bottom: 1rem !important; }
+  .my-5 { margin-top: 1.25rem !important; margin-bottom: 1.25rem !important; }
+  .my-6 { margin-top: 1.5rem !important; margin-bottom: 1.5rem !important; }
+
+  /* ===== CORRECTIONS DES TEXT ===== */
+  
+  /* Text utilities */
+  .text-left { text-align: left !important; }
+  .text-center { text-align: center !important; }
+  .text-right { text-align: right !important; }
+  .text-justify { text-align: justify !important; }
+
+  .text-xs { font-size: 0.75rem !important; }
+  .text-sm { font-size: 0.875rem !important; }
+  .text-base { font-size: 1rem !important; }
+  .text-lg { font-size: 1.125rem !important; }
+  .text-xl { font-size: 1.25rem !important; }
+  .text-2xl { font-size: 1.5rem !important; }
+  .text-3xl { font-size: 1.875rem !important; }
+  .text-4xl { font-size: 2.25rem !important; }
+
+  .font-thin { font-weight: 100 !important; }
+  .font-light { font-weight: 300 !important; }
+  .font-normal { font-weight: 400 !important; }
+  .font-medium { font-weight: 500 !important; }
+  .font-semibold { font-weight: 600 !important; }
+  .font-bold { font-weight: 700 !important; }
+  .font-extrabold { font-weight: 800 !important; }
+  .font-black { font-weight: 900 !
