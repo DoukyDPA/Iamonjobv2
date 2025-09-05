@@ -107,7 +107,7 @@ const CVAnalysisDashboard = ({ analysisData, loading, error, onStartNextStep }) 
           </div>
           {/* Temps estimé supprimé - pas nécessaire */}
           <button 
-            onClick={() => window.location.href = '/services/cv-ats-optimization'}
+            onClick={() => window.location.href = '/cv-ats-optimization'}
             style={{
               width: '100%',
               padding: '1rem',
