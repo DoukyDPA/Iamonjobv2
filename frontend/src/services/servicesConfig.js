@@ -202,7 +202,7 @@ export const SERVICES_CONFIG = {
   // === THÈME : PROJET PROFESSIONNEL ===
   skills_analysis: {
     id: 'skills_analysis',
-    title: 'Analysez vos compétences',
+    title: 'Analysez vos compétences d\'après votre CV',
     shortTitle: 'Analyse compétences',
     icon: '🔍',
     coachAdvice: "L'IA détecte vos compétences transférables en analysant votre parcours. Vous découvrirez des atouts que vous sous-estimez et de nouveaux secteurs où les valoriser. Pour chaque compétence identifiée, listez 3 réalisations concrètes qui la prouvent. \"Je sais gérer\" ne vaut rien. \"J'ai géré 10 personnes pendant 2 ans avec 0% de turnover\" est nettement plus convaincant. Comme l'amour, les compétences ont besoin de preuves ! Vos vraies compétences ne sont pas ce que vous savez faire, mais ce que vous avez déjà fait.",
