@@ -908,7 +908,7 @@ const Dashboard = () => {
 
           {/* Section partenaires */}
           <div style={{ margin: '2.5rem 0' }}>
-            <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <h2 className="revolutionary-section-title" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'white' }}>
               <LogoIcon size={36} />
               Testez votre compatibilité avec les métiers de nos partenaires
             </h2>
