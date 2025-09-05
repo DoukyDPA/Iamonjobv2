@@ -1,8 +1,5 @@
-// FICHIER : frontend/src/components/TestAccess/MobileResponsiveTest.js
-// Composant de test pour vérifier le responsive design mobile
-
 import React, { useState } from 'react';
-import { FiSmartphone, FiTablet, FiMonitor, FiCheck, FiX } from 'react-icons/fi';
+import { FiSmartphone, FiTablet, FiMonitor } from 'react-icons/fi';
 
 const MobileResponsiveTest = () => {
   const [currentViewport, setCurrentViewport] = useState('desktop');
@@ -17,53 +14,16 @@ const MobileResponsiveTest = () => {
     {
       id: 'test1',
       title: 'Analyse de CV - Service très long qui pourrait déborder',
-      description: 'Laissez notre IA analyser votre CV et obtenir des recommandations personnalisées pour améliorer votre présentation professionnelle.',
-      requiresCV: true,
-      requiresJobOffer: false,
+      description: 'Laissez notre IA analyser votre CV et obtenir des recommandations personnalisées.',
       difficulty: 'beginner',
       duration: '3-5 min'
     },
     {
       id: 'test2',
       title: 'Matching CV-Offre',
-      description: 'Découvrez votre taux de compatibilité avec une offre d\'emploi grâce à une analyse IA approfondie.',
-      requiresCV: true,
-      requiresJobOffer: true,
+      description: 'Découvrez votre taux de compatibilité avec une offre d\'emploi.',
       difficulty: 'intermediate',
       duration: '5-10 min'
-    },
-    {
-      id: 'test3',
-      title: 'Conseils entretien',
-      description: 'Préparez-vous efficacement pour vos entretiens d\'embauche avec des conseils personnalisés.',
-      requiresCV: true,
-      requiresJobOffer: true,
-      difficulty: 'advanced',
-      duration: '10-15 min'
-    }
-  ];
-
-  const testDocuments = [
-    {
-      id: 'cv',
-      title: 'CV',
-      subtitle: 'Votre curriculum vitae',
-      uploaded: true,
-      icon: '📄'
-    },
-    {
-      id: 'offre',
-      title: 'Offre d\'emploi',
-      subtitle: 'L\'offre qui vous intéresse',
-      uploaded: false,
-      icon: '💼'
-    },
-    {
-      id: 'questionnaire',
-      title: 'Questionnaire',
-      subtitle: 'Vos préférences professionnelles',
-      uploaded: true,
-      icon: '📋'
     }
   ];
 
@@ -71,7 +31,7 @@ const MobileResponsiveTest = () => {
   const ViewportIcon = currentViewportConfig.icon;
 
   return (
-    <div className="mobile-responsive-test">
+    <div className="mobile-responsive-test" style={{ padding: '2rem' }}>
       {/* Contrôles de test */}
       <div className="test-controls" style={{
         position: 'fixed',
@@ -117,6 +77,23 @@ const MobileResponsiveTest = () => {
         </div>
       </div>
 
+      {/* Header de test */}
+      <div style={{
+        background: 'linear-gradient(135deg, #0a6b79 0%, #27a2b4 100%)',
+        color: 'white',
+        padding: '2rem',
+        textAlign: 'center',
+        borderRadius: '12px',
+        marginBottom: '2rem'
+      }}>
+        <h1 style={{ margin: '0 0 0.5rem 0', fontSize: '2rem' }}>
+          🧪 Test Responsive Mobile
+        </h1>
+        <p style={{ margin: '0', fontSize: '1rem', opacity: 0.9 }}>
+          Vérification des corrections mobile
+        </p>
+      </div>
+
       {/* Conteneur de test avec viewport simulé */}
       <div style={{
         width: currentViewportConfig.width,
@@ -126,23 +103,9 @@ const MobileResponsiveTest = () => {
         borderRadius: '8px',
         overflow: 'hidden',
         background: '#f8fafc',
-        position: 'relative'
+        position: 'relative',
+        marginBottom: '2rem'
       }}>
-        {/* Header de test */}
-        <div style={{
-          background: 'linear-gradient(135deg, #0a6b79 0%, #27a2b4 100%)',
-          color: 'white',
-          padding: '1rem',
-          textAlign: 'center'
-        }}>
-          <h1 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem' }}>
-            🧪 Test Responsive Mobile
-          </h1>
-          <p style={{ margin: '0', fontSize: '0.9rem', opacity: 0.9 }}>
-            Vérification des corrections mobile
-          </p>
-        </div>
-
         {/* Onglets de test */}
         <div style={{
           background: 'white',
@@ -150,122 +113,31 @@ const MobileResponsiveTest = () => {
           borderBottom: '1px solid #e5e7eb',
           display: 'flex',
           gap: '0.25rem',
-          overflowX: 'auto',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none'
+          overflowX: 'auto'
         }}>
-          <div style={{
-            display: 'flex',
-            gap: '0.25rem',
-            minWidth: 'max-content'
-          }}>
-            {['Documents', 'Services', 'Partners'].map((tab, index) => (
-              <button
-                key={tab}
-                style={{
-                  padding: '0.75rem 1rem',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '6px',
-                  background: index === 0 ? '#0a6b79' : 'white',
-                  color: index === 0 ? 'white' : '#374151',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  fontWeight: '500',
-                  whiteSpace: 'nowrap',
-                  minWidth: '80px'
-                }}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+          {['Documents', 'Services', 'Partners'].map((tab, index) => (
+            <button
+              key={tab}
+              style={{
+                padding: '0.75rem 1rem',
+                border: '1px solid #e5e7eb',
+                borderRadius: '6px',
+                background: index === 0 ? '#0a6b79' : 'white',
+                color: index === 0 ? 'white' : '#374151',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                fontWeight: '500',
+                whiteSpace: 'nowrap',
+                minWidth: '80px'
+              }}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
 
-        {/* Contenu de test - Documents */}
+        {/* Contenu de test - Services */}
         <div style={{ padding: '1rem' }}>
-          <h2 style={{ 
-            fontSize: '1.25rem', 
-            margin: '0 0 1rem 0',
-            color: '#1f2937',
-            textAlign: 'center'
-          }}>
-            📄 Documents
-          </h2>
-          
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: currentViewport === 'desktop' ? 'repeat(3, 1fr)' : '1fr',
-            gap: '1rem',
-            marginBottom: '2rem'
-          }}>
-            {testDocuments.map((doc) => (
-              <div
-                key={doc.id}
-                className="document-tile"
-                style={{
-                  background: doc.uploaded ? '#f0fdf4' : '#fef2f2',
-                  border: `1px solid ${doc.uploaded ? '#bbf7d0' : '#fecaca'}`,
-                  borderRadius: '12px',
-                  padding: '1.5rem',
-                  color: doc.uploaded ? '#166534' : '#991b1b',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                  transition: 'transform 0.2s ease'
-                }}
-              >
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  marginBottom: '1rem'
-                }}>
-                  <div style={{
-                    fontSize: '1.5rem',
-                    width: '40px',
-                    height: '40px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: doc.uploaded ? '#22c55e' : '#ef4444',
-                    borderRadius: '8px',
-                    color: 'white'
-                  }}>
-                    {doc.uploaded ? <FiCheck size={20} /> : <FiX size={20} />}
-                  </div>
-                  <div>
-                    <h3 style={{ 
-                      margin: '0 0 0.25rem 0', 
-                      fontSize: '1rem',
-                      fontWeight: '600'
-                    }}>
-                      {doc.title}
-                    </h3>
-                    <p style={{ 
-                      margin: '0', 
-                      fontSize: '0.8rem',
-                      opacity: 0.8
-                    }}>
-                      {doc.subtitle}
-                    </p>
-                  </div>
-                </div>
-                <button style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: doc.uploaded ? '#22c55e' : '#ef4444',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '0.9rem',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}>
-                  {doc.uploaded ? '✓ Téléchargé' : '📤 Télécharger'}
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* Services de test */}
           <h2 style={{ 
             fontSize: '1.25rem', 
             margin: '0 0 1rem 0',
@@ -359,53 +231,6 @@ const MobileResponsiveTest = () => {
                   {service.description}
                 </p>
 
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.5rem',
-                  marginBottom: '1rem'
-                }}>
-                  <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>
-                    Documents requis :
-                  </div>
-                  <div style={{
-                    display: 'flex',
-                    gap: '0.5rem',
-                    flexWrap: 'wrap'
-                  }}>
-                    {service.requiresCV && (
-                      <span style={{
-                        padding: '0.25rem 0.5rem',
-                        background: '#dcfce7',
-                        color: '#166534',
-                        borderRadius: '4px',
-                        fontSize: '0.75rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem'
-                      }}>
-                        <FiCheck size={12} />
-                        CV
-                      </span>
-                    )}
-                    {service.requiresJobOffer && (
-                      <span style={{
-                        padding: '0.25rem 0.5rem',
-                        background: '#fef2f2',
-                        color: '#991b1b',
-                        borderRadius: '4px',
-                        fontSize: '0.75rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem'
-                      }}>
-                        <FiX size={12} />
-                        Offre
-                      </span>
-                    )}
-                  </div>
-                </div>
-
                 <button style={{
                   width: '100%',
                   padding: '0.75rem',
@@ -428,7 +253,6 @@ const MobileResponsiveTest = () => {
 
       {/* Instructions de test */}
       <div style={{
-        marginTop: '2rem',
         padding: '1rem',
         background: '#f8fafc',
         borderRadius: '8px',
