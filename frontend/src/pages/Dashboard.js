@@ -2,19 +2,15 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+// useAuth and useNavigate removed - not used
 import CVAnalysisDashboard from '../components/Analysis/CVAnalysisDashboard';
 import { 
-  FiMessageSquare, 
   FiFileText, 
-  FiZap, 
   FiTarget,
   FiUpload,
   FiMail,
   FiMic,
-  FiCpu,
-  FiCheckCircle,
+  // FiCpu removed - not used
   FiUser,
   FiRefreshCw,
   FiArrowRight,
@@ -23,143 +19,24 @@ import {
   FiSave,
   FiX,
   FiTrendingUp,
-  FiClock,
   FiEdit3,
-  FiSend,
-  FiUsers,
-  FiDollarSign,
-  FiHandHeart,
-  FiInfo,
   FiHelpCircle
 } from 'react-icons/fi';
-import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import PartnerJobs from '../components/Partners/PartnerJobs';
-import SimpleMarkdownRenderer from '../components/Common/SimpleMarkdownRenderer';
 import MatchingAnalysis from '../components/Analysis/MatchingAnalysis';
-import ActionTile from '../components/Common/ActionTile';
 import ServicesGrid from '../components/Services/ServicesGrid';
 import ProfileAdviceModal from '../components/Common/ProfileAdviceModal';
 import { LogoIcon } from '../components/icons/ModernIcons';
 
 
 
-const ServiceCard = ({ title, description, icon, route, color = '#0a6b79', disabled = false, requiredDocs = [], documentStatus }) => {
-  const navigate = useNavigate();
-  const missingDocs = requiredDocs.filter(doc => !documentStatus[doc]?.uploaded);
-  const canAccess = missingDocs.length === 0 && !disabled;
-  const handleClick = () => {
-    if (canAccess) {
-      navigate(route);
-    }
-  };
-  return (
-    <div
-      onClick={handleClick}
-      className={`revolutionary-service-card ${canAccess ? 'accessible' : 'disabled'}`}
-      style={{ 
-         borderColor: canAccess ? color : '#bbf7d0',
-        background: '#f0fdf4',
-        '--service-color': color,
-        '--service-glow': `${color}40`
-      }}
-    >
-      <div className="revolutionary-service-shine" />
-      <div className={`revolutionary-service-icon ${canAccess ? '' : 'disabled'}`} style={{ background: canAccess ? color : '#9ca3af' }}>
-        {icon}
-      </div>
-      <div className="revolutionary-service-content">
-        <h4 className={`revolutionary-service-title ${canAccess ? '' : 'disabled'}`}>{title}</h4>
-        <p className={`revolutionary-service-description ${canAccess ? '' : 'disabled'}`}>{description}</p>
-        {!canAccess && (
-          <div className="revolutionary-service-missing">
-            <p className="revolutionary-service-missing-text">
-              Requis : {missingDocs.join(', ')}
-            </p>
-          </div>
-        )}
-        {canAccess && (
-          <div className="revolutionary-service-access" style={{ color }}>
-            Accéder au service
-            <FiArrowRight className="revolutionary-service-arrow" />
-          </div>
-        )}
-      </div>
-      <div className="revolutionary-service-particles">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="service-particle" style={{
-            '--delay': `${i * 0.3}s`,
-            '--x': `${20 + i * 20}%`,
-            '--y': `${30 + i * 15}%`
-          }} />
-        ))}
-      </div>
-    </div>
-  );
-};
+// ServiceCard component removed - not used
 
-// Nouveau composant DocumentCard (fusion wow + logique upload)
-const DocumentCard = ({
-  type,
-  title,
-  description,
-  icon,
-  color,
-  uploaded,
-  fileName,
-  onFileUpload,
-  onTextClick,
-  isTextOnly,
-  isUploading
-}) => {
-  console.log('DocumentCard render', type);
-  return (
-    <div
-      className="document-tile"
-      style={{ '--tile-color': color }}
-    >
-      <div className={`revolutionary-service-icon ${uploaded ? '' : 'disabled'}`} style={{ background: uploaded ? color : '#9ca3af' }}>
-        {icon}
-      </div>
-      <div className="revolutionary-service-content">
-        <h4 className={`revolutionary-service-title ${uploaded ? '' : 'disabled'}`}>{title}</h4>
-        {description && (
-          <p className={`revolutionary-service-description ${uploaded ? '' : 'disabled'}`}>{description}</p>
-        )}
-        {uploaded && fileName && (
-          <div className="revolutionary-service-missing">
-            <p className="revolutionary-service-missing-text">📄 {fileName}</p>
-          </div>
-        )}
-        <div className="revolutionary-document-actions" style={{ marginTop: 12 }}>
-          {!isTextOnly && (
-            <>
-              <input
-                type="file"
-                id={`file-${type}`}
-                accept={type === 'cv' ? '.pdf,.doc,.docx' : type === 'offre_emploi' ? '.pdf,.doc,.docx,.txt' : type === 'metier_reconversion' ? '.txt,.pdf' : undefined}
-                style={{ display: 'none' }}
-                onChange={onFileUpload}
-                disabled={isUploading}
-              />
-              <label htmlFor={`file-${type}`} className="revolutionary-btn-upload" style={{ cursor: isUploading ? 'not-allowed' : 'pointer', opacity: isUploading ? 0.6 : 1 }}>
-                <FiUpload /> {uploaded ? 'Remplacer' : 'Uploader'}
-              </label>
-            </>
-          )}
-          <button onClick={e => { e.stopPropagation(); console.log('CLICK BTN', type); onTextClick(); }} className="revolutionary-btn-text" disabled={isUploading}>
-            <FiEdit3 /> Saisir le texte
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+// DocumentCard component removed - not used
 
 const Dashboard = () => {
-  const { user } = useAuth();
-  const { documentStatus, loading, uploadDocument, uploadText, executeQuickAction } = useApp();
-  const navigate = useNavigate();
+  const { documentStatus, loading, uploadDocument, uploadText } = useApp();
   const [activeTab, setActiveTab] = useState('documents');
   
   // États questionnaire simple
@@ -215,17 +92,9 @@ const Dashboard = () => {
   ];
 
   // Actions rapides
-  const quickActions = [
-    { id: 'analyser_cv', title: 'Analyser mon CV', icon: <FiFileText />, requiresCV: true },
-    { id: 'compatibilite', title: 'Compatibilité offre', icon: <FiTarget />, requiresCV: true, requiresOffer: true },
-    { id: 'cv_ats_optimization', title: 'Adaptez votre CV aux ATS', icon: <FiCpu />, requiresCV: true, requiresOffer: true },
-    { id: 'lettre_motivation', title: 'Lettre de motivation', icon: <FiMail />, requiresCV: true },
-    { id: 'entretien', title: 'Préparer entretien', icon: <FiMic />, requiresCV: true },
-  ];
+  // Quick actions removed - not used
 
-  // Calculer le nombre de documents uploadés (CV, questionnaire, offre d'emploi seulement)
-  const relevantDocuments = ['cv', 'questionnaire', 'offre_emploi'];
-  const documentsCount = relevantDocuments.filter(docType => documentStatus[docType]?.uploaded).length;
+  // relevantDocuments removed - not used
 
   // Gérer l'upload de texte
   const handleTextUpload = async () => {
@@ -422,14 +291,7 @@ const Dashboard = () => {
     }
   };
 
-  // Gérer les actions rapides
-  const handleQuickAction = async (actionId) => {
-    try {
-      await executeQuickAction(actionId);
-    } catch (error) {
-      toast.error('Erreur lors de l\'exécution de l\'action');
-    }
-  };
+  // handleQuickAction removed - not used
 
   const tabs = [
     { id: 'documents', label: 'Mes documents', mobileLabel: 'Docs', icon: <FiFileText />, route: null },
