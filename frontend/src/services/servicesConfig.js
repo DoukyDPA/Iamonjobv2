@@ -249,7 +249,7 @@ export const SERVICES_CONFIG = {
     title: 'Vers quel métier aller ?',
     shortTitle: 'Orientation métier',
     icon: '🚀',
-    coachAdvice: "Iamonjob vous propose des métiers compatibles avec vos compétences actuelles. C'est votre liste de pistes réalistes, pas de rêves inaccessibles. Sélectionnez 3 métiers maximum et enquêtez sérieusement. Pour chacun : contactez 2 professionnels sur LinkedIn pour un échange, analysez 5 vraies offres d'emploi, identifiez les 2-3 compétences prioritaires à acquérir. L'exploration superficielle ne mène nulle part. L'IA suggère des directions mais seule votre enquête terrain validera le choix. Un métier sur le papier et un métier au quotidien sont deux réalités différentes.",
+    coachAdvice: "Iamonjob vous propose des métiers compatibles avec vos compétences actuelles. C'est votre liste de pistes réalistes, pas de rêves inaccessibles. Sélectionnez 3 métiers maximum et enquêtez sérieusement. Pour chacun : contactez 2 professionnels sur LinkedIn pour un échange, analysez 5 vraies offres d'emploi, identifiez les 2-3 compétences prioritaires à acquérir. L'exploration superficielle ne mène nulle part. L'IA suggère des directions mais seule votre enquête terrain validera le choix. Un métier sur le papier et un métier au quotidien sont deux réalités différentes. Le bon métier n'est pas celui qui vous fait rêver, mais celui dont vous connaissez et acceptez la réalité.",
     requiresCV: true,
     requiresJobOffer: false,
     requiresQuestionnaire: true,
