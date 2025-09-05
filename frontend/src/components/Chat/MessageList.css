@@ -300,38 +300,7 @@
   border-bottom-color: #0a6b79;
 }
 
-/* Tableaux */
-.table-wrapper {
-  overflow-x: auto;
-  margin: 1rem 0;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
-}
-
-.markdown-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-
-.markdown-th {
-  background: #f9fafb;
-  font-weight: 600;
-  text-align: left;
-  padding: 0.75rem;
-  border-bottom: 1px solid #e5e7eb;
-  color: #374151;
-}
-
-.markdown-td {
-  padding: 0.75rem;
-  border-bottom: 1px solid #f3f4f6;
-  vertical-align: top;
-}
-
-.markdown-table tr:last-child .markdown-td {
-  border-bottom: none;
-}
+/* Les styles de tableaux sont maintenant dans SimpleMarkdownRenderer.css */
 
 /* Pied de message */
 .message-footer {
