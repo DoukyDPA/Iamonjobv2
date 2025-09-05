@@ -501,7 +501,7 @@ const Dashboard = () => {
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
           <div style={{
-            background: 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)',
+            background: 'linear-gradient(135deg, #0a6b79 0%, #27a2b4 100%)',
             borderRadius: '20px',
             padding: '2rem',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
@@ -601,7 +601,7 @@ const Dashboard = () => {
         {/* Section Documents harmonisée - onglet documents */}
         {activeTab === 'documents' && (
         <div style={{
-          background: 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)',
+          background: 'linear-gradient(135deg, #0a6b79 0%, #27a2b4 100%)',
           borderRadius: '20px',
           padding: '2rem',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
@@ -923,7 +923,7 @@ const Dashboard = () => {
         {/* Autres onglets avec le même style */}
         {activeTab === 'evaluate' && (
           <div style={{
-            background: 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)',
+            background: 'linear-gradient(135deg, #0a6b79 0%, #27a2b4 100%)',
             borderRadius: '20px',
             padding: '2rem',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
@@ -961,7 +961,7 @@ const Dashboard = () => {
 
         {activeTab === 'improve' && (
           <div style={{
-            background: 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)',
+            background: 'linear-gradient(135deg, #0a6b79 0%, #27a2b4 100%)',
             borderRadius: '20px',
             padding: '2rem',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
@@ -984,7 +984,7 @@ const Dashboard = () => {
 
         {activeTab === 'apply' && (
           <div style={{
-            background: 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)',
+            background: 'linear-gradient(135deg, #0a6b79 0%, #27a2b4 100%)',
             borderRadius: '20px',
             padding: '2rem',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
@@ -1007,7 +1007,7 @@ const Dashboard = () => {
 
         {activeTab === 'interview' && (
           <div style={{
-            background: 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)',
+            background: 'linear-gradient(135deg, #0a6b79 0%, #27a2b4 100%)',
             borderRadius: '20px',
             padding: '2rem',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
@@ -1030,7 +1030,7 @@ const Dashboard = () => {
 
         {activeTab === 'change' && (
           <div style={{
-            background: 'linear-gradient(135deg, #0a6b79 0%, #14b8a6 100%)',
+            background: 'linear-gradient(135deg, #0a6b79 0%, #27a2b4 100%)',
             borderRadius: '20px',
             padding: '2rem',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
