@@ -943,12 +943,11 @@ const Dashboard = () => {
             <ServicesGrid filterTheme="evaluate_offer" />
             {/* Section partenaires */}
             <div style={{ margin: '2.5rem 0' }}>
-              <h2 style={{ 
+              <h2 className="revolutionary-section-title" style={{ 
                 marginBottom: '1.5rem', 
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '0.75rem',
-                color: 'white',
                 fontSize: '1.5rem',
                 fontWeight: '600'
               }}>
