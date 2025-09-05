@@ -121,6 +121,15 @@ h4 { font-size: var(--font-size-xl); }
 h5 { font-size: var(--font-size-lg); }
 h6 { font-size: var(--font-size-base); }
 
+/* ===== TITRES SPÉCIAUX ===== */
+.hero-title {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+  color: white;
+}
+
 p {
   margin-bottom: var(--spacing-md);
   line-height: 1.6;
@@ -287,15 +296,28 @@ a:hover {
     max-width: 100%;
   }
 
-  /* Headers et titres */
-  h1 { font-size: 2rem; line-height: 1.2; margin-bottom: 1rem; }
-  h2 { font-size: 1.5rem; line-height: 1.3; margin-bottom: 1rem; }
-  h3 { font-size: 1.25rem; line-height: 1.3; margin-bottom: 1rem; }
+  /* Headers et titres - exceptions pour hero */
+  h1:not(.hero-title) { font-size: 2rem; line-height: 1.2; margin-bottom: 1rem; }
+  h2:not(.hero-title) { font-size: 1.5rem; line-height: 1.3; margin-bottom: 1rem; }
+  h3:not(.hero-title) { font-size: 1.25rem; line-height: 1.3; margin-bottom: 1rem; }
+  
+  /* Préserver le style hero sur mobile */
+  .hero-title {
+    font-size: 2.5rem !important;
+    line-height: 1.2 !important;
+    margin-bottom: 1.5rem !important;
+    color: white !important;
+    font-weight: 700 !important;
+  }
 
   /* Textes sur fond coloré - forcer en blanc */
   .hero-subtitle,
   .dashboard-header p,
-  .section-description {
+  .section-description,
+  .revolutionary-section-title,
+  .revolutionary-dashboard-content h2,
+  .revolutionary-dashboard-content h3,
+  .revolutionary-dashboard-content p {
     color: white !important;
   }
 
