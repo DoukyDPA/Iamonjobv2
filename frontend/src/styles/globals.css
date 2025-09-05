@@ -318,6 +318,11 @@ a:hover {
     color: white !important;
   }
   
+  /* Forcer la couleur blanche pour les titres de section partenaires */
+  h2.revolutionary-section-title {
+    color: white !important;
+  }
+  
   .revolutionary-section-title,
   .revolutionary-dashboard-content h2,
   .revolutionary-dashboard-content h3,
