@@ -1,132 +1,177 @@
 import React from 'react';
-import { ServiceIcon } from '../icons/ModernIcons';
+import ReactMarkdown from 'react-markdown';
+import { FiUser, FiBot, FiCopy, FiClock } from 'react-icons/fi';
+import './MessageList.css';
+import '../Common/SimpleMarkdownRenderer.css';
 
-const ActionCard = ({ action, onClick, disabled, documentStatus }) => {
-  return (
-    <div
-      onClick={() => !disabled && onClick()}
-      style={{
-        background: 'white',
-        border: '1px solid #e5e7eb',
-        borderRadius: '12px',
-        padding: '1.5rem',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.6 : 1,
-        transition: 'all 0.3s ease',
-        position: 'relative'
-      }}
-      onMouseEnter={(e) => {
-        if (!disabled) {
-          e.currentTarget.style.transform = 'translateY(-2px)';
-          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!disabled) {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = 'none';
-        }
-      }}
-    >
-      {/* Icône moderne */}
-      <div style={{
-        marginBottom: '1rem',
-        color: '#374151'
-      }}>
-        <ServiceIcon 
-          type={action.iconType || 'document'} 
-          size={28} 
-        />
-      </div>
-      {/* Titre */}
-      <h3 style={{
-        margin: '0 0 0.75rem 0',
-        fontSize: '1.1rem',
-        fontWeight: '600',
-        color: '#1f2937'
-      }}>
-        {action.title}
-      </h3>
-      {/* Conseils principaux - EN GRAND */}
-      <div style={{
-        marginBottom: '1rem',
-        padding: '1rem',
-        background: '#f8fafc',
-        borderRadius: '8px',
-        borderLeft: '4px solid #059669'
-      }}>
-        <h4 style={{
-          margin: '0 0 0.5rem 0',
-          fontSize: '0.9rem',
-          fontWeight: '600',
-          color: '#059669',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem'
-        }}>
-          💡 Conseils
-        </h4>
-        <p style={{
-          margin: 0,
-          fontSize: '0.85rem',
-          color: '#374151',
-          lineHeight: '1.4'
-        }}>
-          {action.advice || "Cliquez pour obtenir des conseils personnalisés"}
-        </p>
-      </div>
-      {/* Prérequis - EN PETIT */}
-      {(action.requiresCV || action.requiresOffer) && (
-        <div style={{
-          fontSize: '0.75rem',
-          color: '#6b7280',
-          marginTop: '0.5rem',
-          padding: '0.75rem',
-          background: '#f9fafb',
-          borderRadius: '6px',
-          border: '1px solid #f3f4f6'
-        }}>
-          <div style={{ 
-            fontWeight: '600', 
-            marginBottom: '0.25rem',
-            color: '#4b5563'
-          }}>
-            Ce service nécessite :
-          </div>
-          <div style={{ 
-            display: 'flex', 
-            gap: '0.5rem', 
-            flexWrap: 'wrap' 
-          }}>
-            {action.requiresCV && (
-              <span style={{
-                padding: '0.2rem 0.4rem',
-                borderRadius: '4px',
-                fontSize: '0.7rem',
-                fontWeight: '500',
-                background: documentStatus.cv?.uploaded ? '#dcfce7' : '#fef2f2',
-                color: documentStatus.cv?.uploaded ? '#166534' : '#dc2626'
-              }}>
-                CV {documentStatus.cv?.uploaded ? '✓' : '✗'}
-              </span>
-            )}
-            {action.requiresOffer && (
-              <span style={{
-                padding: '0.2rem 0.4rem',
-                borderRadius: '4px',
-                fontSize: '0.7rem',
-                fontWeight: '500',
-                background: documentStatus.offre_emploi?.uploaded ? '#dcfce7' : '#fef2f2',
-                color: documentStatus.offre_emploi?.uploaded ? '#166534' : '#dc2626'
-              }}>
-                Offre d'emploi {documentStatus.offre_emploi?.uploaded ? '✓' : '✗'}
-              </span>
-            )}
-          </div>
+const MessageList = ({ messages }) => {
+  if (!messages || messages.length === 0) {
+    return (
+      <div className="message-list empty">
+        <div className="empty-state">
+          <div className="empty-icon">💬</div>
+          <h3>Aucun message</h3>
+          <p>Commencez une conversation avec l'assistant IA</p>
         </div>
-      )}
+      </div>
+    );
+  }
+
+  const formatTime = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('fr-FR', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+
+  const copyToClipboard = async (content) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      // Optionnel: afficher une notification de succès
+    } catch (err) {
+      console.error('Erreur lors de la copie:', err);
+    }
+  };
+
+  const renderMessageContent = (content, role) => {
+    if (!content) return null;
+
+    // Détection des tableaux dans le contenu
+    const hasTable = content.includes('|') && content.includes('\n|');
+    
+    if (hasTable) {
+      // Utiliser ReactMarkdown pour les tableaux
+      return (
+        <div className="markdown-content">
+          <ReactMarkdown
+            components={{
+              table: ({ children }) => (
+                <div className="table-wrapper">
+                  <table className="markdown-table">{children}</table>
+                </div>
+              ),
+              thead: ({ children }) => <thead>{children}</thead>,
+              tbody: ({ children }) => <tbody>{children}</tbody>,
+              tr: ({ children }) => <tr>{children}</tr>,
+              th: ({ children }) => <th className="markdown-th">{children}</th>,
+              td: ({ children }) => <td className="markdown-td">{children}</td>,
+              h1: ({ children }) => <h1 className="markdown-h1">{children}</h1>,
+              h2: ({ children }) => <h2 className="markdown-h2">{children}</h2>,
+              h3: ({ children }) => <h3 className="markdown-h3">{children}</h3>,
+              p: ({ children }) => <p className="markdown-p">{children}</p>,
+              ul: ({ children }) => <ul className="markdown-ul">{children}</ul>,
+              ol: ({ children }) => <ol className="markdown-ol">{children}</ol>,
+              li: ({ children }) => <li className="markdown-li">{children}</li>,
+              strong: ({ children }) => <strong className="markdown-strong">{children}</strong>,
+              em: ({ children }) => <em className="markdown-em">{children}</em>,
+              code: ({ children, className }) => {
+                const isInline = !className;
+                return isInline ? (
+                  <code className="markdown-code-inline">{children}</code>
+                ) : (
+                  <pre className="markdown-code-block">
+                    <code>{children}</code>
+                  </pre>
+                );
+              },
+              blockquote: ({ children }) => (
+                <blockquote className="markdown-blockquote">{children}</blockquote>
+              ),
+              a: ({ children, href }) => (
+                <a href={href} className="markdown-link" target="_blank" rel="noopener noreferrer">
+                  {children}
+                </a>
+              ),
+            }}
+          >
+            {content}
+          </ReactMarkdown>
+        </div>
+      );
+    }
+
+    // Pour le contenu simple sans tableaux, utiliser le rendu basique
+    return (
+      <div className="plain-content">
+        {content.split('\n').map((line, index) => (
+          <div key={index}>
+            {line}
+            {index < content.split('\n').length - 1 && <br />}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className="message-list">
+      {messages.map((message, index) => {
+        const isUser = message.role === 'user';
+        const isAssistant = message.role === 'assistant';
+        const isError = message.error;
+        const isAction = message.type === 'quick_action';
+        const isUpload = message.type === 'document_upload';
+
+        return (
+          <div
+            key={index}
+            className={`message ${
+              isUser ? 'user-message' : 
+              isError ? 'error-message' :
+              isAction ? 'quick_action-message' :
+              isUpload ? 'document_upload-message' :
+              'assistant-message'
+            }`}
+          >
+            {/* En-tête du message */}
+            <div className="message-header">
+              <div className="message-info">
+                <div className={`message-icon ${isUser ? 'user-icon' : 'assistant-icon'}`}>
+                  {isUser ? <FiUser /> : <FiBot />}
+                </div>
+                <span className="message-sender">
+                  {isUser ? 'Vous' : 'Assistant IA'}
+                </span>
+                {isAction && <span className="action-badge">Action</span>}
+                {isUpload && <span className="upload-badge">Upload</span>}
+                {isError && <span className="error-badge">Erreur</span>}
+              </div>
+              
+              <div className="message-actions">
+                <span className="message-time">
+                  <FiClock />
+                  {formatTime(message.timestamp)}
+                </span>
+                <button
+                  className="copy-btn"
+                  onClick={() => copyToClipboard(message.content)}
+                  title="Copier le message"
+                >
+                  <FiCopy />
+                </button>
+              </div>
+            </div>
+
+            {/* Corps du message */}
+            <div className="message-body">
+              {renderMessageContent(message.content, message.role)}
+            </div>
+
+            {/* Pied de message (si nécessaire) */}
+            {message.documentInfo && (
+              <div className="message-footer">
+                <div className="document-info">
+                  {message.documentInfo}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };
 
-export default ActionCard; 
+export default MessageList;
