@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FiSmartphone, FiTablet, FiMonitor } from 'react-icons/fi';
+import logoIcon from '../icons/logo-icon.svg';
 
 const MobileResponsiveTest = () => {
   const [currentViewport, setCurrentViewport] = useState('desktop');
@@ -86,8 +87,20 @@ const MobileResponsiveTest = () => {
         borderRadius: '12px',
         marginBottom: '2rem'
       }}>
+        <div style={{ marginBottom: '1rem' }}>
+          <img 
+            src={logoIcon} 
+            alt="IAMONJOB Logo" 
+            style={{ 
+              width: '60px', 
+              height: '60px', 
+              filter: 'brightness(0) invert(1)',
+              marginBottom: '1rem'
+            }} 
+          />
+        </div>
         <h1 style={{ margin: '0 0 0.5rem 0', fontSize: '2rem' }}>
-          🧪 Test Responsive Mobile
+          Test Responsive Mobile
         </h1>
         <p style={{ margin: '0', fontSize: '1rem', opacity: 0.9 }}>
           Vérification des corrections mobile
@@ -104,7 +117,8 @@ const MobileResponsiveTest = () => {
         overflow: 'hidden',
         background: '#f8fafc',
         position: 'relative',
-        marginBottom: '2rem'
+        marginBottom: '2rem',
+        maxWidth: '100%'
       }}>
         {/* Onglets de test */}
         <div style={{
@@ -142,9 +156,22 @@ const MobileResponsiveTest = () => {
             fontSize: '1.25rem', 
             margin: '0 0 1rem 0',
             color: '#1f2937',
-            textAlign: 'center'
+            textAlign: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem'
           }}>
-            ⚡ Services IA
+            <img 
+              src={logoIcon} 
+              alt="IAMONJOB" 
+              style={{ 
+                width: '24px', 
+                height: '24px',
+                filter: 'hue-rotate(180deg) saturate(2)'
+              }} 
+            />
+            Services IA
           </h2>
           
           <div style={{
@@ -180,9 +207,17 @@ const MobileResponsiveTest = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: 'white',
-                    fontSize: '1.5rem'
+                    padding: '8px'
                   }}>
-                    ⚡
+                    <img 
+                      src={logoIcon} 
+                      alt="IAMONJOB" 
+                      style={{ 
+                        width: '100%', 
+                        height: '100%',
+                        filter: 'brightness(0) invert(1)'
+                      }} 
+                    />
                   </div>
                   <div style={{ flex: 1 }}>
                     <h3 style={{ 
@@ -241,9 +276,22 @@ const MobileResponsiveTest = () => {
                   fontSize: '0.9rem',
                   fontWeight: '500',
                   cursor: 'pointer',
-                  minHeight: '44px'
+                  minHeight: '44px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
                 }}>
-                  🚀 Accéder au service
+                  <img 
+                    src={logoIcon} 
+                    alt="IAMONJOB" 
+                    style={{ 
+                      width: '16px', 
+                      height: '16px',
+                      filter: 'brightness(0) invert(1)'
+                    }} 
+                  />
+                  Accéder au service
                 </button>
               </div>
             ))}
@@ -258,8 +306,23 @@ const MobileResponsiveTest = () => {
         borderRadius: '8px',
         border: '1px solid #e5e7eb'
       }}>
-        <h3 style={{ margin: '0 0 1rem 0', color: '#1f2937' }}>
-          ✅ Points à vérifier :
+        <h3 style={{ 
+          margin: '0 0 1rem 0', 
+          color: '#1f2937',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}>
+          <img 
+            src={logoIcon} 
+            alt="IAMONJOB" 
+            style={{ 
+              width: '20px', 
+              height: '20px',
+              filter: 'hue-rotate(120deg) saturate(2)'
+            }} 
+          />
+          Points à vérifier :
         </h3>
         <ul style={{ margin: '0', paddingLeft: '1.5rem', color: '#4b5563' }}>
           <li>Les titres de métiers ne débordent pas et s'adaptent à la largeur</li>
