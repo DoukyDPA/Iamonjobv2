@@ -37,7 +37,7 @@ const CVAnalysisDashboard = ({ analysisData, loading, error, onStartNextStep }) 
       improvements: ["Axe d'amélioration 1", "Axe d'amélioration 2"],
       recommendations: ["Recommandation 1", "Recommandation 2"],
       globalScore: 7,
-      estimatedTime: "10 min"
+      // estimatedTime removed - not needed
     };
   }
 
@@ -105,26 +105,27 @@ const CVAnalysisDashboard = ({ analysisData, loading, error, onStartNextStep }) 
               Votre profil est solide. Quelques ajustements peuvent faire la différence.
             </p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#6b7280', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-            🕐 Temps estimé pour l'étape suivante : {parsedData.estimatedTime || "10 min"}
-          </div>
-          <button style={{
-            width: '100%',
-            padding: '1rem',
-            background: 'linear-gradient(135deg, #0a6b79, #14b8a6)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            fontSize: '1rem',
-            transition: 'all 0.2s ease'
-          }}>
-            ▶️ Commencer maintenant
+          {/* Temps estimé supprimé - pas nécessaire */}
+          <button 
+            onClick={() => window.location.href = '/services/cv-ats-optimization'}
+            style={{
+              width: '100%',
+              padding: '1rem',
+              background: 'linear-gradient(135deg, #0a6b79, #14b8a6)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              fontSize: '1rem',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            🔧 Tester ce CV pour les ATS
           </button>
         </div>
 
