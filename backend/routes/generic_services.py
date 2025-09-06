@@ -277,6 +277,33 @@ def handle_generic_service(service_id, request):
                     user_notes=user_notes,
                     force_new=force_new
                 )
+            elif service_id == "cv_video":
+                # Charger le prompt depuis Supabase pour cv_video
+                from services.ai_service_prompts import get_prompt_from_database
+                service_prompt = get_prompt_from_database("cv_video")
+                
+                if service_prompt:
+                    print(f"✅ Prompt cv_video chargé depuis Supabase")
+                    # Utiliser le système de prompts centralisé
+                    result = execute_ai_service(
+                        service_id="cv_video",
+                        cv_content=cv_content,
+                        job_content=job_content,
+                        questionnaire_content=questionnaire_content,
+                        user_notes=user_notes,
+                        force_new=force_new
+                    )
+                else:
+                    print(f"⚠️ Prompt cv_video non trouvé dans Supabase, utilisation du système générique")
+                    # Fallback vers le système générique
+                    result = execute_ai_service(
+                        service_id=service_id,
+                        cv_content=cv_content,
+                        job_content=job_content,
+                        questionnaire_content=questionnaire_content,
+                        user_notes=user_notes,
+                        force_new=force_new
+                    )
             else:
                 # Appel générique pour les autres services
                 result = execute_ai_service(
