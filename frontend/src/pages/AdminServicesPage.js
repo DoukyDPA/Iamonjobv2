@@ -7,6 +7,7 @@ import {
   FiSave, FiX, FiAlertCircle, FiCheck, FiHome 
 } from 'react-icons/fi';
 import { ServiceIcon } from '../components/icons/ModernIcons';
+import { SERVICES_CONFIG } from '../services/servicesConfig';
 import toast from 'react-hot-toast';
 
 const AdminServicesPage = () => {
@@ -487,7 +488,12 @@ const AdminServicesPage = () => {
   // Éditer les conseils du coach
   const editCoachAdvice = async (serviceId) => {
     setEditingCoachAdvice(serviceId);
-    setCoachAdviceText(services[serviceId]?.coach_advice || '');
+    // Utiliser coach_advice de Supabase s'il existe, sinon fallback vers servicesConfig
+    const service = services[serviceId];
+    const coachAdvice = service?.coach_advice || 
+                       (service?.id && SERVICES_CONFIG[service.id]?.coachAdvice) || 
+                       '';
+    setCoachAdviceText(coachAdvice);
   };
 
   const saveCoachAdvice = async () => {
@@ -532,7 +538,10 @@ const AdminServicesPage = () => {
   // Éditer la description
   const editDescription = async (serviceId) => {
     setEditingDescription(serviceId);
-    setDescriptionText(services[serviceId]?.description || '');
+    // Utiliser description de Supabase, sinon fallback vers coach_advice (ancien système)
+    const service = services[serviceId];
+    const description = service?.description || service?.coach_advice || '';
+    setDescriptionText(description);
   };
 
   const saveDescription = async () => {
@@ -835,7 +844,7 @@ const AdminServicesPage = () => {
                         color: '#6b7280',
                         lineHeight: '1.4'
                       }}>
-                        {service.coach_advice}
+                        {service.description || service.coach_advice || 'Aucune description'}
                       </p>
                     </div>
                     
@@ -966,7 +975,7 @@ const AdminServicesPage = () => {
                         fontSize: '0.8rem'
                       }}
                     >
-                      <FiEdit3 size={14} /> Conseils coach
+                      <FiEdit3 size={14} /> Conseils coach (détaillés)
                     </button>
 
                     <button
@@ -984,7 +993,7 @@ const AdminServicesPage = () => {
                         fontSize: '0.8rem'
                       }}
                     >
-                      <FiEdit3 size={14} /> Description
+                      <FiEdit3 size={14} /> Description courte
                     </button>
 
                     {/* Sélecteur de thème */}
@@ -1664,8 +1673,11 @@ const AdminServicesPage = () => {
             overflowY: 'auto'
           }}>
             <h3 style={{ margin: '0 0 1rem 0' }}>
-              Modifier les conseils du coach - {services[editingCoachAdvice]?.title}
+              Modifier les conseils du coach (détaillés) - {services[editingCoachAdvice]?.title}
             </h3>
+            <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: '#6b7280' }}>
+              Ces conseils apparaissent sur la page du service et dans la grille des services
+            </p>
             <textarea
               value={coachAdviceText}
               onChange={(e) => setCoachAdviceText(e.target.value)}
@@ -1678,7 +1690,7 @@ const AdminServicesPage = () => {
                 fontSize: '0.9rem',
                 lineHeight: '1.5'
               }}
-              placeholder="Conseils du coach pour ce service..."
+              placeholder="Conseils détaillés du coach pour ce service..."
             />
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
               <button
@@ -1749,21 +1761,24 @@ const AdminServicesPage = () => {
             overflowY: 'auto'
           }}>
             <h3 style={{ margin: '0 0 1rem 0' }}>
-              Modifier la description - {services[editingDescription]?.title}
+              Modifier la description courte - {services[editingDescription]?.title}
             </h3>
+            <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: '#6b7280' }}>
+              Cette description courte apparaît dans l'interface d'administration
+            </p>
             <textarea
               value={descriptionText}
               onChange={(e) => setDescriptionText(e.target.value)}
               style={{
                 width: '100%',
-                minHeight: '200px',
+                minHeight: '120px',
                 padding: '0.75rem',
                 border: '1px solid #d1d5db',
                 borderRadius: '8px',
                 fontSize: '0.9rem',
                 lineHeight: '1.5'
               }}
-              placeholder="Description du service..."
+              placeholder="Description courte du service..."
             />
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
               <button
