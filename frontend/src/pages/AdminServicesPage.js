@@ -18,6 +18,10 @@ const AdminServicesPage = () => {
   const [editingService, setEditingService] = useState(null); // service id en édition
   const [editingPrompt, setEditingPrompt] = useState('');
   const [editingRequirements, setEditingRequirements] = useState(null); // service id pour les exigences
+  const [editingCoachAdvice, setEditingCoachAdvice] = useState(null); // service id pour les conseils
+  const [editingDescription, setEditingDescription] = useState(null); // service id pour la description
+  const [coachAdviceText, setCoachAdviceText] = useState('');
+  const [descriptionText, setDescriptionText] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDuplicatesModal, setShowDuplicatesModal] = useState(false);
   const [duplicatesAnalysis, setDuplicatesAnalysis] = useState(null);
@@ -480,6 +484,96 @@ const AdminServicesPage = () => {
     }
   };
 
+  // Éditer les conseils du coach
+  const editCoachAdvice = async (serviceId) => {
+    setEditingCoachAdvice(serviceId);
+    setCoachAdviceText(services[serviceId]?.coach_advice || '');
+  };
+
+  const saveCoachAdvice = async () => {
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Token d\'authentification manquant');
+        return;
+      }
+      
+      const res = await fetch(`/api/admin/services/${editingCoachAdvice}/coach-advice`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ coach_advice: coachAdviceText })
+      });
+      
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Conseils du coach mis à jour');
+        setServices(prev => ({
+          ...prev,
+          [editingCoachAdvice]: {
+            ...prev[editingCoachAdvice],
+            coach_advice: coachAdviceText
+          }
+        }));
+        setEditingCoachAdvice(null);
+        setCoachAdviceText('');
+      } else {
+        toast.error(data.error || 'Erreur lors de la sauvegarde');
+      }
+    } catch (err) {
+      console.error('Erreur sauvegarde conseils:', err);
+      toast.error('Erreur lors de la sauvegarde');
+    }
+  };
+
+  // Éditer la description
+  const editDescription = async (serviceId) => {
+    setEditingDescription(serviceId);
+    setDescriptionText(services[serviceId]?.description || '');
+  };
+
+  const saveDescription = async () => {
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Token d\'authentification manquant');
+        return;
+      }
+      
+      const res = await fetch(`/api/admin/services/${editingDescription}/description`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ description: descriptionText })
+      });
+      
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Description mise à jour');
+        setServices(prev => ({
+          ...prev,
+          [editingDescription]: {
+            ...prev[editingDescription],
+            description: descriptionText
+          }
+        }));
+        setEditingDescription(null);
+        setDescriptionText('');
+      } else {
+        toast.error(data.error || 'Erreur lors de la sauvegarde');
+      }
+    } catch (err) {
+      console.error('Erreur sauvegarde description:', err);
+      toast.error('Erreur lors de la sauvegarde');
+    }
+  };
+
   const themeLabels = {
     'evaluate_offer': '🎯 Évaluer une offre',
     'improve_cv': '📄 Améliorer mon CV', 
@@ -855,6 +949,42 @@ const AdminServicesPage = () => {
                       }}
                     >
                       <FiEdit3 size={14} /> Modifier le prompt
+                    </button>
+
+                    <button
+                      onClick={() => editCoachAdvice(service.id)}
+                      style={{
+                        background: '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '0.5rem 1rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        fontSize: '0.8rem'
+                      }}
+                    >
+                      <FiEdit3 size={14} /> Conseils coach
+                    </button>
+
+                    <button
+                      onClick={() => editDescription(service.id)}
+                      style={{
+                        background: '#f59e0b',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '0.5rem 1rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        fontSize: '0.8rem'
+                      }}
+                    >
+                      <FiEdit3 size={14} /> Description
                     </button>
 
                     {/* Sélecteur de thème */}
@@ -1504,6 +1634,176 @@ const AdminServicesPage = () => {
                 }}
               >
                 🧹 Nettoyer les Doublons
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal édition des conseils du coach */}
+      {editingCoachAdvice && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '2rem',
+            maxWidth: '600px',
+            width: '90%',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            <h3 style={{ margin: '0 0 1rem 0' }}>
+              Modifier les conseils du coach - {services[editingCoachAdvice]?.title}
+            </h3>
+            <textarea
+              value={coachAdviceText}
+              onChange={(e) => setCoachAdviceText(e.target.value)}
+              style={{
+                width: '100%',
+                minHeight: '200px',
+                padding: '0.75rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '0.9rem',
+                lineHeight: '1.5'
+              }}
+              placeholder="Conseils du coach pour ce service..."
+            />
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+              <button
+                onClick={saveCoachAdvice}
+                style={{
+                  flex: 1,
+                  background: '#10b981',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.75rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                <FiSave size={16} /> Sauvegarder
+              </button>
+              <button
+                onClick={() => {
+                  setEditingCoachAdvice(null);
+                  setCoachAdviceText('');
+                }}
+                style={{
+                  flex: 1,
+                  background: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.75rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                <FiX size={16} /> Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal édition de la description */}
+      {editingDescription && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '2rem',
+            maxWidth: '600px',
+            width: '90%',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            <h3 style={{ margin: '0 0 1rem 0' }}>
+              Modifier la description - {services[editingDescription]?.title}
+            </h3>
+            <textarea
+              value={descriptionText}
+              onChange={(e) => setDescriptionText(e.target.value)}
+              style={{
+                width: '100%',
+                minHeight: '200px',
+                padding: '0.75rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '0.9rem',
+                lineHeight: '1.5'
+              }}
+              placeholder="Description du service..."
+            />
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+              <button
+                onClick={saveDescription}
+                style={{
+                  flex: 1,
+                  background: '#f59e0b',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.75rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                <FiSave size={16} /> Sauvegarder
+              </button>
+              <button
+                onClick={() => {
+                  setEditingDescription(null);
+                  setDescriptionText('');
+                }}
+                style={{
+                  flex: 1,
+                  background: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.75rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                <FiX size={16} /> Annuler
               </button>
             </div>
           </div>
