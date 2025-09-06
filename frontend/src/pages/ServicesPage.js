@@ -50,7 +50,7 @@ const ServicesPage = () => {
             const fallbackConfig = SERVICES_CONFIG[service.id];
             return {
               ...service,
-              description: service.description || '', // Description courte
+              description: service.description || fallbackConfig?.description || '', // Description courte
               coachAdvice: service.coach_advice || fallbackConfig?.coachAdvice || ''
             };
           });
@@ -62,7 +62,7 @@ const ServicesPage = () => {
       const fallbackConfig = SERVICES_CONFIG[enhanced.featured.id];
       enhanced.featured = {
         ...enhanced.featured,
-        description: enhanced.featured.description || '', // Description courte
+        description: enhanced.featured.description || fallbackConfig?.description || '', // Description courte
         coachAdvice: enhanced.featured.coach_advice || fallbackConfig?.coachAdvice || ''
       };
     }
