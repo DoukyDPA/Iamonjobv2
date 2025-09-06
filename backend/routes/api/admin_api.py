@@ -1149,6 +1149,72 @@ def admin_partners():
         logging.error(f"Erreur administration partenaires: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+@admin_api.route('/services/<service_id>/coach-advice', methods=['PUT'])
+@verify_jwt_token
+def update_coach_advice(service_id):
+    """Met à jour les conseils du coach d'un service"""
+    try:
+        data = request.get_json()
+        if not data or 'coach_advice' not in data:
+            return jsonify({"success": False, "error": "Conseils du coach manquants"}), 400
+        
+        coach_advice = data['coach_advice']
+        
+        # Mettre à jour dans admin_services_config
+        from services.supabase_storage import SupabaseStorage
+        supabase = SupabaseStorage()
+        
+        response = supabase.client.table('admin_services_config').update({
+            'coach_advice': coach_advice,
+            'updated_at': datetime.now().isoformat()
+        }).eq('service_id', service_id).execute()
+        
+        if response.data:
+            return jsonify({
+                "success": True,
+                "message": "Conseils du coach mis à jour avec succès",
+                "coach_advice": coach_advice
+            }), 200
+        else:
+            return jsonify({"success": False, "error": "Service non trouvé"}), 404
+            
+    except Exception as e:
+        logging.error(f"Erreur mise à jour conseils coach {service_id}: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@admin_api.route('/services/<service_id>/description', methods=['PUT'])
+@verify_jwt_token
+def update_description(service_id):
+    """Met à jour la description d'un service"""
+    try:
+        data = request.get_json()
+        if not data or 'description' not in data:
+            return jsonify({"success": False, "error": "Description manquante"}), 400
+        
+        description = data['description']
+        
+        # Mettre à jour dans admin_services_config
+        from services.supabase_storage import SupabaseStorage
+        supabase = SupabaseStorage()
+        
+        response = supabase.client.table('admin_services_config').update({
+            'description': description,
+            'updated_at': datetime.now().isoformat()
+        }).eq('service_id', service_id).execute()
+        
+        if response.data:
+            return jsonify({
+                "success": True,
+                "message": "Description mise à jour avec succès",
+                "description": description
+            }), 200
+        else:
+            return jsonify({"success": False, "error": "Service non trouvé"}), 404
+            
+    except Exception as e:
+        logging.error(f"Erreur mise à jour description {service_id}: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
 
 
