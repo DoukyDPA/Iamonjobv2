@@ -1152,7 +1152,7 @@ def admin_partners():
 @admin_api.route('/services/<service_id>/coach-advice', methods=['PUT'])
 @verify_jwt_token
 def update_coach_advice(service_id):
-    """Met à jour les conseils du coach d'un service"""
+    """Met à jour les conseils du coach d'un service (vrais conseils)"""
     try:
         data = request.get_json()
         if not data or 'coach_advice' not in data:
@@ -1185,7 +1185,7 @@ def update_coach_advice(service_id):
 @admin_api.route('/services/<service_id>/description', methods=['PUT'])
 @verify_jwt_token
 def update_description(service_id):
-    """Met à jour la description d'un service"""
+    """Met à jour la description courte d'un service (affichée dans l'admin)"""
     try:
         data = request.get_json()
         if not data or 'description' not in data:
