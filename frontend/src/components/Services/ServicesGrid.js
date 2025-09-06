@@ -75,6 +75,7 @@ const ServicesGrid = ({ filterTheme = null }) => {
         return {
           id: serviceId,
           title: service.title,
+          description: service.description || '', // Description courte pour l'affichage
           coachAdvice: service.coach_advice || fallbackConfig?.coachAdvice || '',
           icon: getServiceIcon(service.theme),
           requiresCV: service.requires_cv,
@@ -326,7 +327,7 @@ const ServicesGrid = ({ filterTheme = null }) => {
           </div>
           <div className="revolutionary-service-content">
             <h4 className="revolutionary-service-title">{service.title}</h4>
-            <p className="revolutionary-service-description">{service.coachAdvice}</p>
+            <p className="revolutionary-service-description">{service.description || service.coachAdvice}</p>
             {!canExecute && (
               <div className="revolutionary-service-missing">
                 <p className="revolutionary-service-missing-text">
