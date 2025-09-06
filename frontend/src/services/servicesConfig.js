@@ -22,7 +22,8 @@ export const URL_TO_SERVICE_MAPPING = {
   'matching-cv-offre': 'matching_cv_offre',
   'analyze-cv': 'analyze_cv',
   'analyse-emploi': 'analyse_emploi',
-  'skills-analysis': 'skills_analysis'
+  'skills-analysis': 'skills_analysis',
+  'cv-video': 'cv_video'
 };
 
 // Configuration des services basée sur l'admin
@@ -324,6 +325,27 @@ export const SERVICES_CONFIG = {
       { id: 'skills', label: 'Compétences', icon: '🎯' },
       { id: 'opportunities', label: 'Opportunités', icon: '🌟' }
     ]
+  },
+
+  cv_video: {
+    id: 'cv_video',
+    title: 'CV Vidéo - Présentez-vous en vidéo',
+    shortTitle: 'CV Vidéo',
+    icon: '🎥',
+    coachAdvice: "Un CV vidéo vous permet de vous démarquer et de montrer votre personnalité. Iamonjob vous guide pour créer une présentation vidéo percutante. Préparez votre script, choisissez un bon éclairage, soignez votre tenue et votre environnement. Parlez clairement, regardez la caméra, et restez naturel. Votre CV vidéo doit compléter votre CV papier, pas le remplacer. Montrez votre passion et votre motivation pour le poste. L'IA vous aide à structurer votre présentation mais c'est votre authenticité qui fera la différence.",
+    requiresCV: true,
+    requiresJobOffer: true,
+    requiresQuestionnaire: true,
+    allowsNotes: true,
+    outputType: 'cv_video',
+    storageKey: 'iamonjob_cv_video',
+    actionType: 'cv_video_response',
+    apiEndpoint: '/api/services/execute/cv_video',
+    tabs: [
+      { id: 'script', label: 'Script', icon: '📝' },
+      { id: 'tips', label: 'Conseils', icon: '💡' },
+      { id: 'structure', label: 'Structure', icon: '📋' }
+    ]
   }
 };
 
@@ -337,7 +359,7 @@ export const getServicesByCategory = () => {
     evaluate_offer: ['matching_cv_offre', 'analyse_emploi'],
     improve_cv: ['analyze_cv', 'cv_ats_optimization'],
     apply_jobs: ['cover_letter_advice', 'cover_letter_generate', 'follow_up_email'],
-    interview_prep: ['professional_pitch', 'interview_prep', 'salary_negotiation'],
+    interview_prep: ['professional_pitch', 'interview_prep', 'salary_negotiation', 'cv_video'],
     career_project: ['skills_analysis', 'reconversion_analysis', 'career_transition', 'industry_orientation']
   };
   
