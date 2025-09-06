@@ -488,11 +488,17 @@ const AdminServicesPage = () => {
   // Éditer les conseils du coach
   const editCoachAdvice = async (serviceId) => {
     setEditingCoachAdvice(serviceId);
-    // Utiliser coach_advice de Supabase s'il existe, sinon fallback vers servicesConfig
     const service = services[serviceId];
-    const coachAdvice = service?.coach_advice || 
-                       (service?.id && SERVICES_CONFIG[service.id]?.coachAdvice) || 
-                       '';
+    
+    // Si coach_advice existe et est long (> 100 caractères), c'est probablement un vrai conseil
+    // Sinon, utiliser le fallback vers servicesConfig
+    let coachAdvice = '';
+    if (service?.coach_advice && service.coach_advice.length > 100) {
+      coachAdvice = service.coach_advice;
+    } else {
+      coachAdvice = (service?.id && SERVICES_CONFIG[service.id]?.coachAdvice) || '';
+    }
+    
     setCoachAdviceText(coachAdvice);
   };
 
@@ -538,9 +544,18 @@ const AdminServicesPage = () => {
   // Éditer la description
   const editDescription = async (serviceId) => {
     setEditingDescription(serviceId);
-    // Utiliser description de Supabase, sinon fallback vers coach_advice (ancien système)
     const service = services[serviceId];
-    const description = service?.description || service?.coach_advice || '';
+    
+    // Si description existe, l'utiliser
+    // Sinon, utiliser coach_advice s'il est court (description courte)
+    // Sinon, laisser vide
+    let description = '';
+    if (service?.description) {
+      description = service.description;
+    } else if (service?.coach_advice && service.coach_advice.length <= 100) {
+      description = service.coach_advice;
+    }
+    
     setDescriptionText(description);
   };
 
@@ -844,8 +859,19 @@ const AdminServicesPage = () => {
                         color: '#6b7280',
                         lineHeight: '1.4'
                       }}>
-                        {service.description || service.coach_advice || 'Aucune description'}
+                        {service.description || 'Aucune description courte'}
                       </p>
+                      {service.coach_advice && (
+                        <p style={{
+                          margin: '0.5rem 0 0 0',
+                          fontSize: '0.8rem',
+                          color: '#9ca3af',
+                          lineHeight: '1.3',
+                          fontStyle: 'italic'
+                        }}>
+                          Conseils: {service.coach_advice.substring(0, 100)}...
+                        </p>
+                      )}
                     </div>
                     
                     <ServiceIcon 
