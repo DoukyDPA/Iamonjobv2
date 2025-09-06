@@ -152,6 +152,15 @@ def handle_generic_service(service_id, request):
                 "requires_job": False,
                 "requires_questionnaire": True,
                 "allows_notes": True
+            },
+            "cv_video": {
+                "title": "CV Vidéo",
+                "output_key": "cv_video",
+                "action_type": "cv_video_response",
+                "requires_cv": True,
+                "requires_job": True,
+                "requires_questionnaire": True,
+                "allows_notes": True
             }
         }
         
