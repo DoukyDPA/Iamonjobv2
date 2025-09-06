@@ -75,8 +75,8 @@ const ServicesGrid = ({ filterTheme = null }) => {
         return {
           id: serviceId,
           title: service.title,
-          description: service.description || fallbackConfig?.description || '', // Description courte pour l'affichage
-          coachAdvice: service.coach_advice || fallbackConfig?.coachAdvice || '',
+          description: service.description || '', // Description courte pour l'affichage (Supabase uniquement)
+          coachAdvice: service.coach_advice || '', // Conseils du coach (Supabase uniquement)
           icon: getServiceIcon(service.theme),
           requiresCV: service.requires_cv,
           requiresJobOffer: service.requires_job_offer,
