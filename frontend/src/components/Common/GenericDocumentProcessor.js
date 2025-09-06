@@ -97,20 +97,34 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
 
       // Sinon, tenter de charger depuis l'API (Supabase)
       try {
-        const response = await fetch(`/api/services/${mappedServiceId}`);
-        const data = await response.json();
+        // Certains services peuvent être enregistrés avec des tirets dans Supabase
+        const apiServiceId = mappedServiceId.replace(/_/g, '-');
+
+        let response = await fetch(`/api/services/${apiServiceId}`);
+        let data = await response.json();
+
+        // Si aucune configuration trouvée, essayer la version originale
+        if (!(response.ok && data.success && data.service)) {
+          response = await fetch(`/api/services/${mappedServiceId}`);
+          data = await response.json();
+        }
 
         if (response.ok && data.success && data.service) {
+          const serviceApiId = data.service.id || apiServiceId;
+          const clientId = serviceApiId.replace(/-/g, '_');
           const apiConfig = {
-            id: mappedServiceId,
+            id: clientId,
+            apiId: serviceApiId,
+
             title: data.service.title,
             coachAdvice: data.service.coach_advice,
             requiresCV: data.service.requires_cv,
             requiresJobOffer: data.service.requires_job_offer,
             requiresQuestionnaire: data.service.requires_questionnaire,
             allowsNotes: data.service.allows_notes || false,
-            apiEndpoint: `/api/services/execute/${mappedServiceId}`,
-            storageKey: `iamonjob_${mappedServiceId}`
+            apiEndpoint: `/api/services/execute/${serviceApiId}`,
+            storageKey: `iamonjob_${clientId}`
+
           };
           setServiceConfig(apiConfig);
         } else {
@@ -185,7 +199,7 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
           'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
         },
         body: JSON.stringify({
-          service_id: serviceConfig.id,
+          service_id: serviceConfig.apiId || serviceConfig.id,
           notes: userNotes || ''
         })
       });
