@@ -179,7 +179,7 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
       !serviceConfig.allowsNotes &&
       !autoExecuted
     ) {
-      console.log('🚀 Lancement automatique du service:', serviceConfig.id);
+
       setAutoExecuted(true);
       handleExecute();
     }
