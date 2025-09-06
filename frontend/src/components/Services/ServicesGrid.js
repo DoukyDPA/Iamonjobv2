@@ -64,20 +64,28 @@ const ServicesGrid = ({ filterTheme = null }) => {
   const formatServicesFromAPI = (apiThemes) => {
     const formatted = {};
     
+    // Importer SERVICES_CONFIG pour le fallback
+    const { SERVICES_CONFIG } = require('../../services/servicesConfig');
+    
     Object.entries(apiThemes).forEach(([theme, services]) => {
-      formatted[theme] = services.map(service => ({
-        id: service.service_id,
-        title: service.title,
-        coachAdvice: service.coach_advice,
-        icon: getServiceIcon(service.theme),
-        requiresCV: service.requires_cv,
-        requiresJobOffer: service.requires_job_offer,
-        requiresQuestionnaire: service.requires_questionnaire,
-        difficulty: service.difficulty,
-        // durationMinutes removed - not needed
-        visible: service.visible,
-        featured: service.featured
-      }));
+      formatted[theme] = services.map(service => {
+        const serviceId = service.service_id;
+        const fallbackConfig = SERVICES_CONFIG[serviceId];
+        
+        return {
+          id: serviceId,
+          title: service.title,
+          coachAdvice: service.coach_advice || fallbackConfig?.coachAdvice || '',
+          icon: getServiceIcon(service.theme),
+          requiresCV: service.requires_cv,
+          requiresJobOffer: service.requires_job_offer,
+          requiresQuestionnaire: service.requires_questionnaire,
+          difficulty: service.difficulty,
+          // durationMinutes removed - not needed
+          visible: service.visible,
+          featured: service.featured
+        };
+      });
     });
     
     return formatted;
