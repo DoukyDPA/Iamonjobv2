@@ -71,6 +71,7 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
   const [userNotes, setUserNotes] = useState('');
   const [serviceLoading, setServiceLoading] = useState(false);
   const [serviceConfig, setServiceConfig] = useState(null);
+  const [autoExecuted, setAutoExecuted] = useState(false);
 
   // Récupérer la configuration du service depuis l'URL
   useEffect(() => {
@@ -122,6 +123,7 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
     };
 
     loadConfig();
+    setAutoExecuted(false);
   }, [serviceId, propServiceConfig]);
 
   // Charger un résultat déjà sauvegardé le cas échéant
@@ -155,14 +157,19 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
   // 🚀 ANALYSE AUTOMATIQUE quand on arrive sur la page et que tout est prêt
   // MAIS PAS pour les services qui permettent des notes personnelles
   useEffect(() => {
-    if (canExecute && !result && !serviceLoading && serviceConfig?.id) {
-      // Si le service permet des notes, ne pas lancer automatiquement
-      if (!serviceConfig.allowsNotes) {
-        console.log('🚀 Lancement automatique du service:', serviceConfig.id);
-        handleExecute();
-      }
+    if (
+      canExecute &&
+      !result &&
+      !serviceLoading &&
+      serviceConfig?.id &&
+      !serviceConfig.allowsNotes &&
+      !autoExecuted
+    ) {
+      console.log('🚀 Lancement automatique du service:', serviceConfig.id);
+      setAutoExecuted(true);
+      handleExecute();
     }
-  }, [canExecute, result, serviceLoading, serviceConfig]);
+  }, [canExecute, result, serviceLoading, serviceConfig, autoExecuted]);
 
   const handleExecute = async () => {
     if (!canExecute || serviceLoading) return;
