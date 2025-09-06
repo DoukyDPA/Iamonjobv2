@@ -1193,11 +1193,11 @@ def update_description(service_id):
         
         description = data['description']
         
-        # Mettre à jour dans admin_services_config
+        # Mettre à jour dans ai_prompts (où se trouve la colonne description)
         from services.supabase_storage import SupabaseStorage
         supabase = SupabaseStorage()
         
-        response = supabase.client.table('admin_services_config').update({
+        response = supabase.client.table('ai_prompts').update({
             'description': description,
             'updated_at': datetime.now().isoformat()
         }).eq('service_id', service_id).execute()
