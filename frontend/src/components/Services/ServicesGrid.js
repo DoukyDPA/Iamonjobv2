@@ -327,7 +327,7 @@ const ServicesGrid = ({ filterTheme = null }) => {
           </div>
           <div className="revolutionary-service-content">
             <h4 className="revolutionary-service-title">{service.title}</h4>
-            <p className="revolutionary-service-description">{service.description || service.coachAdvice}</p>
+            <p className="revolutionary-service-description">{service.description}</p>
             {!canExecute && (
               <div className="revolutionary-service-missing">
                 <p className="revolutionary-service-missing-text">
