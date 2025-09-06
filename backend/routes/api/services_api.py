@@ -226,3 +226,4 @@ def follow_up_email():
     except Exception as e:
         logging.error("Erreur service follow-up: %s", e)
         return jsonify({"error": "Erreur lors du service follow-up"}, 500)
+
