@@ -19,7 +19,15 @@ const ServicesPage = () => {
     try {
       const response = await fetch('/api/services/config');
       const data = await response.json();
-      setServicesData(data);
+      
+      if (data.success && data.themes) {
+        // Appliquer le fallback pour les coachAdvice
+        const enhancedData = enhanceServicesWithFallback(data);
+        setServicesData(enhancedData);
+      } else {
+        // Fallback avec configuration locale
+        setServicesData(getLocalServicesConfig());
+      }
     } catch (error) {
       console.error('Erreur chargement services:', error);
       // Fallback avec configuration locale
@@ -27,6 +35,37 @@ const ServicesPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const enhanceServicesWithFallback = (data) => {
+    // Importer SERVICES_CONFIG pour le fallback
+    const { SERVICES_CONFIG } = require('../services/servicesConfig');
+    
+    const enhanced = { ...data };
+    
+    if (enhanced.themes) {
+      Object.keys(enhanced.themes).forEach(themeKey => {
+        if (enhanced.themes[themeKey] && enhanced.themes[themeKey].services) {
+          enhanced.themes[themeKey].services = enhanced.themes[themeKey].services.map(service => {
+            const fallbackConfig = SERVICES_CONFIG[service.id];
+            return {
+              ...service,
+              coachAdvice: service.coach_advice || fallbackConfig?.coachAdvice || ''
+            };
+          });
+        }
+      });
+    }
+    
+    if (enhanced.featured) {
+      const fallbackConfig = SERVICES_CONFIG[enhanced.featured.id];
+      enhanced.featured = {
+        ...enhanced.featured,
+        coachAdvice: enhanced.featured.coach_advice || fallbackConfig?.coachAdvice || ''
+      };
+    }
+    
+    return enhanced;
   };
 
   const getLocalServicesConfig = () => {
