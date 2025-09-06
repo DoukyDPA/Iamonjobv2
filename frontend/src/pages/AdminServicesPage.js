@@ -490,15 +490,10 @@ const AdminServicesPage = () => {
     setEditingCoachAdvice(serviceId);
     const service = services[serviceId];
     
-    // Si coach_advice existe et est long (> 100 caractères), c'est probablement un vrai conseil
-    // Sinon, utiliser le fallback vers servicesConfig
-    let coachAdvice = '';
-    if (service?.coach_advice && service.coach_advice.length > 100) {
-      coachAdvice = service.coach_advice;
-    } else {
-      coachAdvice = (service?.id && SERVICES_CONFIG[service.id]?.coachAdvice) || '';
-    }
-    
+    // Utiliser coach_advice de Supabase, sinon fallback vers servicesConfig
+    const coachAdvice = service?.coach_advice || 
+                       (service?.id && SERVICES_CONFIG[service.id]?.coachAdvice) || 
+                       '';
     setCoachAdviceText(coachAdvice);
   };
 
@@ -546,16 +541,8 @@ const AdminServicesPage = () => {
     setEditingDescription(serviceId);
     const service = services[serviceId];
     
-    // Si description existe, l'utiliser
-    // Sinon, utiliser coach_advice s'il est court (description courte)
-    // Sinon, laisser vide
-    let description = '';
-    if (service?.description) {
-      description = service.description;
-    } else if (service?.coach_advice && service.coach_advice.length <= 100) {
-      description = service.coach_advice;
-    }
-    
+    // Utiliser description de Supabase
+    const description = service?.description || '';
     setDescriptionText(description);
   };
 
