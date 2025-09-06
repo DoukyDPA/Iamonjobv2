@@ -435,7 +435,7 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
             lineHeight: '1.6',
             color: '#374151'
           }}>
-            {serviceConfig.coachAdvice || serviceConfig.description}
+            {serviceConfig.coachAdvice}
           </p>
         </div>
 
