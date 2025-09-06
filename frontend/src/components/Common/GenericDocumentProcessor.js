@@ -115,6 +115,7 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
           const apiConfig = {
             id: clientId,
             apiId: serviceApiId,
+
             title: data.service.title,
             coachAdvice: data.service.coach_advice,
             requiresCV: data.service.requires_cv,
@@ -123,6 +124,7 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
             allowsNotes: data.service.allows_notes || false,
             apiEndpoint: `/api/services/execute/${serviceApiId}`,
             storageKey: `iamonjob_${clientId}`
+
           };
           setServiceConfig(apiConfig);
         } else {
