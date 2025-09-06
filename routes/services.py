@@ -79,6 +79,12 @@ def skills_analyze():
     """Analyse des compétences"""
     return handle_generic_service('skills_analysis', request)
 
+@services_bp.route('/api/cv-video/generate', methods=['POST'])
+@verify_jwt_token
+def cv_video_generate():
+    """Génération CV vidéo"""
+    return handle_generic_service('cv_video', request)
+
 @services_bp.route('/api/actions/compatibility', methods=['POST'])
 def matching_cv_offre_analysis():
     """Route pour l'analyse de compatibilité (utilise le système générique)"""
