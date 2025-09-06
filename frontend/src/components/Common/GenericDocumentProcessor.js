@@ -112,12 +112,17 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
         if (response.ok && data.success && data.service) {
           const serviceApiId = data.service.id || apiServiceId;
           const clientId = serviceApiId.replace(/-/g, '_');
+          
+          // Charger les conseils du coach depuis Supabase, sinon fallback vers servicesConfig
+          const { SERVICES_CONFIG } = await import('../services/servicesConfig');
+          const fallbackConfig = SERVICES_CONFIG[clientId];
+          
           const apiConfig = {
             id: clientId,
             apiId: serviceApiId,
 
             title: data.service.title,
-            coachAdvice: data.service.coach_advice,
+            coachAdvice: data.service.coach_advice || fallbackConfig?.coachAdvice || '',
             requiresCV: data.service.requires_cv,
             requiresJobOffer: data.service.requires_job_offer,
             requiresQuestionnaire: data.service.requires_questionnaire,
