@@ -71,22 +71,71 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
   const [userNotes, setUserNotes] = useState('');
   const [serviceLoading, setServiceLoading] = useState(false);
   const [serviceConfig, setServiceConfig] = useState(null);
+  const [autoExecuted, setAutoExecuted] = useState(false);
 
   // Récupérer la configuration du service depuis l'URL
   useEffect(() => {
-    if (propServiceConfig) {
-      // Si la config est passée en prop (ancien usage)
-      setServiceConfig(propServiceConfig);
-    } else if (serviceId) {
-      // Si on récupère depuis l'URL
-      const mappedServiceId = URL_TO_SERVICE_MAPPING[serviceId] || serviceId;
-      const config = getServiceConfig(mappedServiceId);
-      if (config) {
-        setServiceConfig(config);
-      } else {
+    const loadConfig = async () => {
+      if (propServiceConfig) {
+        // Si la config est passée en prop (ancien usage)
+        setServiceConfig(propServiceConfig);
+        return;
+      }
+
+      if (!serviceId) return;
+
+      // Utiliser le mapping ou convertir les tirets en underscores
+      const mappedServiceId =
+        URL_TO_SERVICE_MAPPING[serviceId] || serviceId.replace(/-/g, '_');
+
+      // D'abord, essayer de récupérer la configuration locale
+      const localConfig = getServiceConfig(mappedServiceId);
+      if (localConfig) {
+        setServiceConfig(localConfig);
+        return;
+      }
+
+      // Sinon, tenter de charger depuis l'API (Supabase)
+      try {
+        // Certains services peuvent être enregistrés avec des tirets dans Supabase
+        const apiServiceId = mappedServiceId.replace(/_/g, '-');
+
+        let response = await fetch(`/api/services/${apiServiceId}`);
+        let data = await response.json();
+
+        // Si aucune configuration trouvée, essayer la version originale
+        if (!(response.ok && data.success && data.service)) {
+          response = await fetch(`/api/services/${mappedServiceId}`);
+          data = await response.json();
+        }
+
+        if (response.ok && data.success && data.service) {
+          const serviceApiId = data.service.id || apiServiceId;
+          const clientId = serviceApiId.replace(/-/g, '_');
+          const apiConfig = {
+            id: clientId,
+            apiId: serviceApiId,
+            title: data.service.title,
+            coachAdvice: data.service.coach_advice,
+            requiresCV: data.service.requires_cv,
+            requiresJobOffer: data.service.requires_job_offer,
+            requiresQuestionnaire: data.service.requires_questionnaire,
+            allowsNotes: data.service.allows_notes || false,
+            apiEndpoint: `/api/services/execute/${serviceApiId}`,
+            storageKey: `iamonjob_${clientId}`
+          };
+          setServiceConfig(apiConfig);
+        } else {
+          setError(`Service "${serviceId}" non trouvé`);
+        }
+      } catch (err) {
+        console.error('Erreur chargement service:', err);
         setError(`Service "${serviceId}" non trouvé`);
       }
-    }
+    };
+
+    loadConfig();
+    setAutoExecuted(false);
   }, [serviceId, propServiceConfig]);
 
   // Charger un résultat déjà sauvegardé le cas échéant
@@ -120,14 +169,19 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
   // 🚀 ANALYSE AUTOMATIQUE quand on arrive sur la page et que tout est prêt
   // MAIS PAS pour les services qui permettent des notes personnelles
   useEffect(() => {
-    if (canExecute && !result && !serviceLoading && serviceConfig?.id) {
-      // Si le service permet des notes, ne pas lancer automatiquement
-      if (!serviceConfig.allowsNotes) {
-        console.log('🚀 Lancement automatique du service:', serviceConfig.id);
-        handleExecute();
-      }
+    if (
+      canExecute &&
+      !result &&
+      !serviceLoading &&
+      serviceConfig?.id &&
+      !serviceConfig.allowsNotes &&
+      !autoExecuted
+    ) {
+      console.log('🚀 Lancement automatique du service:', serviceConfig.id);
+      setAutoExecuted(true);
+      handleExecute();
     }
-  }, [canExecute, result, serviceLoading, serviceConfig]);
+  }, [canExecute, result, serviceLoading, serviceConfig, autoExecuted]);
 
   const handleExecute = async () => {
     if (!canExecute || serviceLoading) return;
@@ -143,7 +197,7 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
           'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
         },
         body: JSON.stringify({
-          service_id: serviceConfig.id,
+          service_id: serviceConfig.apiId || serviceConfig.id,
           notes: userNotes || ''
         })
       });
