@@ -277,8 +277,18 @@ def handle_generic_service(service_id, request):
                     user_notes=user_notes,
                     force_new=force_new
                 )
+            elif service_id == "cv_video":
+                # CORRECTION: Le service cv_video utilise le prompt vv_video
+                result = execute_ai_service(
+                    service_id="vv_video",  # Utiliser le nom du prompt
+                    cv_content=cv_content,
+                    job_content=job_content,
+                    questionnaire_content=questionnaire_content,
+                    user_notes=user_notes,
+                    force_new=force_new
+                )
             else:
-                # Appel générique pour tous les autres services (y compris cv_video)
+                # Appel générique pour tous les autres services
                 result = execute_ai_service(
                     service_id=service_id,
                     cv_content=cv_content,
