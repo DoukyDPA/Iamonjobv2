@@ -340,7 +340,7 @@ export const SERVICES_CONFIG = {
     outputType: 'cv_video',
     storageKey: 'iamonjob_cv_video',
     actionType: 'cv_video_response',
-    apiEndpoint: '/api/services/execute/cv_video',
+    apiEndpoint: '/api/cv-video/generate',
     tabs: [
       { id: 'script', label: 'Script', icon: '📝' },
       { id: 'tips', label: 'Conseils', icon: '💡' },
