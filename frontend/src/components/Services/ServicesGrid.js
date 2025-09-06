@@ -75,7 +75,7 @@ const ServicesGrid = ({ filterTheme = null }) => {
         return {
           id: serviceId,
           title: service.title,
-          description: service.description || '', // Description courte pour l'affichage
+          description: service.description || fallbackConfig?.description || '', // Description courte pour l'affichage
           coachAdvice: service.coach_advice || fallbackConfig?.coachAdvice || '',
           icon: getServiceIcon(service.theme),
           requiresCV: service.requires_cv,
