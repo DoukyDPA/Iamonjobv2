@@ -94,7 +94,7 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
         // Appliquer le même système de fallback pour les configs locales
         const enhancedConfig = {
           ...localConfig,
-          coachAdvice: localConfig.coachAdvice || localConfig.description || ''
+          coachAdvice: localConfig.coachAdvice || ''
         };
         setServiceConfig(enhancedConfig);
         return;
