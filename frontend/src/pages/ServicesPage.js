@@ -242,7 +242,7 @@ const ServicesPage = () => {
             {servicesData.featured.title}
           </h2>
           <p className="service-description">
-            {servicesData.featured.description || servicesData.featured.coachAdvice}
+            {servicesData.featured.description}
           </p>
           <Link
             to={`/${servicesData.featured.slug}`}
