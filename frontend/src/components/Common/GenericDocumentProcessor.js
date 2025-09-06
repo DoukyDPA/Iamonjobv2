@@ -150,6 +150,18 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
     }
   }, [serviceConfig]);
 
+  // 🗑️ REMETTRE À ZÉRO quand les documents changent
+  useEffect(() => {
+    if (serviceConfig?.storageKey) {
+      // Nettoyer le localStorage et le résultat quand les documents changent
+      safeSetStorageItem(serviceConfig.storageKey, '');
+      setResult(null);
+      setError(null);
+      setAutoExecuted(false);
+      console.log(`🗑️ Service ${serviceConfig.id} remis à zéro suite au changement de documents`);
+    }
+  }, [documentStatus.cv?.upload_timestamp, documentStatus.offre_emploi?.upload_timestamp, documentStatus.questionnaire?.upload_timestamp, serviceConfig]);
+
   // Vérifier les documents requis
   const checkRequiredDocuments = () => {
     const missing = [];
