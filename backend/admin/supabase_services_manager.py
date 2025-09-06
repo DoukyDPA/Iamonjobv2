@@ -49,21 +49,30 @@ class SupabaseServicesManager:
             self.supabase_client = None
     
     def get_all_services(self) -> Dict[str, Any]:
-        """Récupère tous les services depuis Supabase"""
+        """Récupère tous les services depuis Supabase avec descriptions"""
         if not self.supabase_client:
             logger.warning("⚠️ Supabase non disponible, retour configuration par défaut")
             return self._get_default_config()
         
         try:
-            response = self.supabase_client.table('admin_services_config').select('*').execute()
+            # Récupérer les services de admin_services_config
+            services_response = self.supabase_client.table('admin_services_config').select('*').execute()
+            
+            # Récupérer les descriptions de ai_prompts
+            descriptions_response = self.supabase_client.table('ai_prompts').select('service_id, description').execute()
+            
+            # Créer un dictionnaire des descriptions par service_id
+            descriptions = {row['service_id']: row['description'] for row in descriptions_response.data}
+            
             services = {}
             
-            for row in response.data:
+            for row in services_response.data:
                 service_id = row['service_id']
                 services[service_id] = {
                     'id': service_id,
                     'title': row['title'],
                     'coach_advice': row['coach_advice'],
+                    'description': descriptions.get(service_id, ''),  # Ajouter la description
                     'theme': row['theme'],
                     'visible': row['visible'],
                     'featured': row['featured'],
@@ -77,7 +86,7 @@ class SupabaseServicesManager:
                     'slug': row['slug']
                 }
             
-            logger.info(f"✅ {len(services)} services chargés depuis Supabase")
+            logger.info(f"✅ {len(services)} services chargés depuis Supabase avec descriptions")
             return services
             
         except Exception as e:
