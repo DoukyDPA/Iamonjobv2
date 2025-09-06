@@ -61,6 +61,11 @@ class SupabaseServicesManager:
             # Récupérer les descriptions de ai_prompts
             descriptions_response = self.supabase_client.table('ai_prompts').select('service_id, description').execute()
             
+            # Debug: logger les descriptions récupérées
+            logger.info(f"📊 Descriptions récupérées: {len(descriptions_response.data)} entrées")
+            for desc in descriptions_response.data[:3]:  # Afficher les 3 premières
+                logger.info(f"  - {desc['service_id']}: {desc['description'][:50]}...")
+            
             # Créer un dictionnaire des descriptions par service_id
             descriptions = {row['service_id']: row['description'] for row in descriptions_response.data}
             
@@ -68,11 +73,17 @@ class SupabaseServicesManager:
             
             for row in services_response.data:
                 service_id = row['service_id']
+                description = descriptions.get(service_id, '')
+                
+                # Debug: logger les descriptions assignées
+                if service_id in ['matching_cv_offre', 'analyze_cv', 'analyse_emploi']:  # Quelques services clés
+                    logger.info(f"🔍 Service {service_id}: description = '{description[:50]}...'")
+                
                 services[service_id] = {
                     'id': service_id,
                     'title': row['title'],
                     'coach_advice': row['coach_advice'],
-                    'description': descriptions.get(service_id, ''),  # Ajouter la description
+                    'description': description,  # Ajouter la description
                     'theme': row['theme'],
                     'visible': row['visible'],
                     'featured': row['featured'],
