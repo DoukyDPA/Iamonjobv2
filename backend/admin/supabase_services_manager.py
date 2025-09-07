@@ -57,17 +57,20 @@ class SupabaseServicesManager:
         try:
             # Récupérer les services de admin_services_config
             services_response = self.supabase_client.table('admin_services_config').select('*').execute()
+            logger.info(f"📊 Services récupérés: {len(services_response.data)} entrées")
             
             # Récupérer les descriptions de ai_prompts
-            descriptions_response = self.supabase_client.table('ai_prompts').select('service_id, description').execute()
-            
-            # Debug: logger les descriptions récupérées
-            logger.info(f"📊 Descriptions récupérées: {len(descriptions_response.data)} entrées")
-            for desc in descriptions_response.data[:3]:  # Afficher les 3 premières
-                logger.info(f"  - {desc['service_id']}: {desc['description'][:50]}...")
-            
-            # Créer un dictionnaire des descriptions par service_id
-            descriptions = {row['service_id']: row['description'] for row in descriptions_response.data}
+            try:
+                descriptions_response = self.supabase_client.table('ai_prompts').select('service_id, description').execute()
+                logger.info(f"📊 Descriptions récupérées: {len(descriptions_response.data)} entrées")
+                for desc in descriptions_response.data[:3]:  # Afficher les 3 premières
+                    logger.info(f"  - {desc['service_id']}: {desc['description'][:50]}...")
+                
+                # Créer un dictionnaire des descriptions par service_id
+                descriptions = {row['service_id']: row['description'] for row in descriptions_response.data}
+            except Exception as desc_error:
+                logger.error(f"❌ Erreur récupération descriptions: {desc_error}")
+                descriptions = {}
             
             services = {}
             
@@ -102,6 +105,8 @@ class SupabaseServicesManager:
             
         except Exception as e:
             logger.error(f"❌ Erreur chargement Supabase: {e}")
+            import traceback
+            logger.error(f"❌ Traceback: {traceback.format_exc()}")
             return self._get_default_config()
     
     def update_service_visibility(self, service_id: str, visible: bool) -> bool:
@@ -591,8 +596,8 @@ class SupabaseServicesManager:
         
         return causes
 
-    def get_services_by_theme(self) -> Dict[str, List[str]]:
-        """Retourne les services groupés par thème"""
+    def get_services_by_theme(self) -> Dict[str, List[Dict]]:
+        """Retourne les services groupés par thème avec toutes les données"""
         services = self.get_all_services()
         themes = {}
         
@@ -601,7 +606,8 @@ class SupabaseServicesManager:
                 theme = service.get('theme', 'other')
                 if theme not in themes:
                     themes[theme] = []
-                themes[theme].append(service_id)
+                # Ajouter l'objet service complet au lieu de juste l'ID
+                themes[theme].append(service)
         
         return themes
     
