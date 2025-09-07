@@ -491,7 +491,7 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
               marginBottom: '2rem',
               boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
             }}>
-              <h2 style={{ marginBottom: '0.5rem', fontSize: '1.5rem' }}>
+              <h2 style={{ marginBottom: '0.5rem', fontSize: '1.5rem', color: 'white' }}>
               {`Score de compatibilité avec le poste de ${displayedTitle}`}
               </h2>
               <div style={{ fontSize: '4rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
