@@ -31,22 +31,20 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
       console.log('🎯 Données préchargées reçues:', preloadedData.substring(0, 100));
       const extractedScores = extractScoresFromResponse(preloadedData);
       
+      if (!extractedScores) {
+        console.error('❌ Impossible d\'extraire les scores depuis les données préchargées');
+        return;
+      }
+      
       const parsedAnalysis = {
-        scores: extractedScores || {
-          compatibilityScore: 75,
-          technical: 70,
-          soft: 80,
-          experience: 75,
-          education: 85,
-          culture: 70
-        },
+        scores: extractedScores,
         jobTitle: extractJobTitle(documentStatus.offre_emploi?.name),
         fullText: preloadedData,
-        hasValidScores: !!extractedScores,
+        hasValidScores: true,
         summary: preloadedData.substring(0, 300) + "..."
       };
 
-      console.log('🎯 Matching analysis traité:', parsedAnalysis);
+      console.log('🎯 Matching analysis traité depuis Supabase:', parsedAnalysis);
       setAnalysisData(parsedAnalysis);
     }
   }, [preloadedData]);
@@ -61,10 +59,9 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
       return null;
     }
 
-    console.log('📊 Extraction des scores depuis la réponse...');
+    console.log('📊 Extraction des scores depuis la réponse Supabase...');
     
-    // 1. Priorité au JSON final (le prompt se termine toujours par un bloc JSON)
-    // Chercher le dernier bloc JSON dans la réponse
+    // Chercher le JSON dans la réponse du prompt Supabase
     const jsonMatches = text.match(/```json\s*(\{[\s\S]*?\})\s*```/g);
     
     if (jsonMatches && jsonMatches.length > 0) {
@@ -75,7 +72,7 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
       if (jsonContent && jsonContent[1]) {
         try {
           const parsed = JSON.parse(jsonContent[1]);
-          console.log('✅ Scores extraits du JSON:', parsed);
+          console.log('✅ Scores extraits du JSON Supabase:', parsed);
           
           // Vérifier que tous les scores sont présents et valides
           const requiredScores = ['compatibilityScore', 'technical', 'soft', 'experience', 'education', 'culture'];
@@ -94,80 +91,17 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
             });
             return roundedScores;
           } else {
-            console.warn('⚠️ JSON trouvé mais scores incomplets ou invalides');
+            console.warn('⚠️ JSON Supabase trouvé mais scores incomplets ou invalides');
+            return null;
           }
         } catch (e) {
-          console.warn('⚠️ Erreur parsing JSON:', e);
-        }
-      }
-    }
-
-    // 2. Fallback : chercher les scores dans le texte avec des patterns
-    console.log('🔍 Recherche des scores par patterns...');
-    
-    const patterns = {
-      compatibilityScore: /Score\s+(?:Global|global)\s*:\s*(\d+)(?:\s*%)?/i,
-      technical: /(?:Score\s+)?(?:Technique|Technical|TECHNIQUE)\s*:\s*(\d+)(?:\s*%)?/i,
-      soft: /(?:Score\s+)?(?:Soft\s+Skills?|SOFT\s+SKILLS?)\s*:\s*(\d+)(?:\s*%)?/i,
-      experience: /(?:Score\s+)?(?:Expérience|Experience|EXPÉRIENCE)\s*:\s*(\d+)(?:\s*%)?/i,
-      education: /(?:Score\s+)?(?:Formation|Education|FORMATION)\s*:\s*(\d+)(?:\s*%)?/i,
-      culture: /(?:Score\s+)?(?:Culture?l?|CULTURE)\s*:\s*(\d+)(?:\s*%)?/i
-    };
-    
-    const extractedScores = {};
-    let foundCount = 0;
-    
-    for (const [key, pattern] of Object.entries(patterns)) {
-      const match = text.match(pattern);
-      if (match) {
-        const score = parseInt(match[1]);
-        if (score >= 0 && score <= 100) {
-          extractedScores[key] = score;
-          foundCount++;
-          console.log(`✓ ${key}: ${score}`);
+          console.warn('⚠️ Erreur parsing JSON Supabase:', e);
+          return null;
         }
       }
     }
     
-    // Si on a trouvé au moins 4 scores, on les utilise
-    if (foundCount >= 4) {
-      console.log('✅ Scores extraits par patterns:', extractedScores);
-      
-      // Ajouter des valeurs par défaut pour les scores manquants
-      if (!extractedScores.compatibilityScore && foundCount >= 3) {
-        // Calculer le score global s'il manque
-        const weights = { technical: 0.30, soft: 0.20, experience: 0.25, education: 0.15, culture: 0.10 };
-        let globalScore = 0;
-        let totalWeight = 0;
-        
-        for (const [key, weight] of Object.entries(weights)) {
-          if (extractedScores[key]) {
-            globalScore += extractedScores[key] * weight;
-            totalWeight += weight;
-          }
-        }
-        
-        if (totalWeight > 0) {
-          extractedScores.compatibilityScore = Math.round(globalScore / totalWeight);
-        }
-      }
-      
-      // Compléter les scores manquants avec des valeurs moyennes
-      const avgScore = Math.round(
-        Object.values(extractedScores).reduce((a, b) => a + b, 0) / Object.keys(extractedScores).length
-      );
-      
-      const allScores = ['compatibilityScore', 'technical', 'soft', 'experience', 'education', 'culture'];
-      allScores.forEach(key => {
-        if (!(key in extractedScores)) {
-          extractedScores[key] = avgScore;
-        }
-      });
-      
-      return extractedScores;
-    }
-    
-    console.warn('⚠️ Impossible d\'extraire suffisamment de scores, utilisation des valeurs par défaut');
+    console.warn('⚠️ Aucun JSON valide trouvé dans la réponse Supabase');
     return null;
   };
 
@@ -205,22 +139,19 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
         const analysisText = data.matching || data.response || "";
         const extractedScores = extractScoresFromResponse(analysisText);
         
+        if (!extractedScores) {
+          throw new Error('Impossible d\'extraire les scores depuis la réponse Supabase');
+        }
+        
         const parsedAnalysis = {
-          scores: extractedScores || {
-            compatibilityScore: 75,
-            technical: 70,
-            soft: 80,
-            experience: 75,
-            education: 85,
-            culture: 70
-          },
+          scores: extractedScores,
           jobTitle: extractJobTitle(documentStatus.offre_emploi?.name),
           fullText: analysisText,
-          hasValidScores: !!extractedScores,
+          hasValidScores: true,
           summary: analysisText.substring(0, 300) + "..."
         };
 
-        console.log('🎯 Matching analysis reçu:', parsedAnalysis);
+        console.log('🎯 Matching analysis reçu depuis Supabase:', parsedAnalysis);
         setAnalysisData(parsedAnalysis);
       } else {
         throw new Error(data.error || 'Erreur lors de l\'analyse');
