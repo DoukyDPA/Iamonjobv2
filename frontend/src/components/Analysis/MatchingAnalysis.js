@@ -110,28 +110,47 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
           console.log('🔍 Données finales après traitement:', data);
           console.log('🔍 Type de data:', typeof data, Array.isArray(data));
           
-          // Vérifier que tous les scores sont présents et valides
+          // Mapping des clés du JSON vers nos clés internes
+          const scoreMapping = {
+            'score_global': 'compatibilityScore',
+            'score_technique': 'technical',
+            'score_soft_skills': 'soft',
+            'score_experience': 'experience',
+            'score_formation': 'education',
+            'score_culture': 'culture'
+          };
+          
           const requiredScores = ['compatibilityScore', 'technical', 'soft', 'experience', 'education', 'culture'];
           
           // Log des scores trouvés pour debug
           console.log('🔍 Scores trouvés dans le JSON:', Object.keys(data));
           console.log('🔍 Valeurs complètes de data:', data);
-          requiredScores.forEach(key => {
-            console.log(`  ${key}:`, data[key], typeof data[key]);
-          });
           
           const validScores = {};
           let validCount = 0;
           
-          requiredScores.forEach(key => {
-            if (key in data && 
-                typeof data[key] === 'number' && 
-                data[key] >= 0 && 
-                data[key] <= 100) {
-              validScores[key] = Math.round(data[key]);
+          // Parcourir les clés du JSON et les mapper vers nos clés internes
+          Object.keys(scoreMapping).forEach(jsonKey => {
+            const internalKey = scoreMapping[jsonKey];
+            const value = data[jsonKey];
+            
+            console.log(`🔍 Mapping ${jsonKey} -> ${internalKey}:`, value, typeof value);
+            
+            // Gérer le cas spécial de "N/A" pour le score technique
+            if (jsonKey === 'score_technique' && value === 'N/A') {
+              console.log('⚠️ Score technique N/A, ignoré');
+              return;
+            }
+            
+            if (value !== null && value !== undefined && 
+                typeof value === 'number' && 
+                value >= 0 && 
+                value <= 100) {
+              validScores[internalKey] = Math.round(value);
               validCount++;
+              console.log(`✅ Score ${internalKey} mappé:`, validScores[internalKey]);
             } else {
-              console.warn(`⚠️ Score ${key} manquant ou invalide:`, data[key]);
+              console.warn(`⚠️ Score ${jsonKey} (${internalKey}) manquant ou invalide:`, value);
             }
           });
           
@@ -567,10 +586,6 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
         </div>
       )}
 
-      {/* Debug info */}
-      {console.log('🔍 analysisData dans le render:', analysisData)}
-      {console.log('🔍 analysisData.scores:', analysisData?.scores)}
-      {console.log('🔍 analysisData.fullText:', analysisData?.fullText)}
 
       {/* Résultats de l'analyse - EFFET WOW */}
       {analysisData && (
