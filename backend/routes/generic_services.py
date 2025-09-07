@@ -156,7 +156,7 @@ def handle_generic_service(service_id, request):
             "vv_video": {
                 "title": "CV Vidéo",
                 "output_key": "vv_video",
-                "action_type": "cv_video_response",
+                "action_type": "vv_video_response",
                 "requires_cv": True,
                 "requires_job": True,
                 "requires_questionnaire": True,
