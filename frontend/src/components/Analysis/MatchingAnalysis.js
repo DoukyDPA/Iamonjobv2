@@ -76,22 +76,34 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
           
           // Vérifier que tous les scores sont présents et valides
           const requiredScores = ['compatibilityScore', 'technical', 'soft', 'experience', 'education', 'culture'];
-          const hasAllScores = requiredScores.every(key => 
-            key in parsed && 
-            typeof parsed[key] === 'number' && 
-            parsed[key] >= 0 && 
-            parsed[key] <= 100
-          );
           
-          if (hasAllScores) {
-            // Arrondir les scores pour l'affichage
-            const roundedScores = {};
-            requiredScores.forEach(key => {
-              roundedScores[key] = Math.round(parsed[key]);
-            });
-            return roundedScores;
+          // Log des scores trouvés pour debug
+          console.log('🔍 Scores trouvés dans le JSON:', Object.keys(parsed));
+          requiredScores.forEach(key => {
+            console.log(`  ${key}:`, parsed[key], typeof parsed[key]);
+          });
+          
+          const validScores = {};
+          let validCount = 0;
+          
+          requiredScores.forEach(key => {
+            if (key in parsed && 
+                typeof parsed[key] === 'number' && 
+                parsed[key] >= 0 && 
+                parsed[key] <= 100) {
+              validScores[key] = Math.round(parsed[key]);
+              validCount++;
+            } else {
+              console.warn(`⚠️ Score ${key} manquant ou invalide:`, parsed[key]);
+            }
+          });
+          
+          // Accepter si on a au moins 4 scores valides
+          if (validCount >= 4) {
+            console.log('✅ Scores valides extraits:', validScores);
+            return validScores;
           } else {
-            console.warn('⚠️ JSON Supabase trouvé mais scores incomplets ou invalides');
+            console.warn('⚠️ Pas assez de scores valides trouvés:', validCount, 'sur', requiredScores.length);
             return null;
           }
         } catch (e) {
@@ -440,8 +452,9 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
       {/* Résultats de l'analyse */}
       {analysisData && (
         <div>
+
           {/* Score global en vedette */}
-          {analysisData.scores.compatibilityScore && (
+          {analysisData.scores && analysisData.scores.compatibilityScore && (
             <div style={{
               background: 'linear-gradient(135deg, #0f766e 0%, #0891b2 100%)',
               color: 'white',
@@ -545,6 +558,36 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
                 <SimpleMarkdownRenderer 
                   content={analysisData.fullText.replace(/```json[\s\S]*?```/g, '')} 
                 />
+              </div>
+            </div>
+          )}
+
+          {/* Fallback si pas de scores mais du texte */}
+          {!analysisData.scores && analysisData.fullText && (
+            <div style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '2rem',
+              marginBottom: '2rem',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              border: '1px solid #e5e7eb'
+            }}>
+              <h3 style={{
+                marginBottom: '1.5rem',
+                color: '#374151',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <FiCheckCircle />
+                Analyse de compatibilité
+              </h3>
+              <div style={{
+                fontSize: '1rem',
+                lineHeight: '1.6',
+                color: '#374151'
+              }}>
+                <SimpleMarkdownRenderer content={analysisData.fullText} />
               </div>
             </div>
           )}
