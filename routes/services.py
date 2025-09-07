@@ -83,7 +83,7 @@ def skills_analyze():
 @verify_jwt_token
 def cv_video_generate():
     """Génération CV vidéo"""
-    return handle_generic_service('cv_video', request)
+    return handle_generic_service('vv_video', request)
 
 @services_bp.route('/api/actions/compatibility', methods=['POST'])
 def matching_cv_offre_analysis():
