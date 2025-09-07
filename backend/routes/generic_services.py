@@ -153,9 +153,9 @@ def handle_generic_service(service_id, request):
                 "requires_questionnaire": True,
                 "allows_notes": True
             },
-            "cv_video": {
+            "vv_video": {
                 "title": "CV Vidéo",
-                "output_key": "cv_video",
+                "output_key": "vv_video",
                 "action_type": "cv_video_response",
                 "requires_cv": True,
                 "requires_job": True,
@@ -277,7 +277,7 @@ def handle_generic_service(service_id, request):
                     user_notes=user_notes,
                     force_new=force_new
                 )
-            elif service_id == "cv_video":
+            elif service_id == "vv_video":
                 # CORRECTION: Le service cv_video utilise le prompt vv_video
                 result = execute_ai_service(
                     service_id="vv_video",  # Utiliser le nom du prompt
