@@ -20,13 +20,13 @@ const ServicesGrid = ({ filterTheme = null }) => {
         setLoading(true);
         setError(null);
         
-        // Charger les services depuis l'API (même endpoint que l'admin)
-        const response = await fetch('/api/admin/services');
+        // Charger les services depuis l'API
+        const response = await fetch('/api/services/by-theme');
         const data = await response.json();
         
-        if (data.success && data.services) {
+        if (data.success && data.themes) {
           // Convertir les services Supabase au format attendu par le composant
-          const formattedServices = formatServicesFromAPI(data.services);
+          const formattedServices = formatServicesFromAPI(data.themes);
           
           if (filterTheme) {
             // Filtrer par thème
@@ -61,34 +61,30 @@ const ServicesGrid = ({ filterTheme = null }) => {
   }, [filterTheme]);
 
   // Formater les services de l'API au format attendu par le composant
-  const formatServicesFromAPI = (apiServices) => {
+  const formatServicesFromAPI = (apiThemes) => {
     const formatted = {};
     
     // Importer SERVICES_CONFIG pour le fallback
     const { SERVICES_CONFIG } = require('../../services/servicesConfig');
     
-    // Grouper les services par thème
-    Object.values(apiServices).forEach(service => {
-      const theme = service.theme || 'other';
-      if (!formatted[theme]) {
-        formatted[theme] = [];
-      }
-      
-      const serviceId = service.id;
-      const fallbackConfig = SERVICES_CONFIG[serviceId];
-      
-      formatted[theme].push({
-        id: serviceId,
-        title: service.title,
-        description: service.description || fallbackConfig?.description || '', // Description courte pour l'affichage
-        coachAdvice: service.coach_advice || fallbackConfig?.coachAdvice || '',
-        icon: getServiceIcon(theme),
-        requiresCV: service.requires_cv,
-        requiresJobOffer: service.requires_job_offer,
-        requiresQuestionnaire: service.requires_questionnaire,
-        difficulty: service.difficulty,
-        visible: service.visible,
-        featured: service.featured
+    Object.entries(apiThemes).forEach(([theme, services]) => {
+      formatted[theme] = services.map(service => {
+        const serviceId = service.service_id;
+        const fallbackConfig = SERVICES_CONFIG[serviceId];
+        
+        return {
+          id: serviceId,
+          title: service.title,
+          description: service.description || fallbackConfig?.description || '', // Description courte pour l'affichage
+          coachAdvice: service.coach_advice || fallbackConfig?.coachAdvice || '',
+          icon: getServiceIcon(service.theme),
+          requiresCV: service.requires_cv,
+          requiresJobOffer: service.requires_job_offer,
+          requiresQuestionnaire: service.requires_questionnaire,
+          difficulty: service.difficulty,
+          visible: service.visible,
+          featured: service.featured
+        };
       });
     });
     
