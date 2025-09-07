@@ -606,8 +606,9 @@ class SupabaseServicesManager:
                 theme = service.get('theme', 'other')
                 if theme not in themes:
                     themes[theme] = []
-                # Ajouter l'objet service complet au lieu de juste l'ID
-                themes[theme].append(service)
+                # Ajouter l'objet service complet avec service_id pour compatibilité
+                service_with_id = {**service, 'service_id': service_id}
+                themes[theme].append(service_with_id)
         
         return themes
     
