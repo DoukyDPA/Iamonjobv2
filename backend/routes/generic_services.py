@@ -278,9 +278,9 @@ def handle_generic_service(service_id, request):
                     force_new=force_new
                 )
             elif service_id == "vv_video":
-                # CORRECTION: Le service cv_video utilise le prompt vv_video
+                # Le service vv_video utilise le prompt vv_video
                 result = execute_ai_service(
-                    service_id="vv_video",  # Utiliser le nom du prompt
+                    service_id="vv_video",
                     cv_content=cv_content,
                     job_content=job_content,
                     questionnaire_content=questionnaire_content,
