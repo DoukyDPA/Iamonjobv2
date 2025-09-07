@@ -352,7 +352,7 @@ export const SERVICES_CONFIG = {
     requiresJobOffer: true,
     requiresQuestionnaire: true,
     allowsNotes: true,
-    outputType: 'cv_video',
+    outputType: 'vv_video',
     storageKey: 'iamonjob_cv_video',
     actionType: 'cv_video_response',
     apiEndpoint: '/api/cv-video/generate',
