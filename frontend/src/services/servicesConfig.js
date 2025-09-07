@@ -354,7 +354,7 @@ export const SERVICES_CONFIG = {
     allowsNotes: true,
     outputType: 'vv_video',
     storageKey: 'iamonjob_cv_video',
-    actionType: 'cv_video_response',
+    actionType: 'vv_video_response',
     apiEndpoint: '/api/cv-video/generate',
     tabs: [
       { id: 'script', label: 'Script', icon: '📝' },
