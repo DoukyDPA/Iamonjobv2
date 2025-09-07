@@ -165,45 +165,55 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
     }
   };
 
-  // Composant de score circulaire
-  const CircularScore = ({ score, label, color }) => {
-    const radius = 35;
+  // Composant de score circulaire amélioré
+  const CircularScore = ({ score, label, color, weight }) => {
+    const radius = 40;
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - (score / 100) * circumference;
+
+    const getScoreLabel = (score) => {
+      if (score >= 90) return 'Excellent';
+      if (score >= 80) return 'Très bon';
+      if (score >= 70) return 'Bon';
+      if (score >= 60) return 'Moyen';
+      if (score >= 50) return 'Faible';
+      return 'Très faible';
+    };
 
     return (
       <div style={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        margin: '1rem',
-        padding: '1rem',
+        margin: '0.5rem',
+        padding: '1.5rem',
         background: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        minWidth: '120px'
+        borderRadius: '16px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+        minWidth: '140px',
+        border: `2px solid ${color}20`
       }}>
-        <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
-          <svg width="80" height="80" style={{ transform: 'rotate(-90deg)' }}>
+        <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
+          <svg width="90" height="90" style={{ transform: 'rotate(-90deg)' }}>
             <circle
-              cx="40"
-              cy="40"
+              cx="45"
+              cy="45"
               r={radius}
               stroke="#e5e7eb"
-              strokeWidth="6"
+              strokeWidth="8"
               fill="transparent"
             />
             <circle
-              cx="40"
-              cy="40"
+              cx="45"
+              cy="45"
               r={radius}
               stroke={color}
-              strokeWidth="6"
+              strokeWidth="8"
               fill="transparent"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
-              style={{ transition: 'stroke-dashoffset 1s ease-in-out' }}
+              style={{ transition: 'stroke-dashoffset 0.8s ease' }}
             />
           </svg>
           <div style={{
@@ -211,21 +221,40 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
+            fontSize: '1.4rem',
             fontWeight: 'bold',
-            fontSize: '1.2rem',
             color: color
           }}>
-            {score}
+            {score}%
           </div>
         </div>
         <div style={{
-          textAlign: 'center',
-          fontSize: '0.9rem',
+          fontSize: '1rem',
+          fontWeight: '700',
           color: '#374151',
-          fontWeight: '500'
+          textAlign: 'center',
+          marginBottom: '0.25rem'
         }}>
           {label}
         </div>
+        <div style={{
+          fontSize: '0.8rem',
+          color: color,
+          fontWeight: '600',
+          textAlign: 'center',
+          marginBottom: '0.25rem'
+        }}>
+          {getScoreLabel(score)}
+        </div>
+        {weight && (
+          <div style={{
+            fontSize: '0.7rem',
+            color: '#6b7280',
+            textAlign: 'center'
+          }}>
+            Pondération: {weight}%
+          </div>
+        )}
       </div>
     );
   };
@@ -429,8 +458,30 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
                 {analysisData.scores.compatibilityScore}/100
               </div>
               <p style={{ fontSize: '1.1rem', opacity: 0.9 }}>
-                Analyse professionnelle complète
+                {analysisData.scores.compatibilityScore >= 85 ? 'Excellent match' : 
+                 analysisData.scores.compatibilityScore >= 70 ? 'Bon match' :
+                 analysisData.scores.compatibilityScore >= 50 ? 'Match moyen' : 'Match faible'}
               </p>
+            </div>
+          )}
+
+          {/* Analyse détaillée en markdown */}
+          {analysisData.fullText && (
+            <div style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '2rem',
+              marginBottom: '2rem',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              border: '1px solid #e5e7eb'
+            }}>
+              <div style={{
+                fontSize: '1rem',
+                lineHeight: '1.6',
+                color: '#374151'
+              }}>
+                <SimpleMarkdownRenderer content={analysisData.fullText} />
+              </div>
             </div>
           )}
 
@@ -448,7 +499,7 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
               
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
                 gap: '1rem',
                 justifyItems: 'center'
               }}>
@@ -463,12 +514,21 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
                       culture: 'Culture'
                     };
                     
+                    const weights = {
+                      technical: 30,
+                      soft: 20,
+                      experience: 25,
+                      education: 15,
+                      culture: 10
+                    };
+                    
                     return (
                       <CircularScore
                         key={key}
                         score={score}
                         label={labels[key] || key}
                         color={getScoreColor(score)}
+                        weight={weights[key]}
                       />
                     );
                   })}
@@ -476,39 +536,6 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
             </div>
           )}
 
-          {/* Analyse textuelle complète */}
-          <div style={{
-            background: 'white',
-            padding: '2rem',
-            borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}>
-            <h3 style={{
-              marginBottom: '1.5rem',
-              color: '#374151',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}>
-              <FiCheckCircle />
-              Analyse détaillée
-            </h3>
-            
-            <SimpleMarkdownRenderer content={analysisData.fullText} />
-            
-            {!analysisData.hasValidScores && (
-              <div style={{
-                background: '#fef3c7',
-                padding: '1rem',
-                borderRadius: '8px',
-                marginTop: '1rem',
-                fontSize: '0.9rem',
-                color: '#92400e'
-              }}>
-                💡 Les scores affichés sont des estimations. L'analyse textuelle contient l'évaluation détaillée.
-              </div>
-            )}
-          </div>
 
           {/* Bouton nouvelle analyse */}
           <div style={{ marginTop: '2rem', textAlign: 'center' }}>
