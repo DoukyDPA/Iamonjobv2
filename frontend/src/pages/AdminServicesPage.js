@@ -11,17 +11,6 @@ import { SERVICES_CONFIG } from '../services/servicesConfig';
 import toast from 'react-hot-toast';
 
 const AdminServicesPage = () => {
-  console.log('🔧 AdminServicesPage component loaded');
-  
-  // Test simple pour voir si le composant se charge
-  return (
-    <div style={{ padding: '2rem', textAlign: 'center' }}>
-      <h1>🔧 Admin Services - TEST</h1>
-      <p>Si vous voyez ce message, le composant se charge !</p>
-      <p>Timestamp: {new Date().toLocaleString()}</p>
-    </div>
-  );
-  
   const [activeTab, setActiveTab] = useState('services');
   const [services, setServices] = useState({});
   const [themes, setThemes] = useState({});
