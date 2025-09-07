@@ -532,7 +532,7 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
                     fontSize: '0.9rem', 
                     lineHeight: '1.4' 
                   }}>
-                    Ajoutez des détails personnels, exemples concrets ou contraintes pour personnaliser l'analyse de l'IA.
+                    Ajoutez des détails personnels, exemples concrets ou contraintes pour personnaliser encore mieux l'analyse.
                   </p>
                   <textarea
                     value={userNotes}
