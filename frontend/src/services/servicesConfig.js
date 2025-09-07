@@ -324,6 +324,7 @@ export const SERVICES_CONFIG = {
     title: 'Analyse d\'offre d\'emploi',
     shortTitle: 'Analyse offre',
     icon: '🔍',
+    description: "Décryptez les offres d'emploi pour mieux candidater et identifier les vraies priorités du poste.",
     coachAdvice: "Iamonjob vous aide à décoder les offres d'emploi au-delà des mots : vraies priorités du poste, compétences négociables vs critiques, signaux sur la culture d'entreprise. Vous saurez où mettre l'accent. Utilisez cette analyse pour personnaliser chirurgicalement votre candidature. Reprenez le vocabulaire exact de l'offre, insistez sur les points critiques identifiés, anticipez les questions probables. L'IA décrypte les attentes mais c'est votre adéquation réelle qui compte. Ne forcez pas le match si l'écart est trop grand. Mieux vaut une compatibilité vraie qu'un maquillage qui tombera en entretien.",
     requiresCV: true,
     requiresJobOffer: true,
@@ -340,8 +341,8 @@ export const SERVICES_CONFIG = {
     ]
   },
 
-  cv_video: {
-    id: 'cv_video',
+  vv_video: {
+    id: 'vv_video',
     title: 'CV Vidéo - Présentez-vous en vidéo',
     shortTitle: 'CV Vidéo',
     icon: '🎥',
@@ -373,7 +374,7 @@ export const getServicesByCategory = () => {
     evaluate_offer: ['matching_cv_offre', 'analyse_emploi'],
     improve_cv: ['analyze_cv', 'cv_ats_optimization'],
     apply_jobs: ['cover_letter_advice', 'cover_letter_generate', 'follow_up_email'],
-    interview_prep: ['professional_pitch', 'interview_prep', 'salary_negotiation', 'cv_video'],
+    interview_prep: ['professional_pitch', 'interview_prep', 'salary_negotiation', 'vv_video'],
     career_project: ['skills_analysis', 'reconversion_analysis', 'career_transition', 'industry_orientation']
   };
   
