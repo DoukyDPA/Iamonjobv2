@@ -482,15 +482,15 @@ const Dashboard = () => {
               <LogoIcon size={32} />
               Vos Documents pour personnaliser l'analyse
             </h2>
-            <button 
-              onClick={() => setShowAdviceModal(true)}
-              style={{
-                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                color: '#92400e',
-                border: 'none',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '8px',
-                fontWeight: '600',
+              <button 
+                onClick={() => setShowAdviceModal(true)}
+                style={{
+                  background: 'white',
+                  color: '#0a6b79',
+                  border: '1px solid #0a6b79',
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '8px',
+                  fontWeight: '600',
                 cursor: 'pointer',
                 fontSize: '0.9rem',
                 display: 'flex',
@@ -704,7 +704,7 @@ const Dashboard = () => {
                 onClick={() => setShowQuestionnaireModal(true)}
                 style={{
                   width: '100%',
-                  background: '#f59e0b',
+                  background: '#0a6b79',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
