@@ -64,18 +64,25 @@ const ServicesGrid = ({ filterTheme = null }) => {
   const formatServicesFromAPI = (apiThemes) => {
     const formatted = {};
     
+    // Importer SERVICES_CONFIG pour le fallback
+    const { SERVICES_CONFIG } = require('../../services/servicesConfig');
+    
     Object.entries(apiThemes).forEach(([theme, services]) => {
       formatted[theme] = services.map(service => {
+        const serviceId = service.service_id;
+        const fallbackConfig = SERVICES_CONFIG[serviceId];
+        
         return {
-          id: service.service_id, // Utiliser service_id pour les URLs
+          id: serviceId,
           title: service.title,
-          description: service.description || '', // Description courte pour l'affichage (Supabase uniquement)
-          coachAdvice: service.coach_advice || '', // Conseils du coach (Supabase uniquement)
+          description: service.description || fallbackConfig?.description || '', // Description courte pour l'affichage
+          coachAdvice: service.coach_advice || fallbackConfig?.coachAdvice || '',
           icon: getServiceIcon(service.theme),
           requiresCV: service.requires_cv,
           requiresJobOffer: service.requires_job_offer,
           requiresQuestionnaire: service.requires_questionnaire,
           difficulty: service.difficulty,
+          // durationMinutes removed - not needed
           visible: service.visible,
           featured: service.featured
         };
@@ -297,7 +304,7 @@ const ServicesGrid = ({ filterTheme = null }) => {
     );
   }
 
-  const renderServiceCard = (service) => {
+    const renderServiceCard = (service) => {
     const { canExecute, missingDocs } = canExecuteService(service);
     
     return (
@@ -320,7 +327,7 @@ const ServicesGrid = ({ filterTheme = null }) => {
           </div>
           <div className="revolutionary-service-content">
             <h4 className="revolutionary-service-title">{service.title}</h4>
-            <p className="revolutionary-service-description">{service.description}</p>
+            <p className="revolutionary-service-description">{service.description || service.coachAdvice}</p>
             {!canExecute && (
               <div className="revolutionary-service-missing">
                 <p className="revolutionary-service-missing-text">
@@ -339,6 +346,8 @@ const ServicesGrid = ({ filterTheme = null }) => {
       </Link>
     );
   };
+
+
 
   // Si un thème est filtré, afficher directement les services de ce thème
   if (filterTheme) {
