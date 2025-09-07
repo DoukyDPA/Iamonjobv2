@@ -23,7 +23,7 @@ export const URL_TO_SERVICE_MAPPING = {
   'analyze-cv': 'analyze_cv',
   'analyse-emploi': 'analyse_emploi',
   'skills-analysis': 'skills_analysis',
-  'vv-video': 'vv_video'
+  'cv-video': 'vv_video'
 };
 
 // Configuration des services basée sur l'admin
