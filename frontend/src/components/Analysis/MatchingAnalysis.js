@@ -105,28 +105,36 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
         try {
           const parsed = JSON.parse(jsonContent[1]);
           console.log('✅ Scores extraits du JSON Supabase:', parsed);
+          console.log('🔍 Type de parsed:', typeof parsed, Array.isArray(parsed));
+          console.log('🔍 Structure complète du JSON:', JSON.stringify(parsed, null, 2));
+          
+          // Si c'est un tableau, prendre le premier élément
+          const data = Array.isArray(parsed) ? parsed[0] : parsed;
+          console.log('🔍 Données finales après traitement:', data);
+          console.log('🔍 Type de data:', typeof data, Array.isArray(data));
           
           // Vérifier que tous les scores sont présents et valides
           const requiredScores = ['compatibilityScore', 'technical', 'soft', 'experience', 'education', 'culture'];
           
           // Log des scores trouvés pour debug
-          console.log('🔍 Scores trouvés dans le JSON:', Object.keys(parsed));
+          console.log('🔍 Scores trouvés dans le JSON:', Object.keys(data));
+          console.log('🔍 Valeurs complètes de data:', data);
           requiredScores.forEach(key => {
-            console.log(`  ${key}:`, parsed[key], typeof parsed[key]);
+            console.log(`  ${key}:`, data[key], typeof data[key]);
           });
           
           const validScores = {};
           let validCount = 0;
           
           requiredScores.forEach(key => {
-            if (key in parsed && 
-                typeof parsed[key] === 'number' && 
-                parsed[key] >= 0 && 
-                parsed[key] <= 100) {
-              validScores[key] = Math.round(parsed[key]);
+            if (key in data && 
+                typeof data[key] === 'number' && 
+                data[key] >= 0 && 
+                data[key] <= 100) {
+              validScores[key] = Math.round(data[key]);
               validCount++;
             } else {
-              console.warn(`⚠️ Score ${key} manquant ou invalide:`, parsed[key]);
+              console.warn(`⚠️ Score ${key} manquant ou invalide:`, data[key]);
             }
           });
           
@@ -760,6 +768,30 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
             </div>
           )}
 
+          {/* Message d'erreur si pas de scores */}
+          {!analysisData.scores && (
+            <div style={{
+              background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+              padding: '2rem',
+              borderRadius: '16px',
+              boxShadow: '0 4px 12px rgba(239, 68, 68, 0.1)',
+              border: '1px solid #fecaca',
+              marginBottom: '2rem',
+              textAlign: 'center'
+            }}>
+              <FiAlertTriangle style={{ fontSize: '2rem', color: '#dc2626', marginBottom: '1rem' }} />
+              <h3 style={{ color: '#dc2626', marginBottom: '1rem', fontSize: '1.2rem' }}>
+                ⚠️ Problème d'extraction des scores
+              </h3>
+              <p style={{ color: '#991b1b', marginBottom: '1rem' }}>
+                Les scores de compatibilité n'ont pas pu être extraits de la réponse de l'IA.
+              </p>
+              <p style={{ color: '#991b1b', fontSize: '0.9rem' }}>
+                Vérifiez la console pour plus de détails sur le format du JSON reçu.
+              </p>
+            </div>
+          )}
+
           {/* Analyse détaillée en markdown - EN DEUXIÈME */}
           {analysisData.fullText && (
             <div style={{
@@ -785,42 +817,13 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
                 lineHeight: '1.6',
                 color: '#374151'
               }}>
-                <SimpleMarkdownRenderer 
-                  content={analysisData.fullText.replace(/```json[\s\S]*?```/g, '')} 
+                <SimpleMarkdownRenderer
+                  content={analysisData.fullText.replace(/```json[\s\S]*?```/g, '')}
                 />
               </div>
             </div>
           )}
 
-          {/* Fallback si pas de scores mais du texte */}
-          {!analysisData.scores && analysisData.fullText && (
-            <div style={{
-              background: 'white',
-              borderRadius: '12px',
-              padding: '2rem',
-              marginBottom: '2rem',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              border: '1px solid #e5e7eb'
-            }}>
-              <h3 style={{
-                marginBottom: '1.5rem',
-                color: '#374151',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                <FiCheckCircle />
-                Analyse de compatibilité
-              </h3>
-              <div style={{
-                fontSize: '1rem',
-                lineHeight: '1.6',
-                color: '#374151'
-              }}>
-                <SimpleMarkdownRenderer content={analysisData.fullText} />
-              </div>
-            </div>
-          )}
 
 
           {/* Bouton nouvelle analyse */}
