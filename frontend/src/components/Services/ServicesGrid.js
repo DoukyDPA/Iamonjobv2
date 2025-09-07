@@ -20,13 +20,13 @@ const ServicesGrid = ({ filterTheme = null }) => {
         setLoading(true);
         setError(null);
         
-        // Charger les services depuis l'API
-        const response = await fetch('/api/services/by-theme');
+        // Charger les services depuis l'API (même endpoint que l'admin)
+        const response = await fetch('/api/admin/services');
         const data = await response.json();
         
-        if (data.success && data.themes) {
+        if (data.success && data.services) {
           // Convertir les services Supabase au format attendu par le composant
-          const formattedServices = formatServicesFromAPI(data.themes);
+          const formattedServices = formatServicesFromAPI(data.services);
           
           if (filterTheme) {
             // Filtrer par thème
@@ -61,24 +61,28 @@ const ServicesGrid = ({ filterTheme = null }) => {
   }, [filterTheme]);
 
   // Formater les services de l'API au format attendu par le composant
-  const formatServicesFromAPI = (apiThemes) => {
+  const formatServicesFromAPI = (apiServices) => {
     const formatted = {};
     
-    Object.entries(apiThemes).forEach(([theme, services]) => {
-      formatted[theme] = services.map(service => {
-        return {
-          id: service.service_id,
-          title: service.title,
-          description: service.description || '', // Description courte pour l'affichage (Supabase uniquement)
-          coachAdvice: service.coach_advice || '', // Conseils du coach (Supabase uniquement)
-          icon: getServiceIcon(service.theme),
-          requiresCV: service.requires_cv,
-          requiresJobOffer: service.requires_job_offer,
-          requiresQuestionnaire: service.requires_questionnaire,
-          difficulty: service.difficulty,
-          visible: service.visible,
-          featured: service.featured
-        };
+    // Grouper les services par thème
+    Object.values(apiServices).forEach(service => {
+      const theme = service.theme || 'other';
+      if (!formatted[theme]) {
+        formatted[theme] = [];
+      }
+      
+      formatted[theme].push({
+        id: service.id,
+        title: service.title,
+        description: service.description || '', // Description courte pour l'affichage (Supabase uniquement)
+        coachAdvice: service.coach_advice || '', // Conseils du coach (Supabase uniquement)
+        icon: getServiceIcon(theme),
+        requiresCV: service.requires_cv,
+        requiresJobOffer: service.requires_job_offer,
+        requiresQuestionnaire: service.requires_questionnaire,
+        difficulty: service.difficulty,
+        visible: service.visible,
+        featured: service.featured
       });
     });
     
