@@ -67,16 +67,28 @@ def get_visible_services():
 
 @services_api.route('/by-theme', methods=['GET'])
 def get_services_by_theme():
-    """Récupérer les services groupés par thème"""
+    """Récupérer les services groupés par thème avec descriptions"""
     try:
-        # Récupérer les services groupés par thème depuis Supabase
-        services_by_theme = services_manager.get_services_by_theme()
-        
-        return jsonify({
-            "success": True,
-            "themes": services_by_theme,
-            "count": sum(len(services) for services in services_by_theme.values())
-        }), 200
+        # Utiliser le même manager que l'admin pour récupérer les descriptions
+        try:
+            from backend.admin.supabase_services_manager import supabase_services_manager
+            services_by_theme = supabase_services_manager.get_services_by_theme()
+            
+            return jsonify({
+                "success": True,
+                "themes": services_by_theme,
+                "count": sum(len(services) for services in services_by_theme.values())
+            }), 200
+        except ImportError:
+            # Fallback vers l'ancien manager
+            services_by_theme = services_manager.get_services_by_theme()
+            
+            return jsonify({
+                "success": True,
+                "themes": services_by_theme,
+                "count": sum(len(services) for services in services_by_theme.values())
+            }), 200
+            
     except Exception as e:
         return jsonify({
             "success": False,
