@@ -20,13 +20,13 @@ const ServicesGrid = ({ filterTheme = null }) => {
         setLoading(true);
         setError(null);
         
-        // Charger les services depuis l'API (même endpoint que l'admin)
-        const response = await fetch('/api/admin/services');
+        // Charger les services depuis l'API
+        const response = await fetch('/api/services/by-theme');
         const data = await response.json();
         
-        if (data.success && data.services) {
+        if (data.success && data.themes) {
           // Convertir les services Supabase au format attendu par le composant
-          const formattedServices = formatServicesFromAPI(data.services);
+          const formattedServices = formatServicesFromAPI(data.themes);
           
           if (filterTheme) {
             // Filtrer par thème
@@ -45,8 +45,8 @@ const ServicesGrid = ({ filterTheme = null }) => {
       } catch (error) {
         console.error('Erreur chargement services:', error);
         setError(error.message);
-        // Pas de fallback - Supabase est la seule source de vérité
-        setServicesByCategory({});
+        // Fallback avec configuration locale si l'API échoue
+        setServicesByCategory(getFallbackServices());
       } finally {
         setLoading(false);
       }
@@ -61,28 +61,31 @@ const ServicesGrid = ({ filterTheme = null }) => {
   }, [filterTheme]);
 
   // Formater les services de l'API au format attendu par le composant
-  const formatServicesFromAPI = (apiServices) => {
+  const formatServicesFromAPI = (apiThemes) => {
     const formatted = {};
     
-    // Grouper les services par thème
-    Object.values(apiServices).forEach(service => {
-      const theme = service.theme || 'other';
-      if (!formatted[theme]) {
-        formatted[theme] = [];
-      }
-      
-      formatted[theme].push({
-        id: service.id,
-        title: service.title,
-        description: service.description || '', // Description courte pour l'affichage (Supabase uniquement)
-        coachAdvice: service.coach_advice || '', // Conseils du coach (Supabase uniquement)
-        icon: getServiceIcon(theme),
-        requiresCV: service.requires_cv,
-        requiresJobOffer: service.requires_job_offer,
-        requiresQuestionnaire: service.requires_questionnaire,
-        difficulty: service.difficulty,
-        visible: service.visible,
-        featured: service.featured
+    // Importer SERVICES_CONFIG pour le fallback
+    const { SERVICES_CONFIG } = require('../../services/servicesConfig');
+    
+    Object.entries(apiThemes).forEach(([theme, services]) => {
+      formatted[theme] = services.map(service => {
+        const serviceId = service.service_id;
+        const fallbackConfig = SERVICES_CONFIG[serviceId];
+        
+        return {
+          id: serviceId,
+          title: service.title,
+          description: service.description || fallbackConfig?.description || '', // Description courte pour l'affichage
+          coachAdvice: service.coach_advice || fallbackConfig?.coachAdvice || '',
+          icon: getServiceIcon(service.theme),
+          requiresCV: service.requires_cv,
+          requiresJobOffer: service.requires_job_offer,
+          requiresQuestionnaire: service.requires_questionnaire,
+          difficulty: service.difficulty,
+          // durationMinutes removed - not needed
+          visible: service.visible,
+          featured: service.featured
+        };
       });
     });
     
@@ -102,6 +105,140 @@ const ServicesGrid = ({ filterTheme = null }) => {
     return iconMap[theme] || <LogoIcon size={20} />;
   };
 
+  // Configuration de fallback si l'API échoue
+  const getFallbackServices = () => {
+    return {
+      evaluate_offer: [
+        {
+          id: 'matching_cv_offre',
+          title: 'Compatibilité CV-Offre',
+          coachAdvice: 'Découvrez votre taux de compatibilité avec une offre d\'emploi',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: true,
+          requiresQuestionnaire: false
+        },
+        {
+          id: 'analyse_emploi',
+          title: 'Analysez une offre d\'emploi',
+          coachAdvice: 'Décryptez les offres d\'emploi pour mieux candidater',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: true,
+          requiresQuestionnaire: false
+        }
+      ],
+      optimize_profile: [
+        {
+          id: 'analyze_cv',
+          title: 'Analyse de CV',
+          coachAdvice: 'Laissez notre IA analyser votre CV et obtenir des recommandations personnalisées',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: false,
+          requiresQuestionnaire: false
+        }
+      ],
+      apply_jobs: [
+        {
+          id: 'job_application',
+          title: 'Candidature optimisée',
+          coachAdvice: 'Optimisez votre candidature pour maximiser vos chances',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: true,
+          requiresQuestionnaire: false
+        },
+        {
+          id: 'cover_letter',
+          title: 'Lettre de motivation',
+          coachAdvice: 'Rédigez une lettre de motivation percutante',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: true,
+          requiresQuestionnaire: false
+        },
+        {
+          id: 'linkedin_optimization',
+          title: 'Optimiser LinkedIn',
+          coachAdvice: 'Améliorez votre profil LinkedIn pour attirer les recruteurs',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: false,
+          requiresQuestionnaire: false
+        }
+      ],
+      improve_cv: [
+        {
+          id: 'analyze_cv',
+          title: 'Analyse de CV',
+          coachAdvice: 'Laissez notre IA analyser votre CV et obtenir des recommandations personnalisées',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: false,
+          requiresQuestionnaire: false
+        },
+        {
+          id: 'cv_ats_optimization',
+          title: 'Optimisez votre CV pour les ATS',
+          coachAdvice: 'Améliorez votre CV pour passer les systèmes de recrutement automatisés',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: true,
+          requiresQuestionnaire: false
+        }
+      ],
+      interview_prep: [
+        {
+          id: 'interview_prep',
+          title: 'Conseils entretien',
+          coachAdvice: 'Préparez-vous efficacement pour vos entretiens d\'embauche',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: true,
+          requiresQuestionnaire: false
+        },
+        {
+          id: 'salary_negotiation',
+          title: 'Négociez votre salaire',
+          coachAdvice: 'Apprenez les techniques pour négocier votre salaire efficacement',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: true,
+          requiresQuestionnaire: true
+        }
+      ],
+      career_project: [
+        {
+          id: 'career_transition',
+          title: 'Vers quel métier ?',
+          coachAdvice: 'Découvrez les métiers qui correspondent à votre profil',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: false,
+          requiresQuestionnaire: true
+        },
+        {
+          id: 'reconversion_analysis',
+          title: 'Idées de reconversion',
+          coachAdvice: 'Explorez les possibilités de reconversion professionnelle',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: false,
+          requiresQuestionnaire: true
+        },
+        {
+          id: 'skills_analysis',
+          title: 'Évaluer compétences',
+          coachAdvice: 'Évaluez vos compétences et identifiez vos points forts',
+          icon: <LogoIcon size={20} />,
+          requiresCV: true,
+          requiresJobOffer: false,
+          requiresQuestionnaire: true
+        }
+      ]
+    };
+  };
 
   // Vérifier si un service peut être exécuté
   const canExecuteService = (service) => {
@@ -190,7 +327,7 @@ const ServicesGrid = ({ filterTheme = null }) => {
           </div>
           <div className="revolutionary-service-content">
             <h4 className="revolutionary-service-title">{service.title}</h4>
-            <p className="revolutionary-service-description">{service.description}</p>
+            <p className="revolutionary-service-description">{service.description || service.coachAdvice}</p>
             {!canExecute && (
               <div className="revolutionary-service-missing">
                 <p className="revolutionary-service-missing-text">
