@@ -248,14 +248,6 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
       return 'Très faible';
     };
 
-    const getScoreEmoji = (score) => {
-      if (score >= 90) return '🔥';
-      if (score >= 80) return '⭐';
-      if (score >= 70) return '👍';
-      if (score >= 60) return '👌';
-      if (score >= 50) return '⚠️';
-      return '❌';
-    };
 
     return (
       <div style={{
@@ -377,14 +369,9 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
             color: color,
             fontWeight: '600',
             textAlign: 'center',
-            marginBottom: '0.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.25rem'
+            marginBottom: '0.5rem'
           }}>
-            <span>{getScoreEmoji(score)}</span>
-            <span>{getScoreLabel(score)}</span>
+            {getScoreLabel(score)}
           </div>
           
           {/* Pondération */}
@@ -398,7 +385,7 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
               borderRadius: '12px',
               fontWeight: '500'
             }}>
-              {weight}% du score global
+              Poids: {weight}%
             </div>
           )}
         </div>
@@ -628,7 +615,7 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
                   marginBottom: '1rem',
                   opacity: 0.9
                 }}>
-                  🎯 Score de compatibilité
+                  Score de compatibilité
                 </div>
                 <h2 style={{ 
                   marginBottom: '1rem', 
@@ -660,9 +647,9 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
                   marginBottom: '1.5rem',
                   textShadow: '0 2px 4px rgba(0,0,0,0.3)'
                 }}>
-                  {analysisData.scores.compatibilityScore >= 85 ? '🌟 Excellent match' : 
-                   analysisData.scores.compatibilityScore >= 70 ? '✅ Bon match' :
-                   analysisData.scores.compatibilityScore >= 50 ? '⚠️ Match moyen' : '❌ Match faible'}
+                  {analysisData.scores.compatibilityScore >= 85 ? 'Excellent match' : 
+                   analysisData.scores.compatibilityScore >= 70 ? 'Bon match' :
+                   analysisData.scores.compatibilityScore >= 50 ? 'Match moyen' : 'Match faible'}
                 </div>
                 
                 {/* Barre de progression */}
@@ -730,7 +717,7 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent'
                 }}>
-                  📊 Analyse détaillée par domaine
+                  Analyse détaillée par domaine
                 </h3>
                 
                 <div style={{
@@ -759,11 +746,11 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
                       };
                       
                       const icons = {
-                        technical: '⚙️',
+                        technical: '⚙',
                         soft: '🤝',
                         experience: '💼',
                         education: '🎓',
-                        culture: '🌟'
+                        culture: '⭐'
                       };
                       
                       return (
@@ -798,7 +785,7 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
             }}>
               <FiAlertTriangle style={{ fontSize: '2rem', color: '#dc2626', marginBottom: '1rem' }} />
               <h3 style={{ color: '#dc2626', marginBottom: '1rem', fontSize: '1.2rem' }}>
-                ⚠️ Problème d'extraction des scores
+                Problème d'extraction des scores
               </h3>
               <p style={{ color: '#991b1b', marginBottom: '1rem' }}>
                 Les scores de compatibilité n'ont pas pu être extraits de la réponse de l'IA.
