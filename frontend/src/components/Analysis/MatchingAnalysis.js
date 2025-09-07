@@ -63,16 +63,13 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
       console.log('🎯 Données préchargées reçues:', preloadedData.substring(0, 100));
       const extractedScores = extractScoresFromResponse(preloadedData);
       
-      if (!extractedScores) {
-        console.error('❌ Impossible d\'extraire les scores depuis les données préchargées');
-        return;
-      }
+      console.log('🔍 Scores extraits:', extractedScores);
       
       const parsedAnalysis = {
         scores: extractedScores,
         jobTitle: extractJobTitle(documentStatus.offre_emploi?.name),
         fullText: preloadedData,
-        hasValidScores: true,
+        hasValidScores: !!extractedScores,
         summary: preloadedData.substring(0, 300) + "..."
       };
 
@@ -569,6 +566,11 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
           </button>
         </div>
       )}
+
+      {/* Debug info */}
+      {console.log('🔍 analysisData dans le render:', analysisData)}
+      {console.log('🔍 analysisData.scores:', analysisData?.scores)}
+      {console.log('🔍 analysisData.fullText:', analysisData?.fullText)}
 
       {/* Résultats de l'analyse - EFFET WOW */}
       {analysisData && (
