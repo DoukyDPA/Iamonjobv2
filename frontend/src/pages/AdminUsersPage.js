@@ -71,7 +71,7 @@ const AdminUsersPage = () => {
         isAdmin: !currentStatus
       });
 
-      if (response.success) {
+      if (response.data.success) {
         // Mettre à jour la liste locale
         setUsers(prevUsers => 
           prevUsers.map(user => 
@@ -84,7 +84,7 @@ const AdminUsersPage = () => {
         // Recalculer les stats
         loadUsers();
       } else {
-        alert(`Erreur: ${response.error}`);
+        alert(`Erreur: ${response.data.error}`);
       }
     } catch (err) {
       alert('Erreur lors de la modification du statut admin');
@@ -129,6 +129,25 @@ const AdminUsersPage = () => {
       }
     } catch (err) {
       alert('Erreur de connexion au serveur');
+    }
+  };
+
+  const updateUserTokenLimits = async (userId, dailyLimit, monthlyLimit) => {
+    try {
+      const response = await api.post(`/api/admin/users/${userId}/tokens/limits`, {
+        daily_limit: dailyLimit,
+        monthly_limit: monthlyLimit
+      });
+
+      if (response.data.success) {
+        alert('Limites de tokens mises à jour avec succès');
+        loadUsers(); // Recharger pour mettre à jour les données
+      } else {
+        alert(`Erreur: ${response.data.error}`);
+      }
+    } catch (err) {
+      alert('Erreur lors de la mise à jour des limites de tokens');
+      console.error('Erreur update token limits:', err);
     }
   };
 
@@ -423,6 +442,21 @@ const AdminUsersPage = () => {
                   className={`action-btn large ${selectedUser.isAdmin ? 'remove-admin-btn' : 'make-admin-btn'}`}
                 >
                   {selectedUser.isAdmin ? '👤 Retirer les droits admin' : '👑 Donner les droits admin'}
+                </button>
+                
+                <button 
+                  onClick={() => {
+                    const dailyLimit = prompt('Limite quotidienne de tokens:', selectedUser.tokens?.daily_tokens || 1000);
+                    const monthlyLimit = prompt('Limite mensuelle de tokens:', selectedUser.tokens?.monthly_tokens || 10000);
+                    
+                    if (dailyLimit && monthlyLimit) {
+                      updateUserTokenLimits(selectedUser.id, parseInt(dailyLimit), parseInt(monthlyLimit));
+                    }
+                  }}
+                  className="action-btn large"
+                  style={{ background: '#3b82f6', color: 'white' }}
+                >
+                  ⚙️ Modifier les limites de tokens
                 </button>
                 
                 <button 
