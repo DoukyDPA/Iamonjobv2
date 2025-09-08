@@ -72,13 +72,13 @@ class TokenTracker:
             total_used = sum(row.get('tokens_used', 0) for row in usage_response.data or [])
             
             # Limites par défaut
-            daily_limit = 1000
-            monthly_limit = 10000
+            daily_limit = 5000
+            monthly_limit = 50000
             
             if limits_response.data:
                 limits = limits_response.data[0]
-                daily_limit = limits.get('daily_limit', 1000)
-                monthly_limit = limits.get('monthly_limit', 10000)
+                daily_limit = limits.get('daily_limit', 5000)
+                monthly_limit = limits.get('monthly_limit', 50000)
             
             return {
                 'total_used': total_used,
@@ -108,8 +108,8 @@ class TokenTracker:
                 # Créer des limites par défaut
                 insert_response = self.supabase.client.table('user_token_limits').insert({
                     'user_email': user_email,
-                    'daily_limit': 1000,
-                    'monthly_limit': 10000
+                'daily_limit': 5000,
+                'monthly_limit': 50000
                 }).execute()
                 
                 if insert_response.data:
