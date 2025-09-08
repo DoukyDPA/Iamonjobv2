@@ -297,7 +297,6 @@ const AdminUsersPage = () => {
               <tr key={user.id} className="user-row">
                 <td className="user-info">
                   <div className="user-email">{user.email}</div>
-                  <div className="user-id">ID: {user.id}</div>
                 </td>
                 
                 <td className="user-status">
@@ -323,7 +322,7 @@ const AdminUsersPage = () => {
                 </td>
                 
                 <td className="last-activity">
-                  {formatDate(user.tokens?.last_reset)}
+                  {formatDate(user.tokens?.last_activity)}
                 </td>
                 
                 <td className="user-actions">
@@ -380,10 +379,6 @@ const AdminUsersPage = () => {
                   <span>{selectedUser.email}</span>
                 </div>
                 
-                <div className="detail-row">
-                  <label>ID:</label>
-                  <span>{selectedUser.id}</span>
-                </div>
                 
                 <div className="detail-row">
                   <label>Statut:</label>
@@ -431,8 +426,8 @@ const AdminUsersPage = () => {
                 </div>
                 
                 <div className="detail-row">
-                  <label>Dernière réinitialisation:</label>
-                  <span>{formatDate(selectedUser.tokens?.last_reset)}</span>
+                  <label>Dernière activité:</label>
+                  <span>{formatDate(selectedUser.tokens?.last_activity)}</span>
                 </div>
               </div>
               
