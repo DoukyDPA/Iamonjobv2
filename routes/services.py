@@ -86,6 +86,7 @@ def cv_video_generate():
     return handle_generic_service('vv_video', request)
 
 @services_bp.route('/api/actions/compatibility', methods=['POST'])
+@verify_jwt_token
 def matching_cv_offre_analysis():
     """Route pour l'analyse de compatibilité (utilise le système générique)"""
     try:
