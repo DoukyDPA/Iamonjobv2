@@ -515,12 +515,12 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
             gap: '0.5rem'
           }}>
             <FiTarget />
-            Matching CV / Offre Professionnel
+            Compatibilité CV / Offre 
           </h2>
           
           <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>
             Obtenez une analyse professionnelle de votre compatibilité avec cette offre, 
-            avec des scores détaillés et des graphiques visuels.
+            avec des scores détaillés et des graphiques.
           </p>
 
           <div style={{ marginBottom: '1.5rem' }}>
@@ -678,7 +678,7 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
                       {analysisData.scores.compatibilityScore >= 85 ? 'Excellent match - Vous êtes parfaitement aligné avec ce poste !' : 
                        analysisData.scores.compatibilityScore >= 70 ? 'Bon match - Bonne adéquation, quelques ajustements possibles' :
                        analysisData.scores.compatibilityScore >= 50 ? 'Match moyen - Adéquation moyenne, des efforts sont nécessaires' : 
-                       'Match faible - Adéquation faible, considérez d\'autres opportunités'}
+                       'Match faible - Adéquation faible, la reconversion risque d\'être difficile considérez d\'autres opportunités'}
                     </p>
                     <div style={{
                       width: '100%',
