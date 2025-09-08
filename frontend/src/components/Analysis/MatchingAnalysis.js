@@ -611,28 +611,60 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
               </div>
               <div style={{ padding: '2rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '1.5rem' }}>
-                  <div style={{
-                    width: '100px',
-                    height: '100px',
-                    borderRadius: '50%',
-                    background: analysisData.scores.compatibilityScore >= 70 ? 
-                      'linear-gradient(135deg, #10b981, #059669)' :
-                      analysisData.scores.compatibilityScore >= 50 ?
-                      'linear-gradient(135deg, #f59e0b, #d97706)' :
-                      'linear-gradient(135deg, #ef4444, #dc2626)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    position: 'relative'
-                  }}>
-                    <div style={{ position: 'absolute', inset: '4px', borderRadius: '50%', background: 'white', zIndex: 1 }} />
-                    <div style={{ fontSize: '2rem', fontWeight: '700', color: analysisData.scores.compatibilityScore >= 70 ? '#10b981' : 
-                                 analysisData.scores.compatibilityScore >= 50 ? '#f59e0b' : '#ef4444', zIndex: 2, position: 'relative' }}>
-                      {analysisData.scores.compatibilityScore}
+                  <div style={{ position: 'relative', width: '100px', height: '100px' }}>
+                    <svg width="100" height="100" style={{ transform: 'rotate(-90deg)' }}>
+                      {/* Cercle de fond */}
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="40"
+                        stroke="#e5e7eb"
+                        strokeWidth="6"
+                        fill="transparent"
+                      />
+                      {/* Cercle de progression */}
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="40"
+                        stroke={analysisData.scores.compatibilityScore >= 70 ? '#10b981' : 
+                               analysisData.scores.compatibilityScore >= 50 ? '#f59e0b' : '#ef4444'}
+                        strokeWidth="6"
+                        fill="transparent"
+                        strokeDasharray={2 * Math.PI * 40}
+                        strokeDashoffset={2 * Math.PI * 40 - (analysisData.scores.compatibilityScore / 100) * 2 * Math.PI * 40}
+                        strokeLinecap="round"
+                        style={{ 
+                          transition: 'stroke-dashoffset 1.5s ease-out',
+                          filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.1))'
+                        }}
+                      />
+                    </svg>
+                    {/* Score au centre */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{ 
+                        fontSize: '2rem', 
+                        fontWeight: '700', 
+                        color: analysisData.scores.compatibilityScore >= 70 ? '#10b981' : 
+                               analysisData.scores.compatibilityScore >= 50 ? '#f59e0b' : '#ef4444',
+                        lineHeight: 1
+                      }}>
+                        {analysisData.scores.compatibilityScore}
+                      </div>
+                      <div style={{ 
+                        fontSize: '0.9rem', 
+                        color: '#6b7280',
+                        marginTop: '0.25rem'
+                      }}>
+                        /100
+                      </div>
                     </div>
-                    <div style={{ fontSize: '0.9rem', color: '#6b7280', zIndex: 2, position: 'relative' }}>/100</div>
                   </div>
                   <div style={{ flex: 1 }}>
                     <h3 style={{ margin: '0 0 0.5rem 0', color: '#1f2937', fontSize: '1.5rem' }}>
@@ -731,23 +763,47 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
                       </div>
                       <div style={{ padding: '1.5rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                          <div style={{
-                            width: '60px',
-                            height: '60px',
-                            borderRadius: '50%',
-                            background: getScoreColor(score) === '#10b981' ? 
-                              'linear-gradient(135deg, #10b981, #059669)' :
-                              getScoreColor(score) === '#f59e0b' ?
-                              'linear-gradient(135deg, #f59e0b, #d97706)' :
-                              'linear-gradient(135deg, #ef4444, #dc2626)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white',
-                            fontSize: '1.2rem',
-                            fontWeight: '700'
-                          }}>
-                            {score}
+                          <div style={{ position: 'relative', width: '60px', height: '60px' }}>
+                            <svg width="60" height="60" style={{ transform: 'rotate(-90deg)' }}>
+                              {/* Cercle de fond */}
+                              <circle
+                                cx="30"
+                                cy="30"
+                                r="24"
+                                stroke="#e5e7eb"
+                                strokeWidth="4"
+                                fill="transparent"
+                              />
+                              {/* Cercle de progression */}
+                              <circle
+                                cx="30"
+                                cy="30"
+                                r="24"
+                                stroke={getScoreColor(score)}
+                                strokeWidth="4"
+                                fill="transparent"
+                                strokeDasharray={2 * Math.PI * 24}
+                                strokeDashoffset={2 * Math.PI * 24 - (score / 100) * 2 * Math.PI * 24}
+                                strokeLinecap="round"
+                                style={{ 
+                                  transition: 'stroke-dashoffset 1.2s ease-out',
+                                  filter: 'drop-shadow(0 0 4px rgba(0,0,0,0.1))'
+                                }}
+                              />
+                            </svg>
+                            {/* Score au centre */}
+                            <div style={{
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              fontSize: '0.9rem',
+                              fontWeight: '700',
+                              color: getScoreColor(score),
+                              textAlign: 'center'
+                            }}>
+                              {score}
+                            </div>
                           </div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '0.25rem' }}>
@@ -843,26 +899,6 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
 
 
 
-          {/* Bouton nouvelle analyse */}
-          <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-            <button
-              onClick={() => {
-                setAnalysisData(null);
-                setUserNotes('');
-              }}
-              style={{
-                padding: '0.75rem 2rem',
-                background: '#6b7280',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '1rem',
-                cursor: 'pointer'
-              }}
-            >
-              Nouvelle analyse
-            </button>
-          </div>
         </div>
       )}
     </div>
