@@ -513,13 +513,13 @@ def _compute_user_token_usage(user_email: str) -> dict:
         # Récupérer les limites depuis user_token_limits
         limits_resp = supabase.client.table('user_token_limits').select('*').eq('user_email', user_email).execute()
         
-        daily_limit = 1000  # Valeur par défaut
-        monthly_limit = 10000  # Valeur par défaut
+        daily_limit = 5000  # Valeur par défaut (augmentée pour les analyses)
+        monthly_limit = 50000  # Valeur par défaut (augmentée)
         
         if limits_resp.data:
             limits = limits_resp.data[0]
-            daily_limit = int(limits.get('daily_limit') or 1000)
-            monthly_limit = int(limits.get('monthly_limit') or 10000)
+            daily_limit = int(limits.get('daily_limit') or 5000)
+            monthly_limit = int(limits.get('monthly_limit') or 50000)
 
         result = {
             'daily_tokens': daily_limit,
@@ -535,8 +535,8 @@ def _compute_user_token_usage(user_email: str) -> dict:
     except Exception as e:
         logging.warning(f"Token usage indisponible pour {user_email}: {e}")
         return {
-            'daily_tokens': 1000,
-            'monthly_tokens': 10000,
+            'daily_tokens': 5000,
+            'monthly_tokens': 50000,
             'used_daily': 0,
             'used_monthly': 0,
             'total_used': 0,
@@ -634,8 +634,8 @@ def reset_user_tokens_api(user_id):
         return jsonify({
             "success": True,
             "message": "Tokens réinitialisés",
-            "daily_limit": 1000,
-            "monthly_limit": 10000
+            "daily_limit": 5000,
+            "monthly_limit": 50000
         }), 200
     except Exception as e:
         logging.error(f"Erreur reset tokens: {e}")
@@ -695,6 +695,88 @@ def update_user_token_limits(user_id):
         
     except Exception as e:
         logging.error(f"Erreur mise à jour limites tokens: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@admin_api.route('/config/token-limits', methods=['GET'])
+@verify_jwt_token
+def get_token_limits_config():
+    """Récupère la configuration des limites de tokens par défaut (admin seulement)"""
+    try:
+        from services.supabase_storage import SupabaseStorage
+        supabase = SupabaseStorage()
+        if not supabase.is_available():
+            return jsonify({"success": False, "error": "Supabase indisponible"}), 500
+        
+        # Récupérer la configuration depuis la table admin_config
+        config_resp = supabase.client.table('admin_config').select('*').eq('key', 'token_limits').execute()
+        
+        if config_resp.data:
+            config = config_resp.data[0]
+            return jsonify({
+                "success": True,
+                "config": {
+                    "default_daily_limit": config.get('value', {}).get('default_daily_limit', 5000),
+                    "default_monthly_limit": config.get('value', {}).get('default_monthly_limit', 50000)
+                }
+            })
+        else:
+            # Configuration par défaut si pas trouvée
+            return jsonify({
+                "success": True,
+                "config": {
+                    "default_daily_limit": 5000,
+                    "default_monthly_limit": 50000
+                }
+            })
+            
+    except Exception as e:
+        logging.error(f"Erreur récupération config token limits: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@admin_api.route('/config/token-limits', methods=['POST'])
+@verify_jwt_token
+def update_token_limits_config():
+    """Met à jour la configuration des limites de tokens par défaut (admin seulement)"""
+    try:
+        from services.supabase_storage import SupabaseStorage
+        supabase = SupabaseStorage()
+        if not supabase.is_available():
+            return jsonify({"success": False, "error": "Supabase indisponible"}), 500
+        
+        data = request.get_json() or {}
+        default_daily_limit = data.get('default_daily_limit')
+        default_monthly_limit = data.get('default_monthly_limit')
+        
+        if default_daily_limit is None or default_monthly_limit is None:
+            return jsonify({"success": False, "error": "Limites quotidienne et mensuelle requises"}), 400
+        
+        # Vérifier si la configuration existe déjà
+        config_resp = supabase.client.table('admin_config').select('*').eq('key', 'token_limits').execute()
+        
+        config_data = {
+            'key': 'token_limits',
+            'value': {
+                'default_daily_limit': int(default_daily_limit),
+                'default_monthly_limit': int(default_monthly_limit)
+            },
+            'updated_at': 'now()'
+        }
+        
+        if config_resp.data:
+            # Mettre à jour la configuration existante
+            response = supabase.client.table('admin_config').update(config_data).eq('key', 'token_limits').execute()
+        else:
+            # Créer une nouvelle configuration
+            response = supabase.client.table('admin_config').insert(config_data).execute()
+        
+        if response.data:
+            logging.info(f"Configuration des limites de tokens mise à jour: {default_daily_limit}/{default_monthly_limit}")
+            return jsonify({"success": True, "message": "Configuration mise à jour"})
+        else:
+            return jsonify({"success": False, "error": "Erreur lors de la mise à jour de la configuration"}), 500
+            
+    except Exception as e:
+        logging.error(f"Erreur mise à jour config token limits: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 
@@ -1257,7 +1339,3 @@ def update_description(service_id):
     except Exception as e:
         logging.error(f"Erreur mise à jour description {service_id}: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
-
-
-
-
