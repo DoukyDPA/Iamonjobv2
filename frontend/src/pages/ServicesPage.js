@@ -17,7 +17,8 @@ const ServicesPage = () => {
 
   const fetchServicesConfig = async () => {
     try {
-      const response = await fetch('/api/services/config');
+      // Ajouter un timestamp pour éviter le cache
+      const response = await fetch(`/api/services/config?t=${Date.now()}`);
       const data = await response.json();
       
       if (data.success && data.themes) {
