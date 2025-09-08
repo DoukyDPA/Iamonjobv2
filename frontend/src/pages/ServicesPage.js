@@ -13,6 +13,14 @@ const ServicesPage = () => {
   useEffect(() => {
     // Charger la configuration des services depuis le backend
     fetchServicesConfig();
+    
+    // Recharger les données toutes les 30 secondes pour avoir les dernières modifications
+    const interval = setInterval(() => {
+      console.log('🔄 Rechargement automatique des services...');
+      fetchServicesConfig();
+    }, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const fetchServicesConfig = async () => {
@@ -21,11 +29,16 @@ const ServicesPage = () => {
       const response = await fetch(`/api/services/config?t=${Date.now()}`);
       const data = await response.json();
       
+      console.log('🔍 ServicesPage - Données reçues:', data);
+      console.log('🔍 ServicesPage - Themes:', data.themes);
+      
       if (data.success && data.themes) {
         // Appliquer le fallback pour les coachAdvice
         const enhancedData = enhanceServicesWithFallback(data);
+        console.log('🔍 ServicesPage - Données enrichies:', enhancedData);
         setServicesData(enhancedData);
       } else {
+        console.log('🔍 ServicesPage - Fallback vers config locale');
         // Fallback avec configuration locale
         setServicesData(getLocalServicesConfig());
       }
@@ -49,6 +62,10 @@ const ServicesPage = () => {
         if (enhanced.themes[themeKey] && enhanced.themes[themeKey].services) {
           enhanced.themes[themeKey].services = enhanced.themes[themeKey].services.map(service => {
             const fallbackConfig = SERVICES_CONFIG[service.id];
+            console.log(`🔍 Service ${service.id}:`, {
+              coach_advice: service.coach_advice,
+              title: service.title
+            });
             return {
               ...service,
               description: service.description || '', // Description courte (Supabase uniquement)
