@@ -10,6 +10,11 @@ const AdminUsersPage = () => {
   const [error, setError] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [tokenConfig, setTokenConfig] = useState({
+    default_daily_limit: 5000,
+    default_monthly_limit: 50000
+  });
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeUsers: 0,
@@ -25,12 +30,39 @@ const AdminUsersPage = () => {
     }
   }, [user]);
 
-  // Charger les utilisateurs
+  // Charger les utilisateurs et la configuration
   useEffect(() => {
     if (user?.isAdmin) {
       loadUsers();
+      loadTokenConfig();
     }
   }, [user]);
+
+  const loadTokenConfig = async () => {
+    try {
+      const response = await api.get('/api/admin/config/token-limits');
+      if (response.data.success) {
+        setTokenConfig(response.data.config);
+      }
+    } catch (err) {
+      console.error('Erreur chargement config tokens:', err);
+    }
+  };
+
+  const updateTokenConfig = async () => {
+    try {
+      const response = await api.post('/api/admin/config/token-limits', tokenConfig);
+      if (response.data.success) {
+        alert('Configuration mise à jour avec succès');
+        setShowConfigModal(false);
+      } else {
+        alert(`Erreur: ${response.data.error}`);
+      }
+    } catch (err) {
+      alert('Erreur lors de la mise à jour de la configuration');
+      console.error('Erreur update config:', err);
+    }
+  };
 
   const loadUsers = async () => {
     try {
@@ -268,6 +300,9 @@ const AdminUsersPage = () => {
         <button onClick={loadUsers} className="refresh-btn">
           🔄 Actualiser
         </button>
+        <button onClick={() => setShowConfigModal(true)} className="config-btn">
+          ⚙️ Configuration Tokens
+        </button>
         <div className="search-box">
           <input 
             type="text" 
@@ -440,9 +475,9 @@ const AdminUsersPage = () => {
                 </button>
                 
                 <button 
-                  onClick={() => {
-                    const dailyLimit = prompt('Limite quotidienne de tokens:', selectedUser.tokens?.daily_tokens || 1000);
-                    const monthlyLimit = prompt('Limite mensuelle de tokens:', selectedUser.tokens?.monthly_tokens || 10000);
+              onClick={() => {
+                const dailyLimit = prompt('Limite quotidienne de tokens:', selectedUser.tokens?.daily_tokens || 5000);
+                const monthlyLimit = prompt('Limite mensuelle de tokens:', selectedUser.tokens?.monthly_tokens || 50000);
                     
                     if (dailyLimit && monthlyLimit) {
                       updateUserTokenLimits(selectedUser.id, parseInt(dailyLimit), parseInt(monthlyLimit));
@@ -461,6 +496,79 @@ const AdminUsersPage = () => {
                   🔄 Réinitialiser les tokens
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Configuration Tokens */}
+      {showConfigModal && (
+        <div className="modal-overlay">
+          <div className="modal-content config-modal">
+            <div className="modal-header">
+              <h2>⚙️ Configuration des Limites de Tokens</h2>
+              <button 
+                onClick={() => setShowConfigModal(false)}
+                className="close-btn"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              <p className="config-description">
+                Configurez les limites de tokens par défaut pour les nouveaux utilisateurs.
+                Ces valeurs seront utilisées lors de la création de nouveaux comptes.
+              </p>
+              
+              <div className="config-form">
+                <div className="form-group">
+                  <label>Limite quotidienne par défaut :</label>
+                  <input
+                    type="number"
+                    value={tokenConfig.default_daily_limit}
+                    onChange={(e) => setTokenConfig({
+                      ...tokenConfig,
+                      default_daily_limit: parseInt(e.target.value) || 0
+                    })}
+                    min="100"
+                    max="100000"
+                    className="config-input"
+                  />
+                  <span className="input-suffix">tokens/jour</span>
+                </div>
+                
+                <div className="form-group">
+                  <label>Limite mensuelle par défaut :</label>
+                  <input
+                    type="number"
+                    value={tokenConfig.default_monthly_limit}
+                    onChange={(e) => setTokenConfig({
+                      ...tokenConfig,
+                      default_monthly_limit: parseInt(e.target.value) || 0
+                    })}
+                    min="1000"
+                    max="1000000"
+                    className="config-input"
+                  />
+                  <span className="input-suffix">tokens/mois</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="modal-actions">
+              <button 
+                onClick={() => setShowConfigModal(false)}
+                className="cancel-btn"
+              >
+                Annuler
+              </button>
+              <button 
+                onClick={updateTokenConfig}
+                className="save-btn"
+              >
+                💾 Sauvegarder
+              </button>
             </div>
           </div>
         </div>
