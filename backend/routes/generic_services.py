@@ -28,7 +28,7 @@ def handle_generic_service(service_id, request):
         # La configuration complète est maintenant dans frontend/src/services/servicesConfig.js
         basic_configs = {
             "matching_cv_offre": {
-                "title": "Matching CV/Offre",
+                "title": "Compatibillité de l'offre par rapport à votre CV",
                 "output_key": "matching",
                 "action_type": "matching_response",
                 "requires_cv": True,
