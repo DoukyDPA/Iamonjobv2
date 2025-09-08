@@ -572,7 +572,7 @@ def list_users():
             users_info.append({
                 "id": user.id,
                 "email": user.email,
-                "is_admin": user.is_admin,
+                "isAdmin": user.is_admin,  # Corriger le nom de la propriété
                 "tokens": _compute_user_token_usage(user.email)
             })
 
@@ -589,10 +589,10 @@ def set_user_admin(user_id):
     """Met à jour le statut administrateur d'un utilisateur"""
     try:
         data = request.get_json() or {}
-        is_admin = bool(data.get('is_admin', True))
+        is_admin = bool(data.get('isAdmin', True))  # Corriger le nom de la propriété
         from models.user import User
         if User.set_admin_status(user_id, is_admin):
-            return jsonify({"success": True, "user_id": user_id, "is_admin": is_admin})
+            return jsonify({"success": True, "user_id": user_id, "isAdmin": is_admin})
         return jsonify({"success": False, "error": "Utilisateur inconnu"}), 404
     except Exception as e:
         logging.error(f"Erreur mise à jour admin: {e}")
@@ -652,6 +652,62 @@ def reset_user_tokens_api(user_id):
         }), 200
     except Exception as e:
         logging.error(f"Erreur reset tokens: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@admin_api.route('/users/<user_id>/tokens/limits', methods=['POST'])
+@verify_jwt_token
+def update_user_token_limits(user_id):
+    """Met à jour les limites de tokens d'un utilisateur (admin seulement)"""
+    try:
+        from models.user import User
+        
+        # Vérifier que l'utilisateur existe
+        user = User.get(user_id)
+        if not user:
+            return jsonify({"success": False, "error": "Utilisateur non trouvé"}), 404
+        
+        data = request.get_json() or {}
+        daily_limit = data.get('daily_limit')
+        monthly_limit = data.get('monthly_limit')
+        
+        if daily_limit is None and monthly_limit is None:
+            return jsonify({"success": False, "error": "Aucune limite fournie"}), 400
+        
+        from services.supabase_storage import SupabaseStorage
+        supabase = SupabaseStorage()
+        if not supabase.is_available():
+            return jsonify({"success": False, "error": "Supabase indisponible"}), 500
+        
+        # Préparer les données de mise à jour
+        update_data = {}
+        if daily_limit is not None:
+            update_data['daily_limit'] = int(daily_limit)
+        if monthly_limit is not None:
+            update_data['monthly_limit'] = int(monthly_limit)
+        
+        # Vérifier si l'utilisateur a déjà des limites définies
+        existing_limits = supabase.client.table('user_token_limits').select('*').eq('user_email', user.email).execute()
+        
+        if existing_limits.data:
+            # Mettre à jour les limites existantes
+            response = supabase.client.table('user_token_limits').update(update_data).eq('user_email', user.email).execute()
+        else:
+            # Créer de nouvelles limites
+            limits_data = {
+                'user_email': user.email,
+                **update_data
+            }
+            response = supabase.client.table('user_token_limits').insert(limits_data).execute()
+        
+        if response.data:
+            logging.info(f"Limites de tokens mises à jour pour l'utilisateur {user_id} ({user.email})")
+            return jsonify({"success": True, "message": "Limites de tokens mises à jour"})
+        else:
+            return jsonify({"success": False, "error": "Erreur lors de la mise à jour des limites"}), 500
+        
+    except Exception as e:
+        logging.error(f"Erreur mise à jour limites tokens: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 
