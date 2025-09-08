@@ -468,9 +468,6 @@ def _compute_user_token_usage(user_email: str) -> dict:
         # Récupérer tous les tokens utilisés pour cet utilisateur
         token_resp = supabase.client.table('token_usage').select('*').eq('user_email', user_email).execute()
         
-        print(f"🔍 Calcul tokens pour {user_email}...")
-        print(f"📊 Réponse token_usage: {len(token_resp.data or [])} enregistrements")
-        
         used_monthly = 0
         used_daily = 0
         total_used = 0
@@ -482,13 +479,9 @@ def _compute_user_token_usage(user_email: str) -> dict:
             today_str = today.isoformat()
             month_start = today.replace(day=1)
             
-            print(f"📅 Aujourd'hui: {today_str}, Début du mois: {month_start.isoformat()}")
-            
             for row in token_resp.data:
                 tokens = int(row.get('tokens_used') or 0)
                 date_str = row.get('date')
-                
-                print(f"   📝 Ligne: {tokens} tokens, date: {date_str} (type: {type(date_str)})")
                 
                 if date_str:
                     try:
@@ -504,14 +497,10 @@ def _compute_user_token_usage(user_email: str) -> dict:
                         # Vérifier si c'est aujourd'hui (comparaison directe de chaînes)
                         if str(date_str) == str(today_str):
                             used_daily += tokens
-                            print(f"      ✅ Ajouté au quotidien: {tokens} tokens (match: {date_str} == {today_str})")
-                        else:
-                            print(f"      ❌ Pas aujourd'hui: {date_str} != {today_str}")
                         
                         # Vérifier si c'est ce mois
                         if row_date >= month_start:
                             used_monthly += tokens
-                            print(f"      ✅ Ajouté au mensuel: {tokens} tokens")
                         
                         # Mettre à jour la dernière activité
                         if last_activity is None or row_date > last_activity:
@@ -541,7 +530,6 @@ def _compute_user_token_usage(user_email: str) -> dict:
             'last_activity': last_activity.isoformat() if last_activity else None,
         }
         
-        print(f"🎯 Résultat final: {result}")
         return result
         
     except Exception as e:
