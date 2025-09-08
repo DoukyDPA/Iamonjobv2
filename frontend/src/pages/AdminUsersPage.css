@@ -1,4 +1,4 @@
-/* AdminPartnersPage.css - Version complète */
+/* AdminUsersPage.css - Version complète */
 .admin-partners-page {
   padding: 2rem;
   max-width: 1400px;
@@ -694,4 +694,74 @@
 .test-btn:hover {
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Configuration Modal Styles */
+.config-btn {
+  background: #8b5cf6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 1rem;
+}
+
+.config-btn:hover {
+  background: #7c3aed;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.config-modal {
+  max-width: 500px;
+  width: 90%;
+}
+
+.config-description {
+  color: #64748b;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.config-input {
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.config-input:focus {
+  outline: none;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.input-suffix {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
 }
