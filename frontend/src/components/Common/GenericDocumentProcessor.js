@@ -105,12 +105,14 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
         // Certains services peuvent être enregistrés avec des tirets dans Supabase
         const apiServiceId = mappedServiceId.replace(/_/g, '-');
 
-        let response = await fetch(`/api/services/${apiServiceId}`);
+        // Ajouter un timestamp pour éviter le cache
+        const timestamp = Date.now();
+        let response = await fetch(`/api/services/${apiServiceId}?t=${timestamp}`);
         let data = await response.json();
 
         // Si aucune configuration trouvée, essayer la version originale
         if (!(response.ok && data.success && data.service)) {
-          response = await fetch(`/api/services/${mappedServiceId}`);
+          response = await fetch(`/api/services/${mappedServiceId}?t=${timestamp}`);
           data = await response.json();
         }
 
