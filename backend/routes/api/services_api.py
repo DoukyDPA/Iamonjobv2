@@ -9,19 +9,28 @@ services_api = Blueprint('services_api', __name__)
 def get_services_config():
     """Récupérer la configuration complète des services pour le frontend"""
     try:
-        # Récupérer tous les services depuis Supabase
-        all_services = services_manager.get_all_services()
+        # Forcer le rechargement depuis Supabase pour avoir les données à jour
+        services_manager.services_config = services_manager._load_config()
+        all_services = services_manager.services_config
+        
+        # Organiser par thèmes pour le frontend
+        themes = services_manager.get_services_by_theme()
+        featured = services_manager.get_featured_service()
         
         return jsonify({
             "success": True,
             "services": all_services,
+            "themes": themes,
+            "featured": featured,
             "count": len(all_services)
         }), 200
     except Exception as e:
         return jsonify({
             "success": False,
             "error": str(e),
-            "services": [],
+            "services": {},
+            "themes": {},
+            "featured": None,
             "count": 0
         }), 500
 
@@ -69,25 +78,15 @@ def get_visible_services():
 def get_services_by_theme():
     """Récupérer les services groupés par thème avec descriptions"""
     try:
-        # Utiliser le même manager que l'admin pour récupérer les descriptions
-        try:
-            from backend.admin.supabase_services_manager import supabase_services_manager
-            services_by_theme = supabase_services_manager.get_services_by_theme()
-            
-            return jsonify({
-                "success": True,
-                "themes": services_by_theme,
-                "count": sum(len(services) for services in services_by_theme.values())
-            }), 200
-        except ImportError:
-            # Fallback vers l'ancien manager
-            services_by_theme = services_manager.get_services_by_theme()
-            
-            return jsonify({
-                "success": True,
-                "themes": services_by_theme,
-                "count": sum(len(services) for services in services_by_theme.values())
-            }), 200
+        # Forcer le rechargement depuis Supabase pour avoir les données à jour
+        services_manager.services_config = services_manager._load_config()
+        services_by_theme = services_manager.get_services_by_theme()
+        
+        return jsonify({
+            "success": True,
+            "themes": services_by_theme,
+            "count": sum(len(services) for services in services_by_theme.values())
+        }), 200
             
     except Exception as e:
         return jsonify({
@@ -101,7 +100,8 @@ def get_services_by_theme():
 def get_service(service_id):
     """Récupérer un service spécifique"""
     try:
-        # Récupérer un service spécifique depuis Supabase
+        # Forcer le rechargement depuis Supabase pour avoir les données à jour
+        services_manager.services_config = services_manager._load_config()
         service = services_manager.get_service(service_id)
         
         if service:
