@@ -574,201 +574,210 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
       )}
 
 
-      {/* Résultats de l'analyse - EFFET WOW */}
+      {/* Résultats de l'analyse - Structure similaire à l'analyse de CV */}
       {analysisData && (
-        <div style={{ animation: 'fadeInUp 0.8s ease-out' }}>
-
-          {/* Score global en vedette - DESIGN PREMIUM */}
+        <div style={{ 
+          maxWidth: '1200px', 
+          margin: '0 auto',
+          animation: 'fadeInUp 0.8s ease-out'
+        }}>
+          
+          {/* Score global - Case principale */}
           {analysisData.scores && analysisData.scores.compatibilityScore && (
             <div style={{
-              background: analysisData.scores.compatibilityScore >= 70 
-                ? 'linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%)'
-                : analysisData.scores.compatibilityScore >= 50
-                ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%)'
-                : 'linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%)',
-              color: 'white',
-              padding: '3rem 2rem',
-              borderRadius: '20px',
-              textAlign: 'center',
-              marginBottom: '3rem',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.1)',
-              position: 'relative',
+              background: 'white',
+              borderRadius: '12px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              marginBottom: '2rem',
               overflow: 'hidden'
             }}>
-              {/* Effet de brillance */}
               <div style={{
-                position: 'absolute',
-                top: '-50%',
-                left: '-50%',
-                width: '200%',
-                height: '200%',
-                background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
-                animation: 'shimmer 3s infinite'
-              }} />
-              
-              <div style={{ position: 'relative', zIndex: 2 }}>
-                <div style={{ 
-                  fontSize: '0.9rem', 
-                  fontWeight: '600', 
-                  textTransform: 'uppercase', 
-                  letterSpacing: '0.1em',
-                  marginBottom: '1rem',
-                  opacity: 0.9
-                }}>
-                  Score de compatibilité
-                </div>
-                <h2 style={{ 
-                  marginBottom: '1rem', 
-                  fontSize: '1.8rem', 
-                  color: 'white',
-                  fontWeight: '700',
-                  textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                }}>
-                  {displayedTitle}
-                </h2>
-                
-                {/* Score avec animation */}
-                <div style={{ 
-                  fontSize: '6rem', 
-                  fontWeight: '900', 
-                  marginBottom: '1rem',
-                  textShadow: '0 4px 8px rgba(0,0,0,0.3)',
-                  background: 'linear-gradient(45deg, #ffffff, #f0f9ff)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  animation: 'pulse 2s infinite'
-                }}>
-                  {analysisData.scores.compatibilityScore}
-                </div>
-                
-                <div style={{ 
-                  fontSize: '1.2rem', 
-                  fontWeight: '600',
-                  marginBottom: '1.5rem',
-                  textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                }}>
-                  {analysisData.scores.compatibilityScore >= 85 ? 'Excellent match' : 
-                   analysisData.scores.compatibilityScore >= 70 ? 'Bon match' :
-                   analysisData.scores.compatibilityScore >= 50 ? 'Match moyen' : 'Match faible'}
-                </div>
-                
-                {/* Barre de progression */}
-                <div style={{
-                  width: '100%',
-                  height: '8px',
-                  background: 'rgba(255,255,255,0.2)',
-                  borderRadius: '4px',
-                  overflow: 'hidden',
-                  marginBottom: '1rem'
-                }}>
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '1rem 1.5rem',
+                background: analysisData.scores.compatibilityScore >= 70 ? '#f0fdf4' : 
+                           analysisData.scores.compatibilityScore >= 50 ? '#fffbeb' : '#fef2f2',
+                borderBottom: '1px solid #e5e7eb'
+              }}>
+                <span style={{ 
+                  color: analysisData.scores.compatibilityScore >= 70 ? '#10b981' : 
+                         analysisData.scores.compatibilityScore >= 50 ? '#f59e0b' : '#ef4444', 
+                  fontSize: '1.2rem' 
+                }}>🎯</span>
+                <h4 style={{ margin: 0, color: '#1f2937', fontSize: '1.1rem', fontWeight: '600' }}>
+                  Score de compatibilité global
+                </h4>
+              </div>
+              <div style={{ padding: '2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '1.5rem' }}>
                   <div style={{
-                    width: `${analysisData.scores.compatibilityScore}%`,
-                    height: '100%',
-                    background: 'linear-gradient(90deg, #ffffff, #f0f9ff)',
-                    borderRadius: '4px',
-                    transition: 'width 1.5s ease-out',
-                    boxShadow: '0 0 10px rgba(255,255,255,0.5)'
-                  }} />
+                    width: '100px',
+                    height: '100px',
+                    borderRadius: '50%',
+                    background: analysisData.scores.compatibilityScore >= 70 ? 
+                      'linear-gradient(135deg, #10b981, #059669)' :
+                      analysisData.scores.compatibilityScore >= 50 ?
+                      'linear-gradient(135deg, #f59e0b, #d97706)' :
+                      'linear-gradient(135deg, #ef4444, #dc2626)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    position: 'relative'
+                  }}>
+                    <div style={{ position: 'absolute', inset: '4px', borderRadius: '50%', background: 'white', zIndex: 1 }} />
+                    <div style={{ fontSize: '2rem', fontWeight: '700', color: analysisData.scores.compatibilityScore >= 70 ? '#10b981' : 
+                                 analysisData.scores.compatibilityScore >= 50 ? '#f59e0b' : '#ef4444', zIndex: 2, position: 'relative' }}>
+                      {analysisData.scores.compatibilityScore}
+                    </div>
+                    <div style={{ fontSize: '0.9rem', color: '#6b7280', zIndex: 2, position: 'relative' }}>/100</div>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ margin: '0 0 0.5rem 0', color: '#1f2937', fontSize: '1.5rem' }}>
+                      {displayedTitle}
+                    </h3>
+                    <p style={{ 
+                      margin: '0 0 1rem 0', 
+                      color: '#6b7280',
+                      fontSize: '1rem'
+                    }}>
+                      {analysisData.scores.compatibilityScore >= 85 ? 'Excellent match - Vous êtes parfaitement aligné avec ce poste !' : 
+                       analysisData.scores.compatibilityScore >= 70 ? 'Bon match - Bonne adéquation, quelques ajustements possibles' :
+                       analysisData.scores.compatibilityScore >= 50 ? 'Match moyen - Adéquation moyenne, des efforts sont nécessaires' : 
+                       'Match faible - Adéquation faible, considérez d\'autres opportunités'}
+                    </p>
+                    <div style={{
+                      width: '100%',
+                      height: '8px',
+                      background: '#e5e7eb',
+                      borderRadius: '4px',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        width: `${analysisData.scores.compatibilityScore}%`,
+                        height: '100%',
+                        background: analysisData.scores.compatibilityScore >= 70 ? 
+                          'linear-gradient(90deg, #10b981, #059669)' :
+                          analysisData.scores.compatibilityScore >= 50 ?
+                          'linear-gradient(90deg, #f59e0b, #d97706)' :
+                          'linear-gradient(90deg, #ef4444, #dc2626)',
+                        borderRadius: '4px',
+                        transition: 'width 1.5s ease-out'
+                      }} />
+                    </div>
+                  </div>
                 </div>
-                
-                <p style={{ 
-                  fontSize: '1rem', 
-                  opacity: 0.9,
-                  fontStyle: 'italic'
-                }}>
-                  {analysisData.scores.compatibilityScore >= 85 ? 'Vous êtes parfaitement aligné avec ce poste !' : 
-                   analysisData.scores.compatibilityScore >= 70 ? 'Bonne adéquation, quelques ajustements possibles' :
-                   analysisData.scores.compatibilityScore >= 50 ? 'Adéquation moyenne, des efforts sont nécessaires' : 'Adéquation faible, considérez d\'autres opportunités'}
-                </p>
               </div>
             </div>
           )}
 
-          {/* Graphiques en cercles - DESIGN PREMIUM */}
+          {/* Scores détaillés par domaine - Cases individuelles */}
           {analysisData.scores && (
             <div style={{
-              background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-              padding: '2.5rem',
-              borderRadius: '24px',
-              marginBottom: '3rem',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05)',
-              position: 'relative',
-              overflow: 'hidden'
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '1.5rem',
+              marginBottom: '2rem'
             }}>
-              {/* Effet de fond subtil */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'radial-gradient(circle at 30% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 50%)',
-                pointerEvents: 'none'
-              }} />
-              
-              <div style={{ position: 'relative', zIndex: 2 }}>
-                <h3 style={{ 
-                  marginBottom: '2rem', 
-                  color: '#1f2937', 
-                  textAlign: 'center',
-                  fontSize: '1.8rem',
-                  fontWeight: '700',
-                  background: 'linear-gradient(135deg, #1f2937, #374151)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent'
-                }}>
-                  Analyse détaillée par domaine
-                </h3>
-                
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                  gap: '2rem',
-                  justifyItems: 'center'
-                }}>
-                  {Object.entries(analysisData.scores)
-                    .filter(([key]) => key !== 'compatibilityScore')
-                    .map(([key, score], index) => {
-                      const labels = {
-                        technical: 'Technique',
-                        soft: 'Soft Skills',
-                        experience: 'Expérience',
-                        education: 'Formation',
-                        culture: 'Culture'
-                      };
-                      
-                      const weights = {
-                        technical: 30,
-                        soft: 20,
-                        experience: 25,
-                        education: 15,
-                        culture: 10
-                      };
-                      
-                      const icons = {
-                        technical: '⚙',
-                        soft: '🤝',
-                        experience: '💼',
-                        education: '🎓',
-                        culture: '⭐'
-                      };
-                      
-                      return (
-                        <div key={key} style={{ 
-                          animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both` 
-                        }}>
-                          <CircularScore
-                            score={score}
-                            label={labels[key] || key}
-                            color={getScoreColor(score)}
-                            weight={weights[key]}
-                            icon={icons[key]}
-                          />
+              {Object.entries(analysisData.scores)
+                .filter(([key]) => key !== 'compatibilityScore')
+                .map(([key, score], index) => {
+                  const labels = {
+                    technical: 'Compétences techniques',
+                    soft: 'Soft Skills',
+                    experience: 'Expérience',
+                    education: 'Formation',
+                    culture: 'Culture d\'entreprise'
+                  };
+                  
+                  const weights = {
+                    technical: 30,
+                    soft: 20,
+                    experience: 25,
+                    education: 15,
+                    culture: 10
+                  };
+                  
+                  const icons = {
+                    technical: '⚙',
+                    soft: '🤝',
+                    experience: '💼',
+                    education: '🎓',
+                    culture: '⭐'
+                  };
+                  
+                  return (
+                    <div key={key} style={{
+                      background: 'white',
+                      borderRadius: '12px',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      overflow: 'hidden',
+                      animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        padding: '1rem 1.5rem',
+                        background: '#f9fafb',
+                        borderBottom: '1px solid #e5e7eb'
+                      }}>
+                        <span style={{ color: '#0a6b79', fontSize: '1.2rem' }}>{icons[key]}</span>
+                        <h4 style={{ margin: 0, color: '#1f2937', fontSize: '1rem', fontWeight: '600' }}>
+                          {labels[key] || key}
+                        </h4>
+                      </div>
+                      <div style={{ padding: '1.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                          <div style={{
+                            width: '60px',
+                            height: '60px',
+                            borderRadius: '50%',
+                            background: getScoreColor(score) === '#10b981' ? 
+                              'linear-gradient(135deg, #10b981, #059669)' :
+                              getScoreColor(score) === '#f59e0b' ?
+                              'linear-gradient(135deg, #f59e0b, #d97706)' :
+                              'linear-gradient(135deg, #ef4444, #dc2626)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontSize: '1.2rem',
+                            fontWeight: '700'
+                          }}>
+                            {score}
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '0.25rem' }}>
+                              Score: {score}/100
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+                              Poids: {weights[key]}% du score global
+                            </div>
+                          </div>
                         </div>
-                      );
-                    })}
-                </div>
-              </div>
+                        <div style={{
+                          fontSize: '0.9rem',
+                          color: getScoreColor(score),
+                          fontWeight: '600',
+                          textAlign: 'center',
+                          padding: '0.5rem',
+                          background: getScoreColor(score) === '#10b981' ? '#f0fdf4' : 
+                                     getScoreColor(score) === '#f59e0b' ? '#fffbeb' : '#fef2f2',
+                          borderRadius: '6px'
+                        }}>
+                          {score >= 90 ? 'Excellent' : 
+                           score >= 80 ? 'Très bon' : 
+                           score >= 70 ? 'Bon' : 
+                           score >= 60 ? 'Moyen' : 
+                           score >= 50 ? 'Faible' : 'Très faible'}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           )}
 
@@ -796,34 +805,38 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
             </div>
           )}
 
-          {/* Analyse détaillée en markdown - EN DEUXIÈME */}
+          {/* Analyse détaillée en markdown */}
           {analysisData.fullText && (
             <div style={{
               background: 'white',
               borderRadius: '12px',
-              padding: '2rem',
-              marginBottom: '2rem',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              border: '1px solid #e5e7eb'
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              overflow: 'hidden',
+              marginBottom: '2rem'
             }}>
-              <h3 style={{
-                marginBottom: '1.5rem',
-                color: '#374151',
+              <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem'
+                gap: '0.75rem',
+                padding: '1rem 1.5rem',
+                background: '#f9fafb',
+                borderBottom: '1px solid #e5e7eb'
               }}>
-                <FiCheckCircle />
-                Analyse détaillée
-              </h3>
-              <div style={{
-                fontSize: '1rem',
-                lineHeight: '1.6',
-                color: '#374151'
-              }}>
-                <SimpleMarkdownRenderer
-                  content={analysisData.fullText.replace(/```json[\s\S]*?```/g, '')}
-                />
+                <span style={{ color: '#0a6b79', fontSize: '1.2rem' }}>📋</span>
+                <h4 style={{ margin: 0, color: '#1f2937', fontSize: '1rem', fontWeight: '600' }}>
+                  Analyse détaillée et recommandations
+                </h4>
+              </div>
+              <div style={{ padding: '1.5rem' }}>
+                <div style={{
+                  fontSize: '1rem',
+                  lineHeight: '1.6',
+                  color: '#374151'
+                }}>
+                  <SimpleMarkdownRenderer
+                    content={analysisData.fullText.replace(/```json[\s\S]*?```/g, '')}
+                  />
+                </div>
               </div>
             </div>
           )}
