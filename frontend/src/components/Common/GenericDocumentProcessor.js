@@ -120,6 +120,12 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
           const serviceApiId = data.service.id || apiServiceId;
           const clientId = serviceApiId.replace(/-/g, '_');
           
+          console.log('🔍 GenericDocumentProcessor - Service reçu:', {
+            id: serviceApiId,
+            title: data.service.title,
+            coach_advice: data.service.coach_advice
+          });
+          
           // Charger les conseils du coach depuis Supabase uniquement
           
           const apiConfig = {
@@ -136,6 +142,7 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
             storageKey: `iamonjob_${clientId}`
 
           };
+          console.log('🔍 GenericDocumentProcessor - Config finale:', apiConfig);
           setServiceConfig(apiConfig);
         } else {
           setError(`Service "${serviceId}" non trouvé`);
