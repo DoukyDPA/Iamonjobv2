@@ -66,36 +66,25 @@ def admin_status():
 def get_services_config():
     """Liste tous les services avec leur configuration"""
     try:
-        # Essayer d'abord le nouveau manager Supabase
-        try:
-            from backend.admin.supabase_services_manager import supabase_services_manager
-            services = supabase_services_manager.get_all_services()
-            
-            # Récupérer les thèmes disponibles
-            themes = {}
-            for service in services.values():
-                theme = service.get('theme')
-                if theme not in themes:
-                    themes[theme] = {
-                        "title": f"Thème {theme}",
-                        "services": []
-                    }
-                themes[theme]['services'].append(service)
-            
-            # Récupérer le service mis en avant
-            featured = supabase_services_manager.get_featured_service()
-            
-            return jsonify({
-                "success": True,
-                "services": services,
-                "themes": themes,
-                "featured": featured
-            })
-            
-        except ImportError:
-            # Fallback vers l'ancien manager
-            from backend.admin.services_manager import get_services_for_admin
-            return get_services_for_admin()
+        # Utiliser le même manager que le frontend public pour la cohérence
+        from backend.admin.services_manager import services_manager
+        
+        # Forcer le rechargement depuis Supabase
+        services_manager.services_config = services_manager._load_config()
+        services = services_manager.services_config
+        
+        # Récupérer les thèmes disponibles
+        themes = services_manager.get_services_by_theme()
+        
+        # Récupérer le service mis en avant
+        featured = services_manager.get_featured_service()
+        
+        return jsonify({
+            "success": True,
+            "services": services,
+            "themes": themes,
+            "featured": featured
+        })
             
     except Exception as e:
         logging.error(f"Erreur lors de la récupération des services: {e}")
@@ -1339,3 +1328,7 @@ def update_description(service_id):
     except Exception as e:
         logging.error(f"Erreur mise à jour description {service_id}: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+
+
