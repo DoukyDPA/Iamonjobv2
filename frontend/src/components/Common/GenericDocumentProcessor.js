@@ -126,6 +126,7 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
           setServiceConfig(finalConfig);
           return;
         }
+        console.log('⚠️ Service non trouvé dans l\'API, utilisation de la config locale');
         if (Object.keys(localConfig).length > 0) {
           const fallbackConfig = {
             ...localConfig,
@@ -135,12 +136,14 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
             apiEndpoint: `/api/services/execute/${apiServiceId}`,
             storageKey: `iamonjob_${mappedServiceId}`
           };
+          console.log('🔍 GenericDocumentProcessor - Config fallback:', fallbackConfig);
           setServiceConfig(fallbackConfig);
         } else {
           setError(`Service "${serviceId}" non trouvé`);
         }
       } catch (err) {
         console.error('Erreur chargement service:', err);
+        console.log('⚠️ Erreur API, utilisation de la config locale');
         if (Object.keys(localConfig).length > 0) {
           const fallbackConfig = {
             ...localConfig,
@@ -150,6 +153,7 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
             apiEndpoint: `/api/services/execute/${mappedServiceId.replace(/_/g, '-')}`,
             storageKey: `iamonjob_${mappedServiceId}`
           };
+          console.log('🔍 GenericDocumentProcessor - Config fallback (erreur):', fallbackConfig);
           setServiceConfig(fallbackConfig);
         } else {
           setError(`Service "${serviceId}" non trouvé`);
