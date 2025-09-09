@@ -94,26 +94,31 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
       // Toujours tenter de charger la configuration depuis l'API pour récupérer
       // les dernières modifications depuis Supabase
       try {
-        const apiServiceId = mappedServiceId.replace(/_/g, '-');
+
         const timestamp = Date.now();
-        let response = await fetch(`/api/services/${apiServiceId}?t=${timestamp}`);
+        let response = await fetch(`/api/services/${mappedServiceId}?t=${timestamp}`);
         let data = await response.json();
         if (!(response.ok && data.success && data.service)) {
-          response = await fetch(`/api/services/${mappedServiceId}?t=${timestamp}`);
+          const hyphenId = mappedServiceId.replace(/_/g, '-');
+          response = await fetch(`/api/services/${hyphenId}?t=${timestamp}`);
           data = await response.json();
         }
         if (response.ok && data.success && data.service) {
-          const serviceApiId = data.service.id || apiServiceId;
-          const clientId = serviceApiId.replace(/-/g, '_');
+          const serviceApiId = data.service.service_id || mappedServiceId;
+          const supabaseId = data.service.id;
+
           console.log('🔍 GenericDocumentProcessor - Service reçu:', {
-            id: serviceApiId,
+            supabaseId,
+            serviceId: serviceApiId,
             title: data.service.title,
             coach_advice: data.service.coach_advice
           });
           const finalConfig = {
             ...localConfig,
-            id: clientId,
+            id: mappedServiceId,
             apiId: serviceApiId,
+            supabaseId,
+
             title: data.service.title || localConfig.title || '',
             coachAdvice:
               data.service.coach_advice || localConfig.coachAdvice || '',
@@ -127,7 +132,8 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
               data.service.allows_notes ?? localConfig.allowsNotes ?? false,
             apiEndpoint:
               localConfig.apiEndpoint || `/api/services/execute/${serviceApiId}`,
-            storageKey: localConfig.storageKey || `iamonjob_${clientId}`
+            storageKey: localConfig.storageKey || `iamonjob_${mappedServiceId}`
+
           };
           console.log('🔍 GenericDocumentProcessor - Config finale:', finalConfig);
           setServiceConfig(finalConfig);
@@ -137,10 +143,11 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
           const fallbackConfig = {
             ...localConfig,
             id: mappedServiceId,
-            apiId: apiServiceId,
+            apiId: mappedServiceId,
             coachAdvice: localConfig.coachAdvice || '',
             apiEndpoint:
-              localConfig.apiEndpoint || `/api/services/execute/${apiServiceId}`,
+              localConfig.apiEndpoint || `/api/services/execute/${mappedServiceId}`,
+
             storageKey: localConfig.storageKey || `iamonjob_${mappedServiceId}`
           };
           setServiceConfig(fallbackConfig);
@@ -153,11 +160,11 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
           const fallbackConfig = {
             ...localConfig,
             id: mappedServiceId,
-            apiId: mappedServiceId.replace(/_/g, '-'),
+            apiId: mappedServiceId,
             coachAdvice: localConfig.coachAdvice || '',
             apiEndpoint:
-              localConfig.apiEndpoint ||
-              `/api/services/execute/${mappedServiceId.replace(/_/g, '-')}`,
+              localConfig.apiEndpoint || `/api/services/execute/${mappedServiceId}`,
+
             storageKey: localConfig.storageKey || `iamonjob_${mappedServiceId}`
           };
           setServiceConfig(fallbackConfig);
