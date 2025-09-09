@@ -88,76 +88,68 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
       const mappedServiceId =
         URL_TO_SERVICE_MAPPING[serviceId] || serviceId.replace(/-/g, '_');
 
-      // Récupérer la configuration locale (fallback)
-      const localConfig = getServiceConfig(mappedServiceId) || {};
+      // D'abord, essayer de récupérer la configuration locale
+      const localConfig = getServiceConfig(mappedServiceId);
+      if (localConfig) {
+        // Appliquer le même système de fallback pour les configs locales
+        const enhancedConfig = {
+          ...localConfig,
+          coachAdvice: localConfig.coachAdvice || ''
+        };
+        setServiceConfig(enhancedConfig);
+        return;
+      }
 
-      // Toujours tenter de charger la configuration depuis l'API pour récupérer
-      // les dernières modifications depuis Supabase
+      // Sinon, tenter de charger depuis l'API (Supabase)
       try {
+        // Certains services peuvent être enregistrés avec des tirets dans Supabase
         const apiServiceId = mappedServiceId.replace(/_/g, '-');
+
+        // Ajouter un timestamp pour éviter le cache
         const timestamp = Date.now();
         let response = await fetch(`/api/services/${apiServiceId}?t=${timestamp}`);
         let data = await response.json();
+
+        // Si aucune configuration trouvée, essayer la version originale
         if (!(response.ok && data.success && data.service)) {
           response = await fetch(`/api/services/${mappedServiceId}?t=${timestamp}`);
           data = await response.json();
         }
+
         if (response.ok && data.success && data.service) {
           const serviceApiId = data.service.id || apiServiceId;
           const clientId = serviceApiId.replace(/-/g, '_');
+          
           console.log('🔍 GenericDocumentProcessor - Service reçu:', {
             id: serviceApiId,
             title: data.service.title,
             coach_advice: data.service.coach_advice
           });
-          const finalConfig = {
+          
+          // Charger les conseils du coach depuis Supabase uniquement
+          
+          const apiConfig = {
             id: clientId,
             apiId: serviceApiId,
-            title: data.service.title || localConfig.title || '',
-            coachAdvice: data.service.coach_advice || localConfig.coachAdvice || '',
-            requiresCV: data.service.requires_cv ?? localConfig.requiresCV ?? false,
-            requiresJobOffer: data.service.requires_job_offer ?? localConfig.requiresJobOffer ?? false,
-            requiresQuestionnaire: data.service.requires_questionnaire ?? localConfig.requiresQuestionnaire ?? false,
-            allowsNotes: data.service.allows_notes ?? localConfig.allowsNotes ?? false,
+
+            title: data.service.title,
+            coachAdvice: data.service.coach_advice || '', // Conseils du coach (Supabase uniquement)
+            requiresCV: data.service.requires_cv,
+            requiresJobOffer: data.service.requires_job_offer,
+            requiresQuestionnaire: data.service.requires_questionnaire,
+            allowsNotes: data.service.allows_notes || false,
             apiEndpoint: `/api/services/execute/${serviceApiId}`,
             storageKey: `iamonjob_${clientId}`
+
           };
-          console.log('🔍 GenericDocumentProcessor - Config finale:', finalConfig);
-          setServiceConfig(finalConfig);
-          return;
-        }
-        console.log('⚠️ Service non trouvé dans l\'API, utilisation de la config locale');
-        if (Object.keys(localConfig).length > 0) {
-          const fallbackConfig = {
-            ...localConfig,
-            id: mappedServiceId,
-            apiId: apiServiceId,
-            coachAdvice: localConfig.coachAdvice || '',
-            apiEndpoint: `/api/services/execute/${apiServiceId}`,
-            storageKey: `iamonjob_${mappedServiceId}`
-          };
-          console.log('🔍 GenericDocumentProcessor - Config fallback:', fallbackConfig);
-          setServiceConfig(fallbackConfig);
+          console.log('🔍 GenericDocumentProcessor - Config finale:', apiConfig);
+          setServiceConfig(apiConfig);
         } else {
           setError(`Service "${serviceId}" non trouvé`);
         }
       } catch (err) {
         console.error('Erreur chargement service:', err);
-        console.log('⚠️ Erreur API, utilisation de la config locale');
-        if (Object.keys(localConfig).length > 0) {
-          const fallbackConfig = {
-            ...localConfig,
-            id: mappedServiceId,
-            apiId: mappedServiceId.replace(/_/g, '-'),
-            coachAdvice: localConfig.coachAdvice || '',
-            apiEndpoint: `/api/services/execute/${mappedServiceId.replace(/_/g, '-')}`,
-            storageKey: `iamonjob_${mappedServiceId}`
-          };
-          console.log('🔍 GenericDocumentProcessor - Config fallback (erreur):', fallbackConfig);
-          setServiceConfig(fallbackConfig);
-        } else {
-          setError(`Service "${serviceId}" non trouvé`);
-        }
+        setError(`Service "${serviceId}" non trouvé`);
       }
     };
 
