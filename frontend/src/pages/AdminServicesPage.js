@@ -491,8 +491,8 @@ const AdminServicesPage = () => {
     const service = services[serviceId];
     
     // Utiliser coach_advice de Supabase, sinon fallback vers servicesConfig
-    const coachAdvice = service?.coach_advice || 
-                       (service?.id && SERVICES_CONFIG[service.id]?.coachAdvice) || 
+    const coachAdvice = service?.coach_advice ||
+                       (service?.service_id && SERVICES_CONFIG[service.service_id]?.coachAdvice) ||
                        '';
     setCoachAdviceText(coachAdvice);
   };
@@ -816,7 +816,7 @@ const AdminServicesPage = () => {
             }}>
               {themeServices.map(service => (
                 <div
-                  key={service.id}
+                  key={service.service_id || service.id}
                   style={{
                     background: 'white',
                     border: service.visible ? '2px solid #10b981' : '2px solid #ef4444',
@@ -920,7 +920,7 @@ const AdminServicesPage = () => {
                     flexWrap: 'wrap'
                   }}>
                     <button
-                      onClick={() => toggleVisibility(service.id)}
+                      onClick={() => toggleVisibility(service.service_id)}
                       style={{
                         background: service.visible ? '#ef4444' : '#10b981',
                         color: 'white',
@@ -939,7 +939,7 @@ const AdminServicesPage = () => {
                     </button>
                     
                     <button
-                      onClick={() => setFeatured(service.id)}
+                      onClick={() => setFeatured(service.service_id)}
                       style={{
                         background: '#f59e0b',
                         color: 'white',
@@ -957,7 +957,7 @@ const AdminServicesPage = () => {
                     </button>
 
                     <button
-                      onClick={() => editPrompt(service.id)}
+                      onClick={() => editPrompt(service.service_id)}
                       style={{
                         background: '#3b82f6',
                         color: 'white',
@@ -975,7 +975,7 @@ const AdminServicesPage = () => {
                     </button>
 
                     <button
-                      onClick={() => editCoachAdvice(service.id)}
+                      onClick={() => editCoachAdvice(service.service_id)}
                       style={{
                         background: '#10b981',
                         color: 'white',
@@ -993,7 +993,7 @@ const AdminServicesPage = () => {
                     </button>
 
                     <button
-                      onClick={() => editDescription(service.id)}
+                      onClick={() => editDescription(service.service_id)}
                       style={{
                         background: '#f59e0b',
                         color: 'white',
@@ -1013,7 +1013,7 @@ const AdminServicesPage = () => {
                     {/* Sélecteur de thème */}
                     <select
                       value={service.theme}
-                      onChange={(e) => changeServiceTheme(service.id, e.target.value)}
+                      onChange={(e) => changeServiceTheme(service.service_id, e.target.value)}
                       style={{
                         padding: '0.5rem',
                         borderRadius: '6px',
@@ -1032,7 +1032,7 @@ const AdminServicesPage = () => {
 
                     {/* Bouton Documents requis */}
                     <button
-                      onClick={() => setEditingRequirements(service.id)}
+                      onClick={() => setEditingRequirements(service.service_id)}
                       style={{
                         background: '#8b5cf6',
                         color: 'white',
