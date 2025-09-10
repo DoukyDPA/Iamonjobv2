@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { FiTarget, FiTrendingUp, FiAlertTriangle, FiCheckCircle, FiBarChart3 } from 'react-icons/fi';
 import SimpleMarkdownRenderer from '../Common/SimpleMarkdownRenderer';
+import LoadingMessage from '../Common/LoadingMessage';
 
 const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
   const { documentStatus } = useApp();
@@ -429,37 +430,11 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
   // Affichage du loading
   if (loading) {
     return (
-      <div style={{
-        padding: '3rem',
-        textAlign: 'center',
-        background: '#f0f9fa',
-        borderRadius: '12px',
-        border: '1px solid #0a6b79',
-        margin: '1rem 0'
-      }}>
-        <div style={{
-          width: '4rem',
-          height: '4rem',
-          border: '4px solid #e5e7eb',
-          borderTop: '4px solid #0a6b79',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-          margin: '0 auto 1rem auto'
-        }} />
-        <h3 style={{ color: '#0a6b79', marginBottom: '0.5rem' }}>
-          Analyse de matching en cours...
-        </h3>
-        <p style={{ color: '#0a6b79', margin: 0 }}>
-          L'IA évalue votre compatibilité professionnelle
-        </p>
-        
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
+      <LoadingMessage 
+        message="Analyse de matching en cours..."
+        subtitle="L'IA évalue votre compatibilité professionnelle"
+        size="large"
+      />
     );
   }
 
