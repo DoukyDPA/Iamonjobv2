@@ -1,11 +1,14 @@
 import React from 'react';
+import LoadingMessage from '../Common/LoadingMessage';
 
 const CVAnalysisDashboard = ({ analysisData, loading, error, onStartNextStep }) => {
   if (loading) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <div>Analyse de votre CV en cours...</div>
-      </div>
+      <LoadingMessage 
+        message="Analyse de votre CV en cours..."
+        subtitle="L'IA analyse votre CV et génère des recommandations personnalisées"
+        size="large"
+      />
     );
   }
 
