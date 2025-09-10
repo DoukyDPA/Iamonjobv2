@@ -32,7 +32,7 @@ const FAQ = () => {
       id: 1,
       category: 'general',
       question: "Qu'est-ce qu'IAMONJOB ?",
-      answer: "IAMONJOB est une plateforme gratuite d'accompagnement à la recherche d'emploi développée par le CBE Sud 94. Nous utilisons l'intelligence artificielle pour analyser votre CV, évaluer votre compatibilité avec des offres d'emploi, générer des lettres de motivation personnalisées et vous préparer aux entretiens d'embauche."
+      answer: "IAMONJOB est une plateforme gratuite d'accompagnement à la recherche d'emploi développée par le CBE Sud 94, spécialiste de l'accompagnement des demandeurs d'emploi depuis plus de 30 ans. Nous utilisons l'intelligence artificielle pour analyser votre CV, évaluer votre compatibilité avec des offres d'emploi, générer des lettres de motivation personnalisées et vous préparer aux entretiens d'embauche."
     },
     {
       id: 2,
@@ -76,7 +76,7 @@ const FAQ = () => {
       id: 8,
       category: 'cv',
       question: "Que faire si mon CV n'est pas reconnu ?",
-      answer: "Si votre CV n'est pas correctement analysé, vérifiez qu'il s'agit d'un format supporté et que le texte est bien lisible (pas d'image scannée). Si le problème persiste, contactez notre support à support@cbesud94.fr."
+      answer: "Si votre CV n'est pas correctement analysé, vérifiez qu'il s'agit d'un format supporté et que le texte est bien lisible (pas d'image scannée). Si le problème persiste, contactez notre support à support@cbe-sud94.org."
     },
 
     // Questions sur la compatibilité
@@ -96,7 +96,7 @@ const FAQ = () => {
       id: 11,
       category: 'compatibility',
       question: "Puis-je analyser plusieurs offres ?",
-      answer: "Oui, vous pouvez analyser autant d'offres que vous le souhaitez. Chaque analyse est indépendante et vous pouvez comparer les résultats pour prioriser vos candidatures."
+      answer: "Oui, vous pouvez analyser autant d'offres que vous le souhaitez dans la limite des capacités journalières de l'outil. Chaque analyse est indépendante et vous pouvez comparer les résultats pour prioriser vos candidatures."
     },
 
     // Questions sur les lettres de motivation
@@ -124,13 +124,13 @@ const FAQ = () => {
       id: 15,
       category: 'privacy',
       question: "Mes données sont-elles sécurisées ?",
-      answer: "Oui, nous prenons la sécurité très au sérieux. Vos documents sont automatiquement supprimés après 24 heures, les échanges sont chiffrés (HTTPS), et nous respectons strictement le RGPD. Vos données ne sont jamais vendues ou partagées avec des tiers."
+      answer: "Oui, nous prenons la sécurité très au sérieux. Vos documents sont automatiquement supprimés de nos serveurs après 24h, les échanges sont chiffrés (HTTPS), et nous respectons strictement le RGPD. Les données sont cependant analysées par Mistral, l'IA française ayant ses serveurs en Europe. Il est cependant recommandé d'anonymiser vos documents avant de les partager en analyse. Vos données ne sont jamais vendues ou partagées avec des tiers."
     },
     {
       id: 16,
       category: 'privacy',
       question: "Que faites-vous de mon CV ?",
-      answer: "Votre CV est temporairement analysé par notre IA puis automatiquement supprimé de nos serveurs dans les 24 heures. Nous ne conservons aucune copie de vos documents personnels. Seules des statistiques anonymes peuvent être conservées pour améliorer notre service."
+      answer: "Votre CV est temporairement analysé par Mistral IA puis automatiquement supprimé de nos serveurs dans les 24 heures. Nous ne conservons aucune copie de vos documents personnels. Seules des statistiques anonymes peuvent être conservées pour améliorer notre service."
     },
     {
       id: 17,
@@ -162,7 +162,7 @@ const FAQ = () => {
       id: 21,
       category: 'general',
       question: "Comment contacter le support ?",
-      answer: "Vous pouvez nous contacter par email à support@cbesud94.fr, par téléphone au +33 1 23 45 67 89, ou via notre formulaire de contact. Notre équipe répond généralement sous 24h en jours ouvrés."
+      answer: "Vous pouvez nous contacter par email à support@cbe-sud94.org, par téléphone au +33 1 76 28 41 64, ou via notre formulaire de contact. Notre équipe répond généralement sous 24h en jours ouvrés."
     },
     {
       id: 22,
@@ -260,10 +260,10 @@ const FAQ = () => {
             
             <div className="contact-info">
               <div className="contact-item">
-                <strong>Email :</strong> support@cbesud94.fr
+                <strong>Email :</strong> support@cbe-sud94.org
               </div>
               <div className="contact-item">
-                <strong>Téléphone :</strong> +33 1 23 45 67 89
+                <strong>Téléphone :</strong> +33 1 76 28 41 64
               </div>
               <div className="contact-item">
                 <strong>Horaires :</strong> Lundi - Vendredi, 9h - 17h
