@@ -28,6 +28,7 @@ import MatchingAnalysis from '../components/Analysis/MatchingAnalysis';
 import ServicesGrid from '../components/Services/ServicesGrid';
 import ProfileAdviceModal from '../components/Common/ProfileAdviceModal';
 import { LogoIcon } from '../components/icons/ModernIcons';
+import LoadingMessage from '../components/Common/LoadingMessage';
 
 
 
@@ -760,7 +761,12 @@ const Dashboard = () => {
               <h3 className="revolutionary-section-title" style={{ fontSize: '1.3rem', marginBottom: 12 }}>
                 🎯 Analyse de la compatibilité entre votre CV et l'offre chargée
               </h3>
-              {compatLoading && <div>Analyse en cours...</div>}
+              {compatLoading && (
+                <LoadingMessage 
+                  message="Analyse de compatibilité en cours..."
+                  size="medium"
+                />
+              )}
               {compatError && <div style={{ color: '#dc2626' }}>{compatError}</div>}
               {!compatLoading && !compatError && (
                 <MatchingAnalysis preloadedData={compatAnalysis} hideButton={true} />
