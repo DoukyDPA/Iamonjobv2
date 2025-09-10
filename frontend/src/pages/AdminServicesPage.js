@@ -8,11 +8,9 @@ import {
 } from 'react-icons/fi';
 import { ServiceIcon } from '../components/icons/ModernIcons';
 import { SERVICES_CONFIG } from '../services/servicesConfig';
-import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const AdminServicesPage = () => {
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('services');
   const [services, setServices] = useState({});
   const [themes, setThemes] = useState({});
@@ -40,7 +38,6 @@ const AdminServicesPage = () => {
   }, []);
 
   const loadServicesData = async () => {
-    console.log('🔧 loadServicesData called');
     try {
       // Récupérer le token d'authentification
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -51,8 +48,6 @@ const AdminServicesPage = () => {
         return;
       }
       
-      console.log('🔧 Token trouvé:', token.substring(0, 20) + '...');
-      
       const response = await fetch('/api/admin/services', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -60,23 +55,17 @@ const AdminServicesPage = () => {
         }
       });
       
-      console.log('🔧 Response status:', response.status);
-      console.log('🔧 Response headers:', response.headers);
-      
       const data = await response.json();
-      console.log('🔧 Response data:', data);
       
       if (data.success) {
-        console.log('✅ Services chargés:', Object.keys(data.services || {}));
         setServices(data.services);
         setThemes(data.themes);
         setFeaturedService(data.featured);
       } else {
-        console.error('❌ Erreur API:', data.error);
         toast.error(data.error || 'Erreur lors du chargement des services');
       }
     } catch (error) {
-      console.error('❌ Erreur chargement services:', error);
+      console.error('Erreur chargement services:', error);
       toast.error('Erreur lors du chargement');
     } finally {
       setLoading(false);
@@ -621,29 +610,6 @@ const AdminServicesPage = () => {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
 
-      {/* Debug Panel */}
-      <div style={{
-        background: '#f3f4f6',
-        border: '1px solid #d1d5db',
-        borderRadius: '8px',
-        padding: '1rem',
-        marginBottom: '2rem',
-        fontSize: '0.9rem'
-      }}>
-        <h4 style={{ margin: '0 0 0.5rem 0', color: '#374151' }}>🔧 Debug Info</h4>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          <div>
-            <strong>Utilisateur:</strong> {user?.email || 'Non connecté'}<br/>
-            <strong>Admin:</strong> {user?.isAdmin ? '✅ Oui' : '❌ Non'}<br/>
-            <strong>ID:</strong> {user?.id || 'N/A'}
-          </div>
-          <div>
-            <strong>Services chargés:</strong> {Object.keys(services).length}<br/>
-            <strong>Thèmes:</strong> {Object.keys(themes).length}<br/>
-            <strong>Loading:</strong> {loading ? '⏳ Oui' : '✅ Non'}
-          </div>
-        </div>
-      </div>
 
       {/* Navigation tabs */}
       <div style={{
