@@ -354,62 +354,7 @@ def analyze_duplicate_services():
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
 
 # === GESTION DES PROMPTS ===
-@admin_api.route('/prompts', methods=['GET'])
-@verify_jwt_token
-def list_prompts():
-    """Liste tous les prompts disponibles"""
-    try:
-        from services.ai_service_prompts import AI_PROMPTS
-        return jsonify({"success": True, "prompts": AI_PROMPTS})
-    except Exception as e:
-        logging.error(f"Erreur lors de la récupération des prompts: {e}")
-        return jsonify({"error": f"Erreur: {str(e)}"}), 500
-
-@admin_api.route('/prompts/<service_id>', methods=['GET', 'PUT'])
-@verify_jwt_token
-def handle_prompt(service_id):
-    """Récupère ou met à jour le prompt d'un service"""
-    try:
-        from services.ai_service_prompts import get_prompt, update_prompt
-        
-        if request.method == 'GET':
-            prompt_entry = get_prompt(service_id)
-            if prompt_entry:
-                # Retourner le texte du prompt, pas l'objet complet
-                prompt_text = prompt_entry.get("prompt", "")
-                return jsonify({"success": True, "prompt": prompt_text})
-            return jsonify({"success": False, "error": "Service inconnu"}), 404
-
-        data = request.get_json() or {}
-        new_prompt = data.get('prompt')
-        if new_prompt is None:
-            return jsonify({"success": False, "error": "Champ 'prompt' manquant"}), 400
-        
-        # Mettre à jour le prompt
-        if update_prompt(service_id, new_prompt):
-            return jsonify({
-                "success": True, 
-                "service_id": service_id, 
-                "prompt": new_prompt,
-                "message": "Prompt mis à jour et sauvegardé avec succès"
-            })
-        return jsonify({"success": False, "error": "Service inconnu"}), 404
-        
-    except Exception as e:
-        logging.error(f"Erreur lors de la gestion du prompt {service_id}: {e}")
-        return jsonify({"error": f"Erreur: {str(e)}"}), 500
-
-@admin_api.route('/prompts/reload', methods=['POST'])
-@verify_jwt_token
-def reload_prompts():
-    """Recharge les prompts depuis le fichier"""
-    try:
-        from services.ai_service_prompts import reload_prompts_from_file
-        success = reload_prompts_from_file()
-        return jsonify({"success": True, "message": "Prompts rechargés" if success else "Erreur lors du rechargement"})
-    except Exception as e:
-        logging.error(f"Erreur lors du rechargement des prompts: {e}")
-        return jsonify({"error": f"Erreur: {str(e)}"}), 500
+# Routes supprimées - voir plus bas pour les routes de base de données
 
 @admin_api.route('/health', methods=['GET'])
 def admin_health():
