@@ -308,6 +308,218 @@
   }
 }
 
+/* ===== STYLES POUR LES MODALS DU DASHBOARD ===== */
+.dashboard-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.dashboard-modal-content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dashboard-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #0a6b79 0%, #27a2b4 100%);
+  color: white;
+  border-radius: 16px 16px 0 0;
+}
+
+.dashboard-modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-modal-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1.2rem;
+}
+
+.dashboard-modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.dashboard-modal-body {
+  padding: 2rem;
+}
+
+.dashboard-modal-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #f8fafc;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #0a6b79;
+}
+
+.dashboard-modal-info p {
+  margin: 0;
+  color: #374151;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.dashboard-modal-question {
+  margin-bottom: 2rem;
+}
+
+.dashboard-modal-question label {
+  display: block;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.dashboard-modal-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.dashboard-modal-textarea:focus {
+  outline: none;
+  border-color: #0a6b79;
+  box-shadow: 0 0 0 3px rgba(10, 107, 121, 0.1);
+}
+
+.dashboard-modal-textarea-large {
+  min-height: 200px;
+}
+
+.dashboard-modal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.dashboard-modal-dots {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.dashboard-modal-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d1d5db;
+  transition: all 0.2s ease;
+}
+
+.dashboard-modal-dot.active {
+  background: #0a6b79;
+  transform: scale(1.2);
+}
+
+.dashboard-modal-dot.filled {
+  background: #22c55e;
+}
+
+.dashboard-modal-btn {
+  background: #0a6b79;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.dashboard-modal-btn:hover {
+  background: #0d5a66;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(10, 107, 121, 0.3);
+}
+
+.dashboard-modal-btn:active {
+  transform: translateY(0);
+}
+
+.dashboard-modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.dashboard-modal-actions .dashboard-modal-btn:first-child {
+  background: #6b7280;
+}
+
+.dashboard-modal-actions .dashboard-modal-btn:first-child:hover {
+  background: #4b5563;
+}
+
 /* ===== CORRECTION INDICATEUR DE CHARGEMENT ===== */
 .dashboard-modal-btn.disabled,
 .dashboard-modal-btn:disabled {
@@ -315,10 +527,52 @@
   color: white !important;
   border-color: #6b7280 !important;
   opacity: 0.7 !important;
+  cursor: not-allowed !important;
 }
 
 .dashboard-modal-btn.disabled:hover,
 .dashboard-modal-btn:disabled:hover {
   background: #6b7280 !important;
   transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ===== RESPONSIVE POUR LES MODALS ===== */
+@media (max-width: 768px) {
+  .dashboard-modal-overlay {
+    padding: 0.5rem;
+  }
+  
+  .dashboard-modal-content {
+    max-height: 95vh;
+  }
+  
+  .dashboard-modal-header {
+    padding: 1rem 1.5rem;
+  }
+  
+  .dashboard-modal-header h3 {
+    font-size: 1.1rem;
+  }
+  
+  .dashboard-modal-body {
+    padding: 1.5rem;
+  }
+  
+  .dashboard-modal-nav {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .dashboard-modal-dots {
+    order: -1;
+  }
+  
+  .dashboard-modal-actions {
+    flex-direction: column;
+  }
+  
+  .dashboard-modal-actions .dashboard-modal-btn {
+    width: 100%;
+  }
 } 
