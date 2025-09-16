@@ -1,244 +1,157 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+/* Import des styles révolutionnaires */
+@import './styles/revolutionary-design.css';
 
-// Contextes
-import { AuthProvider } from './context/AuthContext';
-import { AppProvider } from './context/AppContext';
-
-// Composant de synchronisation
-import DataSync from './components/Common/DataSync';
-
-// Composant d'individualisation des utilisateurs
-import UserIndividualization from './components/Common/UserIndividualization';
-
-// Composant de test responsive
-import MobileResponsiveTest from './components/TestAccess/MobileResponsiveTest';
-
-// Layout et protection
-import Layout from './components/Layout/Layout';
-import PrivateRoute from './components/Auth/PrivateRoute';
-import TestAccessWrapper from './components/TestAccess/TestAccessWrapper';
-
-// Pages publiques
-import Home from './pages/Home';
-import Features from './pages/Features';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-
-// Pages protégées
-import Dashboard from './pages/Dashboard';
-import ServicesGrid from './components/Services/ServicesGrid';
-import GenericDocumentProcessor from './components/Common/GenericDocumentProcessor';
-
-// Pages d'administration
-import AdminServicesPage from './pages/AdminServicesPage';
-import AdminPartnersPage from './pages/AdminPartnersPage';
-import AdminUsersPage from './pages/AdminUsersPage';
-
-// Pages légales
-import LegalNotice from './pages/LegalNotice';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TermsOfService from './pages/TermsOfService';
-import CookiesPolicy from './pages/CookiesPolicy';
-import FAQ from './pages/FAQ';
-
-import './App.css';
-
-function App() {
-  return (
-    <AuthProvider>
-      <AppProvider>
-        <Router>
-          <UserIndividualization>
-            <TestAccessWrapper>
-              <DataSync />
-              <div className="app">
-                <Routes>
-                  {/* Routes publiques avec layout */}
-                  <Route path="/" element={
-                    <Layout>
-                      <Home />
-                    </Layout>
-                  } />
-                  
-                  <Route path="/features" element={
-                    <Layout>
-                      <Features />
-                    </Layout>
-                  } />
-
-                  {/* Routes d'authentification */}
-                  <Route path="/login" element={
-                    <Layout>
-                      <Login />
-                    </Layout>
-                  } />
-                  
-                  <Route path="/register" element={
-                    <Layout>
-                      <Register />
-                    </Layout>
-                  } />
-                  
-                  <Route path="/forgot-password" element={
-                    <Layout>
-                      <ForgotPassword />
-                    </Layout>
-                  } />
-
-                  {/* Routes protégées */}
-                  <Route path="/dashboard" element={
-                    <PrivateRoute>
-                      <Layout>
-                        <Dashboard />
-                      </Layout>
-                    </PrivateRoute>
-                  } />
-
-                  {/* Routes pour les services génériques */}
-                  <Route path="/services" element={
-                    <PrivateRoute>
-                      <Layout>
-                        <ServicesGrid />
-                      </Layout>
-                    </PrivateRoute>
-                  } />
-                  
-                  {/* Routes dynamiques pour tous les services IA */}
-                  <Route path="/:serviceId" element={
-                    <PrivateRoute>
-                      <Layout>
-                        <GenericDocumentProcessor />
-                      </Layout>
-                    </PrivateRoute>
-                  } />
-                
-                  {/* Routes d'administration */}
-                  <Route path="/admin/services" element={
-                    <PrivateRoute>
-                      <Layout>
-                        <AdminServicesPage />
-                      </Layout>
-                    </PrivateRoute>
-                  } />
-                  
-                  <Route path="/admin/partners" element={
-                    <PrivateRoute>
-                      <Layout>
-                        <AdminPartnersPage />
-                      </Layout>
-                    </PrivateRoute>
-                  } />
-                  
-                  <Route path="/admin/users" element={
-                    <PrivateRoute>
-                      <Layout>
-                        <AdminUsersPage />
-                      </Layout>
-                    </PrivateRoute>
-                  } />
-                  
-                  {/* Page de test progression */}
-                  <Route path="/test" element={
-                    <Layout>
-                      <div style={{ padding: '2rem', textAlign: 'center' }}>
-                        <h2>🧪 Page de test</h2>
-                        <p>✅ Contextes fonctionnels</p>
-                        <p>✅ Layout et Header</p>
-                        <p>✅ Pages Home et Features</p>
-                        <p>✅ Authentification Login/Register</p>
-                        <p>✅ Page d'administration des utilisateurs</p>
-                        <p>✅ Corrections responsive mobile</p>
-                        <p>Étape 6/6 terminée</p>
-                        
-                        <div style={{ marginTop: '2rem' }}>
-                          <h3>🎯 Navigation disponible :</h3>
-                          <p>
-                            <a href="/" style={{ margin: '0 1rem', color: '#0a6b79' }}>🏠 Home</a>
-                            <a href="/features" style={{ margin: '0 1rem', color: '#0a6b79' }}>⚡ Features</a>
-                            <a href="/login" style={{ margin: '0 1rem', color: '#0a6b79' }}>🔐 Login</a>
-                            <a href="/register" style={{ margin: '0 1rem', color: '#0a6b79' }}>📝 Register</a>
-                            <a href="/dashboard" style={{ margin: '0 1rem', color: '#0a6b79' }}>🎯 Dashboard</a>
-                            <a href="/admin/users" style={{ margin: '0 1rem', color: '#0a6b79' }}>👥 Admin Users</a>
-                            <a href="/test" style={{ margin: '0 1rem', color: '#0a6b79' }}>🔧 Test</a>
-                            <a href="/test-responsive" style={{ margin: '0 1rem', color: '#0a6b79' }}>📱 Test Mobile</a>
-                          </p>
-                        </div>
-                      </div>
-                    </Layout>
-                  } />
-
-                  {/* Page de test responsive mobile */}
-                  <Route path="/test-responsive" element={
-                    <Layout>
-                      <MobileResponsiveTest />
-                    </Layout>
-                  } />
-
-                  {/* Routes légales */}
-                  <Route path="/mentions-legales" element={
-                    <Layout>
-                      <LegalNotice />
-                    </Layout>
-                  } />
-                  
-                  <Route path="/confidentialite" element={
-                    <Layout>
-                      <PrivacyPolicy />
-                    </Layout>
-                  } />
-                  
-                  <Route path="/conditions" element={
-                    <Layout>
-                      <TermsOfService />
-                    </Layout>
-                  } />
-                  
-                  <Route path="/cookies" element={
-                    <Layout>
-                      <CookiesPolicy />
-                    </Layout>
-                  } />
-                  
-                  <Route path="/faq" element={
-                    <Layout>
-                      <FAQ />
-                    </Layout>
-                  } />
-                  
-                  {/* Routes de construction */}
-                  <Route path="*" element={
-                    <Layout>
-                      <div style={{ padding: '2rem', textAlign: 'center' }}>
-                        <h2>🚧 Page en construction</h2>
-                        <p>Cette fonctionnalité sera bientôt disponible !</p>
-                        <p>
-                          <a href="/" style={{ color: '#0a6b79' }}>← Retour à l'accueil</a>
-                        </p>
-                      </div>
-                    </Layout>
-                  } />
-                </Routes>
-
-                <Toaster 
-                  position="top-right"
-                  toastOptions={{
-                    duration: 4000,
-                    style: {
-                      background: '#363636',
-                      color: '#fff',
-                    },
-                  }}
-                />
-              </div>
-            </TestAccessWrapper>
-          </UserIndividualization>
-        </Router>
-      </AppProvider>
-    </AuthProvider>
-  );
+/* Variables CSS */
+:root {
+  --primary-color: #0a6b79;
+  --primary-dark: #085a66;
+  --primary-light: #27a2b4;
+  --secondary-color: #f8f9fa;
+  --text-color: #333;
+  --text-light: #666;
+  --border-color: #dee2e6;
+  --success-color: #28a745;
+  --error-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #17a2b8;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.15);
+  --border-radius: 8px;
+  --transition: all 0.3s ease;
 }
 
-export default App;
+/* Reset et base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+/* Layout principal */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.header {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+  color: white;
+  padding: 1rem 0;
+  box-shadow: var(--shadow-md);
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  text-decoration: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0; /* évite que l'alt du logo devienne un titre */
+}
+
+.logo-image {
+  height: 40px;
+  width: auto;
+}
+
+/* Main content */
+.main-content {
+  flex: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  width: 100%;
+}
+
+/* Cards */
+.card {
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  transition: var(--transition);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background-color: white;
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
+}
+
+/* Grid */
+.grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .main-content {
+    padding: 1rem 0.5rem;
+  }
+  
+  .card {
+    padding: 1.5rem;
+  }
+}
