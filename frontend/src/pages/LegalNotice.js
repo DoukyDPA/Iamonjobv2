@@ -16,15 +16,15 @@ const LegalNotice = () => {
             <h2>Éditeur du site</h2>
             <div className="info-block">
               <h3>CBE Sud 94</h3>
-              <p><strong>Raison sociale :</strong> Centre Bilan Emploi Sud 94</p>
+              <p><strong>Raison sociale :</strong> Comité de Bassin d'Emploi Sud 94</p>
               <p><strong>Forme juridique :</strong> Association loi 1901</p>
               <p><strong>Adresse du siège social :</strong><br />
-                123 Rue de l'Innovation<br />
-                94000 Créteil<br />
+                1 Rue de la Corderie - Centra 328 <br />
+                94586 Rungis Cedex l<br />
                 France
               </p>
-              <p><strong>Téléphone :</strong> +33 1 23 45 67 89</p>
-              <p><strong>Email :</strong> contact@cbesud94.fr</p>
+              <p><strong>Téléphone :</strong> +33 1 77 28 41 64</p>
+              <p><strong>Email :</strong> contact@cbe-sud94.org</p>
               <p><strong>Numéro SIRET :</strong> [À compléter]</p>
               <p><strong>Code APE :</strong> [À compléter]</p>
             </div>
@@ -33,18 +33,21 @@ const LegalNotice = () => {
           <section className="legal-section">
             <h2>Directeur de la publication</h2>
             <div className="info-block">
-              <p><strong>Directeur :</strong> [Nom du directeur]</p>
+              <p><strong>Directeur :</strong> Daniel Pigeon-Angelini</p>
               <p><strong>Qualité :</strong> Directeur du CBE Sud 94</p>
-              <p><strong>Contact :</strong> direction@cbesud94.fr</p>
+              <p><strong>Contact :</strong> d.pigeon-angelini@cbe-sud94.org</p>
             </div>
           </section>
 
           <section className="legal-section">
             <h2>Hébergement</h2>
             <div className="info-block">
-              <p><strong>Hébergeur :</strong> [Nom de l'hébergeur]</p>
-              <p><strong>Adresse :</strong> [Adresse de l'hébergeur]</p>
-              <p><strong>Site web :</strong> [Site de l'hébergeur]</p>
+              <p><strong>Hébergeur :</strong> Railway</p>
+              <p><strong>Adresse :</strong> Railway Corp.<br />
+              2261 Market Street #4008<br />
+              San Francisco, CA 94114<br />
+              États-Unis</p>
+              <p><strong>Site web :</strong> <a href="https://railway.app" target="_blank" rel="noopener noreferrer">https://railway.app</a></p>
             </div>
           </section>
 
@@ -75,8 +78,8 @@ const LegalNotice = () => {
               
               <p>Pour exercer ces droits ou pour toute question sur le traitement de vos données, vous pouvez nous contacter :</p>
               <ul>
-                <li>Par email : dpo@cbesud94.fr</li>
-                <li>Par courrier : CBE Sud 94 - DPO, 123 Rue de l'Innovation, 94000 Créteil</li>
+                <li>Par email : contact@cbe-sud94.org</li>
+                <li>Par courrier : CBE Sud 94 - DPO, 1 rue de la Corderie, Centra 328, 94586 Rungis Cedex</li>
               </ul>
               
               <p>Pour plus d'informations, consultez notre <a href="/confidentialite">Politique de confidentialité</a>.</p>
@@ -117,21 +120,21 @@ const LegalNotice = () => {
                 <FiMail />
                 <div>
                   <strong>Email</strong>
-                  <p>contact@cbesud94.fr</p>
+                  <p>contact@cbe-sud94.org</p>
                 </div>
               </div>
               <div className="contact-item">
                 <FiPhone />
                 <div>
                   <strong>Téléphone</strong>
-                  <p>+33 1 23 45 67 89</p>
+                  <p>+33 1 76 28 41 64</p>
                 </div>
               </div>
               <div className="contact-item">
                 <FiMapPin />
                 <div>
                   <strong>Adresse</strong>
-                  <p>CBE Sud 94<br />123 Rue de l'Innovation<br />94000 Créteil</p>
+                  <p>CBE Sud 94<br />1 Rue de la Corderie - Centra 328<br />94586 Rungis Cedex</p>
                 </div>
               </div>
             </div>
