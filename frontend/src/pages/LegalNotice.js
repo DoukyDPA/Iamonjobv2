@@ -23,10 +23,10 @@ const LegalNotice = () => {
                 94586 Rungis Cedex l<br />
                 France
               </p>
-              <p><strong>Téléphone :</strong> +33 1 77 28 41 64</p>
+              <p><strong>Téléphone :</strong> +33 1 76 28 41 64</p>
               <p><strong>Email :</strong> contact@cbe-sud94.org</p>
-              <p><strong>Numéro SIRET :</strong> [À compléter]</p>
-              <p><strong>Code APE :</strong> [À compléter]</p>
+              <p><strong>Numéro SIRET :</strong> 413 705 112 0022</p>
+              <p><strong>Code NAF :</strong> 8559A</p>
             </div>
           </section>
 
