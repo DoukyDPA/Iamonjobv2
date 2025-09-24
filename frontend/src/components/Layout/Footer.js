@@ -23,10 +23,10 @@ const Footer = () => {
               Optimisez votre CV, préparez vos entretiens et trouvez le job de vos rêves.
             </p>
             <div className="footer-social">
-              <a href="mailto:contact@cbesud94.fr" aria-label="Email" title="Nous contacter par email">
+              <a href="mailto:contact@cbe-sud94.org" aria-label="Email" title="Nous contacter par email">
                 <FiMail />
               </a>
-              <a href="tel:+33123456789" aria-label="Téléphone" title="Nous appeler">
+              <a href="tel:+33176284164" aria-label="Téléphone" title="Nous appeler">
                 <FiPhone />
               </a>
               <a href="https://linkedin.com/company/cbe-sud-94" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" title="Suivez-nous sur LinkedIn">
@@ -56,7 +56,7 @@ const Footer = () => {
               <li><Link to="/features">Guides pratiques</Link></li>
               <li><Link to="/faq">FAQ</Link></li>
               <li><Link to="/contact">Contact</Link></li>
-              <li><a href="https://cbesud94.fr" target="_blank" rel="noopener noreferrer">CBE Sud 94</a></li>
+              <li><a href="https://cbe-sud94.org" target="_blank" rel="noopener noreferrer">CBE Sud 94</a></li>
             </ul>
           </div>
           
