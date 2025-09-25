@@ -364,6 +364,9 @@ def register_blueprints():
 
 register_blueprints()
 
+# Enregistrer les routes GDPR
+register_gdpr_routes(app)
+
 # ====================================
 # ENREGISTREMENT DES ROUTES ADMIN
 # ====================================
