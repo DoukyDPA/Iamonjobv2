@@ -5,8 +5,15 @@ from flask import Blueprint, request, jsonify, session
 from datetime import datetime, timedelta
 import json
 import logging
-from services.supabase_storage import SupabaseStorage
 from functools import wraps
+
+# Import sécurisé de SupabaseStorage
+try:
+    from services.supabase_storage import SupabaseStorage
+    SUPABASE_AVAILABLE = True
+except Exception as e:
+    logging.warning(f"SupabaseStorage non disponible: {e}")
+    SUPABASE_AVAILABLE = False
 
 # Créer le blueprint
 gdpr_api = Blueprint('gdpr_api', __name__)
@@ -30,6 +37,9 @@ def require_admin_auth(f):
             return jsonify({"error": "Authentification requise"}), 401
         
         # Vérifier le statut admin dans Supabase
+        if not SUPABASE_AVAILABLE:
+            return jsonify({"error": "Service Supabase non disponible"}), 503
+            
         try:
             supabase = SupabaseStorage()
             response = supabase.client.table('users').select('is_admin').eq('email', user_email).execute()
@@ -43,6 +53,19 @@ def require_admin_auth(f):
     return decorated_function
 
 # ====================================
+# ENDPOINTS DE TEST
+# ====================================
+
+@gdpr_api.route('/gdpr/status', methods=['GET'])
+def gdpr_status():
+    """Vérifier le statut de l'API GDPR"""
+    return jsonify({
+        "status": "available",
+        "supabase_available": SUPABASE_AVAILABLE,
+        "timestamp": datetime.now().isoformat()
+    }), 200
+
+# ====================================
 # ENDPOINTS UTILISATEUR
 # ====================================
 
@@ -51,6 +74,9 @@ def require_admin_auth(f):
 def update_consent():
     """Mettre à jour le consentement utilisateur"""
     try:
+        if not SUPABASE_AVAILABLE:
+            return jsonify({"error": "Service Supabase non disponible"}), 503
+            
         data = request.get_json() or {}
         user_email = session.get('user_email') or session.get('user_id')
         
