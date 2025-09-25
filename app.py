@@ -10,6 +10,7 @@ from datetime import datetime
 from flask import Flask, jsonify, send_from_directory, send_file, request, session
 from flask_cors import CORS
 from flask_login import LoginManager
+from backend.routes.api.gdpr_api import register_gdpr_routes
 
 # ====================================
 # CONFIGURATION APPLICATION
