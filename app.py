@@ -10,7 +10,6 @@ from datetime import datetime
 from flask import Flask, jsonify, send_from_directory, send_file, request, session
 from flask_cors import CORS
 from flask_login import LoginManager
-from backend.routes.api.gdpr_api import register_gdpr_routes
 
 # ====================================
 # CONFIGURATION APPLICATION
@@ -47,9 +46,9 @@ try:
     diagnose_config()
     print("✅ ConfigManager disponible pour utilisation progressive")
     USE_CONFIG_MANAGER = True
-except Exception as e:
-    print(f"⚠️ ConfigManager indisponible ou invalide: {e}")
-    print("   L'application continue avec la configuration existante (mode fallback)")
+except ImportError as e:
+    print(f"⚠️ ConfigManager non disponible: {e}")
+    print("   L'application continue avec la configuration existante")
     USE_CONFIG_MANAGER = False
 
 # Afficher la configuration finale
@@ -364,9 +363,6 @@ def register_blueprints():
 
 register_blueprints()
 
-# Enregistrer les routes GDPR
-register_gdpr_routes(app)
-
 # ====================================
 # ENREGISTREMENT DES ROUTES ADMIN
 # ====================================
@@ -514,17 +510,14 @@ def test_supabase_fix():
 
 # Fonctions de compatibilité
 def get_session_data():
-    from services.supabase_storage import SupabaseStorage
     supabase = SupabaseStorage()
     return supabase.get_session_data()
 
 def save_session_data(data):
-    from services.supabase_storage import SupabaseStorage
     supabase = SupabaseStorage()
     return supabase.save_session_data(data)
 
 def link_session_to_user(user_id, user_email):
-    from services.supabase_storage import SupabaseStorage
     supabase = SupabaseStorage()
     session_data = supabase.get_session_data()
     session_data['user_id'] = user_id
