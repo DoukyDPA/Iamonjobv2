@@ -39,21 +39,8 @@ import LoadingMessage from '../components/Common/LoadingMessage';
 const Dashboard = () => {
   const { documentStatus, loading, uploadDocument, uploadText } = useApp();
   const [activeTab, setActiveTab] = useState('documents');
-  
-  // États questionnaire simple
-  const [showQuestionnaireModal, setShowQuestionnaireModal] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState(['', '', '', '', '', '', '', '', '', '']);
 
-  // États pour le modal de texte
-  const [showTextModal, setShowTextModal] = useState(null);
-  const [textContent, setTextContent] = useState('');
-
-  // État pour le modal de conseils
-  const [showAdviceModal, setShowAdviceModal] = useState(false);
-
-  // Questions simples
-  const questions = [
+  const questions = React.useMemo(() => [
     "1. Quelles sont vos 3 principales qualités professionnelles ?",
     "2. Quelles compétences souhaitez-vous développer ?",
     "3. Quel est votre environnement de travail idéal ?",
@@ -64,7 +51,51 @@ const Dashboard = () => {
     "8. Quelles valeurs sont importantes pour vous au travail ?",
     "9. Quel est votre objectif professionnel à 5 ans ?",
     "10. Autres informations importantes ?"
-  ];
+  ], []);
+
+  // États questionnaire simple
+  const [showQuestionnaireModal, setShowQuestionnaireModal] = useState(false);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState(() => Array(questions.length).fill(''));
+
+  const escapeRegExp = React.useCallback((value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), []);
+
+  React.useEffect(() => {
+    if (!showQuestionnaireModal) {
+      return;
+    }
+
+    if (documentStatus.questionnaire?.uploaded && documentStatus.questionnaire?.content) {
+      const normalizedContent = documentStatus.questionnaire.content.replace(/\r\n/g, '\n');
+      const parsedAnswers = questions.map((question) => {
+        const pattern = new RegExp(`${escapeRegExp(question)}\\s*\\n([\\s\\S]*?)(?=\\n\\s*\\d+\\.\\s|$)`, 'i');
+        const match = normalizedContent.match(pattern);
+        return match ? match[1].trim() : '';
+      });
+      setAnswers(parsedAnswers);
+    } else {
+      setAnswers(Array(questions.length).fill(''));
+    }
+  }, [
+    showQuestionnaireModal,
+    documentStatus.questionnaire?.content,
+    documentStatus.questionnaire?.uploaded,
+    questions,
+    escapeRegExp
+  ]);
+
+  React.useEffect(() => {
+    if (showQuestionnaireModal) {
+      setCurrentQuestion(0);
+    }
+  }, [showQuestionnaireModal]);
+
+  // États pour le modal de texte
+  const [showTextModal, setShowTextModal] = useState(null);
+  const [textContent, setTextContent] = useState('');
+
+  // État pour le modal de conseils
+  const [showAdviceModal, setShowAdviceModal] = useState(false);
 
   // Types de documents
   const documentTypes = [
