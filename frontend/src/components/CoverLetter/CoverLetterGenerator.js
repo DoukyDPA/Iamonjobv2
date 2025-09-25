@@ -198,16 +198,71 @@ const CoverLetterGenerator = () => {
     });
   };
 
-  // Fonction pour télécharger en tant que fichier texte
-  const downloadAsText = (content, filename) => {
+  const escapeHtml = (text) =>
+    text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+  const buildHtmlDocument = (title, content) => `<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>${escapeHtml(title)}</title>
+    <style>
+      body {
+        font-family: 'Georgia', 'Times New Roman', serif;
+        background: #f9fafb;
+        color: #1f2937;
+        margin: 0;
+        padding: 2.5rem;
+        line-height: 1.8;
+      }
+      .container {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+        border: 1px solid #e5e7eb;
+      }
+      h1 {
+        margin-top: 0;
+        color: #0a6b79;
+        font-size: 2rem;
+      }
+      .timestamp {
+        font-size: 0.95rem;
+        color: #6b7280;
+        margin-bottom: 1.5rem;
+      }
+      .content {
+        font-size: 1.05rem;
+        white-space: normal;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>${escapeHtml(title)}</h1>
+      <div class="timestamp">Lettre générée le ${new Date().toLocaleString('fr-FR')}</div>
+      <div class="content">${content}</div>
+    </div>
+  </body>
+</html>`;
+
+  const downloadAsHtml = (content, filename, title = 'Lettre de motivation') => {
+    const formattedContent = escapeHtml(content).replace(/\n/g, '<br />');
+    const html = buildHtmlDocument(title, formattedContent);
     const element = document.createElement('a');
-    const file = new Blob([content], { type: 'text/plain' });
+    const file = new Blob([html], { type: 'text/html' });
     element.href = URL.createObjectURL(file);
-    element.download = filename;
+    element.download = filename.replace(/\.txt$/, '.html');
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
-    toast.success('Fichier téléchargé !');
+    toast.success('Lettre exportée en HTML !');
   };
 
   // Formatage du texte markdown simple
@@ -506,7 +561,7 @@ const CoverLetterGenerator = () => {
                     Copier
                   </button>
                   <button
-                    onClick={() => downloadAsText(generatedLetter.content, 'lettre_motivation.txt')}
+                    onClick={() => downloadAsHtml(generatedLetter.content, 'lettre_motivation.html')}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -521,7 +576,7 @@ const CoverLetterGenerator = () => {
                     }}
                   >
                     <FiDownload />
-                    Télécharger
+                    Télécharger en HTML
                   </button>
                 </div>
               </div>
