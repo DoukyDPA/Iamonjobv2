@@ -25,10 +25,10 @@ export const AppProvider = ({ children }) => {
   const [chatLoaded, setChatLoaded] = useState(false);
   const [documentsLoaded, setDocumentsLoaded] = useState(false);
   const [documentStatus, setDocumentStatus] = useState({
-    cv: { uploaded: false, processed: false, name: null, size: null },
-    offre_emploi: { uploaded: false, processed: false, name: null, size: null },
-    metier_souhaite: { uploaded: false, processed: false, name: null, size: null },
-    questionnaire: { uploaded: false, processed: false, name: null, size: null }
+    cv: { uploaded: false, processed: false, name: null, size: null, content: '', upload_timestamp: null },
+    offre_emploi: { uploaded: false, processed: false, name: null, size: null, content: '', upload_timestamp: null },
+    metier_souhaite: { uploaded: false, processed: false, name: null, size: null, content: '', upload_timestamp: null },
+    questionnaire: { uploaded: false, processed: false, name: null, size: null, content: '', upload_timestamp: null }
   });
 
   // Charger l'historique du chat
@@ -127,12 +127,14 @@ export const AppProvider = ({ children }) => {
     // Mise à jour optimiste
     setDocumentStatus(prev => ({
       ...prev,
-      [documentType]: { 
+      [documentType]: {
         ...prev[documentType],
-        uploaded: false, 
-        processed: false, 
+        uploaded: false,
+        processed: false,
         name: file.name,
-        size: file.size 
+        size: file.size,
+        content: '',
+        upload_timestamp: null
       }
     }));
 
@@ -155,12 +157,14 @@ export const AppProvider = ({ children }) => {
           console.log('📊 État précédent:', prev);
           const newState = {
             ...prev,
-            [documentType]: { 
-              uploaded: true, 
-              processed: true, 
+            [documentType]: {
+              uploaded: true,
+              processed: true,
               name: file.name,
               size: file.size,
-              upload_date: new Date().toISOString()
+              upload_date: new Date().toISOString(),
+              upload_timestamp: new Date().toISOString(),
+              content: ''
             }
           };
           console.log('📊 Nouvel état:', newState);
@@ -199,11 +203,13 @@ export const AppProvider = ({ children }) => {
       // Réinitialiser l'état en cas d'erreur
       setDocumentStatus(prev => ({
         ...prev,
-        [documentType]: { 
-          uploaded: false, 
-          processed: false, 
+        [documentType]: {
+          uploaded: false,
+          processed: false,
           name: null,
-          size: null 
+          size: null,
+          content: '',
+          upload_timestamp: null
         }
       }));
 
@@ -238,12 +244,14 @@ export const AppProvider = ({ children }) => {
         // Mise à jour réussie
         setDocumentStatus(prev => ({
           ...prev,
-          [documentType]: { 
-            uploaded: true, 
-            processed: true, 
+          [documentType]: {
+            uploaded: true,
+            processed: true,
             name: 'Texte saisi',
             size: text.length,
-            upload_date: new Date().toISOString()
+            upload_date: new Date().toISOString(),
+            upload_timestamp: new Date().toISOString(),
+            content: text.trim()
           }
         }));
 

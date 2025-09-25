@@ -31,7 +31,9 @@ def api_documents_status():
             'uploaded': False,
             'processed': False,
             'name': None,
-            'size': None
+            'size': None,
+            'content': '',
+            'upload_timestamp': None
         }
         
         # Retourner les données formatées avec structure cohérente
@@ -45,7 +47,9 @@ def api_documents_status():
                     'uploaded': status.get('uploaded', False),
                     'processed': status.get('processed', False),
                     'name': status.get('name', None),
-                    'size': status.get('size', None)
+                    'size': status.get('size', None),
+                    'content': status.get('content', ''),
+                    'upload_timestamp': status.get('upload_timestamp')
                 }
             else:
                 # Structure legacy (booléen) - migration automatique
@@ -53,7 +57,9 @@ def api_documents_status():
                     'uploaded': bool(status),
                     'processed': bool(status),
                     'name': None,
-                    'size': None
+                    'size': None,
+                    'content': '',
+                    'upload_timestamp': None
                 }
         
         return jsonify({
