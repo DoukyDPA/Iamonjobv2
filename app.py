@@ -47,9 +47,9 @@ try:
     diagnose_config()
     print("✅ ConfigManager disponible pour utilisation progressive")
     USE_CONFIG_MANAGER = True
-except ImportError as e:
-    print(f"⚠️ ConfigManager non disponible: {e}")
-    print("   L'application continue avec la configuration existante")
+except Exception as e:
+    print(f"⚠️ ConfigManager indisponible ou invalide: {e}")
+    print("   L'application continue avec la configuration existante (mode fallback)")
     USE_CONFIG_MANAGER = False
 
 # Afficher la configuration finale
@@ -514,14 +514,17 @@ def test_supabase_fix():
 
 # Fonctions de compatibilité
 def get_session_data():
+    from services.supabase_storage import SupabaseStorage
     supabase = SupabaseStorage()
     return supabase.get_session_data()
 
 def save_session_data(data):
+    from services.supabase_storage import SupabaseStorage
     supabase = SupabaseStorage()
     return supabase.save_session_data(data)
 
 def link_session_to_user(user_id, user_email):
+    from services.supabase_storage import SupabaseStorage
     supabase = SupabaseStorage()
     session_data = supabase.get_session_data()
     session_data['user_id'] = user_id
