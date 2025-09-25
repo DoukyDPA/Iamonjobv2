@@ -37,6 +37,9 @@ import AdminServicesPage from './pages/AdminServicesPage';
 import AdminPartnersPage from './pages/AdminPartnersPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 
+// Page GDPR
+import GDPRPage from './pages/GDPRPage';
+
 // Pages légales
 import LegalNotice from './pages/LegalNotice';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -137,6 +140,15 @@ function App() {
                     <PrivateRoute>
                       <Layout>
                         <AdminUsersPage />
+                      </Layout>
+                    </PrivateRoute>
+                  } />
+                  
+                  {/* Page GDPR */}
+                  <Route path="/gdpr" element={
+                    <PrivateRoute>
+                      <Layout>
+                        <GDPRPage />
                       </Layout>
                     </PrivateRoute>
                   } />
