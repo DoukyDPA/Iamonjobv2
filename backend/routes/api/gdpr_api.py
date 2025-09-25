@@ -1,424 +1,566 @@
-# backend/routes/api/gdpr_api.py
-# API complète pour la gestion des droits RGPD
+# app.py - IAMONJOB Application Main File
+"""
+Application principale IAMONJOB
+Version refactorisée et propre
+"""
 
-from flask import Blueprint, request, jsonify, session
-from datetime import datetime, timedelta
-import json
-import logging
-from functools import wraps
+import os
+import uuid
+from datetime import datetime
+from flask import Flask, jsonify, send_from_directory, send_file, request, session
+from flask_cors import CORS
+from flask_login import LoginManager
+from backend.routes.api.gdpr_api import register_gdpr_routes
 
-# Import sécurisé de SupabaseStorage
+# ====================================
+# CONFIGURATION APPLICATION
+# ====================================
+
+# Variable globale pour identifier l'instance
+INSTANCE_ID = str(uuid.uuid4())[:8]
+
+# Configuration des chemins
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_BUILD_DIR = os.path.join(BASE_DIR, 'frontend', 'build')
+
+# Configuration Supabase sécurisée - Variables d'environnement uniquement
+print("🔧 Configuration Supabase depuis variables d'environnement")
+if os.getenv('SUPABASE_URL') and os.getenv('SUPABASE_ANON_KEY'):
+    print("   Variables Supabase détectées")
+else:
+    print("   ⚠️ Variables Supabase manquantes")
+
+# Vérification de sécurité
+if not os.getenv('SUPABASE_URL') or not os.getenv('SUPABASE_ANON_KEY'):
+    print("⚠️ ATTENTION: Variables Supabase manquantes dans l'environnement")
+    print("   Assurez-vous que SUPABASE_URL et SUPABASE_ANON_KEY sont définies")
+else:
+    print("✅ Configuration Supabase sécurisée détectée")
+
+# ====================================
+# NOUVELLE CONFIGURATION HYBRIDE
+# ====================================
+# Test du nouveau ConfigManager en parallèle (sans casser l'existant)
 try:
-    from services.supabase_storage import SupabaseStorage
-    SUPABASE_AVAILABLE = True
-except Exception as e:
-    logging.warning(f"SupabaseStorage non disponible: {e}")
-    SUPABASE_AVAILABLE = False
+    from config.config_manager import config, diagnose_config
+    print("\n🔄 Test du nouveau ConfigManager en parallèle...")
+    diagnose_config()
+    print("✅ ConfigManager disponible pour utilisation progressive")
+    USE_CONFIG_MANAGER = True
+except ImportError as e:
+    print(f"⚠️ ConfigManager non disponible: {e}")
+    print("   L'application continue avec la configuration existante")
+    USE_CONFIG_MANAGER = False
 
-# Créer le blueprint
-gdpr_api = Blueprint('gdpr_api', __name__)
+# Afficher la configuration finale
+print(f"\n🔧 Configuration finale Supabase:")
+url_present = 'définie' if os.getenv('SUPABASE_URL') else 'non définie'
+key_present = 'définie' if os.getenv('SUPABASE_ANON_KEY') else 'non définie'
+print(f"   URL: {url_present}")
+print(f"   Clé: {key_present}")
 
-def require_user_auth(f):
-    """Vérifier que l'utilisateur est connecté"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        user_email = session.get('user_email') or session.get('user_id')
-        if not user_email:
-            return jsonify({"error": "Authentification requise"}), 401
-        return f(*args, **kwargs)
-    return decorated_function
+# Création de l'application Flask
+app = Flask(__name__, static_folder='frontend/build')
+CORS(app, origins=["*"])
 
-def require_admin_auth(f):
-    """Vérifier que l'utilisateur est admin"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        user_email = session.get('user_email') or session.get('user_id')
-        if not user_email:
-            return jsonify({"error": "Authentification requise"}), 401
-        
-        # Vérifier le statut admin dans Supabase
-        if not SUPABASE_AVAILABLE:
-            return jsonify({"error": "Service Supabase non disponible"}), 503
-            
+# Configuration de base
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev_secret_key")
+
+# Configuration des sessions persistantes
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 heures
+
+# ====================================
+# ROUTE DE DIAGNOSTIC RAILWAY
+# ====================================
+
+@app.route('/debug-env')
+def debug_environment():
+    """Diagnostiquer l'environnement Railway (ancienne méthode)"""
+    import os
+    
+    debug_info = {
+        "critical_vars": {},
+        "all_env_vars": {},
+        "supabase_test": False,
+        "method": "legacy"
+    }
+
+    # Variables critiques
+    critical_vars = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_KEY', 'FLASK_SECRET_KEY']
+    for var in critical_vars:
+        value = os.environ.get(var)
+        debug_info["critical_vars"][var] = {"exists": bool(value)}
+
+    # Toutes les variables d'environnement
+    for key, value in os.environ.items():
+        if any(keyword in key.upper() for keyword in ['SUPABASE', 'REDIS', 'FLASK']):
+            debug_info["all_env_vars"][key] = bool(value)
+    
+    # Test Supabase
+    try:
+        supabase_url = os.environ.get('SUPABASE_URL')
+        supabase_key = os.environ.get('SUPABASE_ANON_KEY')
+        if supabase_url and supabase_key:
+            debug_info["supabase_test"] = True
+    except:
+        pass
+    
+    return jsonify(debug_info)
+
+@app.route('/debug-env-v2')
+def debug_environment_v2():
+    """Diagnostiquer l'environnement Railway (nouvelle méthode avec ConfigManager)"""
+    debug_info = {
+        "method": "config_manager",
+        "config_manager_available": USE_CONFIG_MANAGER,
+        "legacy_fallback": True
+    }
+    
+    if USE_CONFIG_MANAGER:
         try:
-            supabase = SupabaseStorage()
-            response = supabase.client.table('users').select('is_admin').eq('email', user_email).execute()
-            if not response.data or not response.data[0].get('is_admin', False):
-                return jsonify({"error": "Droits administrateur requis"}), 403
+            # Utiliser le ConfigManager pour le diagnostic
+            debug_info.update({
+                "environment": config.get('FLASK_ENV', 'Non défini'),
+                "fully_configured": config.is_fully_configured(),
+                "cache_available": config.has_cache(),
+                "config_details": {
+                    "SUPABASE_URL": "Définie" if config.get('SUPABASE_URL') else 'Non définie',
+                    "SUPABASE_ANON_KEY": "Définie" if config.get('SUPABASE_ANON_KEY') else 'Non définie',
+                    "FLASK_SECRET_KEY": "Définie" if config.get('FLASK_SECRET_KEY') else 'Non définie',
+                    "MISTRAL_API_KEY": "Définie" if config.get('MISTRAL_API_KEY') else 'Non définie',
+                }
+            })
+            
+            # Test Supabase via ConfigManager
+            if config.get('SUPABASE_URL') and config.get('SUPABASE_ANON_KEY'):
+                debug_info["supabase_test"] = True
+            else:
+                debug_info["supabase_test"] = False
+                
         except Exception as e:
-            logging.error(f"Erreur vérification admin: {e}")
-            return jsonify({"error": "Erreur de vérification"}), 500
-            
-        return f(*args, **kwargs)
-    return decorated_function
+            debug_info["config_manager_error"] = str(e)
+            debug_info["legacy_fallback"] = True
+    else:
+        # Fallback vers l'ancienne méthode
+        debug_info["legacy_fallback"] = True
+        debug_info["fallback_reason"] = "ConfigManager non disponible"
+    
+    return jsonify(debug_info)
 
-# ====================================
-# ENDPOINTS DE TEST
-# ====================================
-
-@gdpr_api.route('/gdpr/status', methods=['GET'])
-def gdpr_status():
-    """Vérifier le statut de l'API GDPR"""
-    return jsonify({
-        "status": "available",
-        "supabase_available": SUPABASE_AVAILABLE,
-        "timestamp": datetime.now().isoformat()
-    }), 200
-
-# ====================================
-# ENDPOINTS UTILISATEUR
-# ====================================
-
-@gdpr_api.route('/gdpr/consent', methods=['POST'])
-@require_user_auth
-def update_consent():
-    """Mettre à jour le consentement utilisateur"""
+@app.route('/migrate', methods=['POST'])
+def start_migration():
+    """Lancer la migration"""
     try:
-        if not SUPABASE_AVAILABLE:
-            return jsonify({"error": "Service Supabase non disponible"}), 503
-            
-        data = request.get_json() or {}
-        user_email = session.get('user_email') or session.get('user_id')
+        # Migration déjà terminée
+        return jsonify({
+            "success": True,
+            "message": "Migration Redis → Supabase déjà terminée",
+            "status": "completed"
+        })
         
-        marketing_consent = data.get('marketing', False)
-        analytics_consent = data.get('analytics', False)
-        consent_version = data.get('version', '1.0')
-        
-        supabase = SupabaseStorage()
-        
-        # Mettre à jour le consentement
-        response = supabase.client.table('users').update({
-            'marketing_consent': marketing_consent,
-            'analytics_consent': analytics_consent,
-            'consent_date': datetime.now().isoformat(),
-            'consent_version': consent_version
-        }).eq('email', user_email).execute()
-        
-        if response.data:
-            logging.info(f"✅ Consentement mis à jour pour {user_email}")
-            
-            return jsonify({
-                "success": True,
-                "message": "Consentement mis à jour avec succès",
-                "consent": {
-                    "marketing": marketing_consent,
-                    "analytics": analytics_consent,
-                    "date": datetime.now().isoformat(),
-                    "version": consent_version
-                }
-            }), 200
-        else:
-            return jsonify({"error": "Utilisateur non trouvé"}), 404
+        return jsonify({
+            "success": True,
+            "message": "Migration lancée avec succès",
+            "result": result
+        })
         
     except Exception as e:
-        logging.error(f"Erreur mise à jour consentement: {e}")
-        return jsonify({"error": "Erreur lors de la mise à jour"}), 500
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
-@gdpr_api.route('/gdpr/export', methods=['GET'])
-@require_user_auth
-def export_user_data():
-    """Exporter toutes les données utilisateur (droit de portabilité)"""
+@app.route('/migrate-status')
+def migration_status():
+    """Statut de la migration"""
     try:
-        user_email = session.get('user_email') or session.get('user_id')
-        
+        # Vérifier la connexion Supabase
+        from services.supabase_storage import SupabaseStorage
         supabase = SupabaseStorage()
         
-        # Utiliser la fonction SQL pour exporter
-        response = supabase.client.rpc('export_user_data_gdpr', {
-            'user_email_param': user_email
-        }).execute()
+        # Compter les sessions dans Supabase
+        response = supabase.client.table('sessions').select('id').execute()
+        supabase_sessions = len(response.data) if response.data else 0
         
-        if response.data:
-            export_data = response.data
-            
-            logging.info(f"✅ Export RGPD effectué pour {user_email}")
-            
-            return jsonify({
-                "success": True,
-                "data": export_data,
-                "message": "Export terminé. Ces données vous appartiennent selon le RGPD.",
-                "export_info": {
-                    "format": "JSON",
-                    "date": datetime.now().isoformat(),
-                    "gdpr_compliant": True
-                }
-            }), 200
-        else:
-            return jsonify({"error": "Aucune donnée trouvée"}), 404
-            
-    except Exception as e:
-        logging.error(f"Erreur export RGPD: {e}")
-        return jsonify({"error": f"Erreur lors de l'export: {str(e)}"}), 500
-
-@gdpr_api.route('/gdpr/delete-account', methods=['POST'])
-@require_user_auth
-def request_account_deletion():
-    """Demander la suppression du compte (droit à l'oubli)"""
-    try:
-        data = request.get_json() or {}
-        user_email = session.get('user_email') or session.get('user_id')
-        
-        # Vérification de sécurité
-        confirmation = data.get('confirmation', '').strip()
-        if confirmation.lower() != 'supprimer définitivement':
-            return jsonify({
-                "error": "Confirmation requise",
-                "required": "Vous devez taper exactement 'supprimer définitivement'"
-            }), 400
-        
-        supabase = SupabaseStorage()
-        
-        # Marquer le compte pour suppression (délai de grâce de 30 jours)
-        deletion_date = datetime.now() + timedelta(days=30)
-        
-        response = supabase.client.table('users').update({
-            'account_deletion_requested': True,
-            'deletion_scheduled_date': deletion_date.isoformat()
-        }).eq('email', user_email).execute()
-        
-        if response.data:
-            logging.warning(f"⚠️ Suppression de compte demandée pour {user_email}")
-            
-            return jsonify({
-                "success": True,
-                "message": "Demande de suppression enregistrée",
-                "deletion_date": deletion_date.isoformat(),
-                "grace_period_days": 30,
-                "info": "Vous avez 30 jours pour annuler cette demande en vous reconnectant."
-            }), 200
-        else:
-            return jsonify({"error": "Utilisateur non trouvé"}), 404
+        # Vérifier Supabase uniquement
+        return jsonify({
+            "supabase_sessions": supabase_sessions,
+            "migration_ready": True
+        })
         
     except Exception as e:
-        logging.error(f"Erreur demande suppression: {e}")
-        return jsonify({"error": "Erreur lors de la demande"}), 500
+        return jsonify({
+            "error": str(e),
+            "migration_ready": False
+        }), 500
 
-@gdpr_api.route('/gdpr/cancel-deletion', methods=['POST'])
-@require_user_auth
-def cancel_account_deletion():
-    """Annuler la demande de suppression du compte"""
+@app.route('/migrate-simulate', methods=['POST'])
+def simulate_migration():
+    """Simuler la migration (pour test)"""
     try:
-        user_email = session.get('user_email') or session.get('user_id')
-        
+        # Vérifier Supabase
+        from services.supabase_storage import SupabaseStorage
         supabase = SupabaseStorage()
         
-        # Annuler la demande de suppression
-        response = supabase.client.table('users').update({
-            'account_deletion_requested': False,
-            'deletion_scheduled_date': None
-        }).eq('email', user_email).execute()
-        
-        if response.data:
-            logging.info(f"✅ Suppression annulée pour {user_email}")
-            
-            return jsonify({
-                "success": True,
-                "message": "Demande de suppression annulée avec succès"
-            }), 200
-        else:
-            return jsonify({"error": "Utilisateur non trouvé"}), 404
-        
-    except Exception as e:
-        logging.error(f"Erreur annulation suppression: {e}")
-        return jsonify({"error": "Erreur lors de l'annulation"}), 500
-
-@gdpr_api.route('/gdpr/data-summary', methods=['GET'])
-@require_user_auth
-def get_data_summary():
-    """Résumé des données stockées pour l'utilisateur"""
-    try:
-        user_email = session.get('user_email') or session.get('user_id')
-        
-        supabase = SupabaseStorage()
-        
-        # Récupérer les infos depuis la vue GDPR
-        user_response = supabase.client.from_('gdpr_consent_status').select('*').eq('email', user_email).execute()
-        
-        # Récupérer les statistiques d'usage
-        sessions_response = supabase.client.table('sessions').select('created_at, updated_at').eq('user_email', user_email).execute()
-        tokens_response = supabase.client.table('token_usage').select('tokens_used').eq('user_email', user_email).execute()
-        
-        if not user_response.data:
-            return jsonify({"error": "Utilisateur non trouvé"}), 404
-        
-        user_info = user_response.data[0]
-        sessions_data = sessions_response.data or []
-        tokens_data = tokens_response.data or []
-        
-        # Calculer les statistiques
-        total_sessions = len(sessions_data)
-        total_tokens = sum(row.get('tokens_used', 0) for row in tokens_data)
-        last_activity = max([s.get('updated_at', '') for s in sessions_data], default=user_info.get('member_since', ''))
-        
-        summary = {
-            "user_info": {
-                "email": user_info['email'],
-                "member_since": user_info['member_since'],
-                "consent_date": user_info['consent_date'],
-                "marketing_consent": user_info['marketing_consent'],
-                "analytics_consent": user_info['analytics_consent'],
-                "deletion_requested": user_info['deletion_requested'],
-                "consent_status": user_info['consent_status']
-            },
-            "data_summary": {
-                "total_sessions": total_sessions,
-                "tokens_consumed": total_tokens,
-                "last_activity": last_activity
-            },
-            "retention_info": {
-                "session_data": "Conservées jusqu'à suppression manuelle ou 3 ans d'inactivité",
-                "documents": "Analysés puis supprimés immédiatement après traitement",
-                "chat_history": "Conservé avec la session utilisateur",
-                "usage_logs": "Conservés 2 ans pour la facturation et l'audit"
-            }
+        # Créer des données de test
+        test_data = {
+            "sessions_created": 0,
+            "users_created": 0,
+            "tokens_created": 0,
+            "message": "Simulation de migration réussie"
         }
         
-        return jsonify({
-            "success": True,
-            "data": summary
-        }), 200
-        
-    except Exception as e:
-        logging.error(f"Erreur résumé données: {e}")
-        return jsonify({"error": "Erreur lors de la récupération"}), 500
-
-# ====================================
-# ENDPOINTS ADMIN
-# ====================================
-
-@gdpr_api.route('/admin/gdpr/pending-deletions', methods=['GET'])
-@require_admin_auth
-def get_pending_deletions():
-    """Récupérer les comptes en attente de suppression"""
-    try:
-        supabase = SupabaseStorage()
-        
-        response = supabase.client.table('users').select(
-            'email, deletion_scheduled_date, created_at'
-        ).eq('account_deletion_requested', True).execute()
-        
-        pending = []
-        for user in response.data:
-            if user['deletion_scheduled_date']:
-                deletion_date = datetime.fromisoformat(user['deletion_scheduled_date'].replace('Z', '+00:00'))
-                days_remaining = (deletion_date - datetime.now()).days
+        # Créer une session de test
+        try:
+            response = supabase.client.table('sessions').insert({
+                'user_email': 'test@migration.com',
+                'chat_history': [{"role": "system", "content": "Session de test migration"}],
+                'documents': {},
+                'analyses': {}
+            }).execute()
+            
+            if response.data:
+                test_data["sessions_created"] = 1
                 
-                pending.append({
-                    "email": user['email'],
-                    "deletion_date": user['deletion_scheduled_date'],
-                    "days_remaining": max(0, days_remaining),
-                    "member_since": user['created_at']
-                })
+        except Exception as e:
+            test_data["error"] = f"Erreur création session: {str(e)}"
         
         return jsonify({
             "success": True,
-            "pending_deletions": pending,
-            "total": len(pending)
-        }), 200
+            "message": "Simulation de migration lancée",
+            "result": test_data
+        })
         
     except Exception as e:
-        logging.error(f"Erreur récupération suppressions: {e}")
-        return jsonify({"error": "Erreur serveur"}), 500
-
-@gdpr_api.route('/admin/gdpr/execute-deletion/<user_email>', methods=['DELETE'])
-@require_admin_auth
-def execute_user_deletion(user_email):
-    """Exécuter la suppression définitive d'un utilisateur"""
-    try:
-        supabase = SupabaseStorage()
-        
-        # Utiliser la fonction SQL de suppression
-        response = supabase.client.rpc('delete_user_data_gdpr', {
-            'user_email_param': user_email
-        }).execute()
-        
-        if response.data:
-            logging.warning(f"🗑️ SUPPRESSION GDPR EXÉCUTÉE pour {user_email}")
-            
-            return jsonify({
-                "success": True,
-                "message": f"Utilisateur {user_email} supprimé définitivement",
-                "deletion_timestamp": datetime.now().isoformat()
-            }), 200
-        else:
-            return jsonify({"error": "Échec de la suppression"}), 500
-            
-    except Exception as e:
-        logging.error(f"Erreur exécution suppression: {e}")
-        return jsonify({"error": "Erreur lors de la suppression"}), 500
-
-@gdpr_api.route('/admin/gdpr/purge-old-data', methods=['POST'])
-@require_admin_auth
-def purge_old_data():
-    """Purger les anciennes données selon la politique de rétention"""
-    try:
-        supabase = SupabaseStorage()
-        
-        # Utiliser la fonction SQL de purge
-        response = supabase.client.rpc('purge_old_data').execute()
-        
-        if response.data is not None:
-            purged_count = response.data
-            
-            logging.info(f"🧹 Purge automatique: {purged_count} enregistrements supprimés")
-            
-            return jsonify({
-                "success": True,
-                "message": f"Purge terminée: {purged_count} enregistrements supprimés",
-                "purge_timestamp": datetime.now().isoformat()
-            }), 200
-        else:
-            return jsonify({"error": "Échec de la purge"}), 500
-            
-    except Exception as e:
-        logging.error(f"Erreur purge automatique: {e}")
-        return jsonify({"error": "Erreur lors de la purge"}), 500
-
-@gdpr_api.route('/admin/gdpr/stats', methods=['GET'])
-@require_admin_auth
-def get_gdpr_stats():
-    """Statistiques RGPD pour l'administration"""
-    try:
-        supabase = SupabaseStorage()
-        
-        # Statistiques du consentement
-        consent_stats = supabase.client.from_('gdpr_consent_status').select('consent_status').execute()
-        
-        # Compter par statut
-        stats = {}
-        for record in consent_stats.data:
-            status = record['consent_status']
-            stats[status] = stats.get(status, 0) + 1
-        
-        # Logs récents
-        recent_exports = supabase.client.table('export_logs').select('*').order('created_at', desc=True).limit(10).execute()
-        recent_deletions = supabase.client.table('deletion_logs').select('*').order('created_at', desc=True).limit(10).execute()
-        
         return jsonify({
-            "success": True,
-            "consent_stats": stats,
-            "recent_exports": recent_exports.data,
-            "recent_deletions": recent_deletions.data,
-            "generated_at": datetime.now().isoformat()
-        }), 200
-        
+            "success": False,
+            "error": str(e)
+        }), 500
+
+# ====================================
+# CHARGEMENT DE LA CONFIGURATION
+# ====================================
+
+# Configuration des variables d'environnement
+print("🔧 Configuration depuis variables système")
+
+# ====================================
+# INITIALISATION SUPABASE
+# ====================================
+
+try:
+    from services.supabase_storage import init_supabase_service
+    storage_service = init_supabase_service(app)
+    print("✅ Supabase service initialisé avec succès")
+except Exception as e:
+    print(f"❌ Erreur initialisation Supabase: {e}")
+    print("🔄 Mode fallback Flask session activé")
+
+# ====================================
+# STATELESS DATA MANAGER
+# ====================================
+
+from services.stateless_manager import StatelessDataManager, get_user_data, save_user_data
+
+# ====================================
+# CONFIGURATION FLASK-LOGIN
+# ====================================
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+# login_manager.login_view = "auth_api.login"
+
+@login_manager.user_loader
+def load_user(user_id):
+    """Charge un utilisateur par son ID"""
+    try:
+        from models.user import User
+        return User.get(user_id)
     except Exception as e:
-        logging.error(f"Erreur stats RGPD: {e}")
-        return jsonify({"error": "Erreur lors de la récupération des statistiques"}), 500
+        print(f"Erreur chargement utilisateur: {e}")
+        return None
 
 # ====================================
-# FONCTION D'ENREGISTREMENT
+# ENREGISTREMENT DES BLUEPRINTS API
 # ====================================
 
-def register_gdpr_routes(app):
-    """Enregistrer les routes GDPR dans l'application Flask"""
-    app.register_blueprint(gdpr_api, url_prefix='/api')
-    logging.info("✅ Routes GDPR enregistrées")
+def register_blueprints():
+    """Enregistre tous les blueprints API"""
     
-    # Ajouter les headers CORS si nécessaire
-    @gdpr_api.after_request
-    def after_request(response):
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-        return response
+    # Auth API
+    try:
+        from backend.routes.api.auth_api import auth_api
+        app.register_blueprint(auth_api, url_prefix='/api/auth')
+        print("✅ Auth API enregistrée")
+    except ImportError as e:
+        print(f"❌ Erreur import auth_api: {e}")
+    
+    # Auth Routes (forgot password, etc.)
+    try:
+        from backend.routes.auth import auth_bp
+        app.register_blueprint(auth_bp, url_prefix='/api/auth')
+        print("✅ Auth Routes enregistrées")
+    except ImportError as e:
+        print(f"❌ Erreur import auth_bp: {e}")
+
+    # Chat API
+    try:
+        from backend.routes.api.chat_api import chat_api
+        app.register_blueprint(chat_api, url_prefix='/api/chat')
+        print("✅ Chat API enregistrée")
+    except ImportError as e:
+        print(f"❌ Erreur import chat_api: {e}")
+
+    # Admin API
+    try:
+        from backend.routes.api.admin_api import admin_api
+        app.register_blueprint(admin_api, url_prefix='/api/admin')
+        print("✅ Admin API enregistrée")
+    except ImportError as e:
+        print(f"❌ Erreur import admin_api: {e}")
+
+    # Partner Jobs API
+    try:
+        from backend.routes.api.partner_jobs_api import partner_jobs_api
+        app.register_blueprint(partner_jobs_api, url_prefix='/api/partner-jobs')
+        print("✅ Partner Jobs API enregistrée")
+    except ImportError as e:
+        print(f"❌ Erreur import partner_jobs_api: {e}")
+
+    # Services API
+    try:
+        from backend.routes.api.services_api import services_api
+        app.register_blueprint(services_api, url_prefix='/api/services')
+        print("✅ Services API enregistrée")
+    except ImportError as e:
+        print(f"❌ Erreur import services_api: {e}")
+
+    # Documents API
+    try:
+        from backend.routes.api.documents_api import documents_api
+        app.register_blueprint(documents_api, url_prefix='/api/documents')
+        print("✅ Documents API enregistrée")
+    except ImportError as e:
+        print(f"❌ Erreur import documents_api: {e}")
+
+    # Chat API déjà enregistrée plus haut
+    pass
+
+    # Data Sync API
+    try:
+        from backend.routes.api.data_sync import data_sync_api
+        app.register_blueprint(data_sync_api, url_prefix='/api/data')
+        print("✅ Data Sync API enregistrée")
+    except ImportError as e:
+        print(f"❌ Erreur import data_sync_api: {e}")
+
+    # Documents routes (refactor)
+    try:
+        from routes.documents import register_documents_routes
+        register_documents_routes(app)
+        print("✅ Documents routes enregistrées")
+    except ImportError as e:
+        print(f"❌ Erreur routes documents: {e}")
+
+register_blueprints()
+
+# Enregistrer les routes GDPR
+register_gdpr_routes(app)
+
+# ====================================
+# ENREGISTREMENT DES ROUTES ADMIN
+# ====================================
+
+# Enregistrer les routes admin des services
+try:
+    # Les routes admin sont déjà enregistrées via admin_api
+    print("✅ Routes admin déjà enregistrées via admin_api")
+except Exception as e:
+    print(f"❌ Erreur routes admin: {e}")
+
+# ====================================
+# ENREGISTREMENT DES ROUTES DE SERVICES
+# ====================================
+
+try:
+    from routes.services import services_bp
+    app.register_blueprint(services_bp)
+    print("✅ Routes de services enregistrées")
+except ImportError as e:
+    print(f"❌ Erreur import services_bp: {e}")
+
+print("🚀 === ROUTES SERVICES ENREGISTRÉES ===")
+print("✅ /api/actions/compatibility [POST] - NOUVELLE")
+print("✅ /api/actions/cover-letter_generate [POST]")
+print("✅ /api/cover-letter/advice [POST]")
+print("✅ /api/cover-letter/generate [POST]")
+print("✅ /api/interview/prepare [POST]")
+print("✅ /api/pitch/generate [POST]")
+print("✅ /api/presentation/generate [POST]")
+print("✅ /api/reconversion/analyze [POST]")
+print("✅ /api/followup/generate [POST]")
+print("✅ /api/salary/prepare [POST]")
+print("================================================")
+
+# ====================================
+# ENREGISTREMENT DES ROUTES DE SANTÉ
+# ====================================
+
+# Route de santé racine pour Railway
+@app.route('/health')
+def health_root():
+    """Health check racine pour Railway"""
+    try:
+        return jsonify({
+            "status": "healthy",
+            "platform": "railway",
+            "server": "gunicorn",
+            "supabase_configured": bool(os.environ.get('SUPABASE_URL')),
+            "timestamp": datetime.now().isoformat()
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 503
+
+try:
+    from routes.health import health_bp
+    app.register_blueprint(health_bp, url_prefix='/api/health')
+    print("✅ Routes de santé enregistrées")
+except ImportError as e:
+    print(f"❌ Erreur import health_bp: {e}")
+
+# ====================================
+# ENREGISTREMENT DES ROUTES GÉNÉRIQUES  
+# ====================================
+
+try:
+    from backend.routes.generic_services import generic_services_bp
+    app.register_blueprint(generic_services_bp)
+    print("✅ Routes génériques activées")
+except Exception as e:
+    print(f"❌ Erreur routes génériques: {e}")
+    print("⚠️ Fonctionnement en mode dégradé")
+
+
+
+# ====================================
+# ENREGISTREMENT DES ROUTES STATIQUES (EN DERNIER)
+# ====================================
+
+try:
+    from routes.static import static_bp
+    app.register_blueprint(static_bp)
+    print("✅ Routes statiques enregistrées")
+except ImportError as e:
+    print(f"❌ Erreur import static_bp: {e}")
+
+# Suppression de la route /debug et de la fonction debug
+
+# ====================================
+# ROUTE DE TEST SUPABASE
+# ====================================
+
+@app.route('/api/test-supabase-data')
+def test_supabase_data():
+    from services.supabase_storage import SupabaseStorage
+    from datetime import datetime
+    
+    supabase = SupabaseStorage()
+    
+    # Test écriture
+    test_data = {
+        "test": "data",
+        "timestamp": datetime.now().isoformat(),
+        "chat_history": ["test message"]
+    }
+    
+    save_success = supabase.save_session_data(test_data)
+    
+    # Test lecture
+    read_data = supabase.get_session_data()
+    
+    return jsonify({
+        "supabase_connected": True,
+        "write_success": save_success,
+        "data_saved": test_data,
+        "data_read": read_data,
+        "match": read_data.get("test") == "data"
+    })
+
+@app.route('/api/test-supabase-fix', methods=['GET', 'POST'])
+def test_supabase_fix():
+    """
+    Endpoint de test pour vérifier que le fix Supabase fonctionne
+    Teste à la fois les partenaires (qui marchent) et les données utilisateur
+    """
+    from services.supabase_storage import SupabaseStorage
+    
+    try:
+        # Test de base
+        return jsonify({
+            "status": "success",
+            "message": "Test Supabase fix endpoint accessible",
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"Erreur lors du test: {str(e)}",
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+# Fonctions de compatibilité
+def get_session_data():
+    supabase = SupabaseStorage()
+    return supabase.get_session_data()
+
+def save_session_data(data):
+    supabase = SupabaseStorage()
+    return supabase.save_session_data(data)
+
+def link_session_to_user(user_id, user_email):
+    supabase = SupabaseStorage()
+    session_data = supabase.get_session_data()
+    session_data['user_id'] = user_id
+    session_data['user_email'] = user_email
+    return supabase.save_session_data(session_data)
+
+# ====================================
+# ROUTES API GÉRÉES PAR LES BLUEPRINTS
+# ====================================
+# Les routes /api/services, /api/documents, /api/chat/session, 
+# et /api/partner-jobs/partners sont gérées par les blueprints
+
+# ====================================
+# ROUTES STATIQUES MANQUANTES
+# ====================================
+
+@app.route('/favicon.ico')
+def favicon():
+    """Favicon depuis le dossier public"""
+    from flask import send_from_directory
+    return send_from_directory('frontend/public', 'favicon.ico')
+
+# ====================================
+# POINT D'ENTRÉE
+# ====================================
+
+if __name__ == '__main__':
+    # Charger les prompts au démarrage
+    try:
+        from services.ai_service_prompts import reload_prompts_from_file
+        print("🔄 Chargement des prompts au démarrage...")
+        success = reload_prompts_from_file()
+        if success:
+            print("✅ Prompts chargés avec succès")
+        else:
+            print("⚠️ Échec du chargement des prompts")
+    except Exception as e:
+        print(f"❌ Erreur lors du chargement des prompts: {e}")
+    
+    # Développement local uniquement
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port, debug=False)
