@@ -285,18 +285,75 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
     }
   };
 
-  const downloadAsText = () => {
+  const escapeHtml = (text) =>
+    text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+  const buildHtmlDocument = (title, content) => `<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>${escapeHtml(title)}</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #f8fafc;
+        color: #0f172a;
+        margin: 0;
+        padding: 2.5rem;
+        line-height: 1.7;
+      }
+      .container {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+        border: 1px solid #e2e8f0;
+      }
+      h1 {
+        margin-top: 0;
+        font-size: 1.75rem;
+        color: #0a6b79;
+      }
+      .timestamp {
+        font-size: 0.9rem;
+        color: #64748b;
+        margin-bottom: 1.5rem;
+      }
+      .content {
+        font-size: 1rem;
+        color: #1f2937;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>${escapeHtml(title)}</h1>
+      <div class="timestamp">Export généré le ${new Date().toLocaleString('fr-FR')}</div>
+      <div class="content">${content}</div>
+    </div>
+  </body>
+</html>`;
+
+  const downloadAsHtml = () => {
     if (result) {
-      const blob = new Blob([result], { type: 'text/plain' });
+      const formattedResult = escapeHtml(result).replace(/\n/g, '<br />');
+      const documentTitle = serviceConfig?.name || 'Analyse IA';
+      const html = buildHtmlDocument(documentTitle, formattedResult);
+      const blob = new Blob([html], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${serviceConfig.id}_resultat.txt`;
+      a.download = `${serviceConfig.id}_resultat.html`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast.success('Téléchargement terminé !');
+      toast.success('Fichier HTML téléchargé !');
     }
   };
 
@@ -676,11 +733,11 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
                 Copier
               </button>
               <button
-                onClick={downloadAsText}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.5rem', 
+                onClick={downloadAsHtml}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
                   padding: '0.75rem 1.5rem', 
                   fontSize: '1rem', 
                   fontWeight: '500', 
@@ -693,7 +750,7 @@ const GenericDocumentProcessor = ({ serviceConfig: propServiceConfig }) => {
                 }}
               >
                 <FiDownload />
-                Télécharger
+                Télécharger en HTML
               </button>
             </div>
             
