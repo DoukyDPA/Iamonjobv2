@@ -71,6 +71,9 @@ const Header = () => {
                       <Link to="/admin/services" className="admin-dropdown-item">
                         🚀 Services
                       </Link>
+                      <Link to="/gdpr" className="admin-dropdown-item">
+                        🛡️ Mes données RGPD
+                      </Link>
                     </div>
                   </div>
                 )}
@@ -152,6 +155,13 @@ const Header = () => {
                       onClick={closeMobileMenu}
                     >
                       🚀 Services
+                    </Link>
+                    <Link
+                      to="/gdpr"
+                      className={`mobile-nav-link ${isActive('/gdpr') ? 'active' : ''}`}
+                      onClick={closeMobileMenu}
+                    >
+                      🛡️ Mes données RGPD
                     </Link>
                   </>
                 )}
