@@ -65,11 +65,7 @@ const Home = () => {
               Analysez votre CV, évaluez les offres, préparez vos entretiens... et décrochez le poste idéal.
             </p>
             <div className="hero-actions">
-              {isAuthenticated ? (
-                <Link to="/dashboard" className="btn btn-primary btn-lg">
-                  Accéder au tableau de bord
-                </Link>
-              ) : (
+              {!isAuthenticated && (
                 <>
                   <Link to="/register" className="btn btn-primary btn-lg">
                     Commencer gratuitement
