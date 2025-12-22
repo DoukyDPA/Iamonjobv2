@@ -1,0 +1,221 @@
+/* frontend/src/components/Analysis/MatchingAnalysis.css */
+
+.matching-analysis-dashboard {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #f8fafc;
+  color: #334155;
+}
+
+/* --- HEADER SECTION (Score Global) --- */
+.matching-header {
+  display: flex;
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  margin-bottom: 2rem;
+  align-items: center;
+  gap: 2rem;
+}
+
+.global-score-container {
+  flex-shrink: 0;
+}
+
+.big-score-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: conic-gradient(var(--score-color) var(--score-deg), #f1f5f9 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.big-score-circle::before {
+  content: '';
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  background: white;
+  border-radius: 50%;
+}
+
+.score-inner {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.score-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--score-color);
+}
+
+.score-max {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  display: block;
+}
+
+.header-info h2 {
+  margin: 0 0 0.5rem 0;
+  color: #1e293b;
+  font-size: 1.5rem;
+}
+
+.header-info .job-title {
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+.verdict-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 99px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  background-color: var(--bg-color);
+  color: var(--score-color);
+}
+
+/* --- TABLEAU DES SCORES --- */
+.scores-table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.scores-table-container h3 {
+  padding: 1.5rem 1.5rem 1rem;
+  margin: 0;
+  font-size: 1.1rem;
+  color: #0f172a;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.matching-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.matching-table th {
+  text-align: left;
+  padding: 1rem 1.5rem;
+  background-color: #f8fafc;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.matching-table td {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.matching-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Colonnes spécifiques */
+.col-criteria {
+  font-weight: 600;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.criteria-icon {
+  width: 32px;
+  height: 32px;
+  background: #eff6ff;
+  color: #4f46e5;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.score-bar-container {
+  width: 120px;
+  height: 8px;
+  background-color: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 0.25rem;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background-color: var(--bar-color);
+}
+
+.score-text {
+  font-weight: 700;
+  color: #334155;
+}
+
+.appreciation-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+.weight-tag {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  background: #f8fafc;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+/* --- ANALYSE TEXTUELLE --- */
+.text-analysis-container {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.text-analysis-container h3 {
+  margin-top: 0;
+  color: #1e293b;
+  border-bottom: 2px solid #f1f5f9;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .matching-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .matching-table th:nth-child(3),
+  .matching-table td:nth-child(3) {
+    display: none; /* Cache la barre de progression sur mobile */
+  }
+}
