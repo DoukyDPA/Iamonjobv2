@@ -458,3 +458,57 @@ def chat_avec_ia(message: str, context: Optional[str] = None) -> str:
 def chat_avec_ia_action_rapide_optimized(action: str) -> str:
     """Exécute une action rapide avec Mistral IA"""
     return call_mistral_api(f"Action rapide: {action}")
+
+# ==========================================
+# AJOUT POUR LE STREAMING (Temps réel)
+# ==========================================
+
+def stream_mistral_api(prompt: str, context: Optional[str] = None):
+    """
+    Générateur pour le streaming de réponse.
+    Envoie la réponse morceau par morceau (chunks).
+    """
+    mistral_api_key = os.environ.get("MISTRAL_API_KEY")
+    if not mistral_api_key:
+        yield "Configuration manquante: MISTRAL_API_KEY"
+        return
+
+    full_prompt = _build_prompt(prompt, context)
+    
+    url = "https://api.mistral.ai/v1/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {mistral_api_key}"
+    }
+    
+    # Mode stream activé pour l'API Mistral
+    payload = {
+        "model": "mistral-small-latest",
+        "messages": [{"role": "user", "content": full_prompt}],
+        "stream": True 
+    }
+
+    try:
+        with requests.post(url, json=payload, headers=headers, stream=True) as response:
+            if response.status_code != 200:
+                yield f"Erreur API ({response.status_code})"
+                return
+
+            for line in response.iter_lines():
+                if line:
+                    line_text = line.decode('utf-8')
+                    # Mistral envoie "data: {JSON}"
+                    if line_text.startswith('data: '):
+                        data_str = line_text[6:]
+                        if data_str.strip() == '[DONE]': 
+                            break
+                        try:
+                            data_json = json.loads(data_str)
+                            if 'choices' in data_json:
+                                content = data_json['choices'][0]['delta'].get('content', '')
+                                if content: 
+                                    yield content
+                        except: 
+                            continue
+    except Exception as e:
+        yield f"Erreur connexion: {str(e)}"
