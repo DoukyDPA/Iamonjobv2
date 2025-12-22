@@ -1,78 +1,272 @@
 /* frontend/src/components/Analysis/CVAnalysisDashboard.css */
 
 .cv-analysis-dashboard {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: #f8fafc;
   color: #334155;
+  animation: fadeIn 0.6s ease-out;
 }
 
-/* --- HEADER SECTION --- */
-.dashboard-header-section {
-  display: grid;
-  grid-template-columns: 250px 1fr;
-  gap: 1.5rem;
-  margin-bottom: 2.5rem;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.score-card, .synthesis-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-}
-
-.score-card {
+/* --- 1. HEADER : SCORE GLOBAL & SYNTHÈSE --- */
+.dashboard-header {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  background: white;
+  border-radius: 20px;
+  padding: 0; /* Padding géré en interne */
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  margin-bottom: 2.5rem;
+  overflow: hidden;
+  position: relative;
 }
 
-.score-circle-mini {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: conic-gradient(#4f46e5 var(--score-deg), #e2e8f0 0);
+.dashboard-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 6px;
+  background: linear-gradient(90deg, #4f46e5, #8b5cf6);
+}
+
+/* Partie Gauche : Le Score Visuel */
+.header-score-section {
+  flex: 0 0 300px;
+  background: #f8fafc;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  position: relative;
+  padding: 2.5rem;
+  border-right: 1px solid #e2e8f0;
+  text-align: center;
 }
 
-.score-circle-mini::before {
-  content: '';
+.score-circle-big {
+  width: 140px;
+  height: 140px;
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.score-svg circle {
+  transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+.score-overlay {
   position: absolute;
-  width: 50px;
-  height: 50px;
-  background: white;
-  border-radius: 50%;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.score-number-mini {
-  position: relative;
-  z-index: 2;
+.score-value {
+  font-size: 3rem;
   font-weight: 800;
-  color: #4f46e5;
-  font-size: 1.2rem;
   line-height: 1;
+  color: #1e293b;
 }
 
-.score-total-mini {
-  position: relative;
-  z-index: 2;
-  font-size: 0.6rem;
+.score-max {
+  font-size: 0.9rem;
   color: #94a3b8;
+  font-weight: 500;
 }
 
-.score-text h3 { margin: 0; font-size: 1rem; color: #1e293b; }
-.score-text p { margin: 0; font-size: 0.8rem; color: #64748b; }
+.score-label {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
 
-.synthesis-card h3 { margin-top: 0; color: #4f46e5; font-size: 1.1rem; }
-.synthesis-card p { margin: 0; line-height: 1.5; color: #334155; }
+.ats-badge {
+  background: #e0e7ff;
+  color: #4338ca;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
 
-/* --- TABLES --- */
-.
+/* Partie Droite : La Synthèse */
+.header-synthesis-section {
+  flex: 1;
+  padding: 2.5rem;
+}
+
+.header-synthesis-section h3 {
+  margin-top: 0;
+  color: #0f172a;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.synthesis-content {
+  color: #475569;
+  line-height: 1.7;
+  font-size: 1.05rem;
+}
+
+/* --- 2. TABLEAU COMPARATIF (Points Forts vs Améliorations) --- */
+.analysis-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+.analysis-column {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.column-header {
+  padding: 1.25rem 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-strengths { background: #f0fdf4; color: #166534; border-bottom: 1px solid #bbf7d0; }
+.header-improvements { background: #fffbeb; color: #92400e; border-bottom: 1px solid #fde68a; }
+
+.column-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.column-list li {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.column-list li:last-child { border-bottom: none; }
+
+.bullet-icon { flex-shrink: 0; margin-top: 2px; }
+
+/* --- 3. PLAN D'ACTION (Tableau interactif) --- */
+.action-plan-section {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  margin-bottom: 2.5rem;
+}
+
+.section-title {
+  padding: 1.5rem 2rem;
+  margin: 0;
+  font-size: 1.2rem;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fff;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.actions-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.actions-table th {
+  text-align: left;
+  padding: 1rem 2rem;
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.actions-table td {
+  padding: 1.25rem 2rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+}
+
+.actions-table tr:hover td {
+  background: #f8fafc;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.custom-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #4f46e5;
+}
+
+/* --- FOOTER CTA --- */
+.dashboard-footer {
+  text-align: center;
+  margin-top: 3rem;
+}
+
+.optimize-btn {
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2.5rem;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.optimize-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .dashboard-header { flex-direction: column; }
+  .header-score-section { border-right: none; border-bottom: 1px solid #e2e8f0; padding: 2rem; }
+  .analysis-grid { grid-template-columns: 1fr; }
+}
