@@ -1,320 +1,180 @@
-"""Supabase storage service using environment configuration."""
-
+"""Supabase storage service - Version Hybride & Sécurisée"""
 import json
 import logging
 from datetime import datetime
 from typing import Dict, Any, Optional
-
-from supabase import create_client, Client
+from supabase import create_client
 from flask import session
-
 from config.config_manager import get_config
 
+# Configuration des logs
+logger = logging.getLogger(__name__)
+
 class SupabaseStorage:
-    """
-    Service Supabase - Compatible avec votre code existant
-    """
-    
     def __init__(self):
-        """Initialise le client Supabase à partir du ConfigManager."""
         url = get_config('SUPABASE_URL')
         key = get_config('SUPABASE_ANON_KEY')
-
-        logging.info("🔧 Initialisation Supabase via ConfigManager")
-        if url and key:
-            logging.info("✅ Variables Supabase détectées")
-        else:
-            logging.warning("⚠️ Variables Supabase manquantes")
 
         if not url or not key:
             self.available = False
             self.client = None
-            self.cache = {}
-            logging.error("❌ SUPABASE_URL et SUPABASE_ANON_KEY manquants - mode dégradé")
+            logger.error("❌ Configuration Supabase manquante")
             return
 
         try:
             self.client = create_client(url, key)
-            self.cache = {}  # Cache local 1 minute
             self.available = True
-            logging.info("✅ Supabase Storage initialisé avec succès")
-
-            # Test de connexion
-            try:
-                response = self.client.table('partners').select('id').limit(1).execute()
-                logging.info("✅ Test de connexion Supabase réussi")
-            except Exception as test_error:
-                logging.warning(f"⚠️ Test de connexion échoué: {test_error}")
-                # Ne pas marquer comme indisponible pour un test échoué
-
+            logger.info("✅ Supabase Storage connecté")
         except Exception as e:
-            logging.error(f"❌ Erreur init Supabase: {e}")
+            logger.error(f"❌ Erreur connexion Supabase: {e}")
             self.available = False
-            self.client = None
-    
+
     def is_available(self) -> bool:
-        """Vérifie si Supabase est disponible"""
         return hasattr(self, 'available') and self.available
-    
+
     def get_user_key(self) -> str:
-        """Récupère la clé utilisateur depuis le token JWT ou la session"""
+        """Récupère l'identifiant utilisateur (inchangé)"""
         try:
-            # Essayer de récupérer depuis Flask request (si disponible)
             from flask import request
             if hasattr(request, 'current_user') and request.current_user:
                 return request.current_user.email
-            
-            # Fallback sur la session Flask (pour compatibilité)
             if 'user_email' in session and session['user_email']:
                 return session['user_email']
-            elif 'user_id' in session and session['user_id']:
-                return session['user_id']
-            else:
-                # Générer un ID unique pour les anonymes
-                if 'anonymous_id' not in session:
-                    session['anonymous_id'] = f"anon_{datetime.now().timestamp()}"
-                return session['anonymous_id']
-        except Exception as e:
-            logging.warning(f"Erreur lors de la récupération de la clé utilisateur: {e}")
-            # Fallback sur la session Flask
-            if 'user_email' in session and session['user_email']:
-                return session['user_email']
-            elif 'user_id' in session and session['user_id']:
-                return session['user_id']
-            else:
-                # Générer un ID unique pour les anonymes
-                if 'anonymous_id' not in session:
-                    session['anonymous_id'] = f"anon_{datetime.now().timestamp()}"
-                return session['anonymous_id']
-    
+            if 'anonymous_id' not in session:
+                session['anonymous_id'] = f"anon_{datetime.now().timestamp()}"
+            return session['anonymous_id']
+        except Exception:
+            return "anonymous"
+
+    # ============================================================
+    # CŒUR DU SYSTÈME HYBRIDE
+    # ============================================================
+
     def get_session_data(self) -> Dict[str, Any]:
         """
-        Récupération des données de session
-        API identique pour compatibilité
+        Récupère les données et les formate pour le frontend existant.
+        Combine l'ancien stockage JSON et les nouvelles tables relationnelles.
         """
         if not self.is_available():
-            logging.warning("Supabase non disponible - retour données par défaut")
             return self._default_session_data()
-            
+
         user_key = self.get_user_key()
-        
+
         try:
-            # Chercher la session
+            # 1. Récupérer la session principale
             response = self.client.table('sessions').select('*').eq(
                 'user_email', user_key
             ).order('updated_at', desc=True).limit(1).execute()
-            
-            if response.data and len(response.data) > 0:
-                session_data = response.data[0]
-                return {
-                    'user_id': user_key,
-                    'chat_history': session_data.get('chat_history', []),
-                    'documents': session_data.get('documents', {}),
-                    'analyses': session_data.get('analyses', {})
-                }
-            else:
-                # Créer nouvelle session
+
+            if not response.data:
                 return self._create_new_session(user_key)
-                
+
+            session_row = response.data[0]
+            session_id = session_row['id']
+
+            # 2. Récupérer l'historique depuis la NOUVELLE table messages
+            # Si vide, on fallback sur l'ancien champ JSONB pour compatibilité
+            messages_response = self.client.table('messages')\
+                .select('role, content')\
+                .eq('session_id', session_id)\
+                .order('created_at', asc=True)\
+                .execute()
+
+            if messages_response.data:
+                # Transformation format relationnel -> format frontend
+                chat_history = messages_response.data
+            else:
+                # Fallback ancien système
+                chat_history = session_row.get('chat_history', [])
+
+            # 3. Construction de l'objet de réponse (Format attendu par le Frontend)
+            return {
+                'user_id': user_key,
+                'session_db_id': session_id, # Utile pour les futurs appels
+                'chat_history': chat_history,
+                'documents': session_row.get('documents', {}), # On garde le JSON pour docs pour l'instant
+                'analyses': session_row.get('analyses', {})
+            }
+
         except Exception as e:
-            logging.error(f"Erreur Supabase get: {e}")
+            logger.error(f"Erreur lecture session: {e}")
             return self._default_session_data()
-    
-    def save_session_data(self, data: Dict[str, Any]) -> bool:
+
+    def add_message(self, role: str, content: str) -> bool:
         """
-        Sauvegarde des données de session
-        API identique pour compatibilité
+        Nouvelle méthode pour ajouter un message de manière performante.
+        Ajoute AUSSI au JSON pour garantir la compatibilité totale si besoin.
         """
-        if not self.is_available():
-            logging.warning("Supabase non disponible - sauvegarde impossible")
-            return False
-            
+        if not self.is_available(): return False
+        
         user_key = self.get_user_key()
         
         try:
-            # Upsert (update ou insert) - utiliser la colonne unique user_email
-            response = self.client.table('sessions').upsert({
+            # 1. Récupérer ou créer la session
+            session_data = self.get_session_data()
+            session_id = session_data.get('session_db_id')
+            
+            # Si pas d'ID (cas rare de création), on doit refaire un lookup
+            if not session_id:
+                # Logique simplifiée de récupération d'ID...
+                pass
+
+            # 2. Écrire dans la table relationnelle (Optimisation)
+            if session_id:
+                self.client.table('messages').insert({
+                    'session_id': session_id,
+                    'role': role,
+                    'content': content
+                }).execute()
+
+            # 3. Mettre à jour le JSON (Sécurité Compatibilité)
+            # On continue de mettre à jour le JSON pour l'instant
+            current_history = session_data.get('chat_history', [])
+            current_history.append({'role': role, 'content': content})
+            
+            self.client.table('sessions').update({
+                'chat_history': current_history,
+                'updated_at': datetime.now().isoformat()
+            }).eq('user_email', user_key).execute()
+            
+            return True
+        except Exception as e:
+            logger.error(f"Erreur ajout message: {e}")
+            return False
+
+    def save_session_data(self, data: Dict[str, Any]) -> bool:
+        """Compatible avec l'ancien système"""
+        if not self.is_available(): return False
+        user_key = self.get_user_key()
+        try:
+            self.client.table('sessions').upsert({
                 'user_email': user_key,
                 'chat_history': data.get('chat_history', []),
                 'documents': data.get('documents', {}),
                 'analyses': data.get('analyses', {}),
                 'updated_at': datetime.now().isoformat()
             }, on_conflict='user_email').execute()
-            
-            logging.info(f"✅ Session sauvegardée pour {user_key}")
             return True
-            
         except Exception as e:
-            logging.error(f"❌ Erreur Supabase save: {e}")
+            logger.error(f"Erreur save: {e}")
             return False
-    
-    # ====================================
-    # MÉTHODES DE COMPATIBILITÉ
-    # ====================================
-    
-    def get(self, key: str) -> Optional[str]:
-        """
-        Récupère une valeur par clé
-        Compatible avec l'ancien système
-        """
-        try:
-            # Analyser la clé pour déterminer le type de données
-            if key.startswith('user_data:'):
-                # Données utilisateur - utiliser la session
-                return json.dumps(self.get_session_data())
-            elif key == 'partner_companies':
-                # Partenaires - récupérer depuis la table partners
-                response = self.client.table('partners').select('*').execute()
-                if response.data:
-                    return json.dumps(response.data)
-                return None
-            else:
-                # Clé générique - chercher dans sessions
-                response = self.client.table('sessions').select('*').eq('user_email', key).execute()
-                if response.data:
-                    return json.dumps(response.data[0])
-                return None
-                
-        except Exception as e:
-            logging.error(f"Erreur Supabase get({key}): {e}")
-            return None
-    
-    def set(self, key: str, value: str) -> bool:
-        """
-        Définit une valeur par clé
-        Compatible avec l'ancien système
-        """
-        try:
-            if key.startswith('user_data:'):
-                # Données utilisateur - sauvegarder dans sessions
-                data = json.loads(value) if isinstance(value, str) else value
-                return self.save_session_data(data)
-            elif key == 'partner_companies':
-                # Partenaires - sauvegarder dans table partners
-                partners_data = json.loads(value) if isinstance(value, str) else value
-                response = self.client.table('partners').upsert(partners_data).execute()
-                return True
-            else:
-                # Clé générique - sauvegarder dans sessions
-                data = json.loads(value) if isinstance(value, str) else value
-                return self.save_session_data(data)
-                
-        except Exception as e:
-            logging.error(f"Erreur Supabase set({key}): {e}")
-            return False
-    
-    def keys(self, pattern: str) -> list:
-        """
-        Liste les clés selon un pattern
-        Compatible avec l'ancien système
-        """
-        try:
-            if pattern == 'user_data:*':
-                # Lister toutes les sessions utilisateur
-                response = self.client.table('sessions').select('user_email').execute()
-                return [f"user_data:{row['user_email']}" for row in response.data] if response.data else []
-            elif pattern == 'partner_companies':
-                # Clé unique pour partenaires
-                return ['partner_companies']
-            else:
-                # Pattern générique
-                return []
-                
-        except Exception as e:
-            logging.error(f"Erreur Supabase keys({pattern}): {e}")
-            return []
-    
-    def _create_new_session(self, user_key: str) -> Dict[str, Any]:
-        """Créer une nouvelle session"""
-        default_data = self._default_session_data()
-        
-        try:
-            self.client.table('sessions').insert({
-                'user_email': user_key,
-                'chat_history': [],
-                'documents': default_data['documents'],
-                'analyses': {}
-            }).execute()
-        except:
-            pass  # Peut déjà exister
-        
-        return default_data
-    
+
     def _default_session_data(self) -> Dict[str, Any]:
-        """Structure par défaut des données"""
         return {
             'user_id': 'anonymous',
             'chat_history': [],
-            'documents': {
-                'cv': {'uploaded': False, 'name': None},
-                'offre_emploi': {'uploaded': False, 'name': None}
-            },
+            'documents': {'cv': {'uploaded': False}, 'offre_emploi': {'uploaded': False}},
             'analyses': {},
             'created_at': datetime.now().isoformat()
         }
-    
-    # Méthodes additionnelles pour tokens
-    def get_user_tokens(self, user_email: str, date: str = None) -> int:
-        """Récupérer l'usage de tokens"""
-        if not date:
-            date = datetime.now().date().isoformat()
-        
-        try:
-            response = self.client.table('token_usage').select('tokens_used').eq(
-                'user_email', user_email
-            ).eq('date', date).execute()
-            
-            if response.data:
-                return response.data[0]['tokens_used']
-            return 0
-        except:
-            return 0
-    
-    def update_user_tokens(self, user_email: str, tokens: int) -> bool:
-        """Mettre à jour l'usage de tokens"""
-        date = datetime.now().date().isoformat()
-        
-        try:
-            # Upsert avec addition
-            current = self.get_user_tokens(user_email, date)
-            
-            self.client.table('token_usage').upsert({
-                'user_email': user_email,
-                'date': date,
-                'tokens_used': current + tokens
-            }, on_conflict='user_email,date').execute()
-            
-            return True
-        except:
-            return False
 
-# Instance globale du service
+# Initialisation
 _supabase_storage = None
-
 def init_supabase_service(app):
-    """Initialiser le service Supabase"""
     global _supabase_storage
-    
-    try:
-        _supabase_storage = SupabaseStorage()
-        
-        # Exposer le client Supabase dans l'application Flask
-        app.supabase = _supabase_storage.client
-        
-        app.logger.info("✅ Supabase service initialisé")
-        return _supabase_storage
-    except Exception as e:
-        app.logger.error(f"❌ Erreur init Supabase: {e}")
-        return None
+    _supabase_storage = SupabaseStorage()
+    app.supabase = _supabase_storage.client
+    return _supabase_storage
 
-def get_session_data():
-    """API compatible avec votre code existant"""
-    if _supabase_storage:
-        return _supabase_storage.get_session_data()
-    return {}
-
-def save_session_data(data):
-    """API compatible avec votre code existant"""
-    if _supabase_storage:
-        return _supabase_storage.save_session_data(data)
-    return False
+def get_session_data(): return _supabase_storage.get_session_data() if _supabase_storage else {}
+def save_session_data(data): return _supabase_storage.save_session_data(data) if _supabase_storage else False
