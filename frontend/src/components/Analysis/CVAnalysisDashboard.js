@@ -1,13 +1,13 @@
 import React from 'react';
 import LoadingMessage from '../Common/LoadingMessage';
-import './CVAnalysisDashboard.css'; // Assurez-vous que ce fichier contient le CSS donné précédemment
+import './CVAnalysisDashboard.css';
 
 const CVAnalysisDashboard = ({ analysisData, loading, error }) => {
   if (loading) {
     return (
       <LoadingMessage 
         message="Analyse de votre CV en cours..."
-        subtitle="L'IA analyse votre profil et génère des recommandations stratégiques"
+        subtitle="L'IA structure les données pour une présentation détaillée"
         size="large"
       />
     );
@@ -23,116 +23,119 @@ const CVAnalysisDashboard = ({ analysisData, loading, error }) => {
 
   if (!analysisData) return null;
 
-  // Parsing sécurisé des données
+  // Parsing sécurisé
   let parsedData = null;
   try {
     parsedData = typeof analysisData === 'string' ? JSON.parse(analysisData) : analysisData;
   } catch (e) {
     parsedData = {
-      synthesis: "Analyse effectuée. Consultez les détails ci-dessous.",
-      strengths: ["Profil détecté", "Compétences identifiées"],
-      improvements: ["Optimisation du format", "Ajout de métriques"],
-      recommendations: ["Ajoutez des chiffres clés", "Structurez vos expériences"],
-      globalScore: 5
+      globalScore: 0,
+      synthesis: "Données non disponibles.",
+      strengths: [],
+      improvements: [],
+      recommendations: []
     };
   }
 
-  // Calcul dynamique de la couleur du score
-  const score = parsedData.globalScore || 0;
-  const scoreDeg = `${score * 36}deg`; // 10 * 36 = 360deg
+  const { strengths = [], improvements = [], recommendations = [], synthesis, globalScore } = parsedData;
+
+  // Préparation des données pour le tableau comparatif
+  // On prend la longueur maximale pour aligner les lignes
+  const maxRows = Math.max(strengths.length, improvements.length);
+  const comparisonRows = Array.from({ length: maxRows }).map((_, i) => ({
+    strength: strengths[i] || "",
+    improvement: improvements[i] || ""
+  }));
+
+  const scoreDeg = `${(globalScore || 0) * 36}deg`;
 
   return (
     <div className="cv-analysis-dashboard">
       
-      {/* SECTION HAUTE : Bilan & Synthèse */}
-      <div className="dashboard-content">
-        
-        {/* Carte Score */}
-        <div className="quick-summary">
-          <h3>✩ Bilan de performance</h3>
-          
-          <div className="score-circle" style={{ '--score-deg': scoreDeg }}>
-            <div className="score-content">
-              <span className="score-number">{score}</span>
-              <span className="score-total">/ 10</span>
-            </div>
+      {/* HEADER : Score & Synthèse */}
+      <div className="dashboard-header-section">
+        <div className="score-card">
+          <div className="score-circle-mini" style={{ '--score-deg': scoreDeg }}>
+            <span className="score-number-mini">{globalScore || 0}</span>
+            <span className="score-total-mini">/10</span>
           </div>
-          
-          <p className="summary-text">
-            {score >= 8 ? "Excellent profil ! Quelques ajustements suffiront." : 
-             score >= 5 ? "Bonne base, mais nécessite une optimisation pour les ATS." :
-             "Le CV nécessite une refonte structurelle importante."}
-          </p>
-
-          <button 
-            onClick={() => window.location.href = '/cv-ats-optimization'}
-            className="start-btn"
-          >
-            🔧 Optimiser pour les ATS
-          </button>
+          <div className="score-text">
+            <h3>Note Globale</h3>
+            <p>Performance du CV</p>
+          </div>
         </div>
-
-        {/* Carte Synthèse */}
-        <div className="documents-section"> {/* Réutilisation du style carte blanche */}
-          <h3>📋 Synthèse de l'expert IA</h3>
-          <div className="markdown-renderer">
-            {parsedData.synthesis || "Aucune synthèse disponible."}
-          </div>
+        
+        <div className="synthesis-card">
+          <h3>📋 Synthèse de l'expert</h3>
+          <p>{synthesis}</p>
         </div>
       </div>
 
-      {/* SECTION BASSE : Détails (Grid) */}
-      <div className="analysis-sections">
-        
-        {/* Points forts */}
-        <div className="analysis-card success">
-          <div className="card-header">
-            <span className="card-icon">✅</span>
-            <h4>Points forts</h4>
-          </div>
-          <div className="card-content">
-            <ul>
-              {(parsedData.strengths || []).map((item, i) => (
-                <li key={i}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        {/* Axes d'amélioration */}
-        <div className="analysis-card warning">
-          <div className="card-header">
-            <span className="card-icon">💡</span>
-            <h4>Axes d'amélioration</h4>
-          </div>
-          <div className="card-content">
-            <ul>
-              {(parsedData.improvements || []).map((item, i) => (
-                <li key={i}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        {/* Recommandations */}
-        <div className="analysis-card action">
-          <div className="card-header">
-            <span className="card-icon">🚀</span>
-            <h4>Plan d'action</h4>
-          </div>
-          <div className="card-content">
-            <div className="checklist">
-              {(parsedData.recommendations || []).map((item, i) => (
-                <div key={i} className="checklist-item">
-                  <input type="checkbox" id={`rec-${i}`} />
-                  <label htmlFor={`rec-${i}`}>{item}</label>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
+      {/* TABLEAU 1 : Comparatif Points Forts / Faibles */}
+      <div className="table-container">
+        <h3>📊 Analyse Détaillée du Profil</h3>
+        <table className="analysis-table comparison-table">
+          <thead>
+            <tr>
+              <th className="th-success">✅ Points Forts</th>
+              <th className="th-warning">💡 Axes d'Amélioration</th>
+            </tr>
+          </thead>
+          <tbody>
+            {comparisonRows.map((row, index) => (
+              <tr key={index}>
+                <td className={row.strength ? "cell-strength" : "cell-empty"}>
+                  {row.strength && `• ${row.strength}`}
+                </td>
+                <td className={row.improvement ? "cell-improvement" : "cell-empty"}>
+                  {row.improvement && `• ${row.improvement}`}
+                </td>
+              </tr>
+            ))}
+            {comparisonRows.length === 0 && (
+              <tr><td colSpan="2" className="text-center">Aucune donnée disponible</td></tr>
+            )}
+          </tbody>
+        </table>
       </div>
+
+      {/* TABLEAU 2 : Plan d'Action */}
+      <div className="table-container">
+        <h3>🚀 Plan d'Action Recommandé</h3>
+        <table className="analysis-table action-table">
+          <thead>
+            <tr>
+              <th style={{ width: '50px' }}>État</th>
+              <th>Recommandations Prioritaires</th>
+            </tr>
+          </thead>
+          <tbody>
+            {recommendations.map((rec, index) => (
+              <tr key={index}>
+                <td className="text-center">
+                  <input type="checkbox" className="action-checkbox" />
+                </td>
+                <td className="cell-action">
+                  {rec}
+                </td>
+              </tr>
+            ))}
+            {recommendations.length === 0 && (
+              <tr><td colSpan="2" className="text-center">Aucune recommandation</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="actions-footer">
+        <button 
+          onClick={() => window.location.href = '/cv-ats-optimization'}
+          className="primary-btn"
+        >
+          🔧 Lancer l'optimisation ATS
+        </button>
+      </div>
+
     </div>
   );
 };
