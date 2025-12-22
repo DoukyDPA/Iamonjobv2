@@ -1,13 +1,14 @@
 import React from 'react';
 import LoadingMessage from '../Common/LoadingMessage';
+import { FiCheckCircle, FiAlertTriangle, FiTarget, FiZap, FiBarChart2, FiCpu } from 'react-icons/fi';
 import './CVAnalysisDashboard.css';
 
 const CVAnalysisDashboard = ({ analysisData, loading, error }) => {
   if (loading) {
     return (
       <LoadingMessage 
-        message="Analyse de votre CV en cours..."
-        subtitle="L'IA structure les données pour une présentation détaillée"
+        message="Analyse approfondie en cours..."
+        subtitle="L'IA examine la structure, le contenu et l'impact de votre CV"
         size="large"
       />
     );
@@ -28,111 +29,166 @@ const CVAnalysisDashboard = ({ analysisData, loading, error }) => {
   try {
     parsedData = typeof analysisData === 'string' ? JSON.parse(analysisData) : analysisData;
   } catch (e) {
+    // Fallback data
     parsedData = {
-      globalScore: 0,
-      synthesis: "Données non disponibles.",
+      synthesis: "Analyse effectuée. Consultez les détails ci-dessous.",
       strengths: [],
       improvements: [],
-      recommendations: []
+      recommendations: [],
+      globalScore: 5
     };
   }
 
-  const { strengths = [], improvements = [], recommendations = [], synthesis, globalScore } = parsedData;
+  const { strengths = [], improvements = [], recommendations = [], synthesis, globalScore = 0 } = parsedData;
 
-  // Préparation des données pour le tableau comparatif
-  // On prend la longueur maximale pour aligner les lignes
-  const maxRows = Math.max(strengths.length, improvements.length);
-  const comparisonRows = Array.from({ length: maxRows }).map((_, i) => ({
-    strength: strengths[i] || "",
-    improvement: improvements[i] || ""
-  }));
-
-  const scoreDeg = `${(globalScore || 0) * 36}deg`;
+  // Calculs visuels pour la jauge
+  const radius = 60;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (globalScore / 10) * circumference;
+  
+  // Couleur dynamique selon le score
+  const getScoreColor = (score) => {
+    if (score >= 8) return '#16a34a'; // Vert
+    if (score >= 5) return '#d97706'; // Orange
+    return '#dc2626'; // Rouge
+  };
+  const scoreColor = getScoreColor(globalScore);
 
   return (
     <div className="cv-analysis-dashboard">
       
-      {/* HEADER : Score & Synthèse */}
-      <div className="dashboard-header-section">
-        <div className="score-card">
-          <div className="score-circle-mini" style={{ '--score-deg': scoreDeg }}>
-            <span className="score-number-mini">{globalScore || 0}</span>
-            <span className="score-total-mini">/10</span>
-          </div>
-          <div className="score-text">
-            <h3>Note Globale</h3>
-            <p>Performance du CV</p>
-          </div>
-        </div>
+      {/* 1. HEADER HYBRIDE : Score Visuel + Synthèse Texte */}
+      <div className="dashboard-header">
         
-        <div className="synthesis-card">
-          <h3>📋 Synthèse de l'expert</h3>
-          <p>{synthesis}</p>
+        {/* Colonne Gauche : Le Score */}
+        <div className="header-score-section">
+          <div className="score-label">Note Globale</div>
+          <div className="score-circle-big">
+            <svg width="140" height="140" className="score-svg">
+              {/* Cercle fond */}
+              <circle cx="70" cy="70" r={radius} stroke="#e2e8f0" strokeWidth="10" fill="none" />
+              {/* Cercle progression */}
+              <circle 
+                cx="70" cy="70" r={radius} 
+                stroke={scoreColor} 
+                strokeWidth="10" 
+                fill="none" 
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
+              />
+            </svg>
+            <div className="score-overlay">
+              <span className="score-value" style={{ color: scoreColor }}>{globalScore}</span>
+              <span className="score-max">/10</span>
+            </div>
+          </div>
+          
+          <div className="ats-badge">
+            <FiCpu /> Potentiel ATS
+          </div>
+        </div>
+
+        {/* Colonne Droite : La Synthèse */}
+        <div className="header-synthesis-section">
+          <h3><FiBarChart2 /> Synthèse de l'Expert</h3>
+          <p className="synthesis-content">
+            {synthesis || "Aucune synthèse disponible."}
+          </p>
+          <div style={{ marginTop: '1.5rem', color: '#64748b', fontSize: '0.9rem' }}>
+            <em>Basé sur l'analyse de la structure, des mots-clés et de la clarté.</em>
+          </div>
         </div>
       </div>
 
-      {/* TABLEAU 1 : Comparatif Points Forts / Faibles */}
-      <div className="table-container">
-        <h3>📊 Analyse Détaillée du Profil</h3>
-        <table className="analysis-table comparison-table">
+      {/* 2. TABLEAUX COMPARATIFS (Points Forts / Faibles) */}
+      <div className="analysis-grid">
+        
+        {/* Colonne Points Forts */}
+        <div className="analysis-column">
+          <div className="column-header header-strengths">
+            <FiCheckCircle size={18} /> Points Forts
+          </div>
+          <ul className="column-list">
+            {strengths.length > 0 ? strengths.map((item, i) => (
+              <li key={i}>
+                <FiCheckCircle className="bullet-icon" color="#16a34a" size={16} />
+                <span>{item}</span>
+              </li>
+            )) : (
+              <li>Aucun point fort majeur détecté.</li>
+            )}
+          </ul>
+        </div>
+
+        {/* Colonne Améliorations */}
+        <div className="analysis-column">
+          <div className="column-header header-improvements">
+            <FiAlertTriangle size={18} /> Axes d'Amélioration
+          </div>
+          <ul className="column-list">
+            {improvements.length > 0 ? improvements.map((item, i) => (
+              <li key={i}>
+                <FiTarget className="bullet-icon" color="#d97706" size={16} />
+                <span>{item}</span>
+              </li>
+            )) : (
+              <li>Aucun axe d'amélioration critique.</li>
+            )}
+          </ul>
+        </div>
+      </div>
+
+      {/* 3. PLAN D'ACTION (Tableau Détail) */}
+      <div className="action-plan-section">
+        <h3 className="section-title">
+          <FiZap color="#4f46e5" /> Recommandations Prioritaires
+        </h3>
+        <table className="actions-table">
           <thead>
             <tr>
-              <th className="th-success">✅ Points Forts</th>
-              <th className="th-warning">💡 Axes d'Amélioration</th>
+              <th style={{ width: '60px', textAlign: 'center' }}>Fait</th>
+              <th>Action Recommandée</th>
+              <th style={{ width: '150px' }}>Priorité</th>
             </tr>
           </thead>
           <tbody>
-            {comparisonRows.map((row, index) => (
-              <tr key={index}>
-                <td className={row.strength ? "cell-strength" : "cell-empty"}>
-                  {row.strength && `• ${row.strength}`}
+            {recommendations.length > 0 ? recommendations.map((rec, i) => (
+              <tr key={i}>
+                <td style={{ textAlign: 'center' }}>
+                  <div className="checkbox-wrapper">
+                    <input type="checkbox" className="custom-checkbox" />
+                  </div>
                 </td>
-                <td className={row.improvement ? "cell-improvement" : "cell-empty"}>
-                  {row.improvement && `• ${row.improvement}`}
+                <td style={{ fontWeight: '500' }}>{rec}</td>
+                <td>
+                  <span style={{ 
+                    background: i < 2 ? '#fee2e2' : '#f3f4f6', 
+                    color: i < 2 ? '#991b1b' : '#374151',
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '99px',
+                    fontSize: '0.75rem',
+                    fontWeight: '700',
+                    textTransform: 'uppercase'
+                  }}>
+                    {i < 2 ? 'Haute' : 'Moyenne'}
+                  </span>
                 </td>
               </tr>
-            ))}
-            {comparisonRows.length === 0 && (
-              <tr><td colSpan="2" className="text-center">Aucune donnée disponible</td></tr>
+            )) : (
+              <tr><td colSpan="3" style={{textAlign: 'center'}}>Aucune recommandation spécifique.</td></tr>
             )}
           </tbody>
         </table>
       </div>
 
-      {/* TABLEAU 2 : Plan d'Action */}
-      <div className="table-container">
-        <h3>🚀 Plan d'Action Recommandé</h3>
-        <table className="analysis-table action-table">
-          <thead>
-            <tr>
-              <th style={{ width: '50px' }}>État</th>
-              <th>Recommandations Prioritaires</th>
-            </tr>
-          </thead>
-          <tbody>
-            {recommendations.map((rec, index) => (
-              <tr key={index}>
-                <td className="text-center">
-                  <input type="checkbox" className="action-checkbox" />
-                </td>
-                <td className="cell-action">
-                  {rec}
-                </td>
-              </tr>
-            ))}
-            {recommendations.length === 0 && (
-              <tr><td colSpan="2" className="text-center">Aucune recommandation</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="actions-footer">
+      {/* 4. CALL TO ACTION */}
+      <div className="dashboard-footer">
         <button 
           onClick={() => window.location.href = '/cv-ats-optimization'}
-          className="primary-btn"
+          className="optimize-btn"
         >
-          🔧 Lancer l'optimisation ATS
+          <FiCpu /> Lancer l'Optimisation ATS Automatique
         </button>
       </div>
 
