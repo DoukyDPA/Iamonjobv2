@@ -2,19 +2,23 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
-// Contextes (Le moteur de l'app)
+// Contextes
 import { AuthProvider } from './context/AuthContext';
 import { AppProvider } from './context/AppContext';
 
-// Composants Techniques CRITIQUES (Ceux qui faisaient marcher les documents)
+// Composant de synchronisation
 import DataSync from './components/Common/DataSync';
+
+// Composant d'individualisation des utilisateurs
 import UserIndividualization from './components/Common/UserIndividualization';
+
+// Composant de test responsive
 import MobileResponsiveTest from './components/TestAccess/MobileResponsiveTest';
-import TestAccessWrapper from './components/TestAccess/TestAccessWrapper';
 
 // Layout et protection
 import Layout from './components/Layout/Layout';
 import PrivateRoute from './components/Auth/PrivateRoute';
+import TestAccessWrapper from './components/TestAccess/TestAccessWrapper';
 
 // Pages publiques
 import Home from './pages/Home';
@@ -23,14 +27,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 
-// --- VOS NOUVELLES PAGES (Intégrées proprement) ---
-import Dashboard from './pages/Dashboard'; // Le nouveau dashboard simplifié
-import MindMap from './pages/MindMap';     // La nouvelle Mindmap
-import CVAnalysisDashboard from './components/Analysis/CVAnalysisDashboard';
-import MatchingAnalysis from './components/Analysis/MatchingAnalysis';
-import ChatWindow from './components/Chat/ChatWindow';
-
-// Pages existantes (On les garde pour éviter les erreurs 404)
+// Pages protégées
+import Dashboard from './pages/Dashboard';
 import ServicesGrid from './components/Services/ServicesGrid';
 import GenericDocumentProcessor from './components/Common/GenericDocumentProcessor';
 
@@ -39,38 +37,62 @@ import AdminServicesPage from './pages/AdminServicesPage';
 import AdminPartnersPage from './pages/AdminPartnersPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 
-// Pages Légales / GDPR
+// Page GDPR
 import GDPRPage from './pages/GDPRPage';
+
+// Pages légales
 import LegalNotice from './pages/LegalNotice';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import CookiesPolicy from './pages/CookiesPolicy';
 import FAQ from './pages/FAQ';
 
-// STYLES GLOBAUX (Pour ne plus être "affreux")
 import './App.css';
-import './styles/revolutionary-design.css'; 
+import './styles/revolutionary-design.css';
 
 function App() {
   return (
     <AuthProvider>
       <AppProvider>
         <Router>
-          {/* Ces wrappers sont indispensables pour vos documents et user ID */}
           <UserIndividualization>
             <TestAccessWrapper>
-              <DataSync /> 
-              
+              <DataSync />
               <div className="app">
                 <Routes>
-                  {/* === ROUTES PUBLIQUES === */}
-                  <Route path="/" element={<Layout><Home /></Layout>} />
-                  <Route path="/features" element={<Layout><Features /></Layout>} />
-                  <Route path="/login" element={<Layout><Login /></Layout>} />
-                  <Route path="/register" element={<Layout><Register /></Layout>} />
-                  <Route path="/forgot-password" element={<Layout><ForgotPassword /></Layout>} />
+                  {/* Routes publiques avec layout */}
+                  <Route path="/" element={
+                    <Layout>
+                      <Home />
+                    </Layout>
+                  } />
+                  
+                  <Route path="/features" element={
+                    <Layout>
+                      <Features />
+                    </Layout>
+                  } />
 
-                  {/* === DASHBOARD & NOUVELLE NAVIGATION === */}
+                  {/* Routes d'authentification */}
+                  <Route path="/login" element={
+                    <Layout>
+                      <Login />
+                    </Layout>
+                  } />
+                  
+                  <Route path="/register" element={
+                    <Layout>
+                      <Register />
+                    </Layout>
+                  } />
+                  
+                  <Route path="/forgot-password" element={
+                    <Layout>
+                      <ForgotPassword />
+                    </Layout>
+                  } />
+
+                  {/* Routes protégées */}
                   <Route path="/dashboard" element={
                     <PrivateRoute>
                       <Layout>
@@ -79,75 +101,135 @@ function App() {
                     </PrivateRoute>
                   } />
 
-                  <Route path="/mindmap" element={
-                    <PrivateRoute>
-                      <Layout>
-                        <MindMap />
-                      </Layout>
-                    </PrivateRoute>
-                  } />
-
-                  {/* === NOS OUTILS EXPERTS (Restaurés) === */}
-                  <Route path="/cv-analysis" element={
-                    <PrivateRoute>
-                      <Layout>
-                        <CVAnalysisDashboard />
-                      </Layout>
-                    </PrivateRoute>
-                  } />
-
-                  <Route path="/matching" element={
-                    <PrivateRoute>
-                      <Layout>
-                        <MatchingAnalysis />
-                      </Layout>
-                    </PrivateRoute>
-                  } />
-
-                  <Route path="/chat" element={
-                    <PrivateRoute>
-                      <Layout>
-                        <ChatWindow />
-                      </Layout>
-                    </PrivateRoute>
-                  } />
-
-                  {/* === ROUTES HISTORIQUES (Pour compatibilité) === */}
+                  {/* Routes pour les services génériques */}
                   <Route path="/services" element={
                     <PrivateRoute>
-                      <Layout><ServicesGrid /></Layout>
+                      <Layout>
+                        <ServicesGrid />
+                      </Layout>
                     </PrivateRoute>
                   } />
                   
-                  {/* Route générique pour les anciens services si besoin */}
-                  <Route path="/service/:serviceId" element={
+                  {/* Routes dynamiques pour tous les services IA */}
+                  <Route path="/:serviceId" element={
                     <PrivateRoute>
-                      <Layout><GenericDocumentProcessor /></Layout>
+                      <Layout>
+                        <GenericDocumentProcessor />
+                      </Layout>
                     </PrivateRoute>
                   } />
-
-                  {/* === ADMINISTRATION === */}
-                  <Route path="/admin/services" element={<PrivateRoute><Layout><AdminServicesPage /></Layout></PrivateRoute>} />
-                  <Route path="/admin/partners" element={<PrivateRoute><Layout><AdminPartnersPage /></Layout></PrivateRoute>} />
-                  <Route path="/admin/users" element={<PrivateRoute><Layout><AdminUsersPage /></Layout></PrivateRoute>} />
+                
+                  {/* Routes d'administration */}
+                  <Route path="/admin/services" element={
+                    <PrivateRoute>
+                      <Layout>
+                        <AdminServicesPage />
+                      </Layout>
+                    </PrivateRoute>
+                  } />
                   
-                  {/* === PAGES LÉGALES === */}
-                  <Route path="/gdpr" element={<PrivateRoute><Layout><GDPRPage /></Layout></PrivateRoute>} />
-                  <Route path="/mentions-legales" element={<Layout><LegalNotice /></Layout>} />
-                  <Route path="/confidentialite" element={<Layout><PrivacyPolicy /></Layout>} />
-                  <Route path="/conditions" element={<Layout><TermsOfService /></Layout>} />
-                  <Route path="/cookies" element={<Layout><CookiesPolicy /></Layout>} />
-                  <Route path="/faq" element={<Layout><FAQ /></Layout>} />
+                  <Route path="/admin/partners" element={
+                    <PrivateRoute>
+                      <Layout>
+                        <AdminPartnersPage />
+                      </Layout>
+                    </PrivateRoute>
+                  } />
                   
-                  {/* === PAGES DE TEST === */}
-                  <Route path="/test-responsive" element={<Layout><MobileResponsiveTest /></Layout>} />
+                  <Route path="/admin/users" element={
+                    <PrivateRoute>
+                      <Layout>
+                        <AdminUsersPage />
+                      </Layout>
+                    </PrivateRoute>
+                  } />
+                  
+                  {/* Page GDPR */}
+                  <Route path="/gdpr" element={
+                    <PrivateRoute>
+                      <Layout>
+                        <GDPRPage />
+                      </Layout>
+                    </PrivateRoute>
+                  } />
+                  
+                  {/* Page de test progression */}
+                  <Route path="/test" element={
+                    <Layout>
+                      <div style={{ padding: '2rem', textAlign: 'center' }}>
+                        <h2>🧪 Page de test</h2>
+                        <p>✅ Contextes fonctionnels</p>
+                        <p>✅ Layout et Header</p>
+                        <p>✅ Pages Home et Features</p>
+                        <p>✅ Authentification Login/Register</p>
+                        <p>✅ Page d'administration des utilisateurs</p>
+                        <p>✅ Corrections responsive mobile</p>
+                        <p>Étape 6/6 terminée</p>
+                        
+                        <div style={{ marginTop: '2rem' }}>
+                          <h3>🎯 Navigation disponible :</h3>
+                          <p>
+                            <a href="/" style={{ margin: '0 1rem', color: '#0a6b79' }}>🏠 Home</a>
+                            <a href="/features" style={{ margin: '0 1rem', color: '#0a6b79' }}>⚡ Features</a>
+                            <a href="/login" style={{ margin: '0 1rem', color: '#0a6b79' }}>🔐 Login</a>
+                            <a href="/register" style={{ margin: '0 1rem', color: '#0a6b79' }}>📝 Register</a>
+                            <a href="/dashboard" style={{ margin: '0 1rem', color: '#0a6b79' }}>🎯 Dashboard</a>
+                            <a href="/admin/users" style={{ margin: '0 1rem', color: '#0a6b79' }}>👥 Admin Users</a>
+                            <a href="/test" style={{ margin: '0 1rem', color: '#0a6b79' }}>🔧 Test</a>
+                            <a href="/test-responsive" style={{ margin: '0 1rem', color: '#0a6b79' }}>📱 Test Mobile</a>
+                          </p>
+                        </div>
+                      </div>
+                    </Layout>
+                  } />
 
-                  {/* === 404 / FALLBACK === */}
+                  {/* Page de test responsive mobile */}
+                  <Route path="/test-responsive" element={
+                    <Layout>
+                      <MobileResponsiveTest />
+                    </Layout>
+                  } />
+
+                  {/* Routes légales */}
+                  <Route path="/mentions-legales" element={
+                    <Layout>
+                      <LegalNotice />
+                    </Layout>
+                  } />
+                  
+                  <Route path="/confidentialite" element={
+                    <Layout>
+                      <PrivacyPolicy />
+                    </Layout>
+                  } />
+                  
+                  <Route path="/conditions" element={
+                    <Layout>
+                      <TermsOfService />
+                    </Layout>
+                  } />
+                  
+                  <Route path="/cookies" element={
+                    <Layout>
+                      <CookiesPolicy />
+                    </Layout>
+                  } />
+                  
+                  <Route path="/faq" element={
+                    <Layout>
+                      <FAQ />
+                    </Layout>
+                  } />
+                  
+                  {/* Routes de construction */}
                   <Route path="*" element={
                     <Layout>
-                      <div style={{ padding: '4rem', textAlign: 'center' }}>
-                        <h2>Page non trouvée</h2>
-                        <a href="/dashboard" className="btn-primary">Retour au Dashboard</a>
+                      <div style={{ padding: '2rem', textAlign: 'center' }}>
+                        <h2>🚧 Page en construction</h2>
+                        <p>Cette fonctionnalité sera bientôt disponible !</p>
+                        <p>
+                          <a href="/" style={{ color: '#0a6b79' }}>← Retour à l'accueil</a>
+                        </p>
                       </div>
                     </Layout>
                   } />
@@ -157,7 +239,10 @@ function App() {
                   position="top-right"
                   toastOptions={{
                     duration: 4000,
-                    style: { background: '#363636', color: '#fff' },
+                    style: {
+                      background: '#363636',
+                      color: '#fff',
+                    },
                   }}
                 />
               </div>
