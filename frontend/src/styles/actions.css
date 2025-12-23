@@ -1,361 +1,109 @@
-/* ===================================================================
-   ⚡ IAMONJOB - ACTIONS CSS OPTIMISÉ
-   Version: 3.0 - CSS consolidé et optimisé
-   ================================================================== */
+/* frontend/src/styles/actions.css */
 
-/* ===== CONTENEUR PRINCIPAL ACTION ===== */
-.action-page {
-  min-height: calc(100vh - 200px);
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f0f9ff 100%);
-  position: relative;
-  overflow: hidden;
-}
-
-.action-page::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: 
-    radial-gradient(circle at 25% 25%, rgba(10, 107, 121, 0.04) 0%, transparent 50%),
-    radial-gradient(circle at 75% 75%, rgba(5, 150, 105, 0.04) 0%, transparent 50%);
-  pointer-events: none;
-}
-
-.action-page > * {
-  position: relative;
-  z-index: 1;
-}
-
-/* ===== HEADER ACTION ===== */
-.action-header {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
-  color: white;
-  padding: 3rem 0;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.action-header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-  opacity: 0.3;
-}
-
-.action-title {
-  font-size: 3rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.action-subtitle {
-  font-size: 1.2rem;
-  opacity: 0.9;
-  margin-bottom: 2rem;
-  color: white;
-}
-
-/* ===== GRILLE DE SERVICES ===== */
-.services-grid {
+.actions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 2rem;
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
 }
 
 .action-card {
   background: white;
-  border-radius: var(--radius-xl);
+  border-radius: 20px;
   padding: 2rem;
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border-color);
-  transition: all var(--transition-normal);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 220px;
+}
+
+.action-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+  border-color: var(--card-color);
 }
 
 .action-card::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  top: 0; left: 0; width: 6px; height: 100%;
+  background: var(--card-color);
+  opacity: 0;
+  transition: opacity 0.3s;
 }
 
-.action-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+.action-card:hover::before {
+  opacity: 1;
 }
 
-.action-card-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.action-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: var(--radius-lg);
+.action-icon-wrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: #f8fafc;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 1.75rem;
+  color: var(--card-color);
+  margin-bottom: 1.5rem;
+  transition: background 0.3s;
+}
+
+.action-card:hover .action-icon-wrapper {
+  background: var(--card-color);
   color: white;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-  box-shadow: 0 4px 12px rgba(10, 107, 121, 0.3);
 }
 
 .action-content h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-color);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
   margin: 0 0 0.5rem 0;
 }
 
 .action-content p {
-  color: var(--text-light);
-  margin: 0;
+  font-size: 1rem;
+  color: #64748b;
   line-height: 1.5;
+  margin: 0;
 }
 
-.action-meta {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.meta-badge {
-  padding: 0.25rem 0.75rem;
-  background: var(--bg-secondary);
-  color: var(--text-light);
-  border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.meta-badge.difficulty {
-  background: var(--info-bg);
-  color: var(--info-text);
-}
-
-.meta-badge.duration {
-  background: var(--success-bg);
-  color: var(--success-text);
-}
-
-.action-description {
-  color: var(--text-light);
-  margin-bottom: 1.5rem;
-  line-height: 1.6;
-}
-
-.action-requirements {
-  margin-bottom: 1.5rem;
-}
-
-.requirements-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-color);
-  margin-bottom: 0.5rem;
-}
-
-.requirements-list {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.requirement-badge {
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  font-weight: 500;
+.action-arrow {
+  margin-top: auto;
+  align-self: flex-end;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f1f5f9;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  justify-content: center;
+  color: #94a3b8;
+  transition: all 0.3s;
 }
 
-.requirement-badge.required {
-  background: var(--success-bg);
-  color: var(--success-text);
-}
-
-.requirement-badge.optional {
-  background: var(--warning-bg);
-  color: var(--warning-text);
-}
-
-.action-button {
-  width: 100%;
-  padding: 1rem;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+.action-card:hover .action-arrow {
+  background: var(--card-color);
   color: white;
-  border: none;
-  border-radius: var(--radius-lg);
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  position: relative;
-  overflow: hidden;
+  transform: translateX(5px);
 }
 
-.action-button::before {
-  content: '';
+.action-badge {
   position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border-radius: 99px;
+  text-transform: uppercase;
 }
-
-.action-button:hover::before {
-  left: 100%;
-}
-
-.action-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(10, 107, 121, 0.3);
-}
-
-.action-button:active {
-  transform: translateY(0);
-}
-
-/* ===== ÉTATS SPÉCIAUX ===== */
-.action-card.featured {
-  border: 2px solid var(--primary-color);
-  box-shadow: 0 0 20px rgba(10, 107, 121, 0.2);
-}
-
-.action-card.featured::before {
-  height: 6px;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-light), var(--primary-color));
-}
-
-.action-card.disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  filter: grayscale(0.3);
-}
-
-.action-card.disabled:hover {
-  transform: none;
-  box-shadow: var(--shadow-lg);
-}
-
-/* ===== RESPONSIVE DESIGN ===== */
-@media (max-width: 768px) {
-  .action-page {
-    padding: 0;
-  }
-
-  .action-header {
-    padding: 2rem 1rem;
-  }
-
-  .action-title {
-    font-size: 2rem;
-  }
-
-  .action-subtitle {
-    font-size: 1rem;
-  }
-
-  .services-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    padding: 1rem;
-  }
-
-  .action-card {
-    padding: 1.5rem;
-  }
-
-  .action-card-header {
-    flex-direction: column;
-    text-align: center;
-    gap: 0.75rem;
-  }
-
-  .action-icon {
-    width: 50px;
-    height: 50px;
-    font-size: 1.25rem;
-  }
-
-  .action-content h3 {
-    font-size: 1.1rem;
-  }
-
-  .action-meta {
-    justify-content: center;
-  }
-
-  .requirements-list {
-    justify-content: center;
-  }
-
-  .action-button {
-    padding: 0.875rem;
-    font-size: 0.9rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .action-title {
-    font-size: 1.5rem;
-  }
-
-  .action-card {
-    padding: 1rem;
-  }
-
-  .action-icon {
-    width: 45px;
-    height: 45px;
-    font-size: 1.1rem;
-  }
-}
-
-/* ===== ANIMATIONS ===== */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.action-card {
-  animation: fadeInUp 0.6s ease-out;
-}
-
-.action-card:nth-child(1) { animation-delay: 0.1s; }
-.action-card:nth-child(2) { animation-delay: 0.2s; }
-.action-card:nth-child(3) { animation-delay: 0.3s; }
-.action-card:nth-child(4) { animation-delay: 0.4s; }
