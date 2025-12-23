@@ -1,0 +1,100 @@
+/* Ajoutez ceci à votre fichier Dashboard.css */
+
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.dashboard-welcome {
+  margin-bottom: 3rem;
+}
+
+.dashboard-welcome h1 {
+  font-size: 2.5rem;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-welcome .subtitle {
+  font-size: 1.2rem;
+  color: #64748b;
+}
+
+/* Barre "Sans prise de tête" */
+.quick-access-bar {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  color: white;
+  margin-bottom: 4rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+  box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.3);
+}
+
+.quick-access-bar:hover {
+  transform: scale(1.01);
+}
+
+.quick-access-icon {
+  width: 50px;
+  height: 50px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #fbbf24; /* Or */
+}
+
+.quick-access-content {
+  flex: 1;
+}
+
+.quick-access-content h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+}
+
+.quick-access-content p {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
+.quick-btn {
+  background: white;
+  color: #0f172a;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.section-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #94a3b8;
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.section-divider span {
+  padding: 0 1rem;
+}
