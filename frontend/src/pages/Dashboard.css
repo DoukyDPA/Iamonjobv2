@@ -1,100 +1,107 @@
-/* Ajoutez ceci à votre fichier Dashboard.css */
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useApp } from '../context/AppContext';
+import { FiFileText, FiUploadCloud, FiClipboard, FiTarget, FiCompass, FiCheck } from 'react-icons/fi';
+import './Dashboard.css';
 
-.dashboard-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
+const Dashboard = () => {
+  const { user } = useAuth();
+  const { documentStatus } = useApp();
+  const navigate = useNavigate();
 
-.dashboard-welcome {
-  margin-bottom: 3rem;
-}
+  const firstName = user?.email?.split('@')[0] || 'Candidat';
 
-.dashboard-welcome h1 {
-  font-size: 2.5rem;
-  color: #0f172a;
-  margin-bottom: 0.5rem;
-}
+  // Helpers pour l'état des documents
+  const isCvOk = documentStatus?.cv?.uploaded;
+  const isOfferOk = documentStatus?.offre_emploi?.uploaded;
+  const isQuizOk = false; // À connecter plus tard
 
-.dashboard-welcome .subtitle {
-  font-size: 1.2rem;
-  color: #64748b;
-}
+  // Navigation vers la MindMap
+  const goToMindMap = (mode) => {
+    navigate('/mindmap', { state: { mode } });
+  };
 
-/* Barre "Sans prise de tête" */
-.quick-access-bar {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  border-radius: 16px;
-  padding: 1.5rem 2rem;
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  color: white;
-  margin-bottom: 4rem;
-  cursor: pointer;
-  transition: transform 0.2s;
-  box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.3);
-}
+  return (
+    <div className="dashboard-container">
+      
+      {/* HEADER */}
+      <div className="dashboard-welcome">
+        <h1>Tableau de bord de {firstName}</h1>
+        <p className="subtitle">Préparez vos documents, puis choisissez votre stratégie.</p>
+      </div>
 
-.quick-access-bar:hover {
-  transform: scale(1.01);
-}
+      {/* SECTION 1 : MES MUNITIONS (Documents) */}
+      <h3 className="section-title">1. Mes Munitions</h3>
+      <div className="resources-grid">
+        
+        {/* CARTE CV */}
+        <div className={`resource-card ${isCvOk ? 'done' : ''}`} onClick={() => navigate('/documents')}>
+          <div className="resource-icon-bg">
+            {isCvOk ? <FiCheck /> : <FiUploadCloud />}
+          </div>
+          <div className="resource-info">
+            <h4>Mon CV</h4>
+            <p>{isCvOk ? "Chargé et prêt" : "À télécharger pour activer l'IA"}</p>
+          </div>
+        </div>
 
-.quick-access-icon {
-  width: 50px;
-  height: 50px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  color: #fbbf24; /* Or */
-}
+        {/* CARTE OFFRE */}
+        <div className={`resource-card ${isOfferOk ? 'done' : ''}`} onClick={() => navigate('/documents')}>
+          <div className="resource-icon-bg">
+            {isOfferOk ? <FiCheck /> : <FiFileText />}
+          </div>
+          <div className="resource-info">
+            <h4>L'Offre visée</h4>
+            <p>{isOfferOk ? "Chargée et prête" : "Copiez/collez ou uploadez l'offre"}</p>
+          </div>
+        </div>
 
-.quick-access-content {
-  flex: 1;
-}
+        {/* CARTE QUESTIONNAIRE */}
+        <div className={`resource-card ${isQuizOk ? 'done' : ''}`} onClick={() => alert("Questionnaire bientôt disponible")}>
+          <div className="resource-icon-bg">
+            <FiClipboard />
+          </div>
+          <div className="resource-info">
+            <h4>Mon Profil</h4>
+            <p>Questionnaire de personnalité</p>
+          </div>
+        </div>
 
-.quick-access-content h4 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.1rem;
-}
+      </div>
 
-.quick-access-content p {
-  margin: 0;
-  color: #94a3b8;
-  font-size: 0.95rem;
-}
+      {/* SECTION 2 : MES OBJECTIFS (Mind Maps) */}
+      <h3 className="section-title" style={{ marginTop: '3rem' }}>2. Mon Objectif</h3>
+      <div className="goals-grid">
+        
+        {/* OBJECTIF 1 : OFFRE */}
+        <div className="goal-card primary" onClick={() => goToMindMap('offer')}>
+          <div className="goal-content">
+            <div className="goal-icon"><FiTarget /></div>
+            <div>
+              <h3>Répondre à une offre</h3>
+              <p>Matching, analyse d'écarts, lettre de motivation...</p>
+            </div>
+          </div>
+          <div className="goal-action">Voir le plan d'action →</div>
+        </div>
 
-.quick-btn {
-  background: white;
-  color: #0f172a;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-}
+        {/* OBJECTIF 2 : RECONVERSION */}
+        <div className="goal-card secondary" onClick={() => goToMindMap('career')}>
+          <div className="goal-content">
+            <div className="goal-icon"><FiCompass /></div>
+            <div>
+              <h3>Trouver ma voie</h3>
+              <p>Exploration, bilan, coaching carrière...</p>
+            </div>
+          </div>
+          <div className="goal-action">Explorer les pistes →</div>
+        </div>
 
-.section-divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  color: #94a3b8;
-  margin-bottom: 2rem;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
+      </div>
 
-.section-divider::before,
-.section-divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid #e2e8f0;
-}
+    </div>
+  );
+};
 
-.section-divider span {
-  padding: 0 1rem;
-}
+export default Dashboard;
