@@ -2,10 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
-import ActionCard from '../components/Services/ActionCard';
-import ServicesGrid from '../components/Services/ServicesGrid'; // On garde l'ancien grid en bas au cas où
-import { FiFileText, FiTarget, FiCompass, FiZap, FiUploadCloud } from 'react-icons/fi';
-import './Dashboard.css'; // Assurez-vous d'importer le CSS (ou actions.css)
+import { FiFileText, FiUploadCloud, FiClipboard, FiTarget, FiCompass, FiCheck } from 'react-icons/fi';
+import './Dashboard.css';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -14,70 +12,92 @@ const Dashboard = () => {
 
   const firstName = user?.email?.split('@')[0] || 'Candidat';
 
-  // SCÉNARIO 1 : J'ai pas de CV
-  const needsCV = !documentStatus.cv?.uploaded;
+  // Helpers pour l'état des documents
+  const isCvOk = documentStatus?.cv?.uploaded;
+  const isOfferOk = documentStatus?.offre_emploi?.uploaded;
+  const isQuizOk = false; // À connecter plus tard
+
+  // Navigation vers la MindMap
+  const goToMindMap = (mode) => {
+    navigate('/mindmap', { state: { mode } });
+  };
 
   return (
     <div className="dashboard-container">
       
-      {/* HEADER ACCUEILLANT */}
+      {/* HEADER */}
       <div className="dashboard-welcome">
-        <h1>Bonjour, {firstName} 👋</h1>
-        <p className="subtitle">Quel est votre objectif aujourd'hui ?</p>
+        <h1>Tableau de bord de {firstName}</h1>
+        <p className="subtitle">Préparez vos documents, puis choisissez votre stratégie.</p>
       </div>
 
-      {/* ZONE D'ACTIONS PRINCIPALES (Simplifiée) */}
-      <div className="actions-grid">
+      {/* SECTION 1 : MES MUNITIONS (Documents) */}
+      <h3 className="section-title">1. Mes Munitions</h3>
+      <div className="resources-grid">
         
-        {/* 1. BOOSTER MON CV */}
-        <ActionCard 
-          title="Améliorer mon CV"
-          subtitle="Analyse IA, correction des erreurs et optimisation pour les ATS."
-          icon={<FiFileText />}
-          color="#4f46e5" // Indigo
-          onClick={() => navigate('/cv-analysis')}
-          badge={needsCV ? "Prioritaire" : null}
-        />
+        {/* CARTE CV */}
+        <div className={`resource-card ${isCvOk ? 'done' : ''}`} onClick={() => navigate('/documents')}>
+          <div className="resource-icon-bg">
+            {isCvOk ? <FiCheck /> : <FiUploadCloud />}
+          </div>
+          <div className="resource-info">
+            <h4>Mon CV</h4>
+            <p>{isCvOk ? "Chargé et prêt" : "À télécharger pour activer l'IA"}</p>
+          </div>
+        </div>
 
-        {/* 2. RÉPONDRE À UNE OFFRE */}
-        <ActionCard 
-          title="Répondre à une offre"
-          subtitle="Analysez votre compatibilité et générez une lettre de motivation sur-mesure."
-          icon={<FiTarget />}
-          color="#059669" // Emerald
-          onClick={() => navigate('/matching')}
-        />
+        {/* CARTE OFFRE */}
+        <div className={`resource-card ${isOfferOk ? 'done' : ''}`} onClick={() => navigate('/documents')}>
+          <div className="resource-icon-bg">
+            {isOfferOk ? <FiCheck /> : <FiFileText />}
+          </div>
+          <div className="resource-info">
+            <h4>L'Offre visée</h4>
+            <p>{isOfferOk ? "Chargée et prête" : "Copiez/collez ou uploadez l'offre"}</p>
+          </div>
+        </div>
 
-        {/* 3. RECONVERSION / IDÉES */}
-        <ActionCard 
-          title="Trouver ma voie"
-          subtitle="Discutez avec le coach pour explorer des pistes de reconversion."
-          icon={<FiCompass />}
-          color="#d97706" // Amber
-          onClick={() => navigate('/chat')} // Redirige vers le Chat Coach
-        />
+        {/* CARTE QUESTIONNAIRE */}
+        <div className={`resource-card ${isQuizOk ? 'done' : ''}`} onClick={() => alert("Questionnaire bientôt disponible")}>
+          <div className="resource-icon-bg">
+            <FiClipboard />
+          </div>
+          <div className="resource-info">
+            <h4>Mon Profil</h4>
+            <p>Questionnaire de personnalité</p>
+          </div>
+        </div>
 
       </div>
 
-      {/* MODE "SANS SE PRENDRE LA TÊTE" (Accès direct Chat) */}
-      <div className="quick-access-bar" onClick={() => navigate('/chat')}>
-        <div className="quick-access-icon">
-          <FiZap />
+      {/* SECTION 2 : MES OBJECTIFS (Mind Maps) */}
+      <h3 className="section-title" style={{ marginTop: '3rem' }}>2. Mon Objectif</h3>
+      <div className="goals-grid">
+        
+        {/* OBJECTIF 1 : OFFRE */}
+        <div className="goal-card primary" onClick={() => goToMindMap('offer')}>
+          <div className="goal-content">
+            <div className="goal-icon"><FiTarget /></div>
+            <div>
+              <h3>Répondre à une offre</h3>
+              <p>Matching, analyse d'écarts, lettre de motivation...</p>
+            </div>
+          </div>
+          <div className="goal-action">Voir le plan d'action →</div>
         </div>
-        <div className="quick-access-content">
-          <h4>Mode "Sans prise de tête"</h4>
-          <p>Laissez l'assistant IA vous guider pas à pas dans vos démarches.</p>
-        </div>
-        <button className="quick-btn">Démarrer</button>
-      </div>
 
-      {/* SECTION SECONDAIRE : "Je veux travailler dans le détail" */}
-      <div className="advanced-tools-section">
-        <h3 className="section-divider">
-          <span>Tous les outils experts</span>
-        </h3>
-        {/* On réutilise votre grille existante, mais en plus petit ou en dessous */}
-        <ServicesGrid compact={true} /> 
+        {/* OBJECTIF 2 : RECONVERSION */}
+        <div className="goal-card secondary" onClick={() => goToMindMap('career')}>
+          <div className="goal-content">
+            <div className="goal-icon"><FiCompass /></div>
+            <div>
+              <h3>Trouver ma voie</h3>
+              <p>Exploration, bilan, coaching carrière...</p>
+            </div>
+          </div>
+          <div className="goal-action">Explorer les pistes →</div>
+        </div>
+
       </div>
 
     </div>
