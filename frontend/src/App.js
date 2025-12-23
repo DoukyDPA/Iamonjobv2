@@ -28,7 +28,7 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 
 // Pages protégées
-import Dashboard from './pages/Dashboard';
+import Dashboard from './pages/SimplifiedDashboard';
 import ServicesGrid from './components/Services/ServicesGrid';
 import GenericDocumentProcessor from './components/Common/GenericDocumentProcessor';
 
