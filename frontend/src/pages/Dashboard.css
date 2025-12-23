@@ -1,107 +1,123 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useApp } from '../context/AppContext';
-import { FiFileText, FiUploadCloud, FiClipboard, FiTarget, FiCompass, FiCheck } from 'react-icons/fi';
-import './Dashboard.css';
+/* frontend/src/pages/Dashboard.css */
 
-const Dashboard = () => {
-  const { user } = useAuth();
-  const { documentStatus } = useApp();
-  const navigate = useNavigate();
+.dashboard-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+}
 
-  const firstName = user?.email?.split('@')[0] || 'Candidat';
+.dashboard-welcome h1 { font-size: 2rem; color: #0f172a; margin-bottom: 0.5rem; }
+.subtitle { color: #64748b; font-size: 1.1rem; }
 
-  // Helpers pour l'état des documents
-  const isCvOk = documentStatus?.cv?.uploaded;
-  const isOfferOk = documentStatus?.offre_emploi?.uploaded;
-  const isQuizOk = false; // À connecter plus tard
+.section-title {
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  color: #94a3b8;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
 
-  // Navigation vers la MindMap
-  const goToMindMap = (mode) => {
-    navigate('/mindmap', { state: { mode } });
-  };
+/* GRILLE RESSOURCES (DOCUMENTS) */
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
 
-  return (
-    <div className="dashboard-container">
-      
-      {/* HEADER */}
-      <div className="dashboard-welcome">
-        <h1>Tableau de bord de {firstName}</h1>
-        <p className="subtitle">Préparez vos documents, puis choisissez votre stratégie.</p>
-      </div>
+.resource-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
 
-      {/* SECTION 1 : MES MUNITIONS (Documents) */}
-      <h3 className="section-title">1. Mes Munitions</h3>
-      <div className="resources-grid">
-        
-        {/* CARTE CV */}
-        <div className={`resource-card ${isCvOk ? 'done' : ''}`} onClick={() => navigate('/documents')}>
-          <div className="resource-icon-bg">
-            {isCvOk ? <FiCheck /> : <FiUploadCloud />}
-          </div>
-          <div className="resource-info">
-            <h4>Mon CV</h4>
-            <p>{isCvOk ? "Chargé et prêt" : "À télécharger pour activer l'IA"}</p>
-          </div>
-        </div>
+.resource-card:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
 
-        {/* CARTE OFFRE */}
-        <div className={`resource-card ${isOfferOk ? 'done' : ''}`} onClick={() => navigate('/documents')}>
-          <div className="resource-icon-bg">
-            {isOfferOk ? <FiCheck /> : <FiFileText />}
-          </div>
-          <div className="resource-info">
-            <h4>L'Offre visée</h4>
-            <p>{isOfferOk ? "Chargée et prête" : "Copiez/collez ou uploadez l'offre"}</p>
-          </div>
-        </div>
+.resource-card.done { border-color: #86efac; background: #f0fdf4; }
 
-        {/* CARTE QUESTIONNAIRE */}
-        <div className={`resource-card ${isQuizOk ? 'done' : ''}`} onClick={() => alert("Questionnaire bientôt disponible")}>
-          <div className="resource-icon-bg">
-            <FiClipboard />
-          </div>
-          <div className="resource-info">
-            <h4>Mon Profil</h4>
-            <p>Questionnaire de personnalité</p>
-          </div>
-        </div>
+.resource-icon-bg {
+  width: 48px;
+  height: 48px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: #64748b;
+}
 
-      </div>
+.resource-card.done .resource-icon-bg { background: #dcfce7; color: #16a34a; }
 
-      {/* SECTION 2 : MES OBJECTIFS (Mind Maps) */}
-      <h3 className="section-title" style={{ marginTop: '3rem' }}>2. Mon Objectif</h3>
-      <div className="goals-grid">
-        
-        {/* OBJECTIF 1 : OFFRE */}
-        <div className="goal-card primary" onClick={() => goToMindMap('offer')}>
-          <div className="goal-content">
-            <div className="goal-icon"><FiTarget /></div>
-            <div>
-              <h3>Répondre à une offre</h3>
-              <p>Matching, analyse d'écarts, lettre de motivation...</p>
-            </div>
-          </div>
-          <div className="goal-action">Voir le plan d'action →</div>
-        </div>
+.resource-info h4 { margin: 0 0 0.25rem 0; color: #1e293b; font-size: 1rem; }
+.resource-info p { margin: 0; color: #64748b; font-size: 0.85rem; }
 
-        {/* OBJECTIF 2 : RECONVERSION */}
-        <div className="goal-card secondary" onClick={() => goToMindMap('career')}>
-          <div className="goal-content">
-            <div className="goal-icon"><FiCompass /></div>
-            <div>
-              <h3>Trouver ma voie</h3>
-              <p>Exploration, bilan, coaching carrière...</p>
-            </div>
-          </div>
-          <div className="goal-action">Explorer les pistes →</div>
-        </div>
+/* GRILLE OBJECTIFS (GOALS) */
+.goals-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
 
-      </div>
+.goal-card {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 200px;
+}
 
-    </div>
-  );
-};
+.goal-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
 
-export default Dashboard;
+.goal-card.primary { background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%); color: white; }
+.goal-card.secondary { background: white; border: 1px solid #e2e8f0; }
+
+.goal-content { display: flex; align-items: flex-start; gap: 1.5rem; }
+
+.goal-icon {
+  width: 60px; height: 60px;
+  border-radius: 16px;
+  display: flex; align-items: center; justifyContent: center;
+  font-size: 1.75rem;
+  flex-shrink: 0;
+}
+
+.goal-card.primary .goal-icon { background: rgba(255,255,255,0.2); color: white; }
+.goal-card.secondary .goal-icon { background: #fff7ed; color: #d97706; }
+
+.goal-content h3 { margin: 0 0 0.5rem 0; font-size: 1.5rem; }
+.goal-content p { margin: 0; opacity: 0.9; line-height: 1.5; }
+.goal-card.secondary h3 { color: #1e293b; }
+.goal-card.secondary p { color: #64748b; }
+
+.goal-action {
+  margin-top: 2rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-align: right;
+}
+
+.goal-card.secondary .goal-action { color: #d97706; }
+
+@media (max-width: 768px) {
+  .goals-grid { grid-template-columns: 1fr; }
+}
