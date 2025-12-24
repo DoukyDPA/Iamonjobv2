@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { 
   FiUpload, FiCheck, FiArrowRight, FiTarget, 
   FiCompass, FiDownload, FiChevronDown, FiChevronUp, 
-  FiFileText, FiArrowLeft, FiBriefcase, FiActivity
+  FiFileText, FiArrowLeft, FiBriefcase, FiActivity,
+  FiPaperclip, FiEdit3
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 // Imports existants
 import { useApp } from '../context/AppContext';
 import CVAnalysisDashboard from '../components/Analysis/CVAnalysisDashboard';
+import PartnerJobs from '../components/Partners/PartnerJobs'; // Ajout des Jobs Partenaires
 import { LogoIcon } from '../components/icons/ModernIcons';
 
 const SimplifiedDashboard = () => {
@@ -34,62 +36,76 @@ const SimplifiedDashboard = () => {
 
   // --- LOGIQUE MÉTIER ---
 
-  const handleFileUpload = async (event) => {
+  const handleFileUpload = async (event, type = 'cv') => {
     const file = event.target.files[0];
     if (!file) return;
 
-    setIsUploading(true);
+    if (type === 'cv') setIsUploading(true);
+    
     try {
-      const result = await uploadDocument(file, 'cv');
+      const result = await uploadDocument(file, type);
+      
       if (result.success) {
-        toast.success('CV reçu ! Analyse en cours...');
-        setAnalysisLoading(true);
-        setShowAnalysis(true);
-        
-        // Appel API réel
-        try {
-          const response = await fetch('/api/actions/analyze-cv', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-            },
-            body: JSON.stringify({ service_id: 'analyze_cv', force_new: true })
-          });
-          const data = await response.json();
-          if (response.ok && data.success) {
-            const content = data.analysis || data.result || data.content;
-            setCvAnalysis(content);
-            localStorage.setItem('cvAnalysis', JSON.stringify(content));
-          }
-        } catch (err) {
-          console.error(err);
-        } finally {
-          setAnalysisLoading(false);
+        if (type === 'cv') {
+          toast.success('CV reçu ! Analyse en cours...');
+          triggerCVAnalysis();
+        } else if (type === 'offre_emploi') {
+          toast.success('Offre d\'emploi chargée avec succès !');
         }
       }
     } catch (error) {
-      toast.error("Erreur upload");
+      toast.error("Erreur lors de l'envoi du fichier.");
     } finally {
-      setIsUploading(false);
+      if (type === 'cv') setIsUploading(false);
+    }
+  };
+
+  const triggerCVAnalysis = async () => {
+    setAnalysisLoading(true);
+    setShowAnalysis(true);
+    try {
+      const response = await fetch('/api/actions/analyze-cv', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        },
+        body: JSON.stringify({ service_id: 'analyze_cv', force_new: true })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        const content = data.analysis || data.result || data.content;
+        setCvAnalysis(content);
+        localStorage.setItem('cvAnalysis', JSON.stringify(content));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAnalysisLoading(false);
     }
   };
 
   // --- COMPOSANTS DE VUES INTERMÉDIAIRES ---
 
-  // 1. VUE "J'AI VU UNE OFFRE"
+  // 1. VUE "J'AI VU UNE OFFRE" (Mise à jour avec Upload + PartnerJobs)
   const MatchOfferView = () => {
     const [offerText, setOfferText] = useState('');
+    const [inputType, setInputType] = useState('text'); // 'text' ou 'file'
     const [analyzing, setAnalyzing] = useState(false);
     
+    // Vérifier si une offre est déjà chargée
+    const hasOfferUploaded = documentStatus.offre_emploi?.uploaded;
+
     const handleMatch = () => {
-      if (!offerText.trim()) return toast.error('Collez une offre d\'abord');
+      if (inputType === 'text' && !offerText.trim()) return toast.error('Collez une offre d\'abord');
+      if (inputType === 'file' && !hasOfferUploaded) return toast.error('Veuillez charger un fichier d\'abord');
+
       setAnalyzing(true);
-      // Simulation d'attente pour l'UX
+      // Simulation d'appel API de matching
       setTimeout(() => {
         setAnalyzing(false);
         toast.success("Analyse de compatibilité terminée !");
-        // Ici on redirigerait vers le résultat complet
+        // Ici : Redirection vers le résultat ou affichage du matching
       }, 2000);
     };
 
@@ -105,32 +121,101 @@ const SimplifiedDashboard = () => {
           </div>
           <h2 style={{ fontSize: '1.8rem', color: '#1f2937', marginBottom: '10px' }}>Analyse de Compatibilité</h2>
           <p style={{ color: '#6b7280', maxWidth: '600px', margin: '0 auto' }}>
-            Copiez-collez le texte de l'annonce qui vous intéresse. Je vais comparer vos compétences avec les exigences du poste et vous dire comment adapter votre CV.
+            Vérifiez si votre CV correspond à l'offre visée et obtenez des conseils pour l'adapter.
           </p>
         </div>
 
+        {/* Carte de Saisie / Upload */}
         <div style={styles.inputCard}>
-          <textarea 
-            style={styles.textArea}
-            placeholder="Collez le texte de l'offre d'emploi ici..."
-            value={offerText}
-            onChange={(e) => setOfferText(e.target.value)}
-          />
+          {/* Onglets */}
+          <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', marginBottom: '20px' }}>
+            <button 
+              onClick={() => setInputType('text')}
+              style={{ padding: '10px 20px', borderBottom: inputType === 'text' ? '2px solid #0a6b79' : 'none', color: inputType === 'text' ? '#0a6b79' : '#64748b', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <FiEdit3 /> Coller le texte
+            </button>
+            <button 
+              onClick={() => setInputType('file')}
+              style={{ padding: '10px 20px', borderBottom: inputType === 'file' ? '2px solid #0a6b79' : 'none', color: inputType === 'file' ? '#0a6b79' : '#64748b', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <FiPaperclip /> Télécharger un fichier
+            </button>
+          </div>
+
+          {/* Contenu Onglet Texte */}
+          {inputType === 'text' && (
+            <textarea 
+              style={styles.textArea}
+              placeholder="Collez le titre, la description et les prérequis de l'offre ici..."
+              value={offerText}
+              onChange={(e) => setOfferText(e.target.value)}
+            />
+          )}
+
+          {/* Contenu Onglet Fichier */}
+          {inputType === 'file' && (
+            <div style={{ padding: '40px', border: '2px dashed #cbd5e1', borderRadius: '12px', textAlign: 'center', background: '#f8fafc' }}>
+              {hasOfferUploaded ? (
+                <div>
+                  <div style={{ width: '50px', height: '50px', background: '#dcfce7', color: '#166534', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px auto', fontSize: '24px' }}>
+                    <FiCheck />
+                  </div>
+                  <h3 style={{ color: '#1f2937', margin: '0 0 5px 0' }}>Offre chargée !</h3>
+                  <p style={{ color: '#64748b', margin: '0 0 20px 0' }}>{documentStatus.offre_emploi?.fileName || 'Document prêt'}</p>
+                  <label htmlFor="offer-upload" style={{ ...styles.secondaryButton, display: 'inline-flex', cursor: 'pointer' }}>
+                    Remplacer le fichier
+                  </label>
+                </div>
+              ) : (
+                <div>
+                  <FiUpload style={{ fontSize: '40px', color: '#94a3b8', marginBottom: '15px' }} />
+                  <h3 style={{ color: '#1f2937', margin: '0 0 5px 0' }}>Importez votre offre</h3>
+                  <p style={{ color: '#64748b', margin: '0 0 20px 0' }}>PDF, Word ou Texte</p>
+                  <label htmlFor="offer-upload" style={{ ...styles.secondaryButton, display: 'inline-flex', cursor: 'pointer' }}>
+                    Sélectionner un fichier
+                  </label>
+                </div>
+              )}
+              <input 
+                id="offer-upload" 
+                type="file" 
+                accept=".pdf,.doc,.docx,.txt" 
+                style={{ display: 'none' }}
+                onChange={(e) => handleFileUpload(e, 'offre_emploi')}
+              />
+            </div>
+          )}
+
+          {/* Bouton d'action commun */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
             <button 
               onClick={handleMatch}
               disabled={analyzing}
               style={{ ...styles.primaryButton, opacity: analyzing ? 0.7 : 1 }}
             >
-              {analyzing ? 'Comparaison en cours...' : 'Comparer avec mon CV'} <FiArrowRight />
+              {analyzing ? 'Analyse en cours...' : 'Comparer avec mon CV'} <FiArrowRight />
             </button>
           </div>
+        </div>
+
+        {/* SECTION PARTENAIRES INTÉGRÉE */}
+        <div style={{ marginTop: '50px', borderTop: '1px solid #e2e8f0', paddingTop: '40px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+            <h3 style={{ fontSize: '1.5rem', color: '#1f2937', marginBottom: '10px' }}>
+              Pas d'offre sous la main ?
+            </h3>
+            <p style={{ color: '#64748b' }}>
+              Testez directement votre compatibilité avec les métiers qui recrutent chez nos partenaires.
+            </p>
+          </div>
+          <PartnerJobs />
         </div>
       </div>
     );
   };
 
-  // 2. VUE "PROJET PROFESSIONNEL"
+  // 2. VUE "PROJET PROFESSIONNEL" (Inchangée)
   const ProjectView = () => (
     <div style={styles.subPageContainer}>
       <button onClick={() => setCurrentView('dashboard')} style={styles.backButton}>
@@ -183,13 +268,8 @@ const SimplifiedDashboard = () => {
   // --- STYLES ---
   const styles = {
     container: {
-      minHeight: '100vh',
-      background: '#f8fafc',
-      fontFamily: '-apple-system, sans-serif',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      padding: '40px 20px',
+      minHeight: '100vh', background: '#f8fafc', fontFamily: '-apple-system, sans-serif',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px',
     },
     header: {
       width: '100%', maxWidth: '1000px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px',
@@ -209,7 +289,6 @@ const SimplifiedDashboard = () => {
       display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px',
       background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', marginBottom: '20px'
     },
-    // Styles spécifiques sous-pages
     subPageContainer: {
       width: '100%', maxWidth: '900px', animation: 'fadeIn 0.3s ease-out'
     },
@@ -227,6 +306,10 @@ const SimplifiedDashboard = () => {
     primaryButton: {
       background: '#0a6b79', color: 'white', border: 'none', padding: '14px 28px', fontSize: '1rem',
       borderRadius: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '10px', fontWeight: '600',
+    },
+    secondaryButton: {
+      background: 'white', color: '#1f2937', border: '1px solid #cbd5e1', padding: '10px 20px', fontSize: '0.95rem',
+      borderRadius: '8px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', fontWeight: '600',
     },
     gridTwo: {
       display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px'
@@ -274,7 +357,7 @@ const SimplifiedDashboard = () => {
                 </>
               )}
             </label>
-            <input id="cv-upload-input" type="file" accept=".pdf,.doc,.docx" style={{ display: 'none' }} onChange={handleFileUpload} />
+            <input id="cv-upload-input" type="file" accept=".pdf,.doc,.docx" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'cv')} />
           </div>
         ) : (
           <div>
@@ -292,7 +375,7 @@ const SimplifiedDashboard = () => {
                 <label htmlFor="cv-replace" style={{ cursor: 'pointer', fontSize: '0.9rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <FiUpload /> Remplacer
                 </label>
-                <input id="cv-replace" type="file" style={{ display: 'none' }} onChange={handleFileUpload} />
+                <input id="cv-replace" type="file" style={{ display: 'none' }} onChange={(e) => handleFileUpload(e, 'cv')} />
                 
                 <button onClick={() => setShowAnalysis(!showAnalysis)} style={{ background: 'none', border: 'none', color: '#0a6b79', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
                   {showAnalysis ? 'Masquer détails' : 'Voir détails'} {showAnalysis ? <FiChevronUp /> : <FiChevronDown />}
@@ -331,7 +414,7 @@ const SimplifiedDashboard = () => {
               </div>
               <h3 style={{ fontSize: '1.4rem', color: '#1f2937', marginBottom: '10px' }}>J'ai vu une offre</h3>
               <p style={{ color: '#64748b', lineHeight: '1.6', flex: 1 }}>
-                Vous avez repéré une annonce ? Copiez-la ici.
+                Vous avez repéré une annonce ? Copiez-la ou téléchargez-la.
                 <br/><br/>
                 Je vais analyser la compatibilité avec votre CV, identifier les mots-clés manquants et vous aider à rédiger votre lettre de motivation.
               </p>
