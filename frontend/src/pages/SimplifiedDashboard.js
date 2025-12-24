@@ -7,7 +7,7 @@ import {
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
-// Imports existants (Assurez-vous que les chemins sont bons)
+// Imports existants
 import { useApp } from '../context/AppContext';
 import CVAnalysisDashboard from '../components/Analysis/CVAnalysisDashboard';
 import MatchingAnalysis from '../components/Analysis/MatchingAnalysis';
@@ -58,17 +58,19 @@ const SimplifiedDashboard = () => {
     setAnalysisLoading(true);
     setShowAnalysis(true);
     try {
-      const response = await fetch('/api/actions/analyze-cv', {
+      // CORRECTION : Utilisation de la route générique services/execute
+      const response = await fetch('/api/services/execute/analyze_cv', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
         },
-        body: JSON.stringify({ service_id: 'analyze_cv', force_new: true })
+        body: JSON.stringify({ force_new: true })
       });
       const data = await response.json();
       if (data.success) {
-        const content = data.analysis || data.result || data.content;
+        // CORRECTION : Prise en compte du champ 'result' ou 'analysis'
+        const content = data.result || data.analysis || data.content;
         setCvAnalysis(content);
         localStorage.setItem('cvAnalysis', JSON.stringify(content));
       }
@@ -99,19 +101,21 @@ const SimplifiedDashboard = () => {
            await uploadDocument(file, 'offre_emploi');
         }
 
-        const response = await fetch('/api/actions/compatibility', {
+        // CORRECTION MAJEURE : Appel à la bonne route '/api/services/analyse_emploi'
+        const response = await fetch('/api/services/analyse_emploi', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
           },
-          body: JSON.stringify({ service_id: 'matching_cv_offre' })
+          body: JSON.stringify({ notes: '' })
         });
         const data = await response.json();
         
         if (data.success) {
           toast.success("Analyse terminée !");
-          setCompatibilityResult(data.matching || data.response || data.analysis);
+          // CORRECTION : On récupère 'result' car c'est ce que renvoie services_api.py
+          setCompatibilityResult(data.result || data.matching);
         } else {
           toast.error("Erreur lors de l'analyse");
         }
