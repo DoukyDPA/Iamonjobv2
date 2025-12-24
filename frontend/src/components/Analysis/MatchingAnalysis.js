@@ -17,10 +17,10 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
-  // État pour plier/déplier l'analyse
+  // État pour plier/déplier l'analyse (Ouvert par défaut si on a des données)
   const [isExpanded, setIsExpanded] = useState(true);
 
-  // --- LOGIQUE D'EXTRACTION (Améliorée) ---
+  // --- LOGIQUE D'EXTRACTION ---
   const extractJobTitle = (name) => {
     if (!name) return null;
     const base = name.replace(/\.[^/.]+$/, '');
@@ -32,11 +32,9 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
 
   const extractScoresFromResponse = (text) => {
     if (!text || typeof text !== 'string') return null;
-    // Tentative 1 : Chercher un bloc JSON
     let jsonMatch = text.match(/```json\s*(\{[\s\S]*?\})\s*```/);
     let jsonString = jsonMatch ? jsonMatch[1] : null;
 
-    // Tentative 2 : Chercher juste un objet JSON à la fin si pas de balises code
     if (!jsonString) {
       const braceMatch = text.match(/(\{[\s\S]*"score_global"[\s\S]*\})/);
       if (braceMatch) jsonString = braceMatch[1];
@@ -46,15 +44,13 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
       try {
         const parsed = JSON.parse(jsonString);
         const data = Array.isArray(parsed) ? parsed[0] : parsed;
-        // Mapping des clés possibles
         const validScores = {};
-        if (data.score_global) validScores.compatibilityScore = data.score_global;
-        if (data.score_technique) validScores.technical = data.score_technique;
-        if (data.score_soft_skills) validScores.soft = data.score_soft_skills;
-        if (data.score_experience) validScores.experience = data.score_experience;
-        if (data.score_formation) validScores.education = data.score_formation;
-        if (data.score_culture) validScores.culture = data.score_culture;
-        
+        if (data.score_global !== undefined) validScores.compatibilityScore = data.score_global;
+        if (data.score_technique !== undefined) validScores.technical = data.score_technique;
+        if (data.score_soft_skills !== undefined) validScores.soft = data.score_soft_skills;
+        if (data.score_experience !== undefined) validScores.experience = data.score_experience;
+        if (data.score_formation !== undefined) validScores.education = data.score_formation;
+        if (data.score_culture !== undefined) validScores.culture = data.score_culture;
         return Object.keys(validScores).length > 0 ? validScores : null;
       } catch (e) { return null; }
     }
@@ -69,7 +65,7 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
         jobTitle: extractJobTitle(documentStatus.offre_emploi?.name),
         fullText: preloadedData,
       });
-      setIsExpanded(true); // Déplier automatiquement quand une nouvelle donnée arrive
+      setIsExpanded(true); 
     }
   }, [preloadedData, documentStatus.offre_emploi?.name]);
 
@@ -78,17 +74,19 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/actions/compatibility', {
+      // CORRECTION : Appel à la bonne route backend
+      const response = await fetch('/api/services/analyse_emploi', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
         },
-        body: JSON.stringify({ service_id: 'matching_cv_offre' })
+        body: JSON.stringify({ notes: '' })
       });
       const data = await response.json();
       if (data.success) {
-        const analysisText = data.matching || data.response || data.analysis || "";
+        // CORRECTION : Lecture du champ 'result' renvoyé par le backend
+        const analysisText = data.result || data.matching || data.response || "";
         const extractedScores = extractScoresFromResponse(analysisText);
         setAnalysisData({
           scores: extractedScores,
@@ -103,18 +101,14 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
   // --- RENDU ---
   
   if (loading) return <LoadingMessage message="Analyse de compatibilité en cours..." subtitle="Comparaison de votre CV avec l'offre..." size="medium" />;
-  if (error) return <div className="error-message" style={{ color: 'red', padding: '1rem' }}>❌ {error} <button onClick={performAnalysis} style={{marginLeft: '10px', textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none'}}>Réessayer</button></div>;
+  if (error) return <div className="error-message" style={{ color: 'red', padding: '1rem' }}>❌ {error}</div>;
 
-  // Bouton pour lancer l'analyse (si pas de données)
   if (!analysisData && !hideButton) {
     return (
       <div className="matching-analysis-dashboard" style={{ marginTop: '20px' }}>
         <div className="text-analysis-card" style={{ textAlign: 'center', padding: '40px' }}>
           <FiTarget size={48} color="#0a6b79" style={{ marginBottom: '1rem' }} />
           <h2 style={{ marginTop: 0, color: '#1f2937' }}>Prêt à comparer ?</h2>
-          <p style={{ color: '#64748b', marginBottom: '2rem' }}>
-            Lancez l'analyse pour voir votre score de compatibilité avec <strong>{displayedTitle}</strong>.
-          </p>
           <button 
             onClick={performAnalysis} 
             style={{
@@ -123,7 +117,7 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
               display: 'inline-flex', alignItems: 'center', gap: '8px'
             }}
           >
-            <FiBarChart2 /> Lancer l'analyse de compatibilité
+            <FiBarChart2 /> Lancer l'analyse
           </button>
         </div>
       </div>
@@ -132,12 +126,7 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
 
   if (!analysisData) return null;
 
-  // Données calculées
   const globalScore = analysisData.scores?.compatibilityScore || 0;
-  const radius = 60;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (globalScore / 100) * circumference;
-  
   let scoreColor = '#ef4444';
   if (globalScore >= 50) scoreColor = '#f59e0b';
   if (globalScore >= 75) scoreColor = '#10b981';
@@ -145,7 +134,7 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
   return (
     <div className="matching-analysis-dashboard" style={{ marginTop: '30px', animation: 'fadeIn 0.5s' }}>
       
-      {/* HEADER DE L'ANALYSE (Toujours visible) */}
+      {/* HEADER : Score et Bouton Masquer */}
       <div style={{ 
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
         background: 'white', padding: '20px', borderRadius: '16px 16px 0 0',
@@ -181,7 +170,7 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
       {isExpanded && (
         <div style={{ background: 'white', padding: '30px', borderRadius: '0 0 16px 16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
           
-          {/* 1. Tableau des scores */}
+          {/* 1. Jauges */}
           {analysisData.scores && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginBottom: '30px' }}>
               {[
@@ -205,7 +194,7 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
             <SimpleMarkdownRenderer content={analysisData.fullText.replace(/```json[\s\S]*?```/g, '')} />
           </div>
 
-          {/* 3. SECTION : QUELLE EST L'ÉTAPE SUIVANTE ? */}
+          {/* 3. SECTION : ÉTAPE SUIVANTE */}
           <div style={{ borderTop: '2px dashed #e2e8f0', paddingTop: '30px' }}>
             <h3 style={{ fontSize: '1.2rem', color: '#1f2937', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <FiTrendingUp color="#0a6b79" /> Quelle est l'étape suivante ?
@@ -213,61 +202,42 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
               
-              {/* Option A: Lettre de motivation */}
-              <div 
-                className="next-step-card hover-scale"
-                onClick={() => navigate('/cover-letter')}
-                style={{ 
-                  border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px', cursor: 'pointer', transition: 'all 0.2s',
-                  background: '#fff'
-                }}
-              >
-                <div style={{ width: '40px', height: '40px', background: '#ecfeff', borderRadius: '8px', color: '#0a6b79', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
-                  <FiFileText size={20} />
-                </div>
-                <h4 style={{ margin: '0 0 5px 0', color: '#1f2937' }}>Rédiger la lettre</h4>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Générez une lettre adaptée à cette offre.</p>
+              <div onClick={() => navigate('/cover-letter')} className="next-step-card" style={cardStyle}>
+                <div style={{...iconBoxStyle, background: '#ecfeff', color: '#0a6b79'}}><FiFileText size={20} /></div>
+                <h4 style={cardTitleStyle}>Rédiger la lettre</h4>
+                <p style={cardTextStyle}>Générez une lettre adaptée à cette offre.</p>
               </div>
 
-              {/* Option B: Pitch */}
-              <div 
-                className="next-step-card hover-scale"
-                onClick={() => navigate('/pitch')} // Route à créer ou utiliser une existante
-                style={{ 
-                  border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px', cursor: 'pointer', transition: 'all 0.2s',
-                  background: '#fff'
-                }}
-              >
-                <div style={{ width: '40px', height: '40px', background: '#fffbeb', borderRadius: '8px', color: '#b45309', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
-                  <FiMic size={20} />
-                </div>
-                <h4 style={{ margin: '0 0 5px 0', color: '#1f2937' }}>Préparer votre pitch</h4>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Présentez-vous efficacement en 2 minutes.</p>
+              <div onClick={() => navigate('/pitch')} className="next-step-card" style={cardStyle}>
+                <div style={{...iconBoxStyle, background: '#fffbeb', color: '#b45309'}}><FiMic size={20} /></div>
+                <h4 style={cardTitleStyle}>Préparer votre pitch</h4>
+                <p style={cardTextStyle}>Présentez-vous efficacement en 2 minutes.</p>
               </div>
 
-              {/* Option C: Entretien */}
-              <div 
-                className="next-step-card hover-scale"
-                onClick={() => navigate('/interview-prep')}
-                style={{ 
-                  border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px', cursor: 'pointer', transition: 'all 0.2s',
-                  background: '#fff'
-                }}
-              >
-                <div style={{ width: '40px', height: '40px', background: '#fdf2f8', borderRadius: '8px', color: '#be185d', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
-                  <FiMessageSquare size={20} />
-                </div>
-                <h4 style={{ margin: '0 0 5px 0', color: '#1f2937' }}>Préparer l'entretien</h4>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Simulez les questions probables du recruteur.</p>
+              <div onClick={() => navigate('/interview-prep')} className="next-step-card" style={cardStyle}>
+                <div style={{...iconBoxStyle, background: '#fdf2f8', color: '#be185d'}}><FiMessageSquare size={20} /></div>
+                <h4 style={cardTitleStyle}>Préparer l'entretien</h4>
+                <p style={cardTextStyle}>Simulez les questions probables.</p>
               </div>
 
             </div>
           </div>
-
         </div>
       )}
     </div>
   );
 };
+
+// Styles simples pour les cartes "étape suivante"
+const cardStyle = {
+  border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px', 
+  cursor: 'pointer', background: '#fff', transition: 'transform 0.2s'
+};
+const iconBoxStyle = {
+  width: '40px', height: '40px', borderRadius: '8px', 
+  display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px'
+};
+const cardTitleStyle = { margin: '0 0 5px 0', color: '#1f2937' };
+const cardTextStyle = { margin: 0, fontSize: '0.85rem', color: '#64748b' };
 
 export default MatchingAnalysis;
