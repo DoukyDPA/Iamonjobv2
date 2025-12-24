@@ -1,18 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { FiTarget, FiTrendingUp, FiCheckCircle, FiAlertTriangle, FiBarChart2, FiAward, FiBriefcase, FiCpu, FiUsers, FiStar } from 'react-icons/fi';
+import { 
+  FiTarget, FiTrendingUp, FiCheckCircle, FiAlertTriangle, FiBarChart2, 
+  FiAward, FiBriefcase, FiCpu, FiUsers, FiStar, FiChevronUp, FiChevronDown,
+  FiFileText, FiMic, FiMessageSquare
+} from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 import SimpleMarkdownRenderer from '../Common/SimpleMarkdownRenderer';
 import LoadingMessage from '../Common/LoadingMessage';
 import './MatchingAnalysis.css';
 
 const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
   const { documentStatus } = useApp();
+  const navigate = useNavigate();
   const [analysisData, setAnalysisData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [userNotes, setUserNotes] = useState('');
+  
+  // État pour plier/déplier l'analyse
+  const [isExpanded, setIsExpanded] = useState(true);
 
-  // --- LOGIQUE MÉTIER (Extraction) ---
+  // --- LOGIQUE D'EXTRACTION (Améliorée) ---
   const extractJobTitle = (name) => {
     if (!name) return null;
     const base = name.replace(/\.[^/.]+$/, '');
@@ -24,28 +32,31 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
 
   const extractScoresFromResponse = (text) => {
     if (!text || typeof text !== 'string') return null;
-    const jsonMatches = text.match(/```json\s*(\{[\s\S]*?\})\s*```/g);
-    if (jsonMatches && jsonMatches.length > 0) {
-      const lastJsonBlock = jsonMatches[jsonMatches.length - 1];
-      const jsonContent = lastJsonBlock.match(/```json\s*(\{[\s\S]*?\})\s*```/);
-      if (jsonContent && jsonContent[1]) {
-        try {
-          const parsed = JSON.parse(jsonContent[1]);
-          const data = Array.isArray(parsed) ? parsed[0] : parsed;
-          const scoreMapping = { 'score_global': 'compatibilityScore', 'score_technique': 'technical', 'score_soft_skills': 'soft', 'score_experience': 'experience', 'score_formation': 'education', 'score_culture': 'culture' };
-          const validScores = {};
-          let validCount = 0;
-          Object.keys(scoreMapping).forEach(jsonKey => {
-            const internalKey = scoreMapping[jsonKey];
-            const value = data[jsonKey];
-            if (value !== null && typeof value === 'number') {
-              validScores[internalKey] = Math.round(value);
-              validCount++;
-            }
-          });
-          return validCount >= 3 ? validScores : null;
-        } catch (e) { return null; }
-      }
+    // Tentative 1 : Chercher un bloc JSON
+    let jsonMatch = text.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+    let jsonString = jsonMatch ? jsonMatch[1] : null;
+
+    // Tentative 2 : Chercher juste un objet JSON à la fin si pas de balises code
+    if (!jsonString) {
+      const braceMatch = text.match(/(\{[\s\S]*"score_global"[\s\S]*\})/);
+      if (braceMatch) jsonString = braceMatch[1];
+    }
+
+    if (jsonString) {
+      try {
+        const parsed = JSON.parse(jsonString);
+        const data = Array.isArray(parsed) ? parsed[0] : parsed;
+        // Mapping des clés possibles
+        const validScores = {};
+        if (data.score_global) validScores.compatibilityScore = data.score_global;
+        if (data.score_technique) validScores.technical = data.score_technique;
+        if (data.score_soft_skills) validScores.soft = data.score_soft_skills;
+        if (data.score_experience) validScores.experience = data.score_experience;
+        if (data.score_formation) validScores.education = data.score_formation;
+        if (data.score_culture) validScores.culture = data.score_culture;
+        
+        return Object.keys(validScores).length > 0 ? validScores : null;
+      } catch (e) { return null; }
     }
     return null;
   };
@@ -57,10 +68,10 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
         scores: extractedScores,
         jobTitle: extractJobTitle(documentStatus.offre_emploi?.name),
         fullText: preloadedData,
-        hasValidScores: !!extractedScores
       });
+      setIsExpanded(true); // Déplier automatiquement quand une nouvelle donnée arrive
     }
-  }, [preloadedData]);
+  }, [preloadedData, documentStatus.offre_emploi?.name]);
 
   const performAnalysis = async () => {
     if (!documentStatus.cv?.uploaded || !documentStatus.offre_emploi?.uploaded) return;
@@ -69,63 +80,50 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
       setError(null);
       const response = await fetch('/api/actions/compatibility', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ service_id: 'matching_cv_offre', notes: userNotes || '' })
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        },
+        body: JSON.stringify({ service_id: 'matching_cv_offre' })
       });
-      if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
       const data = await response.json();
       if (data.success) {
-        const analysisText = data.matching || data.response || "";
+        const analysisText = data.matching || data.response || data.analysis || "";
         const extractedScores = extractScoresFromResponse(analysisText);
         setAnalysisData({
           scores: extractedScores,
           jobTitle: extractJobTitle(documentStatus.offre_emploi?.name),
           fullText: analysisText,
-          hasValidScores: !!extractedScores
         });
+        setIsExpanded(true);
       } else { throw new Error(data.error || 'Erreur lors de l\'analyse'); }
     } catch (err) { setError(err.message); } finally { setLoading(false); }
   };
 
-  // --- CONFIGURATION VISUELLE ---
-  const getScoreColor = (score) => {
-    if (score >= 80) return '#10b981'; // Vert Émeraude
-    if (score >= 60) return '#f59e0b'; // Ambre
-    return '#ef4444'; // Rouge
-  };
+  // --- RENDU ---
+  
+  if (loading) return <LoadingMessage message="Analyse de compatibilité en cours..." subtitle="Comparaison de votre CV avec l'offre..." size="medium" />;
+  if (error) return <div className="error-message" style={{ color: 'red', padding: '1rem' }}>❌ {error} <button onClick={performAnalysis} style={{marginLeft: '10px', textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none'}}>Réessayer</button></div>;
 
-  const getAppreciation = (score) => {
-    if (score >= 90) return { label: 'Excellent', bg: '#ecfdf5', color: '#059669', icon: <FiCheckCircle /> };
-    if (score >= 75) return { label: 'Très bon', bg: '#f0fdf4', color: '#16a34a', icon: <FiCheckCircle /> };
-    if (score >= 60) return { label: 'Correct', bg: '#fffbeb', color: '#d97706', icon: <FiTarget /> };
-    if (score >= 40) return { label: 'Faible', bg: '#fef2f2', color: '#dc2626', icon: <FiAlertTriangle /> };
-    return { label: 'Insuffisant', bg: '#fef2f2', color: '#b91c1c', icon: <FiAlertTriangle /> };
-  };
-
-  const criteriaConfig = [
-    { key: 'technical', label: 'Technique', icon: <FiCpu />, weight: '30%' },
-    { key: 'experience', label: 'Expérience', icon: <FiBriefcase />, weight: '25%' },
-    { key: 'soft', label: 'Soft Skills', icon: <FiUsers />, weight: '20%' },
-    { key: 'education', label: 'Formation', icon: <FiAward />, weight: '15%' },
-    { key: 'culture', label: 'Culture', icon: <FiStar />, weight: '10%' }
-  ];
-
-  // --- RENDER ---
-  if (loading) return <LoadingMessage message="Analyse de compatibilité..." subtitle="Comparaison détaillée des compétences" size="large" />;
-  if (error) return <div className="error-message">❌ {error} <button onClick={performAnalysis}>Réessayer</button></div>;
-
-  // Mode "Bouton"
+  // Bouton pour lancer l'analyse (si pas de données)
   if (!analysisData && !hideButton) {
     return (
-      <div className="matching-analysis-dashboard">
-        <div className="text-analysis-card" style={{ textAlign: 'center' }}>
-          <FiTarget size={48} color="#4f46e5" style={{ marginBottom: '1rem' }} />
-          <h2 style={{ marginTop: 0 }}>Analyse de Compatibilité CV / Offre</h2>
+      <div className="matching-analysis-dashboard" style={{ marginTop: '20px' }}>
+        <div className="text-analysis-card" style={{ textAlign: 'center', padding: '40px' }}>
+          <FiTarget size={48} color="#0a6b79" style={{ marginBottom: '1rem' }} />
+          <h2 style={{ marginTop: 0, color: '#1f2937' }}>Prêt à comparer ?</h2>
           <p style={{ color: '#64748b', marginBottom: '2rem' }}>
-            Obtenez un score précis et des cartes de compétences pour l'offre : <strong>{displayedTitle}</strong>.
+            Lancez l'analyse pour voir votre score de compatibilité avec <strong>{displayedTitle}</strong>.
           </p>
-          <button onClick={performAnalysis} className="start-btn" style={{ maxWidth: '300px', margin: '0 auto' }}>
-            <FiBarChart2 /> Lancer l'analyse
+          <button 
+            onClick={performAnalysis} 
+            style={{
+              background: '#0a6b79', color: 'white', border: 'none', padding: '12px 24px', 
+              borderRadius: '8px', fontSize: '1rem', fontWeight: '600', cursor: 'pointer',
+              display: 'inline-flex', alignItems: 'center', gap: '8px'
+            }}
+          >
+            <FiBarChart2 /> Lancer l'analyse de compatibilité
           </button>
         </div>
       </div>
@@ -134,138 +132,138 @@ const MatchingAnalysis = ({ preloadedData, hideButton = false }) => {
 
   if (!analysisData) return null;
 
+  // Données calculées
   const globalScore = analysisData.scores?.compatibilityScore || 0;
-  const globalAppreciation = getAppreciation(globalScore);
-  const globalColor = getScoreColor(globalScore);
-
-  // Calcul pour le SVG Circle (Rayon 70)
-  const radius = 70;
+  const radius = 60;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (globalScore / 100) * circumference;
+  
+  let scoreColor = '#ef4444';
+  if (globalScore >= 50) scoreColor = '#f59e0b';
+  if (globalScore >= 75) scoreColor = '#10b981';
 
   return (
-    <div className="matching-analysis-dashboard">
+    <div className="matching-analysis-dashboard" style={{ marginTop: '30px', animation: 'fadeIn 0.5s' }}>
       
-      {/* 1. HEADER AVEC SCORE CIRCULAIRE (Le retour du visuel !) */}
-      <div className="matching-header-card">
-        <div className="score-visual">
-          <svg width="160" height="160" className="score-svg">
-            <circle cx="80" cy="80" r={radius} stroke="#e2e8f0" strokeWidth="12" fill="none" />
-            <circle 
-              cx="80" cy="80" r={radius} 
-              stroke={globalColor} 
-              strokeWidth="12" 
-              fill="none" 
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-            />
-          </svg>
-          <div className="score-overlay">
-            <span className="score-value-big">{globalScore}</span>
-            <span className="score-total-big">/100</span>
+      {/* HEADER DE L'ANALYSE (Toujours visible) */}
+      <div style={{ 
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+        background: 'white', padding: '20px', borderRadius: '16px 16px 0 0',
+        borderBottom: isExpanded ? '1px solid #e5e7eb' : 'none',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ position: 'relative', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="60" height="60" style={{ transform: 'rotate(-90deg)' }}>
+              <circle cx="30" cy="30" r="26" stroke="#e5e7eb" strokeWidth="5" fill="none" />
+              <circle cx="30" cy="30" r="26" stroke={scoreColor} strokeWidth="5" fill="none" strokeDasharray={2 * Math.PI * 26} strokeDashoffset={2 * Math.PI * 26 - (globalScore / 100) * 2 * Math.PI * 26} strokeLinecap="round" />
+            </svg>
+            <span style={{ position: 'absolute', fontWeight: 'bold', fontSize: '14px', color: '#1f2937' }}>{globalScore}%</span>
+          </div>
+          <div>
+            <h3 style={{ margin: 0, color: '#1f2937' }}>Compatibilité : {displayedTitle}</h3>
+            <p style={{ margin: 0, color: scoreColor, fontWeight: '500', fontSize: '0.9rem' }}>
+              {globalScore >= 75 ? 'Excellent profil' : globalScore >= 50 ? 'Profil intéressant' : 'Profil à adapter'}
+            </p>
           </div>
         </div>
-
-        <div className="header-content">
-          <h2>Compatibilité : <span className="job-highlight">{displayedTitle}</span></h2>
-          <div 
-            className="verdict-badge"
-            style={{ '--bg-color': globalAppreciation.bg, '--text-color': globalAppreciation.color }}
-          >
-            {globalAppreciation.icon} Verdict : {globalAppreciation.label}
-          </div>
-          <p style={{ lineHeight: '1.6', color: '#475569' }}>
-            {globalScore >= 75 
-              ? "Excellent profil ! Vos compétences techniques et votre expérience s'alignent parfaitement avec les attentes du recruteur." 
-              : globalScore >= 50 
-              ? "Profil intéressant. Vous avez les bases, mais certains écarts (techniques ou expérience) devront être compensés par votre motivation."
-              : "L'alignement est faible. Les prérequis semblent éloignés de votre profil actuel. Misez sur vos compétences transférables."}
-          </p>
-        </div>
+        
+        <button 
+          onClick={() => setIsExpanded(!isExpanded)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: '500' }}
+        >
+          {isExpanded ? 'Masquer détails' : 'Voir détails'}
+          {isExpanded ? <FiChevronUp /> : <FiChevronDown />}
+        </button>
       </div>
 
-      {/* 2. GRILLE DE CARTES KPI (Le retour des cartes !) */}
-      {analysisData.scores && (
-        <div className="kpi-grid">
-          {criteriaConfig.map((critere) => {
-            const score = analysisData.scores[critere.key] || 0;
-            const color = getScoreColor(score);
-            const appreciation = getAppreciation(score);
-            
-            return (
-              <div key={critere.key} className="kpi-card">
-                <div className="kpi-icon-wrapper">{critere.icon}</div>
-                <div className="kpi-title">{critere.label}</div>
-                <div className="kpi-score" style={{ color: color }}>{score}</div>
-                <div className="kpi-bar-bg">
-                  <div className="kpi-bar-fill" style={{ width: `${score}%`, '--color': color }}></div>
+      {/* CONTENU DÉPLIABLE */}
+      {isExpanded && (
+        <div style={{ background: 'white', padding: '30px', borderRadius: '0 0 16px 16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+          
+          {/* 1. Tableau des scores */}
+          {analysisData.scores && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginBottom: '30px' }}>
+              {[
+                { label: 'Technique', score: analysisData.scores.technical, icon: <FiCpu /> },
+                { label: 'Expérience', score: analysisData.scores.experience, icon: <FiBriefcase /> },
+                { label: 'Soft Skills', score: analysisData.scores.soft, icon: <FiUsers /> },
+                { label: 'Culture', score: analysisData.scores.culture, icon: <FiStar /> },
+              ].map((item, i) => (
+                <div key={i} style={{ background: '#f8fafc', padding: '15px', borderRadius: '12px', textAlign: 'center' }}>
+                  <div style={{ color: '#64748b', marginBottom: '5px' }}>{item.icon} {item.label}</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: item.score >= 70 ? '#10b981' : item.score >= 50 ? '#f59e0b' : '#ef4444' }}>
+                    {item.score || 0}/100
+                  </div>
                 </div>
-                <div className="kpi-appreciation" style={{ '--color': color }}>{appreciation.label}</div>
+              ))}
+            </div>
+          )}
+
+          {/* 2. Texte de l'analyse */}
+          <div className="markdown-content" style={{ fontSize: '0.95rem', lineHeight: '1.6', color: '#334155', marginBottom: '40px' }}>
+            <SimpleMarkdownRenderer content={analysisData.fullText.replace(/```json[\s\S]*?```/g, '')} />
+          </div>
+
+          {/* 3. SECTION : QUELLE EST L'ÉTAPE SUIVANTE ? */}
+          <div style={{ borderTop: '2px dashed #e2e8f0', paddingTop: '30px' }}>
+            <h3 style={{ fontSize: '1.2rem', color: '#1f2937', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <FiTrendingUp color="#0a6b79" /> Quelle est l'étape suivante ?
+            </h3>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+              
+              {/* Option A: Lettre de motivation */}
+              <div 
+                className="next-step-card hover-scale"
+                onClick={() => navigate('/cover-letter')}
+                style={{ 
+                  border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px', cursor: 'pointer', transition: 'all 0.2s',
+                  background: '#fff'
+                }}
+              >
+                <div style={{ width: '40px', height: '40px', background: '#ecfeff', borderRadius: '8px', color: '#0a6b79', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
+                  <FiFileText size={20} />
+                </div>
+                <h4 style={{ margin: '0 0 5px 0', color: '#1f2937' }}>Rédiger la lettre</h4>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Générez une lettre adaptée à cette offre.</p>
               </div>
-            );
-          })}
-        </div>
-      )}
 
-      {/* 3. TABLEAU DÉTAILLÉ (Le tableau demandé, mais joli) */}
-      {analysisData.scores && (
-        <div className="details-section">
-          <h3 className="section-title"><FiBarChart2 /> Détail de la pondération</h3>
-          <table className="modern-table">
-            <thead>
-              <tr>
-                <th>Critère</th>
-                <th>Score</th>
-                <th>Progression</th>
-                <th>Appréciation</th>
-                <th>Poids</th>
-              </tr>
-            </thead>
-            <tbody>
-              {criteriaConfig.map((critere) => {
-                const score = analysisData.scores[critere.key] || 0;
-                const color = getScoreColor(score);
-                const appreciation = getAppreciation(score);
-                
-                return (
-                  <tr key={critere.key}>
-                    <td style={{ fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      {critere.icon} {critere.label}
-                    </td>
-                    <td style={{ fontWeight: '700' }}>{score}/100</td>
-                    <td>
-                      <div className="kpi-bar-bg" style={{ width: '120px' }}>
-                        <div className="kpi-bar-fill" style={{ width: `${score}%`, '--color': color }}></div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className="verdict-badge" style={{ 
-                        '--bg-color': appreciation.bg, 
-                        '--text-color': appreciation.color,
-                        padding: '0.25rem 0.75rem',
-                        fontSize: '0.85rem',
-                        margin: 0
-                      }}>
-                        {appreciation.label}
-                      </span>
-                    </td>
-                    <td style={{ color: '#94a3b8' }}>{critere.weight}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+              {/* Option B: Pitch */}
+              <div 
+                className="next-step-card hover-scale"
+                onClick={() => navigate('/pitch')} // Route à créer ou utiliser une existante
+                style={{ 
+                  border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px', cursor: 'pointer', transition: 'all 0.2s',
+                  background: '#fff'
+                }}
+              >
+                <div style={{ width: '40px', height: '40px', background: '#fffbeb', borderRadius: '8px', color: '#b45309', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
+                  <FiMic size={20} />
+                </div>
+                <h4 style={{ margin: '0 0 5px 0', color: '#1f2937' }}>Préparer votre pitch</h4>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Présentez-vous efficacement en 2 minutes.</p>
+              </div>
 
-      {/* 4. ANALYSE TEXTUELLE */}
-      {analysisData.fullText && (
-        <div className="text-analysis-card">
-          <h3 style={{ marginTop: 0, borderBottom: '1px solid #f1f5f9', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
-            📝 Analyse Détaillée de l'Expert IA
-          </h3>
-          <SimpleMarkdownRenderer content={analysisData.fullText.replace(/```json[\s\S]*?```/g, '')} />
+              {/* Option C: Entretien */}
+              <div 
+                className="next-step-card hover-scale"
+                onClick={() => navigate('/interview-prep')}
+                style={{ 
+                  border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px', cursor: 'pointer', transition: 'all 0.2s',
+                  background: '#fff'
+                }}
+              >
+                <div style={{ width: '40px', height: '40px', background: '#fdf2f8', borderRadius: '8px', color: '#be185d', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
+                  <FiMessageSquare size={20} />
+                </div>
+                <h4 style={{ margin: '0 0 5px 0', color: '#1f2937' }}>Préparer l'entretien</h4>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Simulez les questions probables du recruteur.</p>
+              </div>
+
+            </div>
+          </div>
+
         </div>
       )}
     </div>
