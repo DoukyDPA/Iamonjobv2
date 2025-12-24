@@ -2,15 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { 
   FiUpload, FiCheck, FiArrowRight, FiTarget, 
   FiCompass, FiDownload, FiChevronDown, FiChevronUp, 
-  FiFileText, FiArrowLeft, FiBriefcase, FiActivity,
-  FiPaperclip, FiEdit3
+  FiArrowLeft, FiBriefcase, FiActivity, FiPaperclip, FiEdit3
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 // Imports
 import { useApp } from '../context/AppContext';
 import CVAnalysisDashboard from '../components/Analysis/CVAnalysisDashboard';
-import MatchingAnalysis from '../components/Analysis/MatchingAnalysis';
+import MatchingAnalysis from '../components/Analysis/MatchingAnalysis'; // Le nouveau robuste
 import PartnerJobs from '../components/Partners/PartnerJobs';
 import { LogoIcon } from '../components/icons/ModernIcons';
 
@@ -24,39 +23,35 @@ const SimplifiedDashboard = () => {
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(true);
 
+  // Charger l'analyse CV sauvegardée
   useEffect(() => {
-    const savedAnalysis = localStorage.getItem('cvAnalysis');
-    if (savedAnalysis && documentStatus.cv?.uploaded) {
-      try { setCvAnalysis(JSON.parse(savedAnalysis)); } catch (e) {}
+    const saved = localStorage.getItem('cvAnalysis');
+    if (saved && documentStatus.cv?.uploaded) {
+      try { setCvAnalysis(JSON.parse(saved)); } catch (e) { setCvAnalysis(saved); } // Robuste ici aussi
     }
   }, [documentStatus.cv?.uploaded]);
 
-  // UPLOAD
-  const handleFileUpload = async (event, type = 'cv') => {
+  // --- 1. GESTION DU CV ---
+  const handleCVUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    if (type === 'cv') setIsUploading(true);
+    setIsUploading(true);
     
     try {
-      const result = await uploadDocument(file, type);
+      const result = await uploadDocument(file, 'cv');
       if (result.success) {
-        if (type === 'cv') {
-          toast.success('CV reçu ! Analyse en cours...');
-          triggerCVAnalysis();
-        } else if (type === 'offre_emploi') {
-          toast.success('Offre chargée avec succès !');
-        }
+        toast.success('CV reçu ! Analyse en cours...');
+        triggerCVAnalysis();
       }
-    } catch (error) { toast.error("Erreur upload"); } 
-    finally { if (type === 'cv') setIsUploading(false); }
+    } catch (error) { toast.error("Erreur upload CV"); } 
+    finally { setIsUploading(false); }
   };
 
-  // ANALYSE CV
   const triggerCVAnalysis = async () => {
     setAnalysisLoading(true);
     setShowAnalysis(true);
     try {
-      // APPEL CORRIGÉ: On passe par le service d'exécution générique
+      // On utilise la route générique car analyze_cv est souvent un service standard
       const response = await fetch('/api/services/execute/analyze_cv', {
         method: 'POST',
         headers: {
@@ -67,7 +62,7 @@ const SimplifiedDashboard = () => {
       });
       const data = await response.json();
       if (data.success) {
-        // Le backend renvoie 'result' dans le cas générique
+        // On récupère le contenu peu importe son nom
         const content = data.result || data.analysis || data.content;
         setCvAnalysis(content);
         localStorage.setItem('cvAnalysis', JSON.stringify(content));
@@ -76,46 +71,49 @@ const SimplifiedDashboard = () => {
     finally { setAnalysisLoading(false); }
   };
 
-  // VUE MATCHING
+  // --- 2. VUE MATCHING / OFFRE ---
   const MatchOfferView = () => {
     const [offerText, setOfferText] = useState('');
     const [inputType, setInputType] = useState('text');
     const [analyzing, setAnalyzing] = useState(false);
     const [compatibilityResult, setCompatibilityResult] = useState(null);
-    const hasOfferUploaded = documentStatus.offre_emploi?.uploaded;
+    const hasOffer = documentStatus.offre_emploi?.uploaded;
 
     const handleMatch = async () => {
       if (inputType === 'text' && !offerText.trim()) return toast.error('Collez une offre d\'abord');
-      if (inputType === 'file' && !hasOfferUploaded) return toast.error('Chargez un fichier d\'abord');
+      if (inputType === 'file' && !hasOffer) return toast.error('Chargez un fichier d\'abord');
 
       setAnalyzing(true);
-      setCompatibilityResult(null);
+      setCompatibilityResult(null); // Reset pour forcer le refresh
 
       try {
+        // Si texte, on l'upload comme fichier pour que le backend le trouve
         if (inputType === 'text') {
            const blob = new Blob([offerText], { type: 'text/plain' });
            const file = new File([blob], "offre_collee.txt", { type: "text/plain" });
            await uploadDocument(file, 'offre_emploi');
         }
 
-        // APPEL CORRIGÉ: Route spécifique définie dans services_api.py
+        // APPEL À LA ROUTE SPÉCIFIQUE DU BACKEND
         const response = await fetch('/api/services/analyse_emploi', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
           },
-          body: JSON.stringify({ notes: '' })
+          body: JSON.stringify({ notes: '' }) // Body requis par le backend
         });
+        
         const data = await response.json();
         
         if (data.success) {
           toast.success("Analyse terminée !");
-          setCompatibilityResult(data.result || data.matching);
+          // On passe le résultat directement au composant robuste
+          setCompatibilityResult(data.result);
         } else {
-          toast.error("Erreur lors de l'analyse");
+          toast.error("Erreur: " + (data.error || "Inconnue"));
         }
-      } catch (e) { toast.error("Erreur technique"); } 
+      } catch (e) { toast.error("Erreur technique lors de l'analyse"); } 
       finally { setAnalyzing(false); }
     };
 
@@ -132,6 +130,7 @@ const SimplifiedDashboard = () => {
           <h2 style={{ fontSize: '1.8rem', color: '#1f2937', marginBottom: '10px' }}>Compatibilité Offre</h2>
         </div>
 
+        {/* FORMULAIRE (Si pas de résultat affiché) */}
         {!compatibilityResult && (
           <div style={styles.inputCard}>
             <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', marginBottom: '20px' }}>
@@ -152,12 +151,15 @@ const SimplifiedDashboard = () => {
               />
             ) : (
               <div style={{ padding: '40px', border: '2px dashed #cbd5e1', borderRadius: '12px', textAlign: 'center', background: '#f8fafc' }}>
-                {hasOfferUploaded ? (
+                {hasOffer ? (
                   <div><FiCheck size={30} color="green"/><p>Fichier prêt</p></div>
                 ) : (
                   <div><FiUpload size={30} color="gray"/><p>Importer un fichier</p></div>
                 )}
-                <input type="file" onChange={(e) => handleFileUpload(e, 'offre_emploi')} />
+                <input type="file" onChange={(e) => {
+                  const f = e.target.files[0];
+                  if(f) uploadDocument(f, 'offre_emploi').then(()=>toast.success("Fichier chargé"));
+                }} />
               </div>
             )}
 
@@ -169,11 +171,15 @@ const SimplifiedDashboard = () => {
           </div>
         )}
 
+        {/* RÉSULTAT (S'affiche dès qu'on a un résultat) */}
         {compatibilityResult && (
           <div style={{ marginTop: '20px' }}>
             <div style={{textAlign: 'right', marginBottom: '10px'}}>
-               <button onClick={() => setCompatibilityResult(null)} style={{background:'none', border:'none', textDecoration:'underline', cursor:'pointer'}}>Nouvelle recherche</button>
+               <button onClick={() => setCompatibilityResult(null)} style={{background:'none', border:'none', textDecoration:'underline', cursor:'pointer', color:'#64748b'}}>
+                 Nouvelle recherche
+               </button>
             </div>
+            {/* ICI ON APPELLE LE COMPOSANT ROBUSTE */}
             <MatchingAnalysis preloadedData={compatibilityResult} />
           </div>
         )}
@@ -186,7 +192,7 @@ const SimplifiedDashboard = () => {
     );
   };
 
-  // VUE PROJET PRO
+  // --- 3. VUE PROJET PRO (Placeholder simple) ---
   const ProjectView = () => (
     <div style={styles.subPageContainer}>
       <button onClick={() => setCurrentView('dashboard')} style={styles.backButton}><FiArrowLeft /> Retour</button>
@@ -197,13 +203,11 @@ const SimplifiedDashboard = () => {
       <div style={styles.gridTwo}>
         <div style={styles.infoCard}>
           <h3 style={{ color: '#b45309', display: 'flex', alignItems: 'center', gap: '10px' }}><FiActivity /> Compétences clés</h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-            {['Gestion', 'Communication', 'Analyse'].map(s => <span key={s} style={{background:'#fff7ed', color:'#9a3412', padding:'6px 12px', borderRadius:'20px', fontSize:'0.85rem'}}>{s}</span>)}
-          </div>
+          <p>Analyse de vos compétences transversales en cours...</p>
         </div>
         <div style={styles.infoCard}>
           <h3 style={{ color: '#0a6b79', display: 'flex', alignItems: 'center', gap: '10px' }}><FiBriefcase /> Pistes</h3>
-          <p>Métiers suggérés : Chef de projet, Consultant...</p>
+          <p>Suggestions de métiers basées sur votre CV.</p>
         </div>
       </div>
     </div>
@@ -238,7 +242,7 @@ const SimplifiedDashboard = () => {
           <div style={{ textAlign: 'center', padding: '40px' }}>
             <h2>Bonjour !</h2>
             <p>Déposez votre CV pour commencer.</p>
-            <input type="file" onChange={(e) => handleFileUpload(e, 'cv')} />
+            <input type="file" onChange={handleCVUpload} />
             {isUploading && <p>Analyse...</p>}
           </div>
         ) : (
@@ -249,6 +253,7 @@ const SimplifiedDashboard = () => {
                  {showAnalysis ? 'Masquer' : 'Voir'} détails
                </button>
             </div>
+            {/* L'Analyse CV s'affiche ici */}
             {showAnalysis && <div style={{marginTop:'20px'}}><CVAnalysisDashboard analysisData={cvAnalysis} loading={analysisLoading} /></div>}
           </div>
         )}
@@ -259,12 +264,12 @@ const SimplifiedDashboard = () => {
           <div onClick={() => setCurrentView('match')} style={styles.actionCard} className="hover-scale">
             <div style={{background:'#ecfeff', width:'50px', height:'50px', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', color:'#0a6b79', marginBottom:'15px'}}><FiTarget size={24}/></div>
             <h3>J'ai vu une offre</h3>
-            <p style={{color:'#64748b'}}>Analysez votre compatibilité et adaptez votre candidature.</p>
+            <p style={{color:'#64748b'}}>Analysez votre compatibilité.</p>
           </div>
           <div onClick={() => setCurrentView('project')} style={styles.actionCard} className="hover-scale">
             <div style={{background:'#fffbeb', width:'50px', height:'50px', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', color:'#b45309', marginBottom:'15px'}}><FiCompass size={24}/></div>
             <h3>Projet professionnel</h3>
-            <p style={{color:'#64748b'}}>Explorez de nouvelles pistes selon vos compétences.</p>
+            <p style={{color:'#64748b'}}>Explorez de nouvelles pistes.</p>
           </div>
         </div>
       )}
