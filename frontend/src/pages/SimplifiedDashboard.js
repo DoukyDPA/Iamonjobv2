@@ -7,7 +7,7 @@ import {
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
-// Imports existants
+// Imports
 import { useApp } from '../context/AppContext';
 import CVAnalysisDashboard from '../components/Analysis/CVAnalysisDashboard';
 import MatchingAnalysis from '../components/Analysis/MatchingAnalysis';
@@ -15,9 +15,8 @@ import PartnerJobs from '../components/Partners/PartnerJobs';
 import { LogoIcon } from '../components/icons/ModernIcons';
 
 const SimplifiedDashboard = () => {
-  // --- ÉTATS ---
   const { documentStatus, uploadDocument } = useApp();
-  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'match', 'project'
+  const [currentView, setCurrentView] = useState('dashboard');
   
   // États CV
   const [isUploading, setIsUploading] = useState(false);
@@ -25,7 +24,6 @@ const SimplifiedDashboard = () => {
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(true);
 
-  // Charger l'analyse CV au démarrage
   useEffect(() => {
     const savedAnalysis = localStorage.getItem('cvAnalysis');
     if (savedAnalysis && documentStatus.cv?.uploaded) {
@@ -33,8 +31,7 @@ const SimplifiedDashboard = () => {
     }
   }, [documentStatus.cv?.uploaded]);
 
-  // --- LOGIQUE MÉTIER ---
-
+  // UPLOAD
   const handleFileUpload = async (event, type = 'cv') => {
     const file = event.target.files[0];
     if (!file) return;
@@ -54,11 +51,12 @@ const SimplifiedDashboard = () => {
     finally { if (type === 'cv') setIsUploading(false); }
   };
 
+  // ANALYSE CV
   const triggerCVAnalysis = async () => {
     setAnalysisLoading(true);
     setShowAnalysis(true);
     try {
-      // CORRECTION : Utilisation de la route générique services/execute
+      // APPEL CORRIGÉ: On passe par le service d'exécution générique
       const response = await fetch('/api/services/execute/analyze_cv', {
         method: 'POST',
         headers: {
@@ -69,7 +67,7 @@ const SimplifiedDashboard = () => {
       });
       const data = await response.json();
       if (data.success) {
-        // CORRECTION : Prise en compte du champ 'result' ou 'analysis'
+        // Le backend renvoie 'result' dans le cas générique
         const content = data.result || data.analysis || data.content;
         setCvAnalysis(content);
         localStorage.setItem('cvAnalysis', JSON.stringify(content));
@@ -78,7 +76,7 @@ const SimplifiedDashboard = () => {
     finally { setAnalysisLoading(false); }
   };
 
-  // --- VUE 1 : MATCHING OFFRE ---
+  // VUE MATCHING
   const MatchOfferView = () => {
     const [offerText, setOfferText] = useState('');
     const [inputType, setInputType] = useState('text');
@@ -95,13 +93,12 @@ const SimplifiedDashboard = () => {
 
       try {
         if (inputType === 'text') {
-           // On crée un fichier temporaire pour le texte collé
            const blob = new Blob([offerText], { type: 'text/plain' });
            const file = new File([blob], "offre_collee.txt", { type: "text/plain" });
            await uploadDocument(file, 'offre_emploi');
         }
 
-        // CORRECTION MAJEURE : Appel à la bonne route '/api/services/analyse_emploi'
+        // APPEL CORRIGÉ: Route spécifique définie dans services_api.py
         const response = await fetch('/api/services/analyse_emploi', {
           method: 'POST',
           headers: {
@@ -114,7 +111,6 @@ const SimplifiedDashboard = () => {
         
         if (data.success) {
           toast.success("Analyse terminée !");
-          // CORRECTION : On récupère 'result' car c'est ce que renvoie services_api.py
           setCompatibilityResult(data.result || data.matching);
         } else {
           toast.error("Erreur lors de l'analyse");
@@ -136,7 +132,6 @@ const SimplifiedDashboard = () => {
           <h2 style={{ fontSize: '1.8rem', color: '#1f2937', marginBottom: '10px' }}>Compatibilité Offre</h2>
         </div>
 
-        {/* INPUT (Caché si analyse affichée, sauf si on veut refaire) */}
         {!compatibilityResult && (
           <div style={styles.inputCard}>
             <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', marginBottom: '20px' }}>
@@ -174,7 +169,6 @@ const SimplifiedDashboard = () => {
           </div>
         )}
 
-        {/* RÉSULTAT */}
         {compatibilityResult && (
           <div style={{ marginTop: '20px' }}>
             <div style={{textAlign: 'right', marginBottom: '10px'}}>
@@ -184,7 +178,6 @@ const SimplifiedDashboard = () => {
           </div>
         )}
 
-        {/* PARTENAIRES */}
         <div style={{ marginTop: '50px', borderTop: '1px solid #e2e8f0', paddingTop: '40px' }}>
           <h3 style={{ textAlign: 'center', color: '#1f2937' }}>Ou testez nos partenaires</h3>
           <PartnerJobs />
@@ -193,7 +186,7 @@ const SimplifiedDashboard = () => {
     );
   };
 
-  // --- VUE 2 : PROJET PRO ---
+  // VUE PROJET PRO
   const ProjectView = () => (
     <div style={styles.subPageContainer}>
       <button onClick={() => setCurrentView('dashboard')} style={styles.backButton}><FiArrowLeft /> Retour</button>
@@ -216,7 +209,7 @@ const SimplifiedDashboard = () => {
     </div>
   );
 
-  // --- RENDU PRINCIPAL ---
+  // STYLES
   const styles = {
     container: { minHeight: '100vh', background: '#f8fafc', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px' },
     mainCard: { background: 'white', borderRadius: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', width: '100%', maxWidth: '1000px', padding: '30px', marginBottom: '30px' },
