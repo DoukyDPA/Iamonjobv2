@@ -1,33 +1,126 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  FiUpload, 
-  FiCheck, 
-  FiArrowRight, 
-  FiTarget, 
-  FiTrendingUp, 
-  FiCompass,
-  FiDownload,
-  FiFileText,
-  FiChevronDown,
-  FiChevronUp,
-  FiAlertCircle
+  FiUpload, FiCheck, FiArrowRight, FiTarget, FiTrendingUp, 
+  FiCompass, FiDownload, FiChevronDown, FiChevronUp, FiFileText
 } from 'react-icons/fi';
+import toast from 'react-hot-toast';
+
+// Imports des composants existants
+import { useApp } from '../context/AppContext'; // Le "dispositif existant" pour l'upload
+import CVAnalysisDashboard from '../components/Analysis/CVAnalysisDashboard'; // L'affichage JSON prévu
 import { LogoIcon } from '../components/icons/ModernIcons';
 
 const SimplifiedDashboard = () => {
-  // États de la maquette
-  const [hasCV, setHasCV] = useState(false);
+  // --- ÉTATS FONCTIONNELS ---
+  const { documentStatus, uploadDocument } = useApp();
   const [isUploading, setIsUploading] = useState(false);
-  const [showAnalysis, setShowAnalysis] = useState(true); // Pour plier/déplier l'analyse
+  const [cvAnalysis, setCvAnalysis] = useState(null);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisError, setAnalysisError] = useState(null);
+  const [showAnalysis, setShowAnalysis] = useState(true);
 
-  // Simulation d'upload
-  const handleFakeUpload = () => {
+  // Charger l'analyse depuis le localStorage au démarrage si elle existe
+  useEffect(() => {
+    const savedAnalysis = localStorage.getItem('cvAnalysis');
+    if (savedAnalysis && documentStatus.cv?.uploaded) {
+      try {
+        setCvAnalysis(JSON.parse(savedAnalysis));
+      } catch (e) {
+        console.error("Erreur lecture analyse sauvegardée");
+      }
+    }
+  }, [documentStatus.cv?.uploaded]);
+
+  // --- LOGIQUE MÉTIER (Le "Cerveau") ---
+
+  // 1. Gérer l'upload réel et déclencher l'analyse
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
     setIsUploading(true);
-    setTimeout(() => {
+    try {
+      // A. Upload du fichier via le contexte existant
+      const result = await uploadDocument(file, 'cv');
+      
+      if (result.success) {
+        toast.success('CV reçu ! Analyse en cours...');
+        
+        // B. Appel à l'API d'analyse (utilise le prompt Supabase côté backend)
+        setAnalysisLoading(true);
+        setAnalysisError(null);
+        setShowAnalysis(true);
+        
+        try {
+          const response = await fetch('/api/actions/analyze-cv', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+            },
+            body: JSON.stringify({ 
+              service_id: 'analyze_cv',
+              force_new: true 
+            })
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.success) {
+            // Récupération du JSON généré par le prompt Supabase
+            const analysisContent = data.analysis || data.result || data.content;
+            setCvAnalysis(analysisContent);
+            localStorage.setItem('cvAnalysis', JSON.stringify(analysisContent)); // Persistance
+          } else {
+            throw new Error(data.error || "L'analyse n'a pas pu aboutir.");
+          }
+        } catch (err) {
+          console.error("Erreur analyse:", err);
+          setAnalysisError("Impossible d'analyser le CV pour le moment. Réessayez plus tard.");
+        } finally {
+          setAnalysisLoading(false);
+        }
+      }
+    } catch (error) {
+      console.error("Erreur upload:", error);
+      toast.error("Erreur lors de l'envoi du fichier.");
+    } finally {
       setIsUploading(false);
-      setHasCV(true);
-      setShowAnalysis(true); // On affiche l'analyse automatiquement après l'upload
-    }, 1500);
+    }
+  };
+
+  // 2. Fonction de téléchargement du rapport
+  const downloadReport = () => {
+    if (!cvAnalysis) return;
+    
+    // Convertir l'objet d'analyse en texte lisible
+    const data = typeof cvAnalysis === 'string' ? JSON.parse(cvAnalysis) : cvAnalysis;
+    const textContent = `
+RAPPORT D'ANALYSE CV - IAMONJOB
+Date: ${new Date().toLocaleDateString()}
+Note Globale: ${data.globalScore || 'N/A'}/10
+
+SYNTHÈSE:
+${data.synthesis || 'Non disponible'}
+
+POINTS FORTS:
+${(data.strengths || []).map(s => `- ${s}`).join('\n')}
+
+AXES D'AMÉLIORATION:
+${(data.improvements || []).map(i => `- ${i}`).join('\n')}
+
+RECOMMANDATIONS:
+${(data.recommendations || []).map(r => `- ${r}`).join('\n')}
+    `.trim();
+
+    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Analyse_CV_IAMONJOB.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // --- STYLES ---
@@ -35,7 +128,7 @@ const SimplifiedDashboard = () => {
     container: {
       minHeight: '100vh',
       background: '#f8fafc',
-      fontFamily: '-apple-system, sans-serif',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -57,7 +150,7 @@ const SimplifiedDashboard = () => {
       maxWidth: '1100px',
       padding: '30px',
       marginBottom: '30px',
-      transition: 'all 0.3s ease',
+      overflow: 'hidden'
     },
     uploadArea: {
       border: '2px dashed #e5e7eb',
@@ -82,23 +175,11 @@ const SimplifiedDashboard = () => {
       borderRadius: '12px',
       marginBottom: '20px'
     },
-    analysisSection: {
+    analysisContainer: {
       marginTop: '20px',
       borderTop: '1px solid #e5e7eb',
       paddingTop: '20px',
       animation: 'fadeIn 0.5s ease-in',
-    },
-    analysisGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-      gap: '20px',
-      marginTop: '15px'
-    },
-    statCard: {
-      background: '#f8fafc',
-      padding: '20px',
-      borderRadius: '12px',
-      border: '1px solid #e2e8f0'
     },
     actionGrid: {
       display: 'grid',
@@ -142,8 +223,11 @@ const SimplifiedDashboard = () => {
       alignItems: 'center',
       gap: '8px',
       fontWeight: '500',
+      transition: 'all 0.2s'
     }
   };
+
+  const hasCV = documentStatus.cv?.uploaded;
 
   return (
     <div style={styles.container}>
@@ -157,97 +241,106 @@ const SimplifiedDashboard = () => {
         </div>
       </div>
 
-      {/* SECTION 1 : LE CV ET SON ANALYSE */}
+      {/* SECTION 1 : ZONE DOCUMENT & ANALYSE */}
       <div style={styles.mainCard}>
-        {!hasCV ? (
-          // --- ÉTAT : PAS DE CV ---
+        
+        {/* CAS A : PAS ENCORE DE CV */}
+        {!hasCV && !isUploading && (
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
             <h2 style={{ fontSize: '1.8rem', marginBottom: '10px', color: '#1f2937' }}>Bienvenue !</h2>
             <p style={{ color: '#6b7280', marginBottom: '30px' }}>
               Pour commencer, déposez votre CV. Notre IA va l'analyser instantanément.
             </p>
             
-            <div style={styles.uploadArea} onClick={handleFakeUpload}>
-              {isUploading ? (
-                <div style={{ color: '#0a6b79', fontWeight: '600', fontSize: '1.2rem' }}>
-                  ⚙️ Analyse de votre parcours en cours...
-                </div>
-              ) : (
-                <>
-                  <FiUpload style={{ fontSize: '3rem', color: '#0a6b79' }} />
-                  <div>
-                    <h3 style={{ margin: '0 0 5px 0', fontSize: '1.2rem' }}>Cliquez pour déposer votre CV</h3>
-                    <p style={{ margin: 0, color: '#9ca3af', fontSize: '0.9rem' }}>PDF ou Word (Max 5Mo)</p>
-                  </div>
-                  <button style={styles.primaryButton}>Sélectionner un fichier</button>
-                </>
-              )}
-            </div>
+            <label htmlFor="cv-upload-input" style={styles.uploadArea}>
+              <FiUpload style={{ fontSize: '3rem', color: '#0a6b79' }} />
+              <div>
+                <h3 style={{ margin: '0 0 5px 0', fontSize: '1.2rem' }}>Cliquez pour déposer votre CV</h3>
+                <p style={{ margin: 0, color: '#9ca3af', fontSize: '0.9rem' }}>PDF ou Word (Max 5Mo)</p>
+              </div>
+              <div style={styles.primaryButton}>Sélectionner un fichier</div>
+            </label>
+            <input 
+              id="cv-upload-input"
+              type="file"
+              accept=".pdf,.doc,.docx"
+              style={{ display: 'none' }}
+              onChange={handleFileUpload}
+            />
           </div>
-        ) : (
-          // --- ÉTAT : CV CHARGÉ ---
+        )}
+
+        {/* CAS B : UPLOAD EN COURS */}
+        {isUploading && (
+          <div style={{ textAlign: 'center', padding: '60px 0' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '20px', animation: 'spin 2s linear infinite' }}>⚙️</div>
+            <h3 style={{ color: '#0a6b79', margin: 0 }}>Analyse de votre parcours en cours...</h3>
+            <p style={{ color: '#64748b' }}>Cela prend quelques secondes.</p>
+          </div>
+        )}
+
+        {/* CAS C : CV PRÉSENT */}
+        {hasCV && !isUploading && (
           <div>
-            {/* En-tête du fichier chargé */}
+            {/* Header du fichier */}
             <div style={styles.uploadedHeader}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 <div style={{ width: '40px', height: '40px', background: '#dcfce7', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#166534' }}>
                   <FiCheck size={24} />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1rem', color: '#166534' }}>mon_cv_2024.pdf</h3>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#15803d' }}>Analysé avec succès • Ajouté à l'instant</p>
+                  <h3 style={{ margin: 0, fontSize: '1rem', color: '#166534' }}>CV enregistré</h3>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#15803d' }}>Prêt pour vos candidatures</p>
                 </div>
               </div>
-              <button 
-                onClick={() => setShowAnalysis(!showAnalysis)}
-                style={{ background: 'transparent', border: 'none', color: '#166534', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: '600' }}
-              >
-                {showAnalysis ? 'Masquer l\'analyse' : 'Voir l\'analyse'} 
-                {showAnalysis ? <FiChevronUp /> : <FiChevronDown />}
-              </button>
+              
+              <div style={{ display: 'flex', gap: '10px' }}>
+                {/* Bouton pour remplacer le CV */}
+                <label 
+                  htmlFor="cv-replace-input"
+                  style={{ cursor: 'pointer', fontSize: '0.9rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '5px', padding: '0 10px' }}
+                >
+                  <FiUpload /> Remplacer
+                </label>
+                <input 
+                  id="cv-replace-input"
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  style={{ display: 'none' }}
+                  onChange={handleFileUpload}
+                />
+
+                {/* Bouton pour voir/masquer l'analyse */}
+                <button 
+                  onClick={() => setShowAnalysis(!showAnalysis)}
+                  style={{ background: 'transparent', border: 'none', color: '#0a6b79', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: '600' }}
+                >
+                  {showAnalysis ? 'Masquer l\'analyse' : 'Voir l\'analyse'} 
+                  {showAnalysis ? <FiChevronUp /> : <FiChevronDown />}
+                </button>
+              </div>
             </div>
 
-            {/* ZONE D'ANALYSE (Visible ou Repliée) */}
+            {/* ZONE D'ANALYSE DYNAMIQUE */}
             {showAnalysis && (
-              <div style={styles.analysisSection}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-                  <div>
-                    <h3 style={{ fontSize: '1.4rem', color: '#0a6b79', margin: '0 0 5px 0' }}>Bilan de votre profil</h3>
-                    <p style={{ color: '#6b7280', margin: 0 }}>Basé sur l'analyse IA de votre CV</p>
-                  </div>
-                  <button style={styles.downloadButton}>
-                    <FiDownload /> Télécharger le rapport
-                  </button>
+              <div style={styles.analysisContainer}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', padding: '0 10px' }}>
+                  <h3 style={{ fontSize: '1.2rem', color: '#334155', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <FiFileText /> Analyse IA de votre profil
+                  </h3>
+                  {cvAnalysis && (
+                    <button onClick={downloadReport} style={styles.downloadButton}>
+                      <FiDownload /> Télécharger le rapport
+                    </button>
+                  )}
                 </div>
 
-                <div style={styles.analysisGrid}>
-                  {/* Points Forts */}
-                  <div style={styles.statCard}>
-                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 15px 0', color: '#166534' }}>
-                      <FiCheck /> Points Forts détectés
-                    </h4>
-                    <ul style={{ margin: 0, paddingLeft: '20px', color: '#374151', lineHeight: '1.6' }}>
-                      <li>Expérience solide en gestion de projet</li>
-                      <li>Double compétence technique et commerciale</li>
-                      <li>Maîtrise de l'anglais professionnel</li>
-                    </ul>
-                  </div>
-
-                  {/* Axes d'amélioration */}
-                  <div style={styles.statCard}>
-                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 15px 0', color: '#b45309' }}>
-                      <FiAlertCircle /> Axes d'amélioration
-                    </h4>
-                    <ul style={{ margin: 0, paddingLeft: '20px', color: '#374151', lineHeight: '1.6' }}>
-                      <li>Détailler davantage les résultats chiffrés</li>
-                      <li>Mettre à jour la section "Outils"</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div style={{ marginTop: '20px', padding: '15px', background: '#eff6ff', borderRadius: '8px', borderLeft: '4px solid #3b82f6', color: '#1e40af' }}>
-                  <strong>💡 Conseil du coach :</strong> Votre profil est très pertinent pour des postes de Chef de Projet. Pour augmenter vos chances, nous vous conseillons d'adapter votre CV à chaque offre.
-                </div>
+                {/* --- LE COMPOSANT D'ANALYSE ORIGINAL --- */}
+                <CVAnalysisDashboard 
+                  analysisData={cvAnalysis}
+                  loading={analysisLoading}
+                  error={analysisError}
+                />
               </div>
             )}
           </div>
@@ -262,42 +355,55 @@ const SimplifiedDashboard = () => {
           </h2>
           
           <div style={styles.actionGrid}>
-            {/* Option A : Chercher un job */}
-            <div style={styles.actionCard} className="hover-scale">
+            
+            {/* Action 1 : OFFRE */}
+            <div 
+              style={styles.actionCard} 
+              onClick={() => window.location.href = '/evaluate'}
+              className="hover-scale"
+            >
               <div style={{ marginBottom: '16px', width: '50px', height: '50px', borderRadius: '12px', background: '#ecfeff', color: '#0a6b79', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
                 <FiTarget />
               </div>
               <h3 style={{ fontSize: '1.2rem', fontWeight: '700', margin: '0 0 10px 0', color: '#1f2937' }}>J'ai vu une offre</h3>
               <p style={{ color: '#6b7280', fontSize: '0.95rem', lineHeight: '1.5', flex: 1 }}>
-                Collez le lien ou le texte d'une offre. Je vérifierai si ça matche avec votre CV actuel.
+                Testez votre compatibilité avec une offre et adaptez votre candidature.
               </p>
               <div style={{ marginTop: '20px', color: '#0a6b79', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
                 Tester la compatibilité <FiArrowRight />
               </div>
             </div>
 
-            {/* Option B : Améliorer le profil */}
-            <div style={styles.actionCard} className="hover-scale">
+            {/* Action 2 : PROFIL */}
+            <div 
+              style={styles.actionCard}
+              onClick={() => window.location.href = '/improve'}
+              className="hover-scale"
+            >
               <div style={{ marginBottom: '16px', width: '50px', height: '50px', borderRadius: '12px', background: '#fdf2f8', color: '#be185d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
                 <FiTrendingUp />
               </div>
               <h3 style={{ fontSize: '1.2rem', fontWeight: '700', margin: '0 0 10px 0', color: '#1f2937' }}>Améliorer mon CV</h3>
               <p style={{ color: '#6b7280', fontSize: '0.95rem', lineHeight: '1.5', flex: 1 }}>
-                Utilisons l'analyse ci-dessus pour réécrire les parties faibles de votre CV.
+                Utilisez l'analyse détaillée ci-dessus pour corriger vos points faibles.
               </p>
               <div style={{ marginTop: '20px', color: '#be185d', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
                 Optimiser mon CV <FiArrowRight />
               </div>
             </div>
 
-            {/* Option C : Projet Pro */}
-            <div style={styles.actionCard} className="hover-scale">
+            {/* Action 3 : PROJET */}
+            <div 
+              style={styles.actionCard}
+              onClick={() => window.location.href = '/career'}
+              className="hover-scale"
+            >
               <div style={{ marginBottom: '16px', width: '50px', height: '50px', borderRadius: '12px', background: '#fffbeb', color: '#b45309', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
                 <FiCompass />
               </div>
               <h3 style={{ fontSize: '1.2rem', fontWeight: '700', margin: '0 0 10px 0', color: '#1f2937' }}>Préparer mon projet</h3>
               <p style={{ color: '#6b7280', fontSize: '0.95rem', lineHeight: '1.5', flex: 1 }}>
-                Clarifions vos compétences transférables pour trouver de nouvelles pistes.
+                Identifiez vos compétences transférables et explorez de nouvelles pistes.
               </p>
               <div style={{ marginTop: '20px', color: '#b45309', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
                 Explorer les pistes <FiArrowRight />
