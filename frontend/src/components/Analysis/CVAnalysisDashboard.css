@@ -264,6 +264,40 @@
   box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
 }
 
+/* Met en valeur l'avis de l'expert */
+.synthesis-card {
+  background-color: #eff6ff; /* Un bleu très très clair et rassurant */
+  border-left: 4px solid #3b82f6;
+  padding: 1.5rem;
+  border-radius: 0 8px 8px 0;
+  max-width: 800px; /* Évite que le texte ne s'étire trop et "flotte" */
+}
+
+/* En-tête du plan d'action avec flexbox pour aligner la progression */
+.action-plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-right: 2rem;
+  background: #fff;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.progress-indicator {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #10b981; /* Vert positif */
+  background: #d1fae5;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+}
+
+/* Effet visuel quand une action est cochée */
+.row-completed {
+  background-color: #f8fafc !important;
+  opacity: 0.7;
+}
+
 /* RESPONSIVE */
 @media (max-width: 900px) {
   .dashboard-header { flex-direction: column; }
