@@ -24,23 +24,28 @@ const SimplifiedDashboard = () => {
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(true);
 
-  // Charger l'analyse existante
+// 1. CORRECTION DU USEEFFECT : On s'assure de ne pas charger le cache si une analyse est en cours
   useEffect(() => {
     const savedAnalysis = localStorage.getItem('cvAnalysis');
-    if (savedAnalysis && documentStatus.cv?.uploaded) {
+    // On ne charge depuis le cache QUE si on n'est pas en train d'analyser ou d'uploader
+    if (savedAnalysis && documentStatus.cv?.uploaded && !isUploading && !analysisLoading) {
       try {
         setCvAnalysis(JSON.parse(savedAnalysis));
       } catch (e) { console.error(e); }
     }
-  }, [documentStatus.cv?.uploaded]);
+  }, [documentStatus.cv?.uploaded, isUploading, analysisLoading]); // <-- Ajout des dépendances
 
-  // --- LOGIQUE MÉTIER ---
-
+  // 2. CORRECTION DE L'UPLOAD : On détruit l'ancien cache immédiatement
   const handleFileUpload = async (event, type = 'cv') => {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (type === 'cv') setIsUploading(true);
+    if (type === 'cv') {
+      setIsUploading(true);
+      // 🔥 LE FIX EST ICI : On vide l'ancienne analyse du state et du cache du navigateur !
+      setCvAnalysis(null); 
+      localStorage.removeItem('cvAnalysis');
+    }
     
     try {
       const result = await uploadDocument(file, type);
@@ -59,7 +64,6 @@ const SimplifiedDashboard = () => {
       if (type === 'cv') setIsUploading(false);
     }
   };
-
   const triggerCVAnalysis = async () => {
     setAnalysisLoading(true);
     setShowAnalysis(true);
