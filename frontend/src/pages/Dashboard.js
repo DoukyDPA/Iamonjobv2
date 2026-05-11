@@ -29,6 +29,7 @@ import ServicesGrid from '../components/Services/ServicesGrid';
 import ProfileAdviceModal from '../components/Common/ProfileAdviceModal';
 import { LogoIcon } from '../components/icons/ModernIcons';
 import LoadingMessage from '../components/Common/LoadingMessage';
+import FranceTravailSearch from '../components/FranceTravail/FranceTravailSearch';
 
 
 
@@ -327,7 +328,8 @@ const Dashboard = () => {
 
   const tabs = [
     { id: 'documents', label: 'Mes documents', mobileLabel: 'Docs', icon: <FiFileText />, route: null },
-    { id: 'evaluate', label: 'Évaluer une offre', mobileLabel: 'Offre', icon: <FiTarget />, route: null },
+    { id: 'jobs', label: 'Offres France Travail', mobileLabel: 'Offres FT', icon: <FiTarget />, route: null },
+    { id: 'evaluate', label: 'Évaluer une offre', mobileLabel: 'Évaluer', icon: <FiTarget />, route: null },
     { id: 'improve', label: 'Améliorer mon CV', mobileLabel: 'CV', icon: <FiTrendingUp />, route: null },
     { id: 'apply', label: 'Candidater', mobileLabel: 'Candidature', icon: <FiMail />, route: null },
     { id: 'interview', label: "Préparer l'entretien", mobileLabel: 'Entretien', icon: <FiMic />, route: null },
@@ -817,6 +819,30 @@ const Dashboard = () => {
             <PartnerJobs />
           </div>
         </div>
+        )}
+
+        {/* Onglet France Travail */}
+        {activeTab === 'jobs' && (
+          <div style={{
+            background: 'linear-gradient(135deg, #0a6b79 0%, #27a2b4 100%)',
+            borderRadius: '20px',
+            padding: '2rem',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+          }}>
+            <h2 style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              color: 'white',
+              fontSize: '1.5rem',
+              fontWeight: '600',
+              marginBottom: '1.5rem'
+            }}>
+              <LogoIcon size={24} />
+              Offres d'emploi France Travail
+            </h2>
+            <FranceTravailSearch />
+          </div>
         )}
 
         {/* Autres onglets avec le même style */}
