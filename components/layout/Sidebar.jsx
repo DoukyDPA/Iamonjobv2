@@ -140,14 +140,14 @@ export default function Sidebar({
           <button
             type="button"
             onClick={onRateCv}
-            disabled={isRatingCv || !canRateCv}
+            disabled={isRatingCv}
             className={[
-              'w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left',
+              'w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left cursor-pointer',
               isRatingCv
                 ? 'bg-white border-cream-200 text-teal-700 cursor-wait'
                 : canRateCv
                 ? 'bg-white border-teal-200 hover:border-teal-400 hover:bg-teal-50 text-teal-700 shadow-soft'
-                : 'bg-cream-50 border-cream-200 text-teal-700/50 cursor-not-allowed',
+                : 'bg-white border-cream-300 hover:border-teal-300 hover:bg-cream-50 text-teal-700/80',
             ].join(' ')}
             title={!canRateCv ? 'Importez d\'abord votre CV à l\'étape 1' : undefined}
           >
