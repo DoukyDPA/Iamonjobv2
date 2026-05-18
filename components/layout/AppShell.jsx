@@ -17,6 +17,11 @@ export default function AppShell({
   error,
   onCloseError,
   sessionLabel,
+  cvRating,
+  isRatingCv,
+  canRateCv,
+  onRateCv,
+  onShowRatingDetails,
   children,
 }) {
   return (
@@ -28,6 +33,11 @@ export default function AppShell({
           currentStep={currentStep}
           maxUnlocked={maxUnlocked}
           onNavigate={onNavigate}
+          cvRating={cvRating}
+          isRatingCv={isRatingCv}
+          canRateCv={canRateCv}
+          onRateCv={onRateCv}
+          onShowRatingDetails={onShowRatingDetails}
         />
 
         <div className="flex-1 flex flex-col">
