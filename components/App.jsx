@@ -531,8 +531,8 @@ Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON :
           </Card>
 
           <PrivacyBanner>
-            <strong>Vos données sont protégées.</strong> Votre CV reste sur votre ordinateur.
-            Le texte sera envoyé à l'IA <strong>uniquement</strong> au moment de l'analyse,
+            <strong>Vos données sont protégées.</strong> Votre CV reste dans un premier temps sur votre ordinateur.
+            Vous pouvez en modifier le texte (retirer votre nom et vos coordonnées téléphoniques par exemple) qui sera ensuite envoyé à l'IA <strong>uniquement</strong> au moment de l'analyse,
             puis sauvegardé sur votre compte pour vos prochaines visites.{' '}
             <HelpTip
               label="Sauvegarde"
