@@ -23,7 +23,9 @@ export default function Footer() {
           <p className="text-sm text-teal-800/80 leading-relaxed">
             IAMONJOB accompagne les demandeurs d'emploi dans leur reconversion
             grâce à l'intelligence artificielle, en proposant des pistes
-            réalistes et des outils concrets pour réussir.
+            réalistes et des outils concrets pour réussir. Il s'appuie sur une 
+            expérience de plus de 30 ans de l'accompagnement des demandeurs d'emploi
+            du CBE Sud 94.
           </p>
           <a
             href="mailto:contact@cbe-sud94.org"
@@ -65,7 +67,7 @@ export default function Footer() {
           >
             <img
               src="https://i.postimg.cc/HWBSwZTB/LOGO-CBE-SILVERIA.png"
-              alt="CBE Silveria"
+              alt="CBE Sud 94 - Silveria"
               className="h-14 w-auto"
               style={{ objectFit: 'contain' }}
             />
@@ -79,7 +81,7 @@ export default function Footer() {
       {/* Bandeau bas */}
       <div className="border-t border-cream-200 bg-cream-100">
         <div className="max-w-[1280px] mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-2 text-xs text-teal-700/70">
-          <p>© {year} IAMONJOB · Tous droits réservés.</p>
+          <p>© {year} SILVERIA · Tous droits réservés.</p>
           <p className="inline-flex items-center gap-1">
             Fait avec
             <Heart className="w-3.5 h-3.5 text-pink-500" fill="currentColor" strokeWidth={0} />
