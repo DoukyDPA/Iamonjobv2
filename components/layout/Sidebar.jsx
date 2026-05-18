@@ -186,6 +186,23 @@ export default function Sidebar({
             avec un conseiller bien <strong>humain</strong> pour un regard approfondi.
           </span>
         </p>
+
+        {/* Appel au soutien — renvoie vers HelloAsso dans un nouvel onglet */}
+        <a
+          href="https://www.helloasso.com/associations/comite-de-bassin-d-emploi-sud-val-de-marnais/formulaires/2"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 block rounded-xl overflow-hidden border border-cream-200 hover:border-pink-300 hover:shadow-card transition-all focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 focus:ring-offset-cream-100"
+          aria-label="Soutenir IAMonJob sur HelloAsso (s'ouvre dans un nouvel onglet)"
+          title="Soutenir IAMonJob"
+        >
+          <img
+            src="https://i.postimg.cc/pTqVfhGF/IAMAPUB.png"
+            alt="Soutenez IAMonJob"
+            loading="lazy"
+            className="w-full h-auto block"
+          />
+        </a>
       </div>
 
       <div className="flex-1" />
