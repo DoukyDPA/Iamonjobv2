@@ -21,12 +21,16 @@ const STEPS = [
   { n: 5, label: 'Compatibilité',  icon: Star },
 ];
 
-/** Couleur du score sur 10. */
-const ratingColor = (n) => {
-  if (n == null) return 'text-teal-700 bg-cream-50 border-cream-300';
-  if (n >= 8) return 'text-emerald-700 bg-emerald-50 border-emerald-200';
-  if (n >= 5) return 'text-amber-700 bg-amber-50 border-amber-200';
-  return 'text-rose-700 bg-rose-50 border-rose-200';
+/**
+ * Pastille pleinement colorée selon le score /10.
+ * Texte blanc + ombre légère pour garantir la lisibilité du chiffre
+ * y compris sur les teintes les plus saturées (WCAG AA visé).
+ */
+const ratingTile = (n) => {
+  if (n == null) return 'bg-teal-600 border-teal-700';
+  if (n >= 8) return 'bg-emerald-600 border-emerald-700';
+  if (n >= 5) return 'bg-amber-600 border-amber-700';
+  return 'bg-rose-600 border-rose-700';
 };
 
 export default function Sidebar({
@@ -103,18 +107,23 @@ export default function Sidebar({
           <div className="space-y-2">
             <div
               className={[
-                'rounded-xl border px-3 py-3 flex items-center gap-3',
-                ratingColor(cvRating.score),
+                'rounded-xl border-2 px-4 py-4 flex items-center gap-3 text-white shadow-card',
+                ratingTile(cvRating.score),
               ].join(' ')}
               aria-live="polite"
+              aria-label={`Note de votre CV : ${cvRating.score} sur 10`}
             >
-              <Gauge className="w-5 h-5 shrink-0" />
+              <Gauge className="w-6 h-6 shrink-0 text-white/90" aria-hidden="true" />
               <div className="flex-1 min-w-0">
-                <div className="text-[10px] uppercase tracking-wider font-bold opacity-70">
+                <div className="text-[10px] uppercase tracking-wider font-bold text-white/85">
                   Note de votre CV
                 </div>
-                <div className="text-xl font-extrabold leading-none">
-                  {cvRating.score}<span className="text-sm font-bold opacity-70">/10</span>
+                <div
+                  className="text-4xl font-extrabold leading-none mt-0.5 tabular-nums"
+                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.25)' }}
+                >
+                  {cvRating.score}
+                  <span className="text-base font-bold text-white/90 ml-0.5">/10</span>
                 </div>
               </div>
             </div>
@@ -131,7 +140,7 @@ export default function Sidebar({
               type="button"
               onClick={onRateCv}
               disabled={isRatingCv || !canRateCv}
-              className="w-full text-[11px] text-teal-700/70 hover:text-teal-800 hover:underline disabled:opacity-50 disabled:cursor-not-allowed px-1"
+              className="w-full text-[11px] text-teal-700/70 hover:text-teal-800 hover:underline disabled:opacity-50 disabled:cursor-not-allowed px-1 text-left"
             >
               {isRatingCv ? 'Nouvelle évaluation…' : 'Réévaluer'}
             </button>
