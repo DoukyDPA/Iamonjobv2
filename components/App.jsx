@@ -15,7 +15,12 @@ import {
 } from './ui';
 import { BrandArrow, CatMascot, SectionTitle } from './brand';
 import AppShell from './layout/AppShell';
-import { saveCvToFirestore, getCvFromFirestore } from '@/lib/firebase/client';
+import {
+  saveCvToFirestore,
+  getCvFromFirestore,
+  saveCvRatingToFirestore,
+  clearCvRatingInFirestore,
+} from '@/lib/firebase/client';
 
 const MAX_CHAT_MESSAGES = 30;
 const CHAT_HISTORY_WINDOW = 10;
@@ -71,6 +76,11 @@ export default function App({ user, availableProviders = ['gemini'] }) {
       if (data?.cvText) {
         setCvText(data.cvText);
         if (data.analysis) setSavedSession(data.analysis);
+        // Restauration de la note précédente si elle correspond toujours
+        // au CV en base (elle est nettoyée côté Firestore dès que le CV change).
+        if (data.rating && typeof data.rating.score === 'number') {
+          setCvRating(data.rating);
+        }
       }
     });
   }, [user.id]);
@@ -143,8 +153,9 @@ export default function App({ user, availableProviders = ['gemini'] }) {
     setError(null);
     setFileName(file.name);
     setFileSize(file.size);
-    // Tout nouveau CV ⇒ on réinitialise l'évaluation précédente.
+    // Tout nouveau CV ⇒ on réinitialise l'évaluation précédente (état + Firestore).
     setCvRating(null);
+    clearCvRatingInFirestore(user.id);
     try {
       const pdfjs = await loadPdfJs();
       const arrayBuffer = await file.arrayBuffer();
@@ -168,6 +179,7 @@ export default function App({ user, availableProviders = ['gemini'] }) {
   const resetFile = () => {
     setFileName(''); setFileSize(0); setFilePages(0); setCvText(''); setShowCvEditor(false);
     setCvRating(null);
+    clearCvRatingInFirestore(user.id);
   };
 
   /**
@@ -236,6 +248,9 @@ RÈGLES :
       const result = await callAI(`Voici le CV à évaluer :\n\n${cvText}`, systemInstruction);
       if (result && typeof result.score === 'number') {
         setCvRating(result);
+        // Persistance : la note survivra aux rechargements de page tant que
+        // le CV n'aura pas été modifié.
+        saveCvRatingToFirestore(user.id, cvText, result);
       } else {
         throw new Error('Réponse inattendue de l\'IA.');
       }
@@ -584,8 +599,12 @@ Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON :
                       value={cvText}
                       onChange={(e) => {
                         setCvText(e.target.value);
-                        // Le contenu du CV change ⇒ on invalide la note précédente.
-                        if (cvRating) setCvRating(null);
+                        // Le contenu du CV change ⇒ on invalide la note précédente
+                        // (état React + Firestore, pour qu'elle ne réapparaisse pas au reload).
+                        if (cvRating) {
+                          setCvRating(null);
+                          clearCvRatingInFirestore(user.id);
+                        }
                       }}
                     />
                   )}
