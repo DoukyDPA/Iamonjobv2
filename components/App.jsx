@@ -175,7 +175,14 @@ export default function App({ user, availableProviders = ['gemini'] }) {
    * Le résultat reste affiché jusqu'à ce que l'utilisateur change son CV.
    */
   const rateCV = async () => {
-    if (!cvText.trim() || isRatingCv) return;
+    if (isRatingCv) return;
+    // Pas de CV importé : on guide l'utilisateur vers l'étape 1 plutôt que de
+    // rester silencieux. Le message s'affiche dans le bandeau d'erreur global.
+    if (!cvText.trim()) {
+      setError("Importez d'abord votre CV à l'étape 1 pour pouvoir l'évaluer.");
+      setStep(1);
+      return;
+    }
     setIsRatingCv(true);
     setError(null);
     try {
