@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  padding: 0;
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: #F5EFE3; /* cream-100 */
+  color: #11514B;            /* teal-700 */
+}
+
+* { box-sizing: border-box; }
+
+/* ─── Échelle typographique (A- / A+) ─── */
+html { --font-scale: 1; }
+html[data-text-size="sm"]   { --font-scale: 0.92; }
+html[data-text-size="md"]   { --font-scale: 1; }
+html[data-text-size="lg"]   { --font-scale: 1.12; }
+html[data-text-size="xl"]   { --font-scale: 1.25; }
+
+/* ─── Mode contraste élevé ─── */
+html[data-contrast="high"] {
+  --hc-bg: #FFFFFF;
+  --hc-fg: #000000;
+  --hc-accent: #00574B;
+  --hc-border: #000000;
+}
+html[data-contrast="high"] body { background-color: #FFFFFF !important; color: #000 !important; }
+html[data-contrast="high"] .hc-card { background: #FFFFFF !important; border: 2px solid #000 !important; box-shadow: none !important; }
+html[data-contrast="high"] .hc-muted { color: #000 !important; }
+html[data-contrast="high"] .hc-accent { color: #00574B !important; }
+html[data-contrast="high"] .hc-accent-bg { background-color: #00574B !important; color: #FFFFFF !important; }
+html[data-contrast="high"] .hc-border { border-color: #000 !important; }
+html[data-contrast="high"] a, html[data-contrast="high"] button { text-decoration: underline; }
+
+@layer base {
+  :root {
+    --teal: #176860;
+    --pink: #E4197F;
+    --cream: #F5EFE3;
+  }
+
+  body {
+    font-size: calc(1rem * var(--font-scale, 1));
+  }
+}
+
+@layer utilities {
+  .text-gradient-brand {
+    background: linear-gradient(135deg, #176860, #2E9F93);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Cache visuel mais accessible aux lecteurs d'écran */
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+}
+
+/* Scrollbar discrète pour la sidebar */
+.iamj-scrollbar::-webkit-scrollbar { width: 6px; }
+.iamj-scrollbar::-webkit-scrollbar-thumb { background: #E0D2B0; border-radius: 3px; }
+.iamj-scrollbar::-webkit-scrollbar-track { background: transparent; }
