@@ -7,6 +7,7 @@ import {
   BrainCircuit, MapPin, Building2, PenTool, MessageSquare,
   Send, BookOpen, Clock, ThumbsUp, ThumbsDown,
   Info, ListChecks, Compass, Star, MessageCircle, RefreshCw,
+  Gauge, X,
 } from 'lucide-react';
 import {
   Button, Card, Badge, DifficultyBadge, getScoreColor,
@@ -115,6 +116,11 @@ export default function App({ user, availableProviders = ['gemini'] }) {
   const [savedSession, setSavedSession] = useState(null);
   const [showCvEditor, setShowCvEditor] = useState(false);
 
+  // Évaluation du CV (note /10 + critères détaillés)
+  const [cvRating, setCvRating] = useState(null);
+  const [isRatingCv, setIsRatingCv] = useState(false);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+
   const callAI = async (prompt, systemInstruction, isJson = true, task = 'default') => {
     const res = await fetch('/api/ai', {
       method: 'POST',
@@ -137,6 +143,8 @@ export default function App({ user, availableProviders = ['gemini'] }) {
     setError(null);
     setFileName(file.name);
     setFileSize(file.size);
+    // Tout nouveau CV ⇒ on réinitialise l'évaluation précédente.
+    setCvRating(null);
     try {
       const pdfjs = await loadPdfJs();
       const arrayBuffer = await file.arrayBuffer();
@@ -159,6 +167,76 @@ export default function App({ user, availableProviders = ['gemini'] }) {
 
   const resetFile = () => {
     setFileName(''); setFileSize(0); setFilePages(0); setCvText(''); setShowCvEditor(false);
+    setCvRating(null);
+  };
+
+  /**
+   * Évalue le CV : note sur 10 + détail par critères.
+   * Le résultat reste affiché jusqu'à ce que l'utilisateur change son CV.
+   */
+  const rateCV = async () => {
+    if (!cvText.trim() || isRatingCv) return;
+    setIsRatingCv(true);
+    setError(null);
+    try {
+      const systemInstruction = `Tu es un conseiller emploi expérimenté. Tu évalues la qualité d'un CV de manière bienveillante mais honnête, sans complaisance.
+
+Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON avec la structure exacte suivante :
+{
+  "score": 7,
+  "summary": "Phrase de synthèse de 1 à 2 lignes maximum sur la qualité globale du CV.",
+  "criteria": [
+    {
+      "name": "Clarté et lisibilité",
+      "score": 8,
+      "comment": "Commentaire de 1 à 2 phrases expliquant la note (constats concrets)."
+    },
+    {
+      "name": "Structure et organisation",
+      "score": 6,
+      "comment": "..."
+    },
+    {
+      "name": "Pertinence des expériences",
+      "score": 7,
+      "comment": "..."
+    },
+    {
+      "name": "Mise en valeur des compétences",
+      "score": 6,
+      "comment": "..."
+    },
+    {
+      "name": "Résultats chiffrés et impact",
+      "score": 5,
+      "comment": "..."
+    },
+    {
+      "name": "Orthographe et formulation",
+      "score": 8,
+      "comment": "..."
+    }
+  ],
+  "strengths": ["Point fort 1 concret", "Point fort 2"],
+  "improvements": ["Suggestion concrète d'amélioration 1", "Suggestion 2", "Suggestion 3"]
+}
+
+RÈGLES :
+- Toutes les notes (globale et par critère) sont des ENTIERS de 0 à 10.
+- La note globale doit être cohérente avec la moyenne des critères.
+- Sois constructif et précis. Pas de banalités du type « CV intéressant ».
+- Reste réaliste : un CV vraiment moyen mérite 5 ou 6, pas 8.`;
+      const result = await callAI(`Voici le CV à évaluer :\n\n${cvText}`, systemInstruction);
+      if (result && typeof result.score === 'number') {
+        setCvRating(result);
+      } else {
+        throw new Error('Réponse inattendue de l\'IA.');
+      }
+    } catch (err) {
+      setError(err.message || "Erreur lors de l'évaluation du CV.");
+    } finally {
+      setIsRatingCv(false);
+    }
   };
 
   const analyzeCV = async () => {
@@ -443,6 +521,11 @@ Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON :
       error={error}
       onCloseError={() => setError(null)}
       sessionLabel={formatSessionDate()}
+      cvRating={cvRating}
+      isRatingCv={isRatingCv}
+      canRateCv={Boolean(cvText.trim())}
+      onRateCv={rateCV}
+      onShowRatingDetails={() => setShowRatingModal(true)}
     >
 
       {/* ═══════════════ Étape 1 : Mon CV ═══════════════ */}
@@ -492,7 +575,11 @@ Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON :
                     <textarea
                       className="mt-3 w-full h-56 p-4 border border-cream-200 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-transparent outline-none transition-all bg-cream-50/50 resize-y text-sm"
                       value={cvText}
-                      onChange={(e) => setCvText(e.target.value)}
+                      onChange={(e) => {
+                        setCvText(e.target.value);
+                        // Le contenu du CV change ⇒ on invalide la note précédente.
+                        if (cvRating) setCvRating(null);
+                      }}
                     />
                   )}
                 </>
@@ -1145,6 +1232,139 @@ Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON :
           <StepFooter
             secondary={<Button variant="outline" onClick={() => setStep(4)} icon={ChevronLeft}>Retour aux offres</Button>}
           />
+        </div>
+      )}
+
+      {/* ─────── Modal : détail de la note du CV ─────── */}
+      {showRatingModal && cvRating && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-teal-900/50 animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="cv-rating-title"
+          onClick={() => setShowRatingModal(false)}
+        >
+          <div
+            className="relative w-full max-w-2xl max-h-[90vh] bg-white border border-cream-200 rounded-2xl shadow-card overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* En-tête */}
+            <div className="px-6 py-5 border-b border-cream-200 bg-cream-50/60 flex items-start gap-4">
+              <div className={`w-16 h-16 rounded-full flex flex-col items-center justify-center border-4 shrink-0 ${getScoreColor((cvRating.score || 0) * 10)}`}>
+                <span className="text-xl font-extrabold leading-none">
+                  {cvRating.score}<span className="text-xs opacity-70">/10</span>
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 id="cv-rating-title" className="text-lg font-bold text-teal-800 flex items-center gap-2">
+                  <Gauge className="w-5 h-5 text-teal-600" />
+                  Détail de l'évaluation de votre CV
+                </h2>
+                {cvRating.summary && (
+                  <p className="text-sm text-teal-800/85 mt-1.5">{cvRating.summary}</p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowRatingModal(false)}
+                aria-label="Fermer"
+                className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-teal-700 hover:bg-cream-200/70"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Contenu scrollable */}
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 iamj-scrollbar">
+              {/* Critères */}
+              <section>
+                <h3 className="text-sm font-bold text-teal-800 mb-3 uppercase tracking-wider">
+                  Critères évalués
+                </h3>
+                <div className="space-y-3">
+                  {(cvRating.criteria || []).map((c, idx) => (
+                    <div key={idx} className="bg-cream-50 border border-cream-200 rounded-xl p-4">
+                      <div className="flex items-center justify-between gap-3 mb-2">
+                        <h4 className="font-semibold text-teal-800 text-sm">{c.name}</h4>
+                        <Badge
+                          variant={c.score >= 8 ? 'emerald' : c.score >= 5 ? 'amber' : 'rose'}
+                          className="shrink-0"
+                        >
+                          {c.score}/10
+                        </Badge>
+                      </div>
+                      {/* Barre de progression */}
+                      <div className="w-full h-1.5 bg-cream-200 rounded-full overflow-hidden mb-2">
+                        <div
+                          className={`h-full rounded-full ${
+                            c.score >= 8 ? 'bg-emerald-500' : c.score >= 5 ? 'bg-amber-500' : 'bg-rose-500'
+                          }`}
+                          style={{ width: `${Math.max(0, Math.min(10, c.score)) * 10}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-teal-800/85 leading-relaxed">{c.comment}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Points forts */}
+              {cvRating.strengths?.length > 0 && (
+                <section className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
+                  <h3 className="font-bold text-emerald-800 mb-2 flex items-center gap-2 text-sm">
+                    <ThumbsUp className="w-4 h-4" /> Points forts
+                  </h3>
+                  <ul className="space-y-1.5">
+                    {cvRating.strengths.map((s, i) => (
+                      <li key={i} className="text-emerald-800 text-sm flex items-start gap-2">
+                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {/* Pistes d'amélioration */}
+              {cvRating.improvements?.length > 0 && (
+                <section className="bg-rose-50 rounded-xl p-4 border border-rose-100">
+                  <h3 className="font-bold text-rose-800 mb-2 flex items-center gap-2 text-sm">
+                    <TrendingUp className="w-4 h-4" /> Pistes d'amélioration
+                  </h3>
+                  <ul className="space-y-1.5">
+                    {cvRating.improvements.map((s, i) => (
+                      <li key={i} className="text-rose-800 text-sm flex items-start gap-2">
+                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {/* Rappel pédagogique */}
+              <div className="flex items-start gap-3 p-4 bg-cream-50 border border-cream-200 rounded-xl">
+                <CatMascot className="w-10 h-10 shrink-0" />
+                <p className="text-xs text-teal-800/85 leading-relaxed">
+                  Cette évaluation est générée par une IA et reste <strong>indicative</strong>.
+                  Surtout, gardez en tête qu'un CV <strong>n'a vraiment de sens que par rapport
+                  à un poste donné</strong> : un même CV peut être excellent pour une offre et
+                  mal positionné pour une autre. Pour un retour vraiment personnalisé,
+                  n'hésitez pas à en discuter avec un conseiller bien <strong>humain</strong>
+                  qui pourra le contextualiser selon votre parcours, votre marché et le
+                  poste visé. L'étape <strong>« Compatibilité »</strong> du parcours vous
+                  donnera d'ailleurs un score plus pertinent face à une offre précise.
+                </p>
+              </div>
+            </div>
+
+            {/* Pied de modal */}
+            <div className="px-6 py-4 border-t border-cream-200 bg-cream-50/60 flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setShowRatingModal(false)}>
+                Fermer
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
