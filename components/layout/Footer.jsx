@@ -26,10 +26,10 @@ export default function Footer() {
             réalistes et des outils concrets pour réussir.
           </p>
           <a
-            href="mailto:contact@iamonjob.fr"
+            href="mailto:contact@cbe-sud94.org"
             className="inline-flex items-center gap-1.5 text-sm text-teal-700 hover:text-teal-900 hover:underline"
           >
-            <Mail className="w-4 h-4" /> contact@iamonjob.fr
+            <Mail className="w-4 h-4" /> contact@cbe-sud94.org
           </a>
         </div>
 
