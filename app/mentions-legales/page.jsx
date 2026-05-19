@@ -43,7 +43,7 @@ export default function MentionsLegalesPage() {
       <section>
         <h2 className="text-xl font-bold text-teal-800 mb-3">Crédits</h2>
         <p>
-          Conception et développement : <a href="https://silveria.fr" target="_blank" rel="noopener noreferrer" className="text-teal-700 hover:underline">CBE Silveria</a>.
+          Conception et développement : <a href="https://silveria.fr" target="_blank" rel="noopener noreferrer" className="text-teal-700 hover:underline">CBE Sud 94 - Silveria</a>.
         </p>
       </section>
     </LegalShell>
