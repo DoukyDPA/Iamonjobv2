@@ -11,14 +11,14 @@ export default function MentionsLegalesPage() {
       <section>
         <h2 className="text-xl font-bold text-teal-800 mb-3">Éditeur du site</h2>
         <p>
-          Le site IAMONJOB est édité par <strong>CBE Silveria</strong>.
+          Le site IAMONJOB est édité par <strong>CBE Sud 94 - Silveria</strong>.
         </p>
         <ul className="mt-2 space-y-1 text-sm">
-          <li>Adresse : à compléter</li>
-          <li>Téléphone : à compléter</li>
-          <li>Email : contact@iamonjob.fr</li>
-          <li>SIRET : à compléter</li>
-          <li>Directeur de la publication : à compléter</li>
+          <li>Adresse : 1 rue de la Corderie - Centra 328 - 94586 Rungis Cedex</li>
+          <li>Téléphone : 01 76 28 41 64</li>
+          <li>Email : contact@cbe-sud94.orgr</li>
+          <li>SIRET : 413 705 112 00022</li>
+          <li>Directeur de la publication : D. Pigeon-Angelini - Directeur</li>
         </ul>
       </section>
 
