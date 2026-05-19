@@ -200,51 +200,57 @@ export default function App({ user, availableProviders = ['gemini'] }) {
     try {
       const systemInstruction = `Tu es un conseiller emploi expérimenté. Tu évalues la qualité d'un CV de manière bienveillante mais honnête, sans complaisance.
 
+⚠️ CONTEXTE TECHNIQUE CRUCIAL : tu ne reçois QUE le TEXTE BRUT extrait du PDF du CV (via pdf.js). Tu n'as AUCUN accès à la version visuelle du document : tu ne vois ni la mise en page, ni les couleurs, ni les polices, ni la photo, ni les espacements, ni la hiérarchie graphique, ni le format global. Tu ne dois donc JAMAIS porter de jugement sur ces aspects-là. Si l'ordre du texte te paraît étrange (sauts de colonnes, blocs mêlés), c'est presque toujours un artefact d'extraction PDF — pas un défaut du CV. Ne le mentionne pas.
+
+Ton évaluation porte EXCLUSIVEMENT sur le contenu et la qualité rédactionnelle.
+
 Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON avec la structure exacte suivante :
 {
   "score": 7,
-  "summary": "Phrase de synthèse de 1 à 2 lignes maximum sur la qualité globale du CV.",
+  "summary": "Phrase de synthèse de 1 à 2 lignes maximum sur la qualité globale du contenu textuel.",
   "criteria": [
     {
-      "name": "Clarté et lisibilité",
+      "name": "Clarté de l'expression",
       "score": 8,
-      "comment": "Commentaire de 1 à 2 phrases expliquant la note (constats concrets)."
+      "comment": "Qualité des formulations, précision du vocabulaire, intelligibilité des phrases — jugée sur le texte uniquement."
     },
     {
-      "name": "Structure et organisation",
+      "name": "Structure du contenu",
       "score": 6,
-      "comment": "..."
+      "comment": "Présence et logique des rubriques attendues (état civil, expériences, formation, compétences, langues...) déductibles du texte. Ne juge JAMAIS la mise en forme visuelle."
     },
     {
       "name": "Pertinence des expériences",
       "score": 7,
-      "comment": "..."
+      "comment": "Cohérence des missions décrites, niveau de détail, fil conducteur du parcours."
     },
     {
       "name": "Mise en valeur des compétences",
       "score": 6,
-      "comment": "..."
+      "comment": "Compétences explicites, contextualisées, en lien avec les expériences mentionnées."
     },
     {
       "name": "Résultats chiffrés et impact",
       "score": 5,
-      "comment": "..."
+      "comment": "Présence de chiffres, périmètres, livrables, indicateurs concrets dans les expériences décrites."
     },
     {
       "name": "Orthographe et formulation",
       "score": 8,
-      "comment": "..."
+      "comment": "Qualité linguistique : grammaire, orthographe, conjugaison, tournures professionnelles."
     }
   ],
-  "strengths": ["Point fort 1 concret", "Point fort 2"],
-  "improvements": ["Suggestion concrète d'amélioration 1", "Suggestion 2", "Suggestion 3"]
+  "strengths": ["Point fort 1 (sur le contenu uniquement)", "Point fort 2"],
+  "improvements": ["Suggestion concrète sur le contenu/la rédaction 1", "Suggestion 2", "Suggestion 3"]
 }
 
 RÈGLES :
 - Toutes les notes (globale et par critère) sont des ENTIERS de 0 à 10.
 - La note globale doit être cohérente avec la moyenne des critères.
 - Sois constructif et précis. Pas de banalités du type « CV intéressant ».
-- Reste réaliste : un CV vraiment moyen mérite 5 ou 6, pas 8.`;
+- Reste réaliste : un CV vraiment moyen mérite 5 ou 6, pas 8.
+- INTERDIT FORMEL : commenter la mise en page, le design, la charte graphique, les couleurs, la photo, les polices, les marges, l'espacement, l'aération, le nombre de pages perçu, ou tout aspect visuel — tu ne les vois pas. Tout commentaire de ce type serait inventé et nuirait à l'utilisateur.
+- Si une information manque (par exemple aucun chiffre dans les expériences), dis-le explicitement, n'invente pas.`;
       const result = await callAI(`Voici le CV à évaluer :\n\n${cvText}`, systemInstruction);
       if (result && typeof result.score === 'number') {
         setCvRating(result);
@@ -1302,6 +1308,16 @@ Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON :
 
             {/* Contenu scrollable */}
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 iamj-scrollbar">
+              {/* Périmètre de l'analyse */}
+              <div className="flex items-start gap-2 p-3 bg-teal-50/60 border border-teal-100 rounded-lg text-xs text-teal-800/85 leading-relaxed">
+                <Info className="w-4 h-4 mt-0.5 shrink-0 text-teal-600" />
+                <span>
+                  Cette évaluation porte uniquement sur le <strong>contenu textuel</strong> de
+                  votre CV (le texte extrait du PDF). La <strong>mise en page</strong>, le
+                  design, la photo et tous les aspects visuels <strong>ne sont pas analysés</strong>.
+                </span>
+              </div>
+
               {/* Critères */}
               <section>
                 <h3 className="text-sm font-bold text-teal-800 mb-3 uppercase tracking-wider">
