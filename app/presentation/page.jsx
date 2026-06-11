@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   FileText, Compass, MessageCircle, Briefcase, Star,
   Clock, Shield, Heart, CheckCircle2, Loader2, Send,
-  ArrowRight, AlertCircle, Sparkles, Target, Users,
+  ArrowRight, AlertCircle, Sparkles, Target, Users, Hourglass, Mail,
 } from 'lucide-react';
 import { BrandLogo, CatMascot, BrandArrow } from '@/components/brand';
 import Footer from '@/components/layout/Footer';
@@ -80,6 +80,17 @@ export default function PresentationPage() {
   const [status, setStatus] = useState('idle'); // idle | submitting | success | error
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Statut du quota d'inscriptions (récupéré au montage).
+  // quota = { count, max, remaining, full }
+  const [quota, setQuota] = useState(null);
+
+  useEffect(() => {
+    fetch('/api/beta-signup', { method: 'GET' })
+      .then((r) => r.json())
+      .then((data) => setQuota(data))
+      .catch(() => setQuota(null));
+  }, []);
+
   const onChange = (key) => (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
     setForm((f) => ({ ...f, [key]: value }));
@@ -97,13 +108,26 @@ export default function PresentationPage() {
         body: JSON.stringify(form),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Erreur lors de l'envoi.");
+      if (!res.ok) {
+        // Si le serveur signale un quota plein, on bascule l'UI sur l'état "complet".
+        if (data.full) setQuota((q) => ({ ...(q || {}), full: true }));
+        throw new Error(data.error || "Erreur lors de l'envoi.");
+      }
       setStatus('success');
     } catch (err) {
       setStatus('error');
       setErrorMsg(err.message || "Erreur lors de l'envoi.");
     }
   };
+
+  // Pour l'affichage : "Plus que X places" à partir de 80% de capacité.
+  const showCountdown =
+    quota &&
+    !quota.full &&
+    typeof quota.remaining === 'number' &&
+    quota.max > 0 &&
+    quota.count != null &&
+    quota.count / quota.max >= 0.8;
 
   return (
     <div className="min-h-screen flex flex-col bg-cream-100 text-teal-900">
@@ -134,9 +158,15 @@ export default function PresentationPage() {
       <section className="relative overflow-hidden">
         <div className="max-w-[1280px] mx-auto px-6 py-16 md:py-24 grid md:grid-cols-2 gap-10 items-center">
           <div className="space-y-6 animate-fade-in">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 border border-pink-200 text-xs font-bold tracking-wider text-pink-600 uppercase">
-              <Sparkles className="w-3.5 h-3.5" /> Version de test — accès gratuit
-            </span>
+            {quota?.full ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-xs font-bold tracking-wider text-amber-700 uppercase">
+                <Hourglass className="w-3.5 h-3.5" /> Inscriptions complètes — prochaine vague à venir
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 border border-pink-200 text-xs font-bold tracking-wider text-pink-600 uppercase">
+                <Sparkles className="w-3.5 h-3.5" /> Version de test — accès gratuit
+              </span>
+            )}
             <h1 className="text-4xl md:text-5xl font-extrabold text-teal-800 leading-tight">
               Aidez-nous à construire l'outil qui vous aurait{' '}
               <span className="text-pink-500">vraiment</span> aidé.
@@ -152,7 +182,8 @@ export default function PresentationPage() {
                 href="#formulaire"
                 className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-teal-600 text-white font-semibold shadow-card hover:bg-teal-700 transition-all focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2"
               >
-                Je deviens testeur <ArrowRight className="w-4 h-4" />
+                {quota?.full ? 'Me prévenir à la prochaine vague' : 'Je deviens testeur'}
+                <ArrowRight className="w-4 h-4" />
               </a>
               <a
                 href="#parcours"
@@ -332,15 +363,48 @@ export default function PresentationPage() {
       <section id="formulaire" className="bg-cream-100 scroll-mt-24">
         <div className="max-w-2xl mx-auto px-6 py-16">
           <div className="text-center mb-8">
+            {showCountdown && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-xs font-bold tracking-wider text-amber-700 uppercase mb-4">
+                <Hourglass className="w-3.5 h-3.5" />
+                Plus que {quota.remaining} place{quota.remaining > 1 ? 's' : ''} sur {quota.max}
+              </span>
+            )}
             <h2 className="text-3xl font-extrabold text-teal-800 mb-3">
-              Inscrivez-vous comme testeur
+              {quota?.full ? 'Inscriptions actuellement closes' : 'Inscrivez-vous comme testeur'}
             </h2>
             <p className="text-teal-800/80">
-              On vous envoie un lien d'accès par email sous 48 heures (souvent bien avant).
+              {quota?.full
+                ? 'Nous avons atteint le plafond de cette première vague de testeurs.'
+                : "On vous envoie un lien d'accès par email sous 48 heures (souvent bien avant)."}
             </p>
           </div>
 
-          {status === 'success' ? (
+          {quota?.full ? (
+            <div className="bg-white border border-amber-200 rounded-2xl p-8 shadow-card text-center animate-fade-in">
+              <div className="w-14 h-14 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center mx-auto mb-4">
+                <Hourglass className="w-7 h-7 text-amber-600" />
+              </div>
+              <h3 className="text-xl font-extrabold text-teal-800 mb-2">
+                Le test est complet pour cette vague
+              </h3>
+              <p className="text-teal-800/85 leading-relaxed mb-4">
+                Nous avons recueilli les <strong>{quota.max} inscriptions</strong> prévues pour cette première
+                phase. Une nouvelle session ouvrira prochainement — le temps d'exploiter les retours déjà reçus.
+              </p>
+              <p className="text-teal-800/85 leading-relaxed mb-6">
+                Pour être prévenu(e) de la prochaine ouverture, écrivez-nous un mot :
+              </p>
+              <a
+                href="mailto:contact@cbe-sud94.org?subject=Pr%C3%A9venez-moi%20pour%20la%20prochaine%20vague%20de%20test%20IAMonJob"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-600 text-white font-semibold shadow-card hover:bg-teal-700 transition-all focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2"
+              >
+                <Mail className="w-4 h-4" /> Me prévenir à la prochaine vague
+              </a>
+              <p className="text-xs text-teal-700/70 mt-4">
+                Merci pour votre intérêt — vous nous aidez à construire un outil utile.
+              </p>
+            </div>
+          ) : status === 'success' ? (
             <div className="bg-white border border-emerald-200 rounded-2xl p-8 shadow-card animate-fade-in text-center">
               <div className="w-14 h-14 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="w-7 h-7 text-emerald-600" />

@@ -131,11 +131,13 @@ export default function App({ user, availableProviders = ['gemini'] }) {
   const [isRatingCv, setIsRatingCv] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
 
-  const callAI = async (prompt, systemInstruction, isJson = true, task = 'default') => {
+  // Le client ne construit plus d'instruction système : il choisit une ACTION
+  // (gabarit de confiance côté serveur) et fournit seulement des DONNÉES.
+  const callAI = async (action, params = {}) => {
     const res = await fetch('/api/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider, task, prompt, systemInstruction, isJson }),
+      body: JSON.stringify({ provider, action, params }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -198,60 +200,7 @@ export default function App({ user, availableProviders = ['gemini'] }) {
     setIsRatingCv(true);
     setError(null);
     try {
-      const systemInstruction = `Tu es un conseiller emploi expérimenté. Tu évalues la qualité d'un CV de manière bienveillante mais honnête, sans complaisance.
-
-⚠️ CONTEXTE TECHNIQUE CRUCIAL : tu ne reçois QUE le TEXTE BRUT extrait du PDF du CV (via pdf.js). Tu n'as AUCUN accès à la version visuelle du document : tu ne vois ni la mise en page, ni les couleurs, ni les polices, ni la photo, ni les espacements, ni la hiérarchie graphique, ni le format global. Tu ne dois donc JAMAIS porter de jugement sur ces aspects-là. Si l'ordre du texte te paraît étrange (sauts de colonnes, blocs mêlés), c'est presque toujours un artefact d'extraction PDF — pas un défaut du CV. Ne le mentionne pas.
-
-Ton évaluation porte EXCLUSIVEMENT sur le contenu et la qualité rédactionnelle.
-
-Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON avec la structure exacte suivante :
-{
-  "score": 7,
-  "summary": "Phrase de synthèse de 1 à 2 lignes maximum sur la qualité globale du contenu textuel.",
-  "criteria": [
-    {
-      "name": "Clarté de l'expression",
-      "score": 8,
-      "comment": "Qualité des formulations, précision du vocabulaire, intelligibilité des phrases — jugée sur le texte uniquement."
-    },
-    {
-      "name": "Structure du contenu",
-      "score": 6,
-      "comment": "Présence et logique des rubriques attendues (état civil, expériences, formation, compétences, langues...) déductibles du texte. Ne juge JAMAIS la mise en forme visuelle."
-    },
-    {
-      "name": "Pertinence des expériences",
-      "score": 7,
-      "comment": "Cohérence des missions décrites, niveau de détail, fil conducteur du parcours."
-    },
-    {
-      "name": "Mise en valeur des compétences",
-      "score": 6,
-      "comment": "Compétences explicites, contextualisées, en lien avec les expériences mentionnées."
-    },
-    {
-      "name": "Résultats chiffrés et impact",
-      "score": 5,
-      "comment": "Présence de chiffres, périmètres, livrables, indicateurs concrets dans les expériences décrites."
-    },
-    {
-      "name": "Orthographe et formulation",
-      "score": 8,
-      "comment": "Qualité linguistique : grammaire, orthographe, conjugaison, tournures professionnelles."
-    }
-  ],
-  "strengths": ["Point fort 1 (sur le contenu uniquement)", "Point fort 2"],
-  "improvements": ["Suggestion concrète sur le contenu/la rédaction 1", "Suggestion 2", "Suggestion 3"]
-}
-
-RÈGLES :
-- Toutes les notes (globale et par critère) sont des ENTIERS de 0 à 10.
-- La note globale doit être cohérente avec la moyenne des critères.
-- Sois constructif et précis. Pas de banalités du type « CV intéressant ».
-- Reste réaliste : un CV vraiment moyen mérite 5 ou 6, pas 8.
-- INTERDIT FORMEL : commenter la mise en page, le design, la charte graphique, les couleurs, la photo, les polices, les marges, l'espacement, l'aération, le nombre de pages perçu, ou tout aspect visuel — tu ne les vois pas. Tout commentaire de ce type serait inventé et nuirait à l'utilisateur.
-- Si une information manque (par exemple aucun chiffre dans les expériences), dis-le explicitement, n'invente pas.`;
-      const result = await callAI(`Voici le CV à évaluer :\n\n${cvText}`, systemInstruction);
+      const result = await callAI('rate_cv', { cvText });
       if (result && typeof result.score === 'number') {
         setCvRating(result);
         // Persistance : la note survivra aux rechargements de page tant que
@@ -271,51 +220,7 @@ RÈGLES :
     setIsLoading(true);
     setError(null);
     try {
-      const systemInstruction = `Tu es conseiller emploi, spécialiste du recrutement et des reconversions professionnelles, avec une grande créativité.
-
-Analyse le CV fourni et réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON avec la structure exacte suivante :
-{
-  "location": "Le numéro de département (ex: 75, 69, 13) OU le nom de la région extrait du CV. Laisse vide si introuvable.",
-  "skills": {
-    "categories": [
-      {
-        "name": "Nom de la catégorie",
-        "items": ["compétence 1", "compétence 2"]
-      }
-    ]
-  },
-  "suggestions": {
-    "proches": [
-      {
-        "title": "Nom du métier proche (simple, sans slash ni parenthèse)",
-        "acquired": ["compétence acquise 1"],
-        "toDevelop": ["compétence à développer 1"],
-        "difficulty": "facile"
-      }
-    ],
-    "logiques": [
-      {
-        "title": "Nom du métier en lien logique (simple, sans slash ni parenthèse)",
-        "acquired": ["compétence acquise 1"],
-        "toDevelop": ["compétence à développer 1"],
-        "difficulty": "moyenne"
-      }
-    ],
-    "eloignes": [
-      {
-        "title": "Nom du métier éloigné (simple, sans slash ni parenthèse)",
-        "acquired": ["compétence acquise 1"],
-        "toDevelop": ["compétence à développer 1"],
-        "difficulty": "difficile"
-      }
-    ]
-  }
-}
-RÈGLES IMPORTANTES :
-- Propose EXACTEMENT 3 métiers dans chaque catégorie (proches, logiques, éloignés), soit 9 métiers au total.
-- Les titres de métiers doivent être COURTS (2 à 4 mots maximum), simples et directement utilisables comme terme de recherche d'emploi. Sans slash (/), sans parenthèses, sans mention H/F. Exemples corrects : "Vendeur beauté", "Chef de projet", "Chargé de communication", "Formateur". Exemples INTERDITS : "Chef de projet Accompagnement au changement", "Vendeur/Vendeuse en produits de beauté (H/F)".
-- "difficulty" : utilise uniquement "facile", "moyenne" ou "difficile".`;
-      const result = await callAI(`Voici mon CV :\n\n${cvText}`, systemInstruction);
+      const result = await callAI('analyze_cv', { cvText });
       setAnalysis(result);
       if (result.location) setUserLocation(result.location);
       await saveCvToFirestore(user.id, cvText, result);
@@ -336,40 +241,7 @@ RÈGLES IMPORTANTES :
     setChatHistory([]);
     setError(null);
     try {
-      const systemInstruction = `Tu es un professionnel de terrain avec 15 ans d'expérience dans le métier de : ${jobTitle}. Quelqu'un envisage une reconversion vers ce métier et vient te poser des questions pour mieux comprendre la réalité du terrain.
-Ta mission :
-1. Produire une analyse de poste OBJECTIVE et ÉQUILIBRÉE (missions, compétences, réalités du terrain, évolution, salaire). Cite autant les aspects positifs que les contraintes réelles, sans enjoliver ni décourager.
-2. Initier le dialogue dans le chat. Tu n'es PAS un recruteur. Tu es un professionnel honnête qui partage son vécu, y compris les difficultés, les frustrations et les limites du métier. Présente-toi brièvement, mentionne dès le départ UN avantage ET UNE contrainte concrète du métier, puis invite la personne à poser ses questions.
-RÈGLES ABSOLUES :
-- Ne cherche PAS à convaincre la personne de faire ce métier. Ton rôle est de l'informer objectivement pour qu'elle décide elle-même.
-- Ne pose aucune question d'entretien d'embauche (interdit : "Pourquoi ce métier ?", "Quelles sont vos motivations ?").
-- Sois factuel : salaires réels, horaires réels, difficultés réelles.
-
-Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON avec cette structure précise :
-{
-  "report": {
-    "missions": ["mission principale 1", "mission 2", "mission 3"],
-    "skills": {
-      "hardSkills": ["compétence technique 1", "compétence 2"],
-      "softSkills": ["qualité humaine 1", "qualité 2"]
-    },
-    "realities": {
-      "horaires": "horaires typiques et contraintes",
-      "environnement": "cadre de travail (bureau, extérieur, bruit, etc.)",
-      "risques": "risques ou pression éventuelle"
-    },
-    "evolution": {
-      "formations": ["formation clé 1"],
-      "passerelles": ["métier passerelle 1"]
-    },
-    "salaire": "Fourchette de salaire réaliste (débutant à confirmé)"
-  },
-  "initialMessage": "Ton premier message d'accueil."
-}`;
-      const result = await callAI(
-        `Génère le rapport de découverte et lance la simulation d'enquête métier (pas d'entretien d'embauche !) pour le métier de ${jobTitle}.`,
-        systemInstruction, true
-      );
+      const result = await callAI('discover_job', { jobTitle });
       if (result?.report) {
         setJobReport(result.report);
         setChatHistory([{ role: 'assistant', content: result.initialMessage }]);
@@ -391,15 +263,8 @@ Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON avec cette structure préc
     setChatInput('');
     setIsChatLoading(true);
     try {
-      const systemInstruction = `Tu es un professionnel de terrain avec 15 ans d'expérience dans le métier de ${selectedJob}. Tu participes à une "enquête métier". L'utilisateur (qui réfléchit à une reconversion) te pose des questions pour découvrir la réalité de ton quotidien.
-      Ta mission : Réponds de manière transparente, authentique et bienveillante. Donne des exemples concrets, parle des bons comme des mauvais côtés (fatigue, stress, satisfaction, etc.).
-      RÈGLE ABSOLUE : Tu n'es PAS en train de faire passer un entretien d'embauche. Ne juge pas le candidat, et ne lui pose pas de questions sur ses motivations ou son CV. Contente-toi de répondre à ses interrogations de façon vivante.`;
       const recentHistory = newHistory.slice(-CHAT_HISTORY_WINDOW);
-      const chatPrompt = `Historique récent de la conversation :
-${JSON.stringify(recentHistory.slice(0, -1))}
-Le candidat dit : "${newUserMsg.content}"
-Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON avec cette structure exacte : { "reply": "Ta réponse" }`;
-      const res = await callAI(chatPrompt, systemInstruction, true, 'chat');
+      const res = await callAI('job_chat', { selectedJob, history: recentHistory });
       if (res?.reply) setChatHistory([...newHistory, { role: 'assistant', content: res.reply }]);
     } catch (e) {
       setChatHistory([...newHistory, { role: 'assistant', content: "Désolé, j'ai une petite urgence sur le terrain. Pouvons-nous reprendre dans un instant ?" }]);
@@ -445,16 +310,14 @@ Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON avec cette structure exact
     setInterviewPrep(null);
     setActionPlan(null);
     try {
-      const systemInstruction = `Tu es un expert RH. Analyse la compatibilité entre un CV et une offre d'emploi.
-Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON avec la structure exacte suivante :
-{
-  "score": 85,
-  "forces": ["Point fort 1 pertinent pour l'offre", "Point fort 2"],
-  "faiblesses": ["Écart 1", "Écart 2"],
-  "conseilGlobal": "Un paragraphe de conseil pratique pour adapter la candidature ou palier les manques."
-}`;
-      const prompt = `OFFRE D'EMPLOI:\nTitre: ${offer.intitule}\nDescription: ${offer.description}\nCompétences attendues: ${offer.competencesRequises.join(', ')}\n\nCV DU CANDIDAT:\n${cvText}`;
-      const result = await callAI(prompt, systemInstruction);
+      const result = await callAI('analyze_compatibility', {
+        offer: {
+          intitule: offer.intitule,
+          description: offer.description,
+          competencesRequises: offer.competencesRequises,
+        },
+        cvText,
+      });
       setCompatibility(result);
     } catch (err) {
       setError("Erreur lors de l'analyse de compatibilité.");
@@ -466,12 +329,14 @@ Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON avec la structure exacte s
   const generateCoverLetter = async () => {
     setIsGeneratingLetter(true);
     try {
-      const prompt = `Rédige une lettre de motivation professionnelle et convaincante pour l'offre de ${selectedOffer.intitule} chez ${selectedOffer.entreprise}.
-      Utilise les informations de mon CV pour mettre en valeur ma candidature, en insistant sur les points forts identifiés et en compensant intelligemment les manques.
-      Ne mets pas de coordonnées d'en-tête, commence directement par l'objet puis "Madame, Monsieur,".
-      Offre: ${selectedOffer.description}
-      CV: ${cvText}`;
-      const textResult = await callAI(prompt, 'Tu es un expert en rédaction de lettre de motivation. Sois direct, professionnel et enthousiaste.', false);
+      const textResult = await callAI('cover_letter', {
+        offer: {
+          intitule: selectedOffer.intitule,
+          entreprise: selectedOffer.entreprise,
+          description: selectedOffer.description,
+        },
+        cvText,
+      });
       setCoverLetter(textResult);
     } catch (err) {
       setError('Erreur génération lettre de motivation.');
@@ -483,22 +348,13 @@ Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON avec la structure exacte s
   const generateInterviewPrep = async () => {
     setIsGeneratingPrep(true);
     try {
-      const prompt = `Prépare-moi pour un entretien pour le poste de ${selectedOffer.intitule}. Compare mon CV aux exigences du poste et identifie les questions que le recruteur va probablement me poser.
-      Offre: ${selectedOffer.description}
-      CV: ${cvText}`;
-      const systemInstruction = `Tu es un recruteur préparant un candidat.
-Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON :
-{
-  "questions": [
-    {
-      "type": "classique" | "piege" | "technique",
-      "question": "La question du recruteur",
-      "why": "Pourquoi il pose cette question (ce qu'il cherche à vérifier)",
-      "advice": "Conseil sur la façon d'y répondre en utilisant les éléments du CV du candidat"
-    }
-  ]
-} (Génère 4 questions pertinentes)`;
-      const result = await callAI(prompt, systemInstruction);
+      const result = await callAI('interview_prep', {
+        offer: {
+          intitule: selectedOffer.intitule,
+          description: selectedOffer.description,
+        },
+        cvText,
+      });
       setInterviewPrep(result.questions);
     } catch (err) {
       setError("Erreur génération préparation entretien.");
@@ -510,23 +366,14 @@ Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON :
   const generateActionPlan = async () => {
     setIsGeneratingPlan(true);
     try {
-      const prompt = `Crée un plan d'action sur 4 semaines pour m'aider à décrocher ce poste de ${selectedOffer.intitule} chez ${selectedOffer.entreprise}.
-      Base-toi sur mon profil et l'analyse de compatibilité suivante :
-      Mes atouts : ${compatibility.forces.join(', ')}
-      Mes faiblesses à combler : ${compatibility.faiblesses.join(', ')}
-      Propose des actions concrètes, des formations rapides ou des stratégies de réseau pour palier à ces manques et valoriser mon profil.`;
-      const systemInstruction = `Tu es un coach de carrière pragmatique.
-Réponds OBLIGATOIREMENT ET UNIQUEMENT au format JSON :
-{
-  "plan": [
-    {
-      "semaine": "Semaine 1 (Titre de la phase)",
-      "objectif": "Objectif principal de la semaine",
-      "actions": ["Action concrète 1", "Action concrète 2"]
-    }
-  ]
-} (Génère exactement 4 semaines)`;
-      const result = await callAI(prompt, systemInstruction);
+      const result = await callAI('action_plan', {
+        offer: {
+          intitule: selectedOffer.intitule,
+          entreprise: selectedOffer.entreprise,
+        },
+        forces: compatibility.forces,
+        faiblesses: compatibility.faiblesses,
+      });
       setActionPlan(result.plan);
     } catch (err) {
       setError("Erreur génération plan d'action.");
