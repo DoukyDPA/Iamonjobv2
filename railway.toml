@@ -1,0 +1,14 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+healthcheckPath = "/"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 5
+numReplicas = 1
+sleepApplication = false
+
+[[services]]
+name = "web"
+memory = "512Mi"
