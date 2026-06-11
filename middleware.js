@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server';
 
 export function middleware(request) {
   const { pathname } = request.nextUrl;
-  const publicRoutes = ['/login', '/signup', '/api/auth'];
+  const publicRoutes = [
+    '/login', '/signup', '/api/auth',
+    '/mentions-legales', '/confidentialite', '/cgu', '/accessibilite',
+  ];
   const isPublic = publicRoutes.some((r) => pathname.startsWith(r));
   const token = request.cookies.get('__session')?.value;
 

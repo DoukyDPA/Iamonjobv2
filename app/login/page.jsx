@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client';
+import { googleErrorMessage } from '@/lib/firebase/auth-errors';
 import { Loader2, Mail, Lock, AlertCircle } from 'lucide-react';
 import { BrandLogo, CatMascot } from '@/components/brand';
 import AccessibilityBar from '@/components/layout/AccessibilityBar';
@@ -50,7 +51,7 @@ export default function LoginPage() {
       router.push('/');
       router.refresh();
     } catch (err) {
-      setError(err.message);
+      setError(googleErrorMessage(err));
       setLoading(false);
     }
   };
