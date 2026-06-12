@@ -1,8 +1,23 @@
 import { NextResponse } from 'next/server';
 import { adminDb, FieldValue } from '@/lib/firebase/admin';
+import { enforceRateLimit } from '@/lib/rate-limit';
+import { logEvent, newRequestId } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+// ─── Limitation de débit par IP ─────────────────────────────────────────────
+// L'endpoint est public : le CORS protège le navigateur mais n'arrête pas un
+// bot qui tape le serveur directement. On plafonne donc les inscriptions par
+// adresse IP pour bloquer le spam. Réglable via variables d'environnement.
+const IP_PER_MINUTE = parseInt(process.env.BETA_SIGNUP_IP_PER_MINUTE || '5', 10);
+const IP_PER_DAY = parseInt(process.env.BETA_SIGNUP_IP_PER_DAY || '20', 10);
+
+// Récupère l'IP cliente derrière le proxy de l'hébergeur (Railway).
+function clientIp(request) {
+  const fwd = request.headers.get('x-forwarded-for') || '';
+  return fwd.split(',')[0].trim() || request.headers.get('x-real-ip') || 'inconnue';
+}
 
 // Endpoint public (pas d'auth) — utilisable depuis la landing Next.js comme
 // depuis la version HTML autonome hébergée ailleurs.
@@ -76,6 +91,24 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  // ─── Limitation de débit par IP (anti-spam) ─────────────────────────────
+  const ip = clientIp(request);
+  const rate = await enforceRateLimit({
+    uid: ip,
+    route: 'beta-signup-ip',
+    perMinute: IP_PER_MINUTE,
+    perDay: IP_PER_DAY,
+  });
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Trop de tentatives. Réessayez un peu plus tard.' },
+      {
+        status: 429,
+        headers: { ...cors(request), 'Retry-After': String(rate.retryAfter || 60) },
+      }
+    );
+  }
+
   let body;
   try {
     body = await request.json();
@@ -144,7 +177,7 @@ export async function POST(request) {
 
   // ─── Enregistrement Firestore ──────────────────────────────────────────
   try {
-    await adminDb.collection('beta_signups').add({
+    const ref = await adminDb.collection('beta_signups').add({
       name,
       email,
       phone,
@@ -155,6 +188,8 @@ export async function POST(request) {
       source: trim(request.headers.get('referer') || '', 500),
       userAgent: trim(request.headers.get('user-agent') || '', 500),
     });
+    // Trace d'audit : on journalise l'ID du document, jamais le nom ou l'email.
+    logEvent({ event: 'beta-signup', requestId: newRequestId(), docId: ref.id, status: 'created' });
     return NextResponse.json({ ok: true }, { status: 200, headers: cors(request) });
   } catch (err) {
     console.error('[beta-signup] Erreur enregistrement :', err);

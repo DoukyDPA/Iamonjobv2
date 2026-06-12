@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase/admin';
 import { searchOffers } from '@/lib/france-travail';
 import { enforceRateLimit } from '@/lib/rate-limit';
+import { logEvent, newRequestId } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -55,11 +56,21 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Le champ keywords est requis.' }, { status: 400 });
   }
 
+  const requestId = newRequestId();
+  const startedAt = Date.now();
   try {
     const offers = await searchOffers({ keywords, location, limit });
+    // On journalise le nombre de résultats, jamais les mots-clés (donnée perso).
+    logEvent({
+      event: 'france-travail', requestId, uid, status: 'ok',
+      resultCount: offers.length, durationMs: Date.now() - startedAt,
+    });
     return NextResponse.json({ offers });
   } catch (err) {
-    console.error('Erreur France Travail :', err);
+    logEvent({
+      event: 'france-travail', requestId, uid, status: 'error',
+      durationMs: Date.now() - startedAt, error: err.message, level: 'error',
+    });
     return NextResponse.json(
       { error: err.message || 'Erreur recherche offres.' },
       { status: 500 }
