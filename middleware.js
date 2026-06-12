@@ -4,6 +4,7 @@ export function middleware(request) {
   const { pathname } = request.nextUrl;
   const publicRoutes = [
     '/login', '/signup', '/api/auth',
+    '/api/health', '/api/beta-signup',
     '/mentions-legales', '/confidentialite', '/cgu', '/accessibilite',
   ];
   const isPublic = publicRoutes.some((r) => pathname.startsWith(r));

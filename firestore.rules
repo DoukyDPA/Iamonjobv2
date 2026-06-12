@@ -1,0 +1,46 @@
+rules_version = '2';
+
+// ════════════════════════════════════════════════════════════════════════════
+// Règles de sécurité Firestore — IAMONJOB
+//
+// Principe : refus par défaut. On n'ouvre que le strict nécessaire.
+//   - cvs/{uid}       : un utilisateur n'accède QU'À son propre CV (lecture +
+//                       écriture depuis le navigateur via lib/firebase/client.js).
+//   - beta_signups    : écriture réservée au serveur (Admin SDK, qui contourne
+//                       ces règles). Aucun accès client.
+//   - rate_limits     : compteurs internes, serveur uniquement.
+//   - audit_logs      : trace d'audit, serveur uniquement.
+//
+// Déploiement : firebase deploy --only firestore:rules
+// ════════════════════════════════════════════════════════════════════════════
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Chaque utilisateur ne lit et n'écrit que son propre document CV.
+    match /cvs/{userId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+    }
+
+    // Inscriptions bêta : écrites par le serveur (Admin SDK). Pas d'accès client.
+    match /beta_signups/{doc} {
+      allow read, write: if false;
+    }
+
+    // Compteurs de limitation de débit : serveur uniquement.
+    match /rate_limits/{doc} {
+      allow read, write: if false;
+    }
+
+    // Trace d'audit : serveur uniquement.
+    match /audit_logs/{doc} {
+      allow read, write: if false;
+    }
+
+    // Tout le reste : refusé.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

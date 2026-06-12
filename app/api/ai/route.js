@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase/admin';
 import { callAI, availableProviders } from '@/lib/ai';
 import { buildAIRequest } from '@/lib/ai/prompts';
+import { validateAIResult } from '@/lib/ai/validate';
 import { enforceRateLimit } from '@/lib/rate-limit';
+import { logEvent, newRequestId } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,8 +18,12 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  const requestId = newRequestId();
+  const startedAt = Date.now();
+
   const token = request.cookies.get('__session')?.value;
   if (!token) {
+    logEvent({ event: 'ai', requestId, status: 'unauthenticated', level: 'error' });
     return NextResponse.json({ error: 'Non authentifié.' }, { status: 401 });
   }
 
@@ -27,6 +33,7 @@ export async function POST(request) {
     const decoded = await adminAuth.verifyIdToken(token);
     uid = decoded.uid;
   } catch {
+    logEvent({ event: 'ai', requestId, status: 'invalid_token', level: 'error' });
     return NextResponse.json({ error: 'Session invalide.' }, { status: 401 });
   }
 
@@ -38,6 +45,7 @@ export async function POST(request) {
     perDay: AI_PER_DAY,
   });
   if (!limit.allowed) {
+    logEvent({ event: 'ai', requestId, uid, status: 'rate_limited', scope: limit.scope });
     return NextResponse.json(
       {
         error:
@@ -78,9 +86,33 @@ export async function POST(request) {
       systemInstruction: aiRequest.systemInstruction,
       isJson: aiRequest.isJson,
     });
+
+    // ─── Validation de la forme de la réponse (sorties JSON uniquement) ────
+    if (aiRequest.isJson) {
+      const { ok } = validateAIResult(action, result);
+      if (!ok) {
+        logEvent({
+          event: 'ai', requestId, uid, action, provider: provider || 'gemini',
+          status: 'invalid_output', durationMs: Date.now() - startedAt, level: 'error',
+        });
+        return NextResponse.json(
+          { error: "La réponse de l'IA est incomplète. Réessayez." },
+          { status: 502 }
+        );
+      }
+    }
+
+    logEvent({
+      event: 'ai', requestId, uid, action, provider: provider || 'gemini',
+      status: 'ok', durationMs: Date.now() - startedAt,
+    });
     return NextResponse.json({ result });
   } catch (err) {
-    console.error('Erreur API IA :', err);
+    logEvent({
+      event: 'ai', requestId, uid, action, provider: provider || 'gemini',
+      status: 'error', durationMs: Date.now() - startedAt,
+      error: err.message, level: 'error',
+    });
     return NextResponse.json(
       { error: err.message || "Erreur lors de l'appel à l'IA." },
       { status: 500 }
