@@ -3,6 +3,7 @@
 import { LogOut } from 'lucide-react';
 import { BrandLogo } from '../brand';
 import AccessibilityBar from './AccessibilityBar';
+import DeleteAccountButton from '../account/DeleteAccountButton';
 
 export default function Header({ user, sessionLabel, onReadRequest }) {
   const initial = (user?.name || user?.email || '?').charAt(0).toUpperCase();
@@ -50,6 +51,7 @@ export default function Header({ user, sessionLabel, onReadRequest }) {
               <LogOut className="w-4 h-4" />
             </button>
           </form>
+          <DeleteAccountButton email={user?.email} />
         </div>
       </div>
     </header>

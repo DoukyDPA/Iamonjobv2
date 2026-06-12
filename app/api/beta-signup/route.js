@@ -56,6 +56,13 @@ export async function OPTIONS(request) {
 // BETA_SIGNUP_MAX. Pas de redéploiement de code nécessaire.
 const MAX_SIGNUPS = parseInt(process.env.BETA_SIGNUP_MAX || '100', 10);
 
+// ─── Rétention RGPD ──────────────────────────────────────────────────────
+// Durée de conservation des inscriptions (en jours). On écrit un champ
+// `expireAt` sur chaque document ; il suffit ensuite d'activer une TTL policy
+// Firestore sur ce champ pour que Google purge automatiquement les documents
+// périmés. Voir RGPD-RETENTION.md.
+const RETENTION_DAYS = parseInt(process.env.BETA_SIGNUP_RETENTION_DAYS || '180', 10);
+
 async function getSignupCount() {
   // Agrégation côté serveur Firestore : ne télécharge pas les documents,
   // renvoie juste le compteur — opération économique même à grande échelle.
@@ -185,6 +192,8 @@ export async function POST(request) {
       heardFrom,
       consent,
       createdAt: FieldValue.serverTimestamp(),
+      // Date de péremption pour la purge automatique (TTL Firestore).
+      expireAt: new Date(Date.now() + RETENTION_DAYS * 24 * 60 * 60 * 1000),
       source: trim(request.headers.get('referer') || '', 500),
       userAgent: trim(request.headers.get('user-agent') || '', 500),
     });
