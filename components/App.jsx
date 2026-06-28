@@ -15,6 +15,7 @@ import {
 } from './ui';
 import { BrandArrow, CatMascot, SectionTitle } from './brand';
 import AppShell from './layout/AppShell';
+import CampaignLauncher from './CampaignLauncher';
 import {
   saveCvToFirestore,
   getCvFromFirestore,
@@ -130,6 +131,9 @@ export default function App({ user, availableProviders = ['gemini'] }) {
   const [cvRating, setCvRating] = useState(null);
   const [isRatingCv, setIsRatingCv] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
+
+  // Modal campagne spontanée
+  const [showCampaignLauncher, setShowCampaignLauncher] = useState(false);
 
   // Le client ne construit plus d'instruction système : il choisit une ACTION
   // (gabarit de confiance côté serveur) et fournit seulement des DONNÉES.
@@ -665,18 +669,28 @@ export default function App({ user, availableProviders = ['gemini'] }) {
               />
             </div>
 
-            <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl border border-cream-200 shadow-soft">
-              <div className="flex items-center px-3 bg-cream-50 rounded-lg border border-cream-200">
-                <MapPin className="w-4 h-4 text-teal-500 mr-2 shrink-0" />
-                <input
-                  type="text"
-                  value={userLocation}
-                  onChange={(e) => setUserLocation(e.target.value)}
-                  placeholder="Dépt (ex: 75)…"
-                  className="w-28 sm:w-36 py-1.5 bg-transparent text-sm outline-none placeholder:text-teal-700/40"
-                />
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl border border-cream-200 shadow-soft">
+                <div className="flex items-center px-3 bg-cream-50 rounded-lg border border-cream-200">
+                  <MapPin className="w-4 h-4 text-teal-500 mr-2 shrink-0" />
+                  <input
+                    type="text"
+                    value={userLocation}
+                    onChange={(e) => setUserLocation(e.target.value)}
+                    placeholder="Dépt (ex: 75)…"
+                    className="w-28 sm:w-36 py-1.5 bg-transparent text-sm outline-none placeholder:text-teal-700/40"
+                  />
+                </div>
+                <Button onClick={searchFranceTravail} icon={Search} size="md">Voir les offres</Button>
               </div>
-              <Button onClick={searchFranceTravail} icon={Search} size="md">Voir les offres</Button>
+              <Button
+                onClick={() => setShowCampaignLauncher(true)}
+                variant="secondary"
+                icon={Send}
+                size="md"
+              >
+                Campagne spontanée
+              </Button>
             </div>
           </div>
 
@@ -1113,6 +1127,15 @@ export default function App({ user, availableProviders = ['gemini'] }) {
           />
         </div>
       )}
+
+      {/* ─────── Modal : campagne spontanée ─────── */}
+      <CampaignLauncher
+        isOpen={showCampaignLauncher}
+        onClose={() => setShowCampaignLauncher(false)}
+        cvText={cvText}
+        selectedJob={selectedJob}
+        userLocation={userLocation}
+      />
 
       {/* ─────── Modal : détail de la note du CV ─────── */}
       {showRatingModal && cvRating && (

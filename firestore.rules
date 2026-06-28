@@ -38,6 +38,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Campagnes de candidatures spontanées : serveur uniquement (Admin SDK).
+    // Le client passe exclusivement par /api/campaign/*.
+    match /campaigns/{doc} {
+      allow read, write: if false;
+    }
+
     // Tout le reste : refusé.
     match /{document=**} {
       allow read, write: if false;

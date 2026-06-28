@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut } from 'lucide-react';
+import { LogOut, Send } from 'lucide-react';
 import { BrandLogo } from '../brand';
 import AccessibilityBar from './AccessibilityBar';
 import DeleteAccountButton from '../account/DeleteAccountButton';
@@ -24,6 +24,15 @@ export default function Header({ user, sessionLabel, onReadRequest }) {
           Bonjour <strong className="font-semibold">{displayName}</strong>
           {sessionLabel && <span className="text-teal-700/60"> · {sessionLabel}</span>}
         </p>
+
+        {/* Lien candidatures spontanées */}
+        <a
+          href="/campagne"
+          className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-teal-700 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-3 py-1.5 rounded-lg transition-colors"
+        >
+          <Send className="w-3.5 h-3.5" />
+          Mes candidatures
+        </a>
 
         <div className="flex-1" />
 
