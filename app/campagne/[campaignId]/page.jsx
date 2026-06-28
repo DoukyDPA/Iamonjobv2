@@ -615,10 +615,15 @@ export default function CampaignValidationPage() {
                     {/* Email */}
                     <div className="shrink-0 text-xs">
                       {company.email ? (
-                        <span className="flex items-center gap-1 text-teal-600">
-                          <Mail className="w-3.5 h-3.5" />
-                          {company.email}
-                        </span>
+                        <div className="flex flex-col items-end gap-0.5">
+                          <span className="flex items-center gap-1 text-teal-600">
+                            <Mail className="w-3.5 h-3.5" />
+                            {company.email}
+                          </span>
+                          <span className="text-amber-500 font-medium" title="Adresse déduite algorithmiquement — à vérifier avant envoi">
+                            ⚠ à vérifier
+                          </span>
+                        </div>
                       ) : (
                         <span className="text-slate-400 flex items-center gap-1">
                           <Mail className="w-3.5 h-3.5" />
@@ -669,11 +674,26 @@ export default function CampaignValidationPage() {
                   {isExpanded && (
                     <div className="px-4 sm:px-6 pb-5 pt-2 space-y-4 bg-cream-50/40 border-t border-cream-100">
 
+                      {/* Avertissement adresse déduite */}
+                      {company.email && (
+                        <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+                          <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                          <span>
+                            <strong>Adresse déduite algorithmiquement</strong> — le domaine répond
+                            au courrier (enregistrement MX confirmé), mais l'adresse exacte n'est pas
+                            vérifiée. Confirmez-la sur le site de l'entreprise avant d'envoyer.
+                            {company.candidates?.length > 1 && !isReadOnly && (
+                              <> Vous pouvez aussi choisir une autre variante ci-dessous.</>
+                            )}
+                          </span>
+                        </div>
+                      )}
+
                       {/* Sélection email si plusieurs candidats */}
                       {company.candidates?.length > 1 && !isReadOnly && (
                         <div>
                           <label className="block text-xs font-semibold text-teal-600 uppercase tracking-wider mb-1.5">
-                            Adresse email à utiliser
+                            Choisir une autre variante
                           </label>
                           <select
                             value={company.email || ''}

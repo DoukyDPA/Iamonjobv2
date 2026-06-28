@@ -163,6 +163,14 @@ function CompanyCard({ company, index }) {
         )}
       </div>
 
+      {/* Avertissement adresse déduite */}
+      {hasEmail && (
+        <div className="mb-3 bg-amber-50 border border-amber-200 rounded p-2 text-xs text-amber-800">
+          ⚠ Adresse déduite algorithmiquement (domaine MX confirmé, adresse non vérifiée).
+          Confirmez-la sur le site de l'entreprise avant d'envoyer.
+        </div>
+      )}
+
       {/* Mail personnalisé */}
       {hasEmail && company.emailBody && (
         <div className="mb-3">
