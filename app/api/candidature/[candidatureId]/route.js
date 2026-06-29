@@ -1,6 +1,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 // Route API — /api/candidature/[candidatureId]
 //
+// GET    → récupérer une fiche candidature France Travail
 // DELETE → supprimer une fiche candidature France Travail
 //
 // Accès : authentifié uniquement, cookie __session requis.
@@ -24,6 +25,20 @@ async function authenticate(request) {
   } catch {
     return { uid: null, error: 'Session invalide.', status: 401 };
   }
+}
+
+// ─── GET /api/candidature/[candidatureId] ────────────────────────────────
+
+export async function GET(request, { params }) {
+  const { uid, error, status } = await authenticate(request);
+  if (!uid) return NextResponse.json({ error }, { status });
+
+  const { candidatureId } = params;
+  const candidature = await getCandidatureById(candidatureId, uid);
+  if (!candidature) {
+    return NextResponse.json({ error: 'Candidature introuvable.' }, { status: 404 });
+  }
+  return NextResponse.json({ candidature });
 }
 
 // ─── DELETE /api/candidature/[candidatureId] ──────────────────────────────

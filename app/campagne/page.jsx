@@ -243,8 +243,9 @@ export default function CampaignListPage() {
                   <Card
                     key={`ft-${item.id}`}
                     className={`px-5 py-4 flex items-center gap-4 transition-all border-l-4 border-l-amber-400 ${
-                      isConfirming ? 'border-rose-300 bg-rose-50' : 'hover:shadow-card'
+                      isConfirming ? 'border-rose-300 bg-rose-50' : 'hover:shadow-card cursor-pointer'
                     }`}
+                    onClick={() => !isConfirming && router.push(`/candidature/${item.id}`)}
                   >
                     <Briefcase className="w-4 h-4 text-amber-500 shrink-0" />
                     <div className="flex-1 min-w-0">
