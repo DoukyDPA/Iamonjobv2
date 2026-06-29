@@ -1,8 +1,9 @@
 // ════════════════════════════════════════════════════════════════════════════
 // Route API — /api/campaign/[campaignId]
 //
-// GET  → lecture d'une campagne (vérification uid)
-// PATCH → mise à jour partielle : status, companies, emailTemplate, validationLog
+// GET    → lecture d'une campagne (vérification uid)
+// PATCH  → mise à jour partielle : status, companies, emailTemplate, validationLog
+// DELETE → suppression définitive (vérification uid)
 //
 // Règle métier clé :
 //   - PATCH status:'validated'   → horodate validationLog.validatedAt côté serveur
@@ -14,7 +15,7 @@
 
 import { NextResponse } from 'next/server';
 import { adminAuth, FieldValue } from '@/lib/firebase/admin';
-import { getCampaignById, updateCampaign } from '@/lib/campaign';
+import { getCampaignById, updateCampaign, deleteCampaign } from '@/lib/campaign';
 import { logEvent, newRequestId } from '@/lib/logger';
 
 export const runtime = 'nodejs';
@@ -168,6 +169,42 @@ export async function PATCH(request, { params }) {
     });
     return NextResponse.json(
       { error: err.message || 'Erreur mise à jour campagne.' },
+      { status: 500 }
+    );
+  }
+}
+
+// ─── DELETE /api/campaign/[campaignId] ───────────────────────────────────
+
+export async function DELETE(request, { params }) {
+  const { uid, error, status } = await authenticate(request);
+  if (!uid) return NextResponse.json({ error }, { status });
+
+  const { campaignId } = await params;
+  const requestId = newRequestId();
+
+  // Vérification d'appartenance
+  let existing;
+  try {
+    existing = await getCampaignById(campaignId, uid);
+  } catch (err) {
+    return NextResponse.json({ error: 'Erreur lecture campagne.' }, { status: 500 });
+  }
+  if (!existing) {
+    return NextResponse.json({ error: 'Campagne introuvable.' }, { status: 404 });
+  }
+
+  try {
+    await deleteCampaign(campaignId);
+    logEvent({ event: 'campaign-delete', requestId, uid, status: 'ok', campaignId });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    logEvent({
+      event: 'campaign-delete', requestId, uid, status: 'error',
+      campaignId, error: err.message, level: 'error',
+    });
+    return NextResponse.json(
+      { error: err.message || 'Erreur suppression campagne.' },
       { status: 500 }
     );
   }

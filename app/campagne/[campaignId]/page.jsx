@@ -29,10 +29,11 @@ import { Button, Badge, Card } from '@/components/ui';
 // ─── Constantes ───────────────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
-  draft:              { label: 'Brouillon',    color: 'gray',    Icon: Clock },
-  pending_validation: { label: 'En attente',   color: 'amber',   Icon: Clock },
-  validated:          { label: 'Validée',      color: 'emerald', Icon: CheckCircle2 },
-  done:               { label: 'Terminée',     color: 'teal',    Icon: CheckCircle2 },
+  draft:              { label: 'Brouillon',             color: 'gray',    Icon: Clock },
+  pending_validation: { label: 'Validée',               color: 'emerald', Icon: CheckCircle2 },
+  validated:          { label: 'Validée',               color: 'emerald', Icon: CheckCircle2 },
+  done:               { label: 'Candidatures envoyées', color: 'teal',    Icon: CheckCircle2 },
+  sending:            { label: 'Candidatures envoyées', color: 'teal',    Icon: CheckCircle2 },
 };
 
 // ─── Composants utilitaires locaux ────────────────────────────────────────
@@ -384,7 +385,7 @@ export default function CampaignValidationPage() {
                 icon={Send}
                 size="sm"
               >
-                {isSubmitting ? 'Envoi…' : 'Soumettre au conseiller'}
+                {isSubmitting ? 'Validation…' : 'Valider la campagne'}
               </Button>
             )}
             {!isReadOnly && (

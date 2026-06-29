@@ -6,7 +6,7 @@ import {
   ChevronRight, ChevronLeft, Loader2, Upload, AlertCircle, ExternalLink,
   BrainCircuit, MapPin, Building2, PenTool, MessageSquare,
   Send, BookOpen, Clock, ThumbsUp, ThumbsDown,
-  Info, ListChecks, Compass, Star, MessageCircle, RefreshCw,
+  Info, Compass, Star, MessageCircle, RefreshCw,
   Gauge, X, Mail, Phone, Scissors, EyeOff,
 } from 'lucide-react';
 import {
@@ -117,13 +117,13 @@ export default function App({ user, availableProviders = ['gemini'] }) {
   const [isGeneratingLetter, setIsGeneratingLetter] = useState(false);
   const [interviewPrep, setInterviewPrep] = useState(null);
   const [isGeneratingPrep, setIsGeneratingPrep] = useState(false);
-  const [actionPlan, setActionPlan] = useState(null);
-  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
 
   const [isExtractingPdf, setIsExtractingPdf] = useState(false);
   const [fileName, setFileName] = useState('');
   const [fileSize, setFileSize] = useState(0);
   const [filePages, setFilePages] = useState(0);
+  // true quand le texte vient de l'OCR vision (PDF graphique non lisible par pdf.js)
+  const [ocrUsed, setOcrUsed] = useState(false);
   const [savedSession, setSavedSession] = useState(null);
   const [showCvEditor, setShowCvEditor] = useState(false);
   const [anonymizeWords, setAnonymizeWords] = useState('');
@@ -152,6 +152,21 @@ export default function App({ user, availableProviders = ['gemini'] }) {
     return data.result;
   };
 
+  /**
+   * Rend une page PDF en image base64 via un canvas hors-écran.
+   * Utilisé en fallback quand l'extraction de texte échoue.
+   */
+  const renderPageToBase64 = async (page, scale = 1.5) => {
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    // Retire le préfixe "data:image/png;base64," — l'API n'attend que le base64 brut.
+    return canvas.toDataURL('image/png').split(',')[1];
+  };
+
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -161,20 +176,48 @@ export default function App({ user, availableProviders = ['gemini'] }) {
     setFileName(file.name);
     setFileSize(file.size);
     // Tout nouveau CV ⇒ on réinitialise l'évaluation précédente (état + Firestore).
-    setCvRating(null);
+    setCvRating(null); setOcrUsed(false);
     clearCvRatingInFirestore(user.id);
     try {
       const pdfjs = await loadPdfJs();
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
       setFilePages(pdf.numPages);
+
+      // ── Tentative 1 : extraction de texte standard ────────────────────
       let fullText = '';
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
         fullText += textContent.items.map((item) => item.str).join(' ') + '\n\n';
       }
-      setCvText(fullText.trim());
+      fullText = fullText.trim();
+
+      // ── Tentative 2 : OCR vision si le texte extrait est trop court ───
+      // Seuil de 200 caractères : en dessous, le PDF est probablement un rendu
+      // graphique (Canva, Illustrator, scan) que pdf.js ne sait pas lire.
+      if (fullText.length < 200) {
+        const images = [];
+        for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
+          const page = await pdf.getPage(i);
+          const b64 = await renderPageToBase64(page);
+          images.push({ data: b64, mimeType: 'image/png' });
+        }
+        const res = await fetch('/api/ocr', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ images }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Erreur OCR.');
+        }
+        const { text } = await res.json();
+        fullText = text.trim();
+        setOcrUsed(true);
+      }
+
+      setCvText(fullText);
     } catch (err) {
       setError('Erreur lors de la lecture du PDF. Le fichier est peut-être protégé ou illisible.');
     } finally {
@@ -185,7 +228,7 @@ export default function App({ user, availableProviders = ['gemini'] }) {
 
   const resetFile = () => {
     setFileName(''); setFileSize(0); setFilePages(0); setCvText(''); setShowCvEditor(false);
-    setCvRating(null);
+    setCvRating(null); setOcrUsed(false);
     clearCvRatingInFirestore(user.id);
   };
 
@@ -313,7 +356,6 @@ export default function App({ user, availableProviders = ['gemini'] }) {
     setIsAnalyzingMatch(true);
     setCoverLetter(null);
     setInterviewPrep(null);
-    setActionPlan(null);
     try {
       const result = await callAI('analyze_compatibility', {
         offer: {
@@ -324,6 +366,12 @@ export default function App({ user, availableProviders = ['gemini'] }) {
         cvText,
       });
       setCompatibility(result);
+      // Sauvegarde automatique de la fiche candidature (silencieuse, sans bloquer l'UI)
+      fetch('/api/candidature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offer, compatibility: result }),
+      }).catch(() => {}); // échec silencieux : non bloquant
     } catch (err) {
       setError("Erreur lors de l'analyse de compatibilité.");
     } finally {
@@ -368,24 +416,6 @@ export default function App({ user, availableProviders = ['gemini'] }) {
     }
   };
 
-  const generateActionPlan = async () => {
-    setIsGeneratingPlan(true);
-    try {
-      const result = await callAI('action_plan', {
-        offer: {
-          intitule: selectedOffer.intitule,
-          entreprise: selectedOffer.entreprise,
-        },
-        forces: compatibility.forces,
-        faiblesses: compatibility.faiblesses,
-      });
-      setActionPlan(result.plan);
-    } catch (err) {
-      setError("Erreur génération plan d'action.");
-    } finally {
-      setIsGeneratingPlan(false);
-    }
-  };
 
   const handleRemoveEmails = () => {
     const cleaned = cvText.replace(
@@ -478,6 +508,25 @@ export default function App({ user, availableProviders = ['gemini'] }) {
                     onChange={resetFile}
                     status="ok"
                   />
+
+                  {/* Avertissement PDF graphique non lisible */}
+                  {ocrUsed && (
+                    <div className="mt-3 flex items-start gap-3 px-4 py-3 bg-amber-50 border border-amber-300 rounded-xl text-sm text-amber-900">
+                      <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="font-semibold">Ce CV n'est pas lisible par les logiciels de recrutement (ATS).</p>
+                        <p className="text-amber-800/80 leading-relaxed">
+                          Son format graphique (Canva, image, PDF scanné…) empêche l'extraction automatique du texte.
+                          La plupart des ATS le rejetteront ou liront un document vide.
+                          <strong> L'anonymisation est également impossible</strong> dans ce cas.
+                        </p>
+                        <p className="text-amber-800 font-medium">
+                          Conseil : recréez ce CV dans Word, LibreOffice ou Google Docs et exportez-le en PDF — votre candidature passera beaucoup mieux les filtres automatiques.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <button
                     onClick={() => setShowCvEditor((v) => !v)}
                     className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-teal-700 hover:text-teal-900 hover:underline"
@@ -1122,18 +1171,6 @@ export default function App({ user, availableProviders = ['gemini'] }) {
                 </Card>
               </div>
 
-              <Card className="p-6 border-l-4 border-l-teal-600">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <SectionTitle icon={ListChecks} className="mb-1">Plan d'action personnalisé</SectionTitle>
-                    <p className="text-sm text-teal-700/70">Un programme sur 4 semaines pour combler vos lacunes avant de postuler.</p>
-                  </div>
-                  <Button onClick={generateActionPlan} disabled={isGeneratingPlan} variant="secondary" icon={ListChecks}>
-                    Générer le plan
-                  </Button>
-                </div>
-              </Card>
-
               {coverLetter && (
                 <Card className="p-6 border-l-4 border-l-teal-400">
                   <SectionTitle icon={FileText} className="mb-4">Proposition de Lettre</SectionTitle>
@@ -1174,27 +1211,6 @@ export default function App({ user, availableProviders = ['gemini'] }) {
                 </div>
               )}
 
-              {actionPlan && (
-                <div className="space-y-4">
-                  <SectionTitle icon={ListChecks}>Votre feuille de route à 30 jours</SectionTitle>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    {actionPlan.map((week, idx) => (
-                      <Card key={idx} className="p-5 border-l-4 border-l-teal-600">
-                        <Badge variant="teal" className="mb-2">{week.semaine}</Badge>
-                        <h4 className="font-bold text-teal-800 mb-3">{week.objectif}</h4>
-                        <ul className="space-y-2">
-                          {week.actions.map((act, i) => (
-                            <li key={i} className="text-teal-700/80 text-sm flex items-start gap-2">
-                              <BrandArrow className="w-5 h-3 mt-1 shrink-0" />
-                              <span>{act}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
 

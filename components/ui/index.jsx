@@ -50,7 +50,7 @@ export const Button = ({
 };
 
 /* ─────────────────────────────────────── Card ─────────────────────────────────────── */
-export const Card = ({ children, className = '', tone = 'default' }) => {
+export const Card = ({ children, className = '', tone = 'default', ...rest }) => {
   const tones = {
     default: 'bg-white border-cream-200',
     cream:   'bg-cream-50 border-cream-200',
@@ -59,6 +59,7 @@ export const Card = ({ children, className = '', tone = 'default' }) => {
   return (
     <div
       className={`hc-card rounded-2xl border shadow-card overflow-hidden ${tones[tone] || tones.default} ${className}`}
+      {...rest}
     >
       {children}
     </div>
