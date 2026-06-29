@@ -483,7 +483,7 @@ export default function App({ user, availableProviders = ['gemini'] }) {
                     className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-teal-700 hover:text-teal-900 hover:underline"
                   >
                     <ChevronRight className={`w-4 h-4 transition-transform ${showCvEditor ? 'rotate-90' : ''}`} />
-                    Vérifier ou corriger le texte extrait
+                    Anonymiser, vérifier ou corriger le texte extrait
                   </button>
                   {showCvEditor && (
                     <>

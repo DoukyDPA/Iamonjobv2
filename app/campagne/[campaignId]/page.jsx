@@ -721,21 +721,15 @@ export default function CampaignValidationPage() {
                           />
                         </div>
                       ) : (
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700">
-                          <div className="flex items-start gap-2 flex-1">
-                            <Info className="w-4 h-4 shrink-0 mt-0.5" />
-                            <span>Aucun site trouvé automatiquement. Recherchez manuellement pour compléter le contact.</span>
-                          </div>
-                          <a
-                            href={`https://www.google.com/search?q=${encodeURIComponent(`"${company.name}" contact recrutement site officiel`)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 bg-white text-amber-700 hover:bg-amber-100 font-medium whitespace-nowrap transition-colors"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            Rechercher sur Google
-                          </a>
-                        </div>
+                        <a
+                          href={`https://www.google.com/search?q=${encodeURIComponent(`"${company.name}" contact recrutement site officiel`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 text-xs font-medium transition-colors"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          Rechercher sur Google
+                        </a>
                       )}
 
                       {/* Notes libres */}
