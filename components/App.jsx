@@ -7,7 +7,7 @@ import {
   BrainCircuit, MapPin, Building2, PenTool, MessageSquare,
   Send, BookOpen, Clock, ThumbsUp, ThumbsDown,
   Info, ListChecks, Compass, Star, MessageCircle, RefreshCw,
-  Gauge, X,
+  Gauge, X, Mail, Phone, Scissors, EyeOff,
 } from 'lucide-react';
 import {
   Button, Card, Badge, DifficultyBadge, getScoreColor,
@@ -126,6 +126,7 @@ export default function App({ user, availableProviders = ['gemini'] }) {
   const [filePages, setFilePages] = useState(0);
   const [savedSession, setSavedSession] = useState(null);
   const [showCvEditor, setShowCvEditor] = useState(false);
+  const [anonymizeWords, setAnonymizeWords] = useState('');
 
   // Évaluation du CV (note /10 + critères détaillés)
   const [cvRating, setCvRating] = useState(null);
@@ -386,6 +387,40 @@ export default function App({ user, availableProviders = ['gemini'] }) {
     }
   };
 
+  const handleRemoveEmails = () => {
+    const cleaned = cvText.replace(
+      /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g,
+      '[email retiré]'
+    );
+    setCvText(cleaned);
+    if (cvRating) { setCvRating(null); clearCvRatingInFirestore(user.id); }
+  };
+
+  const handleRemovePhones = () => {
+    // Formats français et internationaux courants
+    const cleaned = cvText.replace(
+      /(?:\+33|0033|0)\s?[1-9](?:[\s.\-]?\d{2}){4}/g,
+      '[tél retiré]'
+    );
+    setCvText(cleaned);
+    if (cvRating) { setCvRating(null); clearCvRatingInFirestore(user.id); }
+  };
+
+  const handleRemoveWords = () => {
+    if (!anonymizeWords.trim()) return;
+    const words = anonymizeWords
+      .split(',')
+      .map((w) => w.trim())
+      .filter(Boolean);
+    if (words.length === 0) return;
+    const escaped = words.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const pattern = new RegExp(escaped.join('|'), 'gi');
+    const cleaned = cvText.replace(pattern, '[retiré]');
+    setCvText(cleaned);
+    setAnonymizeWords('');
+    if (cvRating) { setCvRating(null); clearCvRatingInFirestore(user.id); }
+  };
+
   const displayName = user?.name || user?.email?.split('@')[0] || '';
 
   /* ════════════════════════════════════════════════════════════════════════════
@@ -451,19 +486,60 @@ export default function App({ user, availableProviders = ['gemini'] }) {
                     Vérifier ou corriger le texte extrait
                   </button>
                   {showCvEditor && (
-                    <textarea
-                      className="mt-3 w-full h-56 p-4 border border-cream-200 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-transparent outline-none transition-all bg-cream-50/50 resize-y text-sm"
-                      value={cvText}
-                      onChange={(e) => {
-                        setCvText(e.target.value);
-                        // Le contenu du CV change ⇒ on invalide la note précédente
-                        // (état React + Firestore, pour qu'elle ne réapparaisse pas au reload).
-                        if (cvRating) {
-                          setCvRating(null);
-                          clearCvRatingInFirestore(user.id);
-                        }
-                      }}
-                    />
+                    <>
+                      {/* ── Panneau d'anonymisation rapide ── */}
+                      <div className="mt-3 p-3 bg-teal-50 border border-teal-100 rounded-xl space-y-2.5">
+                        <p className="text-xs font-semibold text-teal-700 uppercase tracking-wide flex items-center gap-1.5">
+                          <EyeOff className="w-3.5 h-3.5" /> Anonymisation rapide
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={handleRemoveEmails}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white border border-teal-200 text-teal-700 hover:bg-teal-100 hover:border-teal-400 transition-colors"
+                          >
+                            <Mail className="w-3.5 h-3.5" /> Retirer les e-mails
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleRemovePhones}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white border border-teal-200 text-teal-700 hover:bg-teal-100 hover:border-teal-400 transition-colors"
+                          >
+                            <Phone className="w-3.5 h-3.5" /> Retirer les téléphones
+                          </button>
+                        </div>
+                        <div className="flex gap-2 items-center">
+                          <input
+                            type="text"
+                            value={anonymizeWords}
+                            onChange={(e) => setAnonymizeWords(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleRemoveWords(); } }}
+                            placeholder="Mots à retirer, séparés par une virgule…"
+                            className="flex-1 px-3 py-1.5 text-xs border border-teal-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-teal-400 placeholder:text-teal-700/40"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleRemoveWords}
+                            disabled={!anonymizeWords.trim()}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white border border-teal-200 text-teal-700 hover:bg-teal-100 hover:border-teal-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            <Scissors className="w-3.5 h-3.5" /> Retirer
+                          </button>
+                        </div>
+                      </div>
+                      {/* ── Textarea d'édition ── */}
+                      <textarea
+                        className="mt-3 w-full h-56 p-4 border border-cream-200 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-transparent outline-none transition-all bg-cream-50/50 resize-y text-sm"
+                        value={cvText}
+                        onChange={(e) => {
+                          setCvText(e.target.value);
+                          if (cvRating) {
+                            setCvRating(null);
+                            clearCvRatingInFirestore(user.id);
+                          }
+                        }}
+                      />
+                    </>
                   )}
                 </>
               ) : (

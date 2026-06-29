@@ -583,31 +583,25 @@ export default function CampaignValidationPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
                         <span className="font-semibold text-teal-800 text-sm truncate">{company.name}</span>
-                        {company.lbbUrl && (
-                          <a
-                            href={company.lbbUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-teal-500 hover:text-teal-700"
-                            title="Fiche La Bonne Boîte"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                        )}
                         <StarScore stars={company.stars} />
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-teal-700/70">
                         <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" /> {company.city}
+                          <MapPin className="w-3 h-3" /> {company.city}{company.zipcode ? ` (${company.zipcode})` : ''}
                         </span>
-                        {company.nafText && (
-                          <span className="flex items-center gap-1">
-                            <Building2 className="w-3 h-3" /> {company.nafText.replace(/\(.*?\)/g, '').trim()}
+                        {(company.nafText || company.naf) && (
+                          <span className="flex items-center gap-1 font-medium text-teal-700">
+                            <Building2 className="w-3 h-3" />
+                            {(company.nafText || company.naf).replace(/\(.*?\)/g, '').trim()}
                           </span>
                         )}
                         {company.headcountText && (
                           <span>{company.headcountText}</span>
+                        )}
+                        {company.lbbHasEmail && !company.email && (
+                          <span className="text-emerald-600 font-medium" title="La Bonne Boîte indique qu'un email existe pour cette entreprise">
+                            ✉ email LBB
+                          </span>
                         )}
                       </div>
                     </div>
@@ -625,10 +619,16 @@ export default function CampaignValidationPage() {
                           </span>
                         </div>
                       ) : (
-                        <span className="text-slate-400 flex items-center gap-1">
-                          <Mail className="w-3.5 h-3.5" />
-                          Pas d'email
-                        </span>
+                        <a
+                          href={`https://www.google.com/search?q=${encodeURIComponent(`"${company.name}" contact recrutement site officiel`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-teal-600 hover:text-teal-800 hover:underline"
+                          title="Rechercher le site de l'entreprise sur Google"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          Trouver le site
+                        </a>
                       )}
                     </div>
 
@@ -721,9 +721,20 @@ export default function CampaignValidationPage() {
                           />
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700">
-                          <Info className="w-4 h-4 shrink-0" />
-                          Pas d'adresse email résolue. Cette entreprise nécessite une démarche par formulaire ou courrier.
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700">
+                          <div className="flex items-start gap-2 flex-1">
+                            <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                            <span>Aucun site trouvé automatiquement. Recherchez manuellement pour compléter le contact.</span>
+                          </div>
+                          <a
+                            href={`https://www.google.com/search?q=${encodeURIComponent(`"${company.name}" contact recrutement site officiel`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 bg-white text-amber-700 hover:bg-amber-100 font-medium whitespace-nowrap transition-colors"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            Rechercher sur Google
+                          </a>
                         </div>
                       )}
 
