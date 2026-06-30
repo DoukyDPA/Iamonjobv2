@@ -6,11 +6,11 @@ import Sidebar from './Sidebar';
 import Footer from './Footer';
 import { ErrorBanner } from '../ui';
 
-/** Couleur de la pastille mobile selon le score /10 (cohérent avec la sidebar). */
+/** Couleur de la pastille mobile selon le score /20 (cohérent avec la sidebar). */
 const mobileRatingTile = (n) => {
   if (n == null) return 'bg-teal-600 border-teal-700';
-  if (n >= 8) return 'bg-emerald-600 border-emerald-700';
-  if (n >= 5) return 'bg-amber-600 border-amber-700';
+  if (n >= 16) return 'bg-emerald-600 border-emerald-700';
+  if (n >= 10) return 'bg-amber-600 border-amber-700';
   return 'bg-rose-600 border-rose-700';
 };
 
@@ -49,7 +49,7 @@ export default function AppShell({
                   'flex items-center gap-2 px-3 py-2 rounded-xl border-2 text-white shadow-soft shrink-0',
                   mobileRatingTile(cvRating.score),
                 ].join(' ')}
-                aria-label={`Note de votre CV : ${cvRating.score} sur 10`}
+                aria-label={`Note de votre CV : ${cvRating.score} sur 20`}
               >
                 <Gauge className="w-4 h-4 text-white/90" aria-hidden="true" />
                 <span
@@ -57,7 +57,7 @@ export default function AppShell({
                   style={{ textShadow: '0 1px 2px rgba(0,0,0,0.25)' }}
                 >
                   {cvRating.score}
-                  <span className="text-xs font-bold text-white/90 ml-0.5">/10</span>
+                  <span className="text-xs font-bold text-white/90 ml-0.5">/20</span>
                 </span>
               </div>
               <div className="flex-1 min-w-0">

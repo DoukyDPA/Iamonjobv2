@@ -128,7 +128,7 @@ export default function App({ user, availableProviders = ['gemini'] }) {
   const [showCvEditor, setShowCvEditor] = useState(false);
   const [anonymizeWords, setAnonymizeWords] = useState('');
 
-  // Évaluation du CV (note /10 + critères détaillés)
+  // Évaluation du CV (note /20 + critères détaillés)
   const [cvRating, setCvRating] = useState(null);
   const [isRatingCv, setIsRatingCv] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -1244,9 +1244,9 @@ export default function App({ user, availableProviders = ['gemini'] }) {
           >
             {/* En-tête */}
             <div className="px-6 py-5 border-b border-cream-200 bg-cream-50/60 flex items-start gap-4">
-              <div className={`w-16 h-16 rounded-full flex flex-col items-center justify-center border-4 shrink-0 ${getScoreColor((cvRating.score || 0) * 10)}`}>
+              <div className={`w-16 h-16 rounded-full flex flex-col items-center justify-center border-4 shrink-0 ${getScoreColor((cvRating.score || 0) * 5)}`}>
                 <span className="text-xl font-extrabold leading-none">
-                  {cvRating.score}<span className="text-xs opacity-70">/10</span>
+                  {cvRating.score}<span className="text-xs opacity-70">/20</span>
                 </span>
               </div>
               <div className="flex-1 min-w-0">
@@ -1291,19 +1291,19 @@ export default function App({ user, availableProviders = ['gemini'] }) {
                       <div className="flex items-center justify-between gap-3 mb-2">
                         <h4 className="font-semibold text-teal-800 text-sm">{c.name}</h4>
                         <Badge
-                          variant={c.score >= 8 ? 'emerald' : c.score >= 5 ? 'amber' : 'rose'}
+                          variant={c.score >= 16 ? 'emerald' : c.score >= 10 ? 'amber' : 'rose'}
                           className="shrink-0"
                         >
-                          {c.score}/10
+                          {c.score}/20
                         </Badge>
                       </div>
                       {/* Barre de progression */}
                       <div className="w-full h-1.5 bg-cream-200 rounded-full overflow-hidden mb-2">
                         <div
                           className={`h-full rounded-full ${
-                            c.score >= 8 ? 'bg-emerald-500' : c.score >= 5 ? 'bg-amber-500' : 'bg-rose-500'
+                            c.score >= 16 ? 'bg-emerald-500' : c.score >= 10 ? 'bg-amber-500' : 'bg-rose-500'
                           }`}
-                          style={{ width: `${Math.max(0, Math.min(10, c.score)) * 10}%` }}
+                          style={{ width: `${Math.max(0, Math.min(20, c.score)) * 5}%` }}
                         />
                       </div>
                       <p className="text-xs text-teal-800/85 leading-relaxed">{c.comment}</p>

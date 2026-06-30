@@ -22,14 +22,14 @@ const STEPS = [
 ];
 
 /**
- * Pastille pleinement colorée selon le score /10.
+ * Pastille pleinement colorée selon le score /20.
  * Texte blanc + ombre légère pour garantir la lisibilité du chiffre
  * y compris sur les teintes les plus saturées (WCAG AA visé).
  */
 const ratingTile = (n) => {
   if (n == null) return 'bg-teal-600 border-teal-700';
-  if (n >= 8) return 'bg-emerald-600 border-emerald-700';
-  if (n >= 5) return 'bg-amber-600 border-amber-700';
+  if (n >= 16) return 'bg-emerald-600 border-emerald-700';
+  if (n >= 10) return 'bg-amber-600 border-amber-700';
   return 'bg-rose-600 border-rose-700';
 };
 
@@ -111,7 +111,7 @@ export default function Sidebar({
                 ratingTile(cvRating.score),
               ].join(' ')}
               aria-live="polite"
-              aria-label={`Note de votre CV : ${cvRating.score} sur 10`}
+              aria-label={`Note de votre CV : ${cvRating.score} sur 20`}
             >
               <Gauge className="w-6 h-6 shrink-0 text-white/90" aria-hidden="true" />
               <div className="flex-1 min-w-0">
@@ -123,7 +123,7 @@ export default function Sidebar({
                   style={{ textShadow: '0 1px 2px rgba(0,0,0,0.25)' }}
                 >
                   {cvRating.score}
-                  <span className="text-base font-bold text-white/90 ml-0.5">/10</span>
+                  <span className="text-base font-bold text-white/90 ml-0.5">/20</span>
                 </div>
               </div>
             </div>
