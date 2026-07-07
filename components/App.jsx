@@ -56,6 +56,24 @@ const formatSessionDate = () => {
   } catch { return ''; }
 };
 
+// Aplati une valeur IA en texte affichable. L'IA renvoie parfois un objet ou un
+// tableau là où une phrase est attendue (ex. « risques » = { pression, ... }).
+// Sans cela, React plante : « Objects are not valid as a React child ».
+const asText = (v) => {
+  if (v == null) return '';
+  if (typeof v === 'string') return v;
+  if (Array.isArray(v)) return v.map(asText).filter(Boolean).join(' · ');
+  if (typeof v === 'object') {
+    return Object.entries(v)
+      .map(([k, val]) => {
+        const t = asText(val);
+        return t ? `${k} : ${t}` : k;
+      })
+      .join(' · ');
+  }
+  return String(v);
+};
+
 export default function App({ user, availableProviders = ['mistral'] }) {
   const [step, setStep] = useState(1);
   const [maxUnlocked, setMaxUnlocked] = useState(1);
@@ -879,19 +897,19 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                       <span className="font-semibold text-teal-800 mb-1 flex items-center gap-1">
                         <Clock className="w-4 h-4 text-teal-500" /> Horaires & Rythme
                       </span>
-                      <p className="text-teal-700/80 mt-1">{jobReport.realities?.horaires}</p>
+                      <p className="text-teal-700/80 mt-1">{asText(jobReport.realities?.horaires)}</p>
                     </div>
                     <div>
                       <span className="font-semibold text-teal-800 mb-1 flex items-center gap-1">
                         <Building2 className="w-4 h-4 text-teal-500" /> Environnement
                       </span>
-                      <p className="text-teal-700/80 mt-1">{jobReport.realities?.environnement}</p>
+                      <p className="text-teal-700/80 mt-1">{asText(jobReport.realities?.environnement)}</p>
                     </div>
                     <div>
                       <span className="font-semibold text-amber-700 mb-1 flex items-center gap-1">
                         <AlertCircle className="w-4 h-4" /> Contraintes / Risques
                       </span>
-                      <p className="text-teal-700/80 mt-1">{jobReport.realities?.risques}</p>
+                      <p className="text-teal-700/80 mt-1">{asText(jobReport.realities?.risques)}</p>
                     </div>
                   </div>
                 </Card>
