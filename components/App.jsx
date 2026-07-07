@@ -336,7 +336,10 @@ export default function App({ user, availableProviders = ['mistral'] }) {
       const result = await callAI('discover_job', { jobTitle });
       if (result?.report) {
         setJobReport(result.report);
-        setChatHistory([{ role: 'assistant', content: result.initialMessage }]);
+        const accueil = typeof result.initialMessage === 'string' && result.initialMessage.trim()
+          ? result.initialMessage
+          : `Bonjour, je fais ce métier depuis des années. Posez-moi vos questions sur le quotidien de ${jobTitle}, je vous réponds d'après le terrain.`;
+        setChatHistory([{ role: 'assistant', content: accueil }]);
       } else {
         throw new Error('Format de réponse invalide');
       }
