@@ -28,11 +28,14 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Non authentifié.' }, { status: 401 });
   }
 
-  // Vérification du token ET récupération de l'uid (pour le rate limiting).
+  // Vérification du token ET récupération de l'uid (pour le rate limiting)
+  // et du rôle (pour garantir un traitement européen aux bénéficiaires).
   let uid;
+  let role = null;
   try {
     const decoded = await adminAuth.verifyIdToken(token);
     uid = decoded.uid;
+    role = decoded.role || null;
   } catch {
     logEvent({ event: 'ai', requestId, status: 'invalid_token', level: 'error' });
     return NextResponse.json({ error: 'Session invalide.' }, { status: 401 });
@@ -72,6 +75,10 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Le champ action est requis.' }, { status: 400 });
   }
 
+  // Bénéficiaire : traitement forcé sur Mistral (France), sans repli Google.
+  // Garantie affichée à l'activation d'un traitement 100% européen du CV.
+  const effectiveProvider = role === 'beneficiaire' ? 'mistral' : provider;
+
   let aiRequest;
   try {
     aiRequest = buildAIRequest({ action, params });
@@ -81,7 +88,7 @@ export async function POST(request) {
 
   try {
     const result = await callAI({
-      provider,
+      provider: effectiveProvider,
       task: aiRequest.task,
       prompt: aiRequest.prompt,
       systemInstruction: aiRequest.systemInstruction,
@@ -93,7 +100,7 @@ export async function POST(request) {
       const { ok } = validateAIResult(action, result);
       if (!ok) {
         logEvent({
-          event: 'ai', requestId, uid, action, provider: provider || 'gemini',
+          event: 'ai', requestId, uid, action, provider: effectiveProvider || 'mistral',
           status: 'invalid_output', durationMs: Date.now() - startedAt, level: 'error',
         });
         return NextResponse.json(
@@ -120,13 +127,13 @@ export async function POST(request) {
     }
 
     logEvent({
-      event: 'ai', requestId, uid, action, provider: provider || 'gemini',
+      event: 'ai', requestId, uid, action, provider: effectiveProvider || 'mistral',
       status: 'ok', durationMs: Date.now() - startedAt,
     });
     return NextResponse.json({ result: finalResult });
   } catch (err) {
     logEvent({
-      event: 'ai', requestId, uid, action, provider: provider || 'gemini',
+      event: 'ai', requestId, uid, action, provider: effectiveProvider || 'mistral',
       status: 'error', durationMs: Date.now() - startedAt,
       error: err.message, level: 'error',
     });

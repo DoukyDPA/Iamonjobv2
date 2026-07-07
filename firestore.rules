@@ -44,6 +44,23 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Bénéficiaires : écrits et lus par le serveur (Admin SDK) via
+    // /api/conseiller/*. Le pseudonyme et le pilotage ne transitent jamais
+    // par le client Firestore.
+    match /beneficiaires/{doc} {
+      allow read, write: if false;
+    }
+
+    // Consentements : registre append-only, serveur uniquement.
+    match /consents/{doc} {
+      allow read, write: if false;
+    }
+
+    // Compteurs (génération des codes AC-AAAA-NNN) : serveur uniquement.
+    match /counters/{doc} {
+      allow read, write: if false;
+    }
+
     // Tout le reste : refusé.
     match /{document=**} {
       allow read, write: if false;

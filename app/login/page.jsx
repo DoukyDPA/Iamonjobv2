@@ -165,6 +165,15 @@ export default function LoginPage() {
                 Créer un compte
               </Link>
             </p>
+
+            <div className="mt-4 pt-4 border-t border-cream-200 text-center">
+              <p className="text-sm text-teal-700/80">
+                Vous êtes accompagné ?{' '}
+                <Link href="/acces" className="text-teal-700 hover:text-teal-900 hover:underline font-semibold">
+                  Accès par code
+                </Link>
+              </p>
+            </div>
           </div>
 
           {/* Rassurance RGPD discrète sous la carte */}

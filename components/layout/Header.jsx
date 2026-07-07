@@ -1,13 +1,27 @@
 'use client';
 
-import { LogOut, Send } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { LogOut, Send, Users } from 'lucide-react';
 import { BrandLogo } from '../brand';
+import { auth } from '@/lib/firebase/client';
 import AccessibilityBar from './AccessibilityBar';
 import DeleteAccountButton from '../account/DeleteAccountButton';
 
 export default function Header({ user, sessionLabel, onReadRequest }) {
   const initial = (user?.name || user?.email || '?').charAt(0).toUpperCase();
   const displayName = user?.name || user?.email?.split('@')[0] || '';
+
+  // Le lien conseiller n'apparaît que si le compte porte le rôle. On lit le
+  // rôle dans le token déjà en mémoire, sans appel réseau.
+  const [isConseiller, setIsConseiller] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    auth.currentUser
+      ?.getIdTokenResult()
+      .then((res) => { if (alive) setIsConseiller(res?.claims?.role === 'conseiller'); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   return (
     <header className="bg-cream-50 border-b border-cream-200 sticky top-0 z-20">
@@ -33,6 +47,17 @@ export default function Header({ user, sessionLabel, onReadRequest }) {
           <Send className="w-3.5 h-3.5" />
           Mes candidatures
         </a>
+
+        {/* Lien espace conseiller, réservé au rôle conseiller */}
+        {isConseiller && (
+          <a
+            href="/conseiller"
+            className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            <Users className="w-3.5 h-3.5" />
+            Espace conseiller
+          </a>
+        )}
 
         <div className="flex-1" />
 
