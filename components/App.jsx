@@ -100,6 +100,12 @@ export default function App({ user, availableProviders = ['gemini'] }) {
   const [selectedJob, setSelectedJob] = useState(null);
   const [jobReport, setJobReport] = useState(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  // Salaire sourcé (Adzuna) : null tant qu'on n'a pas de donnée fiable,
+  // on retombe alors sur l'estimation IA de la fiche métier.
+  const [salaryStats, setSalaryStats] = useState(null);
+  // Code ROME du métier sélectionné, résolu une fois via ROMEO et partagé
+  // aux offres et aux entreprises : la clé unique du métier ciblé.
+  const [selectedRome, setSelectedRome] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -280,14 +286,33 @@ export default function App({ user, availableProviders = ['gemini'] }) {
     }
   };
 
-  const discoverJob = async (jobTitle) => {
+  const discoverJob = async (jobTitle, codeRome = null) => {
     setSelectedJob(jobTitle);
     setSearchKeywords(jobTitle);
     goToStep(3);
     setIsGeneratingReport(true);
     setJobReport(null);
+    setSalaryStats(null);
+    setSelectedRome(null);
     setChatHistory([]);
     setError(null);
+
+    // Clé unifiée. Le code ROME est déjà résolu à l'analyse du CV et voyage avec
+    // la carte métier : on le réutilise directement. Sinon (accès direct, repli),
+    // on le résout une fois via ROMEO. Non bloquant dans les deux cas.
+    if (codeRome) {
+      setSelectedRome({ codeRome, libelle: jobTitle });
+    } else {
+      fetch('/api/rome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label: jobTitle, limit: 1 }),
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (d?.metiers?.[0]?.codeRome) setSelectedRome(d.metiers[0]); })
+        .catch(() => {}); // échec silencieux : les offres retomberont sur les mots-clés
+    }
+
     try {
       const result = await callAI('discover_job', { jobTitle });
       if (result?.report) {
@@ -296,6 +321,17 @@ export default function App({ user, availableProviders = ['gemini'] }) {
       } else {
         throw new Error('Format de réponse invalide');
       }
+
+      // Salaire sourcé, en parallèle : n'interrompt jamais l'enquête métier.
+      // Si Adzuna ne renvoie rien, on garde l'estimation IA de la fiche.
+      fetch('/api/salary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobTitle, location: userLocation }),
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (d?.salary) setSalaryStats(d.salary); })
+        .catch(() => {}); // échec silencieux : repli sur le salaire IA
     } catch (err) {
       setError("Erreur lors de la préparation de l'enquête métier.");
     } finally {
@@ -334,7 +370,12 @@ export default function App({ user, availableProviders = ['gemini'] }) {
       const res = await fetch('/api/france-travail', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keywords: searchKeywords || selectedJob, location: userLocation, limit: 8 }),
+        body: JSON.stringify({
+          keywords: searchKeywords || selectedJob,
+          codeRome: selectedRome?.codeRome || null,
+          location: userLocation,
+          limit: 8,
+        }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -728,7 +769,7 @@ export default function App({ user, availableProviders = ['gemini'] }) {
                         <tr
                           key={idx}
                           className="hover:bg-cream-50 transition-colors group cursor-pointer"
-                          onClick={() => discoverJob(job.title)}
+                          onClick={() => discoverJob(job.title, job.codeRome)}
                         >
                           <td className="p-4 align-top">
                             <span className="font-semibold text-teal-700 group-hover:underline flex items-center gap-2">
@@ -871,7 +912,20 @@ export default function App({ user, availableProviders = ['gemini'] }) {
                     </div>
                     <div>
                       <span className="block font-semibold text-teal-800 mb-2">Salaire</span>
-                      <Badge variant="teal" className="text-sm">{jobReport.salaire}</Badge>
+                      {salaryStats ? (
+                        <div className="space-y-1">
+                          <Badge variant="teal" className="text-sm">{salaryStats.rangeLabel}</Badge>
+                          <p className="text-xs text-teal-700/70">
+                            Médiane {salaryStats.median.toLocaleString('fr-FR')} €/an ·
+                            source {salaryStats.source} ({salaryStats.sampleSize} offres, {salaryStats.year})
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          <Badge variant="teal" className="text-sm">{jobReport.salaire}</Badge>
+                          <p className="text-xs text-teal-700/60">Estimation indicative</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Card>
@@ -1039,7 +1093,7 @@ export default function App({ user, availableProviders = ['gemini'] }) {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="group inline-flex items-center gap-1.5 text-base font-bold text-teal-800 hover:text-teal-600 hover:underline focus:outline-none focus:ring-2 focus:ring-teal-400 rounded"
-                            title="Voir la fiche complète sur France Travail"
+                            title={`Voir la fiche complète sur ${offer.source || 'la source'}`}
                           >
                             {offer.intitule}
                             <ExternalLink className="w-4 h-4 opacity-60 group-hover:opacity-100 transition-opacity" />
@@ -1048,6 +1102,7 @@ export default function App({ user, availableProviders = ['gemini'] }) {
                           <h3 className="text-base font-bold text-teal-800">{offer.intitule}</h3>
                         )}
                         <Badge variant="teal">{offer.typeContrat}</Badge>
+                        {offer.source && <Badge variant="rose">{offer.source}</Badge>}
                       </div>
                       <div className="flex items-center gap-4 text-sm text-teal-700/70 mb-3">
                         <span className="flex items-center gap-1"><Building2 className="w-4 h-4 text-teal-500" /> {offer.entreprise}</span>
@@ -1227,6 +1282,7 @@ export default function App({ user, availableProviders = ['gemini'] }) {
         cvText={cvText}
         selectedJob={selectedJob}
         userLocation={userLocation}
+        preResolvedRome={selectedRome}
       />
 
       {/* ─────── Modal : détail de la note du CV ─────── */}

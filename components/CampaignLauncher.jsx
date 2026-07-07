@@ -63,7 +63,7 @@ function StepRow({ step, status, detail }) {
 
 // ─── Composant principal ──────────────────────────────────────────────────
 
-export default function CampaignLauncher({ isOpen, onClose, cvText, selectedJob, userLocation = '' }) {
+export default function CampaignLauncher({ isOpen, onClose, cvText, selectedJob, userLocation = '', preResolvedRome = null }) {
   const [city, setCity]     = useState(userLocation);
   const [radius, setRadius] = useState(30);
   const [running, setRunning] = useState(false);
@@ -107,17 +107,24 @@ export default function CampaignLauncher({ isOpen, onClose, cvText, selectedJob,
       setStep('geocode', 'done', `${cityLabel} (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
 
       // ── 2. Code ROME ─────────────────────────────────────────────────
+      // Clé unifiée : on réutilise le ROME déjà résolu à la sélection du métier
+      // s'il est disponible, sinon on le résout ici (repli).
       setStep('rome', 'active');
-      const romeRes = await fetch('/api/rome', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ label: selectedJob, limit: 1 }),
-      });
-      const romeData = await romeRes.json();
-      if (!romeRes.ok) throw new Error(romeData.error || 'Erreur ROME.');
-      const codeRome = romeData.metiers?.[0]?.codeRome;
+      let codeRome = preResolvedRome?.codeRome;
+      let romeLibelle = preResolvedRome?.libelle;
+      if (!codeRome) {
+        const romeRes = await fetch('/api/rome', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ label: selectedJob, limit: 1 }),
+        });
+        const romeData = await romeRes.json();
+        if (!romeRes.ok) throw new Error(romeData.error || 'Erreur ROME.');
+        codeRome = romeData.metiers?.[0]?.codeRome;
+        romeLibelle = romeData.metiers?.[0]?.libelle;
+      }
       if (!codeRome) throw new Error(`Aucun code ROME trouvé pour « ${selectedJob} ».`);
-      setStep('rome', 'done', `${codeRome} — ${romeData.metiers[0].libelle}`);
+      setStep('rome', 'done', `${codeRome} — ${romeLibelle || ''}`);
 
       // ── 3. La Bonne Boîte ────────────────────────────────────────────
       setStep('lbb', 'active');

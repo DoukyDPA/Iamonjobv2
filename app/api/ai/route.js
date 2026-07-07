@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase/admin';
 import { callAI, availableProviders } from '@/lib/ai';
+import { normalizeSuggestionsToRome } from '@/lib/france-travail';
 import { buildAIRequest } from '@/lib/ai/prompts';
 import { validateAIResult } from '@/lib/ai/validate';
 import { enforceRateLimit } from '@/lib/rate-limit';
@@ -102,11 +103,27 @@ export async function POST(request) {
       }
     }
 
+    // Normalisation ROME des métiers suggérés : on cale chaque piste sur une
+    // appellation officielle et on y attache le code ROME, clé de toute la chaîne.
+    let finalResult = result;
+    if (action === 'analyze_cv' && result?.suggestions) {
+      try {
+        const suggestions = await normalizeSuggestionsToRome(result.suggestions);
+        finalResult = { ...result, suggestions };
+      } catch (err) {
+        // Non bloquant : on renvoie l'analyse telle quelle si la normalisation échoue.
+        logEvent({
+          event: 'ai', requestId, uid, action, status: 'rome_normalize_skipped',
+          error: err.message, level: 'warn',
+        });
+      }
+    }
+
     logEvent({
       event: 'ai', requestId, uid, action, provider: provider || 'gemini',
       status: 'ok', durationMs: Date.now() - startedAt,
     });
-    return NextResponse.json({ result });
+    return NextResponse.json({ result: finalResult });
   } catch (err) {
     logEvent({
       event: 'ai', requestId, uid, action, provider: provider || 'gemini',

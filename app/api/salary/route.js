@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase/admin';
-import { searchAllOffers } from '@/lib/offers';
+import { getSalaryStats } from '@/lib/salary';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { logEvent, newRequestId } from '@/lib/logger';
 
@@ -8,8 +8,8 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 // Plafonds par utilisateur (modifiables via variables d'environnement).
-const FT_PER_MINUTE = parseInt(process.env.FT_RATE_PER_MINUTE || '20', 10);
-const FT_PER_DAY = parseInt(process.env.FT_RATE_PER_DAY || '300', 10);
+const SALARY_PER_MINUTE = parseInt(process.env.SALARY_RATE_PER_MINUTE || '20', 10);
+const SALARY_PER_DAY = parseInt(process.env.SALARY_RATE_PER_DAY || '300', 10);
 
 export async function POST(request) {
   const token = request.cookies.get('__session')?.value;
@@ -28,17 +28,17 @@ export async function POST(request) {
   // ─── Limitation de débit par utilisateur ───────────────────────────────
   const rate = await enforceRateLimit({
     uid,
-    route: 'france-travail',
-    perMinute: FT_PER_MINUTE,
-    perDay: FT_PER_DAY,
+    route: 'salary',
+    perMinute: SALARY_PER_MINUTE,
+    perDay: SALARY_PER_DAY,
   });
   if (!rate.allowed) {
     return NextResponse.json(
       {
         error:
           rate.scope === 'day'
-            ? 'Quota quotidien de recherches atteint. Réessayez demain.'
-            : 'Trop de recherches. Patientez un instant avant de réessayer.',
+            ? 'Quota quotidien atteint. Réessayez demain.'
+            : 'Trop de requêtes. Patientez un instant avant de réessayer.',
       },
       { status: 429, headers: { 'Retry-After': String(rate.retryAfter || 60) } }
     );
@@ -51,28 +51,29 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Body JSON invalide.' }, { status: 400 });
   }
 
-  const { keywords, codeRome, location, limit } = body;
-  if (!keywords && !codeRome) {
-    return NextResponse.json({ error: 'Un champ keywords ou codeRome est requis.' }, { status: 400 });
+  const { jobTitle, location } = body;
+  if (!jobTitle || typeof jobTitle !== 'string' || !jobTitle.trim()) {
+    return NextResponse.json({ error: 'Le champ jobTitle est requis.' }, { status: 400 });
   }
 
   const requestId = newRequestId();
   const startedAt = Date.now();
   try {
-    const offers = await searchAllOffers({ keywords, codeRome, location, limit });
-    // On journalise le nombre de résultats, jamais les mots-clés (donnée perso).
+    const salary = await getSalaryStats({ jobTitle, location });
+    // On journalise seulement la présence/absence de résultat, jamais l'intitulé
+    // (le métier ciblé est une donnée personnelle liée au projet de l'utilisateur).
     logEvent({
-      event: 'france-travail', requestId, uid, status: 'ok',
-      resultCount: offers.length, durationMs: Date.now() - startedAt,
+      event: 'salary', requestId, uid, status: 'ok',
+      resultCount: salary ? 1 : 0, durationMs: Date.now() - startedAt,
     });
-    return NextResponse.json({ offers });
+    return NextResponse.json({ salary });
   } catch (err) {
     logEvent({
-      event: 'france-travail', requestId, uid, status: 'error',
+      event: 'salary', requestId, uid, status: 'error',
       durationMs: Date.now() - startedAt, error: err.message, level: 'error',
     });
     return NextResponse.json(
-      { error: err.message || 'Erreur recherche offres.' },
+      { error: err.message || 'Erreur récupération salaire.' },
       { status: 500 }
     );
   }
