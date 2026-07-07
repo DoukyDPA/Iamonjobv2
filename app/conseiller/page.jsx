@@ -20,7 +20,15 @@ import { auth } from '@/lib/firebase/client';
 import {
   Loader2, Users, UserPlus, ShieldCheck, ShieldAlert, ShieldX,
   Compass, Copy, Check, X, AlertCircle, Send,
+  MessageSquareHeart, Clock, CheckCircle2, ExternalLink, Coins,
 } from 'lucide-react';
+
+// Format court des grands nombres : 12 340 → « 12,3 k », lisible d'un coup d'œil.
+function formatTokens(n) {
+  const v = Number(n) || 0;
+  if (v >= 1000) return `${(v / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} k`;
+  return v.toLocaleString('fr-FR');
+}
 import { BrandLogo } from '@/components/brand';
 import AccessibilityBar from '@/components/layout/AccessibilityBar';
 import Footer from '@/components/layout/Footer';
@@ -61,6 +69,9 @@ export default function ConseillerPage() {
   const [creating, setCreating] = useState(false);
   const [newCode, setNewCode] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [avis, setAvis] = useState([]);
+  const [drafts, setDrafts] = useState({});
+  const [replyingId, setReplyingId] = useState(null);
 
   async function load() {
     const res = await fetch('/api/conseiller/beneficiaires');
@@ -68,7 +79,33 @@ export default function ConseillerPage() {
     if (!res.ok) { setError('Chargement impossible.'); setLoading(false); return; }
     const data = await res.json();
     setList(data.beneficiaires || []);
+    // File des avis. Un échec ici ne bloque pas l'affichage du groupe.
+    try {
+      const ar = await fetch('/api/conseiller/avis');
+      if (ar.ok) { const ad = await ar.json(); setAvis(ad.avis || []); }
+    } catch { /* silencieux */ }
     setLoading(false);
+  }
+
+  async function sendReply(avisId) {
+    const reply = (drafts[avisId] || '').trim();
+    if (!reply) return;
+    setReplyingId(avisId);
+    setError(null);
+    try {
+      const res = await fetch(`/api/conseiller/avis/${avisId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reply }),
+      });
+      if (!res.ok) throw new Error();
+      setDrafts((d) => { const n = { ...d }; delete n[avisId]; return n; });
+      await load();
+    } catch {
+      setError("L'envoi de la réponse a échoué. Réessayez.");
+    } finally {
+      setReplyingId(null);
+    }
   }
 
   useEffect(() => {
@@ -147,6 +184,7 @@ export default function ConseillerPage() {
   const total = list.length;
   const enAttente = list.filter((b) => b.consentStatus !== 'granted').length;
   const autonomes = list.filter((b) => b.pilotage === 'autonome').length;
+  const tokensMois = list.reduce((s, b) => s + (b.usage?.tokensThisMonth || 0), 0);
 
   return (
     <div className="min-h-screen bg-cream-100 text-teal-900 flex flex-col">
@@ -183,10 +221,11 @@ export default function ConseillerPage() {
         )}
 
         {/* Cartes de synthèse */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           <Stat icon={Users} label="Personnes suivies" value={total} tone="teal" />
           <Stat icon={ShieldAlert} label="Consentement à obtenir" value={enAttente} tone="amber" />
           <Stat icon={Compass} label="En autonomie" value={autonomes} tone="teal" />
+          <Stat icon={Coins} label="Tokens IA ce mois" value={formatTokens(tokensMois)} tone="teal" />
         </div>
 
         {/* Tableau radar */}
@@ -208,6 +247,8 @@ export default function ConseillerPage() {
                   <th className="px-4 py-3 font-semibold">Consentement</th>
                   <th className="px-4 py-3 font-semibold">Pilotage</th>
                   <th className="px-4 py-3 font-semibold">Candidatures</th>
+                  <th className="px-4 py-3 font-semibold">Tokens (mois)</th>
+                  <th className="px-4 py-3 font-semibold">Tokens (total)</th>
                   <th className="px-4 py-3 font-semibold">Accès</th>
                 </tr>
               </thead>
@@ -218,6 +259,8 @@ export default function ConseillerPage() {
                     <td className="px-4 py-3"><Badge map={CONSENT} value={b.consentStatus} /></td>
                     <td className="px-4 py-3"><Badge map={PILOTAGE} value={b.pilotage} /></td>
                     <td className="px-4 py-3 text-teal-700">{b.candidaturesCount}</td>
+                    <td className="px-4 py-3 font-medium text-teal-800">{formatTokens(b.usage?.tokensThisMonth)}</td>
+                    <td className="px-4 py-3 text-teal-700/70">{formatTokens(b.usage?.tokensTotal)}</td>
                     <td className="px-4 py-3">
                       <span className={`text-xs font-medium ${b.status === 'active' ? 'text-teal-600' : 'text-amber-600'}`}>
                         {b.status === 'active' ? 'Actif' : 'Code non activé'}
@@ -229,6 +272,15 @@ export default function ConseillerPage() {
             </table>
           </div>
         )}
+
+        {/* File des avis demandés */}
+        <AvisQueue
+          avis={avis}
+          drafts={drafts}
+          setDrafts={setDrafts}
+          onReply={sendReply}
+          replyingId={replyingId}
+        />
       </main>
 
       {/* Modale : code fraîchement généré */}
@@ -311,5 +363,108 @@ function Stat({ icon: Icon, label, value, tone }) {
         <div className="text-xs text-teal-700/70 mt-1">{label}</div>
       </div>
     </div>
+  );
+}
+
+// Photo des emplois figés au moment de la demande. Lecture rapide pour le
+// conseiller : intitulé, entreprise, lieu, avec lien vers l'annonce.
+function OffersPreview({ offers = [] }) {
+  if (!offers.length) return null;
+  return (
+    <ul className="mt-2 space-y-1">
+      {offers.slice(0, 6).map((o, i) => (
+        <li key={i} className="text-xs text-teal-700/80 flex items-start gap-1.5">
+          <span className="text-teal-400 mt-0.5">•</span>
+          <span>
+            {o.url ? (
+              <a href={o.url} target="_blank" rel="noopener noreferrer"
+                 className="font-semibold text-teal-700 hover:underline inline-flex items-center gap-1">
+                {o.intitule}<ExternalLink className="w-3 h-3 opacity-60" />
+              </a>
+            ) : (
+              <span className="font-semibold text-teal-700">{o.intitule}</span>
+            )}
+            {(o.entreprise || o.lieu) && (
+              <span className="text-teal-700/60"> — {[o.entreprise, o.lieu].filter(Boolean).join(', ')}</span>
+            )}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// File des demandes d'avis. En attente d'abord (avec zone de réponse), puis les
+// demandes déjà traitées, repliées visuellement.
+function AvisQueue({ avis, drafts, setDrafts, onReply, replyingId }) {
+  if (!avis || avis.length === 0) return null;
+  const pending = avis.filter((a) => a.status === 'pending');
+  const answered = avis.filter((a) => a.status === 'answered');
+
+  return (
+    <section className="mt-8">
+      <div className="flex items-center gap-2 mb-4">
+        <MessageSquareHeart className="w-5 h-5 text-teal-700" aria-hidden="true" />
+        <h2 className="text-xl font-extrabold text-teal-800">Avis demandés</h2>
+        {pending.length > 0 && (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">
+            {pending.length} en attente
+          </span>
+        )}
+      </div>
+
+      <div className="space-y-3">
+        {pending.map((a) => (
+          <div key={a.id} className="bg-white border border-amber-200 rounded-2xl shadow-card p-5">
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <Clock className="w-4 h-4 text-amber-500" aria-hidden="true" />
+              <span className="font-mono font-semibold text-teal-800">{a.beneficiaireCode}</span>
+              <span className="text-teal-700/60">demande un avis sur</span>
+              <span className="font-semibold text-teal-800">{a.context?.metier || 'des emplois'}</span>
+            </div>
+            {a.note && (
+              <p className="mt-2 text-sm text-teal-800 bg-cream-50 border border-cream-200 rounded-lg px-3 py-2 whitespace-pre-wrap">
+                {a.note}
+              </p>
+            )}
+            <OffersPreview offers={a.context?.offers} />
+
+            <div className="mt-3">
+              <label htmlFor={`reply-${a.id}`} className="sr-only">Votre réponse</label>
+              <textarea
+                id={`reply-${a.id}`}
+                value={drafts[a.id] || ''}
+                onChange={(e) => setDrafts((d) => ({ ...d, [a.id]: e.target.value }))}
+                rows={2}
+                maxLength={2000}
+                placeholder="Votre avis, en quelques mots…"
+                className="w-full p-3 text-sm rounded-lg border border-cream-300 bg-white outline-none focus:ring-2 focus:ring-teal-400 placeholder:text-teal-700/40"
+              />
+              <div className="mt-2 flex justify-end">
+                <button
+                  onClick={() => onReply(a.id)}
+                  disabled={replyingId === a.id || !(drafts[a.id] || '').trim()}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 disabled:bg-teal-200 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                >
+                  {replyingId === a.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  Répondre
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {answered.map((a) => (
+          <div key={a.id} className="bg-white border border-cream-200 rounded-2xl shadow-card p-5 opacity-90">
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <CheckCircle2 className="w-4 h-4 text-teal-600" aria-hidden="true" />
+              <span className="font-mono font-semibold text-teal-800">{a.beneficiaireCode}</span>
+              <span className="text-teal-700/60">— {a.context?.metier || 'emplois'} · répondu</span>
+            </div>
+            <p className="mt-2 text-sm text-teal-800 whitespace-pre-wrap">{a.reply}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

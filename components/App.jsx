@@ -22,6 +22,7 @@ import {
   saveCvRatingToFirestore,
   clearCvRatingInFirestore,
 } from '@/lib/firebase/client';
+import AvisConseiller from './AvisConseiller';
 
 const MAX_CHAT_MESSAGES = 30;
 const CHAT_HISTORY_WINDOW = 10;
@@ -55,7 +56,7 @@ const formatSessionDate = () => {
   } catch { return ''; }
 };
 
-export default function App({ user, availableProviders = ['gemini'] }) {
+export default function App({ user, availableProviders = ['mistral'] }) {
   const [step, setStep] = useState(1);
   const [maxUnlocked, setMaxUnlocked] = useState(1);
   const [cvText, setCvText] = useState('');
@@ -63,7 +64,7 @@ export default function App({ user, availableProviders = ['gemini'] }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [userLocation, setUserLocation] = useState('');
-  const [provider, setProvider] = useState(availableProviders[0] || 'gemini');
+  const [provider, setProvider] = useState(availableProviders[0] || 'mistral');
 
   useEffect(() => {
     try {
@@ -1124,6 +1125,14 @@ export default function App({ user, availableProviders = ['gemini'] }) {
                 </Card>
               ))}
             </div>
+          )}
+
+          {searchResults.length > 0 && (
+            <AvisConseiller
+              metier={searchKeywords || selectedJob}
+              codeRome={selectedRome?.codeRome || null}
+              offers={searchResults}
+            />
           )}
 
           <StepFooter

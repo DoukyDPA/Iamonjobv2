@@ -10,6 +10,7 @@
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/session';
 import { createBeneficiaire, listBeneficiaires } from '@/lib/beneficiaires';
+import { getUsageForBeneficiaires } from '@/lib/usage';
 import { logEvent, newRequestId } from '@/lib/logger';
 
 export const runtime = 'nodejs';
@@ -23,7 +24,13 @@ export async function GET(request) {
 
   try {
     const beneficiaires = await listBeneficiaires(uid);
-    return NextResponse.json({ beneficiaires });
+    // Suivi de coût : on rattache à chaque dossier sa consommation de tokens.
+    const usage = await getUsageForBeneficiaires(beneficiaires.map((b) => b.id));
+    const withUsage = beneficiaires.map((b) => ({
+      ...b,
+      usage: usage[b.id] || { tokensTotal: 0, callsTotal: 0, tokensThisMonth: 0 },
+    }));
+    return NextResponse.json({ beneficiaires: withUsage });
   } catch (err) {
     return NextResponse.json({ error: err.message || 'Erreur chargement.' }, { status: 500 });
   }

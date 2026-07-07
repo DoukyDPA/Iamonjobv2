@@ -5,6 +5,8 @@ import { normalizeSuggestionsToRome } from '@/lib/france-travail';
 import { buildAIRequest } from '@/lib/ai/prompts';
 import { validateAIResult } from '@/lib/ai/validate';
 import { enforceRateLimit } from '@/lib/rate-limit';
+import { getBeneficiaireByAuthUid } from '@/lib/beneficiaires';
+import { recordUsage } from '@/lib/usage';
 import { logEvent, newRequestId } from '@/lib/logger';
 
 export const runtime = 'nodejs';
@@ -86,6 +88,15 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Action IA non autorisée.' }, { status: 400 });
   }
 
+  // Suivi de coût : on cumule les tokens de l'appel. Le provider les remonte via
+  // onUsage ; on somme ici, puis on enregistre une seule fois après succès.
+  let tokensUsed = 0;
+  let usageProvider = effectiveProvider || 'mistral';
+  const onUsage = ({ provider: p, tokens }) => {
+    tokensUsed += Number(tokens) || 0;
+    if (p) usageProvider = p;
+  };
+
   try {
     const result = await callAI({
       provider: effectiveProvider,
@@ -93,6 +104,7 @@ export async function POST(request) {
       prompt: aiRequest.prompt,
       systemInstruction: aiRequest.systemInstruction,
       isJson: aiRequest.isJson,
+      onUsage,
     });
 
     // ─── Validation de la forme de la réponse (sorties JSON uniquement) ────
@@ -128,8 +140,18 @@ export async function POST(request) {
 
     logEvent({
       event: 'ai', requestId, uid, action, provider: effectiveProvider || 'mistral',
-      status: 'ok', durationMs: Date.now() - startedAt,
+      status: 'ok', durationMs: Date.now() - startedAt, tokens: tokensUsed,
     });
+
+    // Comptabilisation des tokens par personne accompagnée, sans bloquer la
+    // réponse. On ne suit que les dossiers rattachés à un conseiller ; un compte
+    // libre (hors accompagnement) n'a pas de dossier et n'est donc pas suivi.
+    if (tokensUsed > 0) {
+      getBeneficiaireByAuthUid(uid)
+        .then((ben) => ben && recordUsage({ beneficiaireId: ben.id, provider: usageProvider, tokens: tokensUsed }))
+        .catch((err) => logEvent({ event: 'usage-record', requestId, uid, status: 'error', error: err.message, level: 'warn' }));
+    }
+
     return NextResponse.json({ result: finalResult });
   } catch (err) {
     logEvent({

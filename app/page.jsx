@@ -9,7 +9,7 @@ import App from '@/components/App';
 export default function HomePage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [providers, setProviders] = useState(['gemini']);
+  const [providers, setProviders] = useState(['mistral']);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
