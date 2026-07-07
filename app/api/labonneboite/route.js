@@ -49,11 +49,15 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Body JSON invalide.' }, { status: 400 });
   }
 
-  const { romeCode, latitude, longitude, distance, nafCodes, headcount, contract, page, pageSize } = body;
+  const {
+    romeCode, citycode, postcode, departmentNumber, city, region,
+    distance, nafCodes, headcount, contract, page, pageSize,
+  } = body;
 
-  if (!romeCode || latitude == null || longitude == null) {
+  const hasLocation = citycode || postcode || departmentNumber || city || region;
+  if (!romeCode || !hasLocation) {
     return NextResponse.json(
-      { error: 'Les champs romeCode, latitude et longitude sont requis.' },
+      { error: 'Les champs romeCode et une localisation (citycode, postcode, departmentNumber, city ou region) sont requis.' },
       { status: 400 }
     );
   }
@@ -66,8 +70,8 @@ export async function POST(request) {
       name: `Entreprise Test ${i + 1}`,
       naf: '7022Z', nafText: 'Conseil pour les affaires et autres conseils de gestion',
       address: '', city: 'Paris', zipcode: '75001',
-      latitude: latitude + (Math.random() - 0.5) * 0.1,
-      longitude: longitude + (Math.random() - 0.5) * 0.1,
+      latitude: 48.8566 + (Math.random() - 0.5) * 0.1,
+      longitude: 2.3522 + (Math.random() - 0.5) * 0.1,
       headcountText: '10–19 salariés',
       stars: Math.round(Math.random() * 5 * 10) / 10,
       url: null, website: null,
@@ -79,7 +83,7 @@ export async function POST(request) {
   const startedAt = Date.now();
   try {
     const result = await getLaBonneBoite({
-      romeCode, latitude, longitude,
+      romeCode, citycode, postcode, departmentNumber, city, region,
       distance, nafCodes, headcount, contract, page, pageSize,
     });
     logEvent({

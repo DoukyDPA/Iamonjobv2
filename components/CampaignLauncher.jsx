@@ -104,6 +104,10 @@ export default function CampaignLauncher({ isOpen, onClose, cvText, selectedJob,
       if (!feature) throw new Error(`Ville « ${city} » introuvable.`);
       const [longitude, latitude] = feature.geometry.coordinates;
       const cityLabel = feature.properties.label;
+      // La Bonne Boîte v2 exige un code de localisation (city/citycode/postcode…),
+      // pas des coordonnées : la Base Adresse Nationale nous donne le code INSEE.
+      const citycode = feature.properties.citycode;
+      const postcode = feature.properties.postcode;
       setStep('geocode', 'done', `${cityLabel} (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
 
       // ── 2. Code ROME ─────────────────────────────────────────────────
@@ -131,12 +135,23 @@ export default function CampaignLauncher({ isOpen, onClose, cvText, selectedJob,
       const lbbRes = await fetch('/api/labonneboite', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ romeCode: codeRome, latitude, longitude, distance: radius, pageSize: 20 }),
+        body:    JSON.stringify({ romeCode: codeRome, citycode, postcode, distance: radius, pageSize: 20 }),
       });
       const lbbData = await lbbRes.json();
       if (!lbbRes.ok) throw new Error(lbbData.error || 'Erreur La Bonne Boîte.');
       const companies = lbbData.companies || [];
-      if (companies.length === 0) throw new Error('Aucune entreprise trouvée dans ce secteur. Essayez un rayon plus large.');
+      if (companies.length === 0) {
+        // La Bonne Boîte n'est pas un annuaire d'entreprises qui recrutent : c'est
+        // un modèle qui repère les employeurs à fort volume d'embauche (données
+        // DPAE). Il couvre mal les métiers transversaux ou de niche (RSE, qualité,
+        // conseil…), pour lesquels il ne fléche personne, même en élargissant la
+        // zone. Élargir le rayon n'y change rien : on l'explique au lieu de le
+        // suggérer à tort, et on renvoie vers les offres, qui nomment de vraies
+        // entreprises en train de recruter ce profil.
+        throw new Error(
+          "La Bonne Boîte ne référence aucune entreprise pour ce métier. Ce n'est pas un bug : cet outil de France Travail repère surtout les métiers à fort volume d'embauche et couvre mal les profils transversaux comme celui-ci. Élargir la zone n'y changerait rien. Appuyez-vous plutôt sur les offres d'emploi de l'étape précédente : elles nomment des entreprises qui recrutent ce profil en ce moment."
+        );
+      }
       setStep('lbb', 'done', `${companies.length} entreprise${companies.length > 1 ? 's' : ''} trouvée${companies.length > 1 ? 's' : ''}`);
 
       // ── 4. Résolution des contacts ───────────────────────────────────
