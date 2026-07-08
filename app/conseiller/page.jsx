@@ -43,12 +43,6 @@ const CONSENT = {
   revoked: { label: 'Retiré',     cls: 'bg-rose-50 text-rose-700 border-rose-200',    Icon: ShieldX },
 };
 
-const PILOTAGE = {
-  autonome: { label: 'Autonome', cls: 'bg-teal-50 text-teal-700 border-teal-200' },
-  mixte:    { label: 'Mixte',    cls: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-  pilote:   { label: 'Piloté',   cls: 'bg-amber-50 text-amber-700 border-amber-200' },
-};
-
 function Badge({ map, value }) {
   const it = map[value] || { label: value, cls: 'bg-gray-50 text-gray-600 border-gray-200' };
   const Icon = it.Icon;
@@ -203,7 +197,7 @@ export default function ConseillerPage() {
 
   const total = list.length;
   const enAttente = list.filter((b) => b.consentStatus !== 'granted').length;
-  const autonomes = list.filter((b) => b.pilotage === 'autonome').length;
+  const nonActives = list.filter((b) => b.status !== 'active').length;
   const tokensMois = list.reduce((s, b) => s + (b.usage?.tokensThisMonth || 0), 0);
 
   return (
@@ -244,7 +238,7 @@ export default function ConseillerPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           <Stat icon={Users} label="Personnes suivies" value={total} tone="teal" />
           <Stat icon={ShieldAlert} label="Consentement à obtenir" value={enAttente} tone="amber" />
-          <Stat icon={Compass} label="En autonomie" value={autonomes} tone="teal" />
+          <Stat icon={Clock} label="Accès non activés" value={nonActives} tone={nonActives > 0 ? 'amber' : 'teal'} />
           <Stat icon={Coins} label="Tokens IA ce mois" value={formatTokens(tokensMois)} tone="teal" />
         </div>
 
@@ -259,49 +253,95 @@ export default function ConseillerPage() {
             </p>
           </div>
         ) : (
-          <div className="bg-white border border-cream-200 rounded-2xl shadow-card overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-cream-50 text-teal-700/70 text-left text-xs uppercase tracking-wide">
-                  <th className="px-4 py-3 font-semibold">Code</th>
-                  <th className="px-4 py-3 font-semibold">Consentement</th>
-                  <th className="px-4 py-3 font-semibold">Pilotage</th>
-                  <th className="px-4 py-3 font-semibold">Candidatures</th>
-                  <th className="px-4 py-3 font-semibold">Tokens (mois)</th>
-                  <th className="px-4 py-3 font-semibold">Tokens (total)</th>
-                  <th className="px-4 py-3 font-semibold">Accès</th>
-                  <th className="px-4 py-3 font-semibold text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {list.map((b) => (
-                  <tr key={b.id} className="border-t border-cream-100 hover:bg-cream-50/50">
-                    <td className="px-4 py-3 font-mono font-semibold text-teal-800">{b.code}</td>
-                    <td className="px-4 py-3"><Badge map={CONSENT} value={b.consentStatus} /></td>
-                    <td className="px-4 py-3"><Badge map={PILOTAGE} value={b.pilotage} /></td>
-                    <td className="px-4 py-3 text-teal-700">{b.candidaturesCount}</td>
-                    <td className="px-4 py-3 font-medium text-teal-800">{formatTokens(b.usage?.tokensThisMonth)}</td>
-                    <td className="px-4 py-3 text-teal-700/70">{formatTokens(b.usage?.tokensTotal)}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs font-medium ${b.status === 'active' ? 'text-teal-600' : 'text-amber-600'}`}>
-                        {b.status === 'active' ? 'Actif' : 'Code non activé'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => setConfirmDelete(b)}
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-400"
-                        aria-label={`Supprimer le dossier ${b.code}`}
-                        title="Supprimer ce dossier"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
+          <>
+            {/* Desktop : tableau (défile horizontalement si l'écran est étroit) */}
+            <div className="hidden md:block bg-white border border-cream-200 rounded-2xl shadow-card overflow-x-auto">
+              <table className="w-full text-sm min-w-[680px]">
+                <thead>
+                  <tr className="bg-cream-50 text-teal-700/70 text-left text-xs uppercase tracking-wide">
+                    <th className="px-4 py-3 font-semibold">Code</th>
+                    <th className="px-4 py-3 font-semibold">Consentement</th>
+                    <th className="px-4 py-3 font-semibold">Candidatures</th>
+                    <th className="px-4 py-3 font-semibold">Tokens (mois)</th>
+                    <th className="px-4 py-3 font-semibold">Tokens (total)</th>
+                    <th className="px-4 py-3 font-semibold">Accès</th>
+                    <th className="px-4 py-3 font-semibold text-right">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {list.map((b) => (
+                    <tr key={b.id} className="border-t border-cream-100 hover:bg-cream-50/50">
+                      <td className="px-4 py-3 font-mono font-semibold text-teal-800">{b.code}</td>
+                      <td className="px-4 py-3"><Badge map={CONSENT} value={b.consentStatus} /></td>
+                      <td className="px-4 py-3 text-teal-700">{b.candidaturesCount}</td>
+                      <td className="px-4 py-3 font-medium text-teal-800">{formatTokens(b.usage?.tokensThisMonth)}</td>
+                      <td className="px-4 py-3 text-teal-700/70">{formatTokens(b.usage?.tokensTotal)}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs font-medium ${b.status === 'active' ? 'text-teal-600' : 'text-amber-600'}`}>
+                          {b.status === 'active' ? 'Actif' : 'Code non activé'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => setConfirmDelete(b)}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-400"
+                          aria-label={`Supprimer le dossier ${b.code}`}
+                          title="Supprimer ce dossier"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile : une carte par personne, lisible sans défilement horizontal */}
+            <div className="md:hidden space-y-3">
+              {list.map((b) => (
+                <div key={b.id} className="bg-white border border-cream-200 rounded-2xl shadow-card p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-mono font-bold text-teal-800 text-base">{b.code}</span>
+                    <button
+                      onClick={() => setConfirmDelete(b)}
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-400 shrink-0"
+                      aria-label={`Supprimer le dossier ${b.code}`}
+                      title="Supprimer ce dossier"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Badge map={CONSENT} value={b.consentStatus} />
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-semibold ${
+                      b.status === 'active'
+                        ? 'bg-teal-50 text-teal-700 border-teal-200'
+                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
+                      {b.status === 'active' ? 'Actif' : 'Code non activé'}
+                    </span>
+                  </div>
+
+                  <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
+                    <div className="rounded-xl bg-cream-50 border border-cream-100 py-2">
+                      <dt className="text-[11px] text-teal-700/60">Candidatures</dt>
+                      <dd className="text-lg font-bold text-teal-800 leading-tight">{b.candidaturesCount}</dd>
+                    </div>
+                    <div className="rounded-xl bg-cream-50 border border-cream-100 py-2">
+                      <dt className="text-[11px] text-teal-700/60">Tokens (mois)</dt>
+                      <dd className="text-lg font-bold text-teal-800 leading-tight">{formatTokens(b.usage?.tokensThisMonth)}</dd>
+                    </div>
+                    <div className="rounded-xl bg-cream-50 border border-cream-100 py-2">
+                      <dt className="text-[11px] text-teal-700/60">Tokens (total)</dt>
+                      <dd className="text-lg font-bold text-teal-800 leading-tight">{formatTokens(b.usage?.tokensTotal)}</dd>
+                    </div>
+                  </dl>
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
         {/* File des avis demandés */}
