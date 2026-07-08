@@ -17,7 +17,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   MessageSquareHeart, Send, Loader2, CheckCircle2, Clock, X,
-  Paperclip, Download, FileText, Briefcase, ChevronDown,
+  Paperclip, Download, FileText, Briefcase,
 } from 'lucide-react';
 import { Button } from './ui';
 
@@ -32,57 +32,22 @@ function formatBytes(b) {
 export function SharedContext({ context }) {
   const shared = context?.shared;
   const att = context?.attachment;
-  const [expanded, setExpanded] = useState(false);
   if (!shared && !att) return null;
-  // La fiche porte un instantané de son contenu (summary), figé au partage.
-  // On le déplie au clic : le conseiller lit le détail sans quitter sa file.
-  const canExpand = Boolean(shared?.summary);
   return (
     <div className="mt-2 space-y-1.5">
       {shared && (
-        canExpand ? (
-          <div className="rounded-lg border border-teal-200 bg-teal-50/60 overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setExpanded((v) => !v)}
-              aria-expanded={expanded}
-              className="w-full flex items-start gap-2 text-xs px-2.5 py-2 text-left hover:bg-teal-50"
-            >
-              <Briefcase className="w-3.5 h-3.5 text-teal-600 shrink-0 mt-0.5" />
-              <div className="min-w-0 flex-1">
-                <div className="font-semibold text-teal-800">
-                  {shared.kind === 'campaign' ? 'Campagne partagée' : 'Fiche partagée'} : {shared.title}
-                  {typeof shared.score === 'number' && (
-                    <span className="ml-1 text-teal-600">· {shared.score}%</span>
-                  )}
-                </div>
-                {shared.subtitle && <div className="text-teal-700/70">{shared.subtitle}</div>}
-              </div>
-              <ChevronDown
-                className={`w-4 h-4 text-teal-600 shrink-0 mt-0.5 transition-transform ${expanded ? 'rotate-180' : ''}`}
-                aria-hidden="true"
-              />
-            </button>
-            {expanded && (
-              <div className="px-2.5 pb-2.5 pt-0.5 text-xs text-teal-800/90 whitespace-pre-wrap border-t border-teal-100">
-                {shared.summary}
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="flex items-start gap-2 text-xs rounded-lg border border-teal-200 bg-teal-50/60 px-2.5 py-2">
-            <Briefcase className="w-3.5 h-3.5 text-teal-600 shrink-0 mt-0.5" />
-            <div className="min-w-0">
-              <div className="font-semibold text-teal-800">
-                {shared.kind === 'campaign' ? 'Campagne partagée' : 'Fiche partagée'} : {shared.title}
-                {typeof shared.score === 'number' && (
-                  <span className="ml-1 text-teal-600">· {shared.score}%</span>
-                )}
-              </div>
-              {shared.subtitle && <div className="text-teal-700/70">{shared.subtitle}</div>}
+        <div className="flex items-start gap-2 text-xs rounded-lg border border-teal-200 bg-teal-50/60 px-2.5 py-2">
+          <Briefcase className="w-3.5 h-3.5 text-teal-600 shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <div className="font-semibold text-teal-800">
+              {shared.kind === 'campaign' ? 'Campagne partagée' : 'Fiche partagée'} : {shared.title}
+              {typeof shared.score === 'number' && (
+                <span className="ml-1 text-teal-600">· {shared.score}%</span>
+              )}
             </div>
+            {shared.subtitle && <div className="text-teal-700/70">{shared.subtitle}</div>}
           </div>
-        )
+        </div>
       )}
       {att && (
         att.downloadUrl ? (

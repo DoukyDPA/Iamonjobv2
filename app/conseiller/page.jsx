@@ -20,7 +20,7 @@ import { auth } from '@/lib/firebase/client';
 import {
   Loader2, Users, UserPlus, ShieldCheck, ShieldAlert, ShieldX,
   Compass, Copy, Check, X, AlertCircle, Send,
-  MessageSquareHeart, Clock, CheckCircle2, ExternalLink, Coins,
+  MessageSquareHeart, Clock, CheckCircle2, ExternalLink, Coins, Eye,
 } from 'lucide-react';
 
 // Format court des grands nombres : 12 340 → « 12,3 k », lisible d'un coup d'œil.
@@ -33,6 +33,7 @@ import { BrandLogo } from '@/components/brand';
 import AccessibilityBar from '@/components/layout/AccessibilityBar';
 import Footer from '@/components/layout/Footer';
 import { SharedContext } from '@/components/MonConseiller';
+import FicheConseiller from '@/components/FicheConseiller';
 
 // ─── Libellés et styles des statuts ─────────────────────────────────────────
 
@@ -73,6 +74,7 @@ export default function ConseillerPage() {
   const [avis, setAvis] = useState([]);
   const [drafts, setDrafts] = useState({});
   const [replyingId, setReplyingId] = useState(null);
+  const [openFiche, setOpenFiche] = useState(null); // { avisId, code } | null
 
   async function load() {
     const res = await fetch('/api/conseiller/beneficiaires');
@@ -281,8 +283,18 @@ export default function ConseillerPage() {
           setDrafts={setDrafts}
           onReply={sendReply}
           replyingId={replyingId}
+          onOpenFiche={(a) => setOpenFiche({ avisId: a.id, code: a.beneficiaireCode })}
         />
       </main>
+
+      {/* Modale : fiche partagée en entier */}
+      {openFiche && (
+        <FicheConseiller
+          avisId={openFiche.avisId}
+          code={openFiche.code}
+          onClose={() => setOpenFiche(null)}
+        />
+      )}
 
       {/* Modale : code fraîchement généré */}
       {newCode && (
@@ -397,7 +409,20 @@ function OffersPreview({ offers = [] }) {
 
 // File des demandes d'avis. En attente d'abord (avec zone de réponse), puis les
 // demandes déjà traitées, repliées visuellement.
-function AvisQueue({ avis, drafts, setDrafts, onReply, replyingId }) {
+function FicheButton({ avis, onOpenFiche }) {
+  if (!avis.context?.shared) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => onOpenFiche(avis)}
+      className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-200 bg-white text-xs font-semibold text-teal-700 hover:border-teal-300 hover:bg-teal-50 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-400"
+    >
+      <Eye className="w-3.5 h-3.5" /> Voir la fiche complète
+    </button>
+  );
+}
+
+function AvisQueue({ avis, drafts, setDrafts, onReply, replyingId, onOpenFiche }) {
   if (!avis || avis.length === 0) return null;
   const pending = avis.filter((a) => a.status === 'pending');
   const answered = avis.filter((a) => a.status === 'answered');
@@ -430,6 +455,7 @@ function AvisQueue({ avis, drafts, setDrafts, onReply, replyingId }) {
             )}
             <OffersPreview offers={a.context?.offers} />
             <SharedContext context={a.context} />
+            <FicheButton avis={a} onOpenFiche={onOpenFiche} />
 
             <div className="mt-3">
               <label htmlFor={`reply-${a.id}`} className="sr-only">Votre réponse</label>
@@ -469,6 +495,7 @@ function AvisQueue({ avis, drafts, setDrafts, onReply, replyingId }) {
               </p>
             )}
             <SharedContext context={a.context} />
+            <FicheButton avis={a} onOpenFiche={onOpenFiche} />
             <p className="mt-2 text-sm text-teal-800 whitespace-pre-wrap">
               <span className="font-semibold text-teal-700">Votre réponse : </span>{a.reply}
             </p>
