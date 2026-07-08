@@ -43,7 +43,44 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Session invalide.' }, { status: 401 });
   }
 
+  // ─── Corps de la requête ────────────────────────────────────────────────
+  // Lu tôt (avant la limitation de débit) pour connaître le code ROME et lancer
+  // le chargement de la fiche métier EN PARALLÈLE du rate-limit ci-dessous.
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Body JSON invalide.' }, { status: 400 });
+  }
+
+  // Le client choisit une ACTION et fournit des DONNÉES. Il ne contrôle plus
+  // l'instruction système : celle-ci est construite côté serveur (lib/ai/prompts).
+  const { provider, action, params } = body;
+  if (!action) {
+    return NextResponse.json({ error: 'Le champ action est requis.' }, { status: 400 });
+  }
+
+  // Enrichissement enquête métier : on ancre la découverte ET le chat sur la
+  // fiche ROME officielle (compétences, savoirs) au lieu de laisser le modèle
+  // tout inventer. La fiche est mise en cache (lib/france-travail), donc les
+  // messages successifs du chat ne retapent pas l'API.
+  // On DÉMARRE ici le chargement, en tâche de fond, pour qu'il se déroule pendant
+  // la vérification de quota. Sa latence ne s'ajoute donc plus au temps de
+  // génération perçu. Non bloquant : si le référentiel répond mal ou trop
+  // lentement, la promesse retombe sur null et on poursuit sans la fiche.
+  const fichePromise =
+    (action === 'discover_job' || action === 'job_chat') && params?.codeRome
+      ? fetchFicheRome(params.codeRome).catch((err) => {
+          logEvent({
+            event: 'ai', requestId, uid, action, status: 'rome_fiche_skipped',
+            error: err.message, level: 'warn',
+          });
+          return null;
+        })
+      : null;
+
   // ─── Limitation de débit par utilisateur ───────────────────────────────
+  // S'exécute pendant que la fiche ROME se charge (voir ci-dessus).
   const limit = await enforceRateLimit({
     uid,
     route: 'ai',
@@ -63,40 +100,16 @@ export async function POST(request) {
     );
   }
 
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Body JSON invalide.' }, { status: 400 });
-  }
-
-  // Le client choisit une ACTION et fournit des DONNÉES. Il ne contrôle plus
-  // l'instruction système : celle-ci est construite côté serveur (lib/ai/prompts).
-  const { provider, action, params } = body;
-  if (!action) {
-    return NextResponse.json({ error: 'Le champ action est requis.' }, { status: 400 });
-  }
-
   // Bénéficiaire : traitement forcé sur Mistral (France), sans repli Google.
   // Garantie affichée à l'activation d'un traitement 100% européen du CV.
   const effectiveProvider = role === 'beneficiaire' ? 'mistral' : provider;
 
-  // Enrichissement enquête métier : on ancre la découverte ET le chat sur la
-  // fiche ROME officielle (compétences, savoirs) au lieu de laisser le modèle
-  // tout inventer. La fiche est mise en cache (lib/france-travail), donc les
-  // messages successifs du chat ne retapent pas l'API.
-  // Non bloquant : si le référentiel répond mal, on poursuit sans la fiche.
+  // La fiche ROME est déjà en cours de chargement : on la récupère juste avant
+  // de construire le prompt.
   let effectiveParams = params;
-  if ((action === 'discover_job' || action === 'job_chat') && params?.codeRome) {
-    try {
-      const fiche = await fetchFicheRome(params.codeRome);
-      effectiveParams = { ...params, fiche };
-    } catch (err) {
-      logEvent({
-        event: 'ai', requestId, uid, action, status: 'rome_fiche_skipped',
-        error: err.message, level: 'warn',
-      });
-    }
+  if (fichePromise) {
+    const fiche = await fichePromise;
+    if (fiche) effectiveParams = { ...params, fiche };
   }
 
   let aiRequest;

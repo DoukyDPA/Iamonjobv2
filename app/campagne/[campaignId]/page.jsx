@@ -1,17 +1,19 @@
 'use client';
 
 // ════════════════════════════════════════════════════════════════════════════
-// Page de validation conseiller — Lot 4 du module candidatures spontanées
+// Page campagne de candidatures spontanées
 //
 // Accès : /campagne/[campaignId]
 //
 // Flux :
 //   1. Chargement de la campagne via GET /api/campaign/[campaignId]
 //   2. Lecture du profil, du brouillon email, des entreprises
-//   3. Le conseiller / candidat ajuste les décisions (keep/reject) et les emails
-//   4. Bouton "Valider" → PATCH status:'validated'  (≥1 entreprise en keep)
-//   5. Post-validation : tout passe en lecture seule
-//   6. Toute modification post-validation repasse en pending_validation automatiquement
+//   3. Le candidat ajuste les décisions (keep/reject) et les emails, puis
+//      enregistre (bouton « Enregistrer »).
+//   4. La fiche reste toujours éditable. Le dossier PDF est accessible dès qu'au
+//      moins une entreprise est marquée « Garder ».
+//   5. La fiche peut être partagée avec le conseiller (bloc « Partager »),
+//      comme une fiche candidature. Il n'y a plus de validation conseiller.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { useEffect, useState, useCallback, useRef } from 'react';
@@ -19,43 +21,16 @@ import { useParams, useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client';
 import {
-  Loader2, CheckCircle2, Clock, Send, AlertCircle, ChevronLeft,
-  Building2, MapPin, Star, Mail, FileText, MessageSquare,
-  ThumbsUp, ThumbsDown, HelpCircle, Lock, ExternalLink, RefreshCw,
-  ClipboardList, ShieldCheck, Info, X, Download,
+  Loader2, CheckCircle2, AlertCircle, ChevronLeft,
+  Building2, MapPin, Star, Mail, FileText,
+  ThumbsUp, ThumbsDown, HelpCircle, ExternalLink, RefreshCw,
+  Info, X, Download,
 } from 'lucide-react';
 import { Button, Badge, Card } from '@/components/ui';
 import NotesBlock from '@/components/NotesBlock';
 import ShareToConseiller from '@/components/ShareToConseiller';
 
-// ─── Constantes ───────────────────────────────────────────────────────────
-
-const STATUS_CONFIG = {
-  draft:              { label: 'Brouillon',             color: 'gray',    Icon: Clock },
-  pending_validation: { label: 'Validée',               color: 'emerald', Icon: CheckCircle2 },
-  validated:          { label: 'Validée',               color: 'emerald', Icon: CheckCircle2 },
-  done:               { label: 'Candidatures envoyées', color: 'teal',    Icon: CheckCircle2 },
-  sending:            { label: 'Candidatures envoyées', color: 'teal',    Icon: CheckCircle2 },
-};
-
 // ─── Composants utilitaires locaux ────────────────────────────────────────
-
-function StatusBadge({ status }) {
-  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.draft;
-  const Icon = cfg.Icon;
-  const colorMap = {
-    gray:    'bg-slate-100 text-slate-600 border-slate-200',
-    amber:   'bg-amber-50 text-amber-700 border-amber-200',
-    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    teal:    'bg-teal-50 text-teal-700 border-teal-100',
-  };
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-sm font-medium ${colorMap[cfg.color]}`}>
-      <Icon className="w-3.5 h-3.5" />
-      {cfg.label}
-    </span>
-  );
-}
 
 function StarScore({ stars }) {
   if (!stars) return <span className="text-slate-400 text-xs">—</span>;
@@ -114,7 +89,6 @@ export default function CampaignValidationPage() {
 
   // Auth
   const [authReady, setAuthReady] = useState(false);
-  const [uid, setUid] = useState(null);
 
   // Données campagne
   const [campaign, setCampaign] = useState(null);
@@ -125,15 +99,12 @@ export default function CampaignValidationPage() {
   const [companies, setCompanies] = useState([]);
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
-  const [advisorNotes, setAdvisorNotes] = useState('');
   const [selectedPitchIndex, setSelectedPitchIndex] = useState(0);
 
   // UX
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [isValidating, setIsValidating] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // (export PDF : pas d'état local, simple lien vers /pdf)
 
@@ -154,7 +125,6 @@ export default function CampaignValidationPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
       });
-      setUid(firebaseUser.uid);
       setAuthReady(true);
     });
     return () => unsub();
@@ -177,7 +147,6 @@ export default function CampaignValidationPage() {
       setCompanies(data.companies || []);
       setEmailSubject(data.emailTemplate?.subject || '');
       setEmailBody(data.emailTemplate?.body || '');
-      setAdvisorNotes(data.validationLog?.advisorNotes || '');
       setSelectedPitchIndex(0);
     } catch (err) {
       setLoadError(err.message);
@@ -190,21 +159,16 @@ export default function CampaignValidationPage() {
 
   // ── Helpers d'état ────────────────────────────────────────────────────
 
-  const isReadOnly = campaign?.status === 'validated'
-    || campaign?.status === 'done';
+  // La fiche campagne reste toujours éditable : plus de circuit de validation
+  // conseiller, donc plus de verrouillage lecture seule.
+  const isReadOnly = false;
 
   const keepCount = companies.filter((c) => c.decision === 'keep').length;
-  const canValidate = keepCount >= 1 && !isReadOnly;
 
   // ── Mise à jour d'une entreprise dans l'état local ───────────────────
 
   const updateCompany = (idx, patch) => {
     setCompanies((prev) => prev.map((c, i) => (i === idx ? { ...c, ...patch } : c)));
-    // Sur campagne validée : repasse en pending_validation automatiquement
-    // (le PATCH API s'en chargera côté serveur, on met à jour l'état local aussi)
-    if (isReadOnly) {
-      setCampaign((prev) => ({ ...prev, status: 'pending_validation' }));
-    }
   };
 
   // Personnalise un email avec les données d'une entreprise
@@ -241,10 +205,6 @@ export default function CampaignValidationPage() {
         body: JSON.stringify({
           companies,
           emailTemplate: { subject: emailSubject, body: emailBody },
-          validationLog: {
-            ...(campaign?.validationLog || {}),
-            advisorNotes,
-          },
         }),
       });
       if (!res.ok) {
@@ -262,65 +222,8 @@ export default function CampaignValidationPage() {
     }
   };
 
-  // ── Soumission au conseiller ─────────────────────────────────────────
-
-  const submitForValidation = async () => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-    setSaveError(null);
-    try {
-      const res = await fetch(`/api/campaign/${campaignId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'pending_validation' }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `Erreur ${res.status}`);
-      }
-      setCampaign((prev) => ({ ...prev, status: 'pending_validation' }));
-    } catch (err) {
-      setSaveError(err.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // ── Validation ────────────────────────────────────────────────────────
-
-  const validateCampaign = async () => {
-    if (isValidating || !canValidate) return;
-    setIsValidating(true);
-    setSaveError(null);
-    try {
-      const res = await fetch(`/api/campaign/${campaignId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: 'validated',
-          companies,
-          emailTemplate: { subject: emailSubject, body: emailBody },
-          validationLog: {
-            ...(campaign?.validationLog || {}),
-            advisorNotes,
-            validatedAt: new Date().toISOString(), // remplacé côté serveur
-            validatedBy: uid,
-          },
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `Erreur ${res.status}`);
-      }
-      setCampaign((prev) => ({ ...prev, status: 'validated' }));
-    } catch (err) {
-      setSaveError(err.message);
-    } finally {
-      setIsValidating(false);
-    }
-  };
-
-  // (envoi supprimé — export PDF uniquement)
+  // (validation conseiller supprimée — le dossier PDF est toujours accessible,
+  //  et le partage au conseiller se fait via le bloc « Partager » ci-dessous.)
 
   // ── Rendu conditionnel ────────────────────────────────────────────────
 
@@ -347,7 +250,6 @@ export default function CampaignValidationPage() {
   if (!campaign) return null;
 
   const profile = campaign.candidateProfile || {};
-  const validationLog = campaign.validationLog || {};
 
   // ── Rendu principal ───────────────────────────────────────────────────
 
@@ -366,12 +268,9 @@ export default function CampaignValidationPage() {
           </button>
 
           <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-lg font-bold text-teal-800 truncate">
-                Campagne : {campaign.jobTitle}
-              </h1>
-              <StatusBadge status={campaign.status} />
-            </div>
+            <h1 className="text-lg font-bold text-teal-800 truncate">
+              Campagne : {campaign.jobTitle}
+            </h1>
             <p className="text-xs text-teal-700/60 mt-0.5">
               {companies.length} entreprise{companies.length > 1 ? 's' : ''} · {keepCount} retenue{keepCount > 1 ? 's' : ''}
             </p>
@@ -379,34 +278,15 @@ export default function CampaignValidationPage() {
 
           {/* Actions en-tête */}
           <div className="flex items-center gap-2 shrink-0">
-            {campaign.status === 'draft' && (
-              <Button
-                onClick={submitForValidation}
-                disabled={isSubmitting}
-                variant="secondary"
-                icon={Send}
-                size="sm"
-              >
-                {isSubmitting ? 'Validation…' : 'Valider la campagne'}
-              </Button>
-            )}
-            {!isReadOnly && (
-              <Button
-                onClick={saveDraft}
-                disabled={isSaving}
-                variant="secondary"
-                size="sm"
-              >
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Enregistrer'}
-                {saveSuccess && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
-              </Button>
-            )}
-            {isReadOnly && (
-              <span className="inline-flex items-center gap-1.5 text-xs text-teal-600 bg-teal-50 border border-teal-100 rounded-lg px-3 py-1.5">
-                <Lock className="w-3.5 h-3.5" />
-                Lecture seule
-              </span>
-            )}
+            <Button
+              onClick={saveDraft}
+              disabled={isSaving}
+              variant="secondary"
+              size="sm"
+            >
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Enregistrer'}
+              {saveSuccess && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+            </Button>
           </div>
         </div>
       </header>
@@ -783,98 +663,8 @@ export default function CampaignValidationPage() {
           </div>
         </Card>
 
-        {/* ══ 4. Journal de validation ═════════════════════════════════════ */}
-        <Card>
-          <div className="px-6 pt-5 pb-2 border-b border-cream-200 bg-cream-50/60">
-            <SectionHeading icon={ClipboardList}>Journal de validation</SectionHeading>
-          </div>
-          <div className="px-6 py-5 space-y-4">
-
-            {/* Date de validation si validée */}
-            {campaign.status === 'validated' && validationLog.validatedAt && (
-              <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3">
-                <ShieldCheck className="w-5 h-5 shrink-0" />
-                Campagne validée — {new Date(
-                  typeof validationLog.validatedAt === 'object' && validationLog.validatedAt._seconds
-                    ? validationLog.validatedAt._seconds * 1000
-                    : validationLog.validatedAt
-                ).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })}
-              </div>
-            )}
-
-            {/* Notes conseiller */}
-            <div>
-              <label className="block text-xs font-semibold text-teal-600 uppercase tracking-wider mb-1.5">
-                Notes du conseiller
-              </label>
-              <AutoTextarea
-                value={advisorNotes}
-                onChange={(e) => setAdvisorNotes(e.target.value)}
-                readOnly={isReadOnly}
-                placeholder="Observations de la séance, ajustements à prévoir…"
-              />
-            </div>
-
-            {/* Récap avant validation */}
-            {!isReadOnly && (
-              <div className="bg-teal-50 border border-teal-100 rounded-xl p-4 text-sm space-y-2">
-                <p className="font-semibold text-teal-800 flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4" />
-                  Récapitulatif avant validation
-                </p>
-                <ul className="space-y-1 text-teal-700">
-                  <li className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${keepCount >= 1 ? 'bg-emerald-500' : 'bg-rose-400'}`} />
-                    {keepCount} entreprise{keepCount > 1 ? 's' : ''} retenue{keepCount > 1 ? 's' : ''}
-                    {keepCount === 0 && ' — au moins une obligatoire'}
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                    {companies.filter((c) => c.decision === 'keep' && c.email).length} email
-                    {companies.filter((c) => c.decision === 'keep' && c.email).length > 1 ? 's' : ''} prêt
-                    {companies.filter((c) => c.decision === 'keep' && c.email).length > 1 ? 's' : ''} à l'envoi
-                  </li>
-                </ul>
-              </div>
-            )}
-
-            {/* Bouton Valider */}
-            {!isReadOnly && (
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-2">
-                <Button
-                  onClick={validateCampaign}
-                  disabled={!canValidate || isValidating}
-                  icon={ShieldCheck}
-                >
-                  {isValidating ? 'Validation…' : 'Valider la campagne'}
-                </Button>
-                {!canValidate && keepCount === 0 && (
-                  <p className="text-xs text-rose-600 flex items-center gap-1">
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                    Marquez au moins une entreprise comme « Garder »
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Post-validation : invitation à télécharger le dossier */}
-            {campaign.status === 'validated' && (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-emerald-800 space-y-1">
-                <p className="font-semibold flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Campagne validée
-                </p>
-                <p className="text-emerald-700 text-xs">
-                  {keepCount} entreprise{keepCount > 1 ? 's' : ''} retenue{keepCount > 1 ? 's' : ''}.
-                  Téléchargez le dossier PDF depuis la section ci-dessous.
-                </p>
-              </div>
-            )}
-          </div>
-        </Card>
-
-        {/* ══ 5. Télécharger le dossier ════════════════════════════════════ */}
-        {(campaign.status === 'validated' || campaign.status === 'done') && (() => {
+        {/* ══ 4. Télécharger le dossier ════════════════════════════════════ */}
+        {(() => {
           const keptWithEmail    = companies.filter((c) => c.decision === 'keep' && c.email).length;
           const keptWithoutEmail = companies.filter((c) => c.decision === 'keep' && !c.email).length;
 
@@ -886,6 +676,18 @@ export default function CampaignValidationPage() {
                 </SectionHeading>
               </div>
               <div className="px-6 py-5 space-y-4">
+
+                {keepCount === 0 ? (
+                  <div className="flex items-start gap-2 px-3 py-2.5 bg-amber-50 border border-amber-100 rounded-xl text-sm text-amber-700">
+                    <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>
+                      Passez en revue les entreprises ci-dessus et marquez celles à contacter
+                      comme «&nbsp;Garder&nbsp;». Le dossier PDF se compose à partir des
+                      entreprises retenues.
+                    </span>
+                  </div>
+                ) : (
+                  <>
 
                 {/* Récap entreprises */}
                 <div className="divide-y divide-cream-100 rounded-xl border border-cream-200 overflow-hidden">
@@ -944,6 +746,8 @@ export default function CampaignValidationPage() {
                   </p>
                 </div>
 
+                  </>
+                )}
               </div>
             </Card>
           );

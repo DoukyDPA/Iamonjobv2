@@ -140,6 +140,88 @@ export default function App({ user, availableProviders = ['mistral'] }) {
     });
   };
 
+  // ── Métiers explorés (comparaison) ───────────────────────────────────────
+  // Chaque enquête métier ouverte est mémorisée dans le navigateur : la personne
+  // peut rouvrir une fiche déjà consultée sans la régénérer, et comparer plusieurs
+  // métiers sans que l'un efface l'autre. Stocké en localStorage (par utilisateur),
+  // donc conservé même après un rechargement de page. Rien n'est écrit en base.
+  const MAX_DISCOVERED = 12;
+  const [discoveredJobs, setDiscoveredJobs] = useState([]);
+  const [activeJobKey, setActiveJobKey] = useState(null);
+  // Copie à jour de la clé active, lisible dans les callbacks asynchrones : elle
+  // sert à ne pas écraser la fiche affichée si l'utilisateur change d'onglet
+  // pendant qu'une génération est encore en cours.
+  const activeJobKeyRef = useRef(null);
+  useEffect(() => { activeJobKeyRef.current = activeJobKey; }, [activeJobKey]);
+
+  const jobKey = (title, codeRome) =>
+    (codeRome || String(title || '')).toLowerCase().replace(/\s+/g, ' ').trim();
+
+  // Écrit un correctif dans l'entrée mémorisée d'un métier, repéré par sa clé
+  // (indépendamment du métier actuellement affiché).
+  const patchDiscovered = (key, patch) => {
+    setDiscoveredJobs((prev) => {
+      const idx = prev.findIndex((j) => j.key === key);
+      if (idx === -1) return prev;
+      const copy = prev.slice();
+      copy[idx] = { ...copy[idx], ...patch };
+      return copy;
+    });
+  };
+
+  // Chargement des fiches mémorisées au montage (clé propre à l'utilisateur).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(`iamj_discovered_${user.id}`);
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) setDiscoveredJobs(arr);
+      }
+    } catch { /* localStorage indisponible : on continue sans mémoire */ }
+  }, [user.id]);
+
+  // Sauvegarde à chaque changement (on a déjà lu la valeur stockée au montage).
+  useEffect(() => {
+    try {
+      localStorage.setItem(`iamj_discovered_${user.id}`, JSON.stringify(discoveredJobs));
+    } catch { /* quota ou mode privé : on ignore */ }
+  }, [discoveredJobs, user.id]);
+
+  // Rouvre une fiche mémorisée : restaure rapport, salaire, ROME et conversation.
+  const activateDiscovered = (entry) => {
+    if (!entry) return;
+    setActiveJobKey(entry.key);
+    setSelectedJob(entry.title);
+    setSearchKeywords(entry.title);
+    setSelectedRome(
+      entry.rome || (entry.codeRome ? { codeRome: entry.codeRome, libelle: entry.title } : null)
+    );
+    setJobReport(entry.report || null);
+    setSalaryStats(entry.salaryStats || null);
+    setChatHistory(Array.isArray(entry.chatHistory) ? entry.chatHistory : []);
+    // Fiche pas encore prête (génération encore en cours) : on garde le chargement.
+    setIsGeneratingReport(!entry.report);
+    setError(null);
+  };
+
+  // Ferme un onglet métier. Si c'était l'onglet actif, on bascule sur un autre.
+  const removeDiscovered = (key) => {
+    const next = discoveredJobs.filter((j) => j.key !== key);
+    setDiscoveredJobs(next);
+    if (key === activeJobKey) {
+      if (next.length > 0) {
+        activateDiscovered(next[next.length - 1]);
+      } else {
+        setActiveJobKey(null);
+        setSelectedJob(null);
+        setJobReport(null);
+        setSalaryStats(null);
+        setSelectedRome(null);
+        setChatHistory([]);
+      }
+    }
+  };
+
   // Ouvre l'enquête métier d'un favori depuis la colonne de gauche.
   const openFavorite = (job) => {
     if (job?.title) discoverJob(job.title, job.codeRome);
@@ -352,8 +434,19 @@ export default function App({ user, availableProviders = ['mistral'] }) {
   };
 
   const discoverJob = async (jobTitle, codeRome = null) => {
+    const key = jobKey(jobTitle, codeRome);
+
+    // Métier déjà exploré : on rouvre la fiche mémorisée, sans la régénérer.
+    const cached = discoveredJobs.find((j) => j.key === key);
+    if (cached && cached.report) {
+      goToStep(3);
+      activateDiscovered(cached);
+      return;
+    }
+
     setSelectedJob(jobTitle);
     setSearchKeywords(jobTitle);
+    setActiveJobKey(key);
     goToStep(3);
     setIsGeneratingReport(true);
     setJobReport(null);
@@ -362,11 +455,25 @@ export default function App({ user, availableProviders = ['mistral'] }) {
     setChatHistory([]);
     setError(null);
 
+    // Crée l'entrée mémorisée (vide pour l'instant) : l'effet de synchronisation
+    // la remplira au fil des résultats. On borne la liste aux derniers métiers.
+    setDiscoveredJobs((prev) => {
+      if (prev.some((j) => j.key === key)) return prev;
+      const entry = {
+        key, title: jobTitle, codeRome: codeRome || null,
+        rome: null, report: null, salaryStats: null, chatHistory: [],
+      };
+      const next = [...prev, entry];
+      return next.length > MAX_DISCOVERED ? next.slice(next.length - MAX_DISCOVERED) : next;
+    });
+
     // Clé unifiée. Le code ROME est déjà résolu à l'analyse du CV et voyage avec
     // la carte métier : on le réutilise directement. Sinon (accès direct, repli),
     // on le résout une fois via ROMEO. Non bloquant dans les deux cas.
     if (codeRome) {
-      setSelectedRome({ codeRome, libelle: jobTitle });
+      const rome = { codeRome, libelle: jobTitle };
+      patchDiscovered(key, { rome });
+      setSelectedRome(rome);
     } else {
       fetch('/api/rome', {
         method: 'POST',
@@ -374,36 +481,55 @@ export default function App({ user, availableProviders = ['mistral'] }) {
         body: JSON.stringify({ label: jobTitle, limit: 1 }),
       })
         .then((r) => (r.ok ? r.json() : null))
-        .then((d) => { if (d?.metiers?.[0]?.codeRome) setSelectedRome(d.metiers[0]); })
+        .then((d) => {
+          const rome = d?.metiers?.[0];
+          if (rome?.codeRome) {
+            patchDiscovered(key, { rome });
+            if (activeJobKeyRef.current === key) setSelectedRome(rome);
+          }
+        })
         .catch(() => {}); // échec silencieux : les offres retomberont sur les mots-clés
     }
+
+    // Salaire sourcé, lancé EN PARALLÈLE du rapport (et non après) : il s'affiche
+    // dès qu'il est prêt sans allonger l'attente de l'enquête métier. Si Adzuna
+    // ne renvoie rien, on garde l'estimation IA de la fiche.
+    fetch('/api/salary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jobTitle, location: userLocation }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.salary) {
+          patchDiscovered(key, { salaryStats: d.salary });
+          if (activeJobKeyRef.current === key) setSalaryStats(d.salary);
+        }
+      })
+      .catch(() => {}); // échec silencieux : repli sur le salaire IA
 
     try {
       const result = await callAI('discover_job', { jobTitle, codeRome });
       if (result?.report) {
-        setJobReport(result.report);
         const accueil = typeof result.initialMessage === 'string' && result.initialMessage.trim()
           ? result.initialMessage
           : `Bonjour, je fais ce métier depuis des années. Posez-moi vos questions sur le quotidien de ${jobTitle}, je vous réponds d'après le terrain.`;
-        setChatHistory([{ role: 'assistant', content: stripMarkdown(accueil) }]);
+        const chat = [{ role: 'assistant', content: stripMarkdown(accueil) }];
+        patchDiscovered(key, { report: result.report, chatHistory: chat });
+        // On n'actualise l'affichage que si ce métier est encore celui à l'écran.
+        if (activeJobKeyRef.current === key) {
+          setJobReport(result.report);
+          setChatHistory(chat);
+        }
       } else {
         throw new Error('Format de réponse invalide');
       }
-
-      // Salaire sourcé, en parallèle : n'interrompt jamais l'enquête métier.
-      // Si Adzuna ne renvoie rien, on garde l'estimation IA de la fiche.
-      fetch('/api/salary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobTitle, location: userLocation }),
-      })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => { if (d?.salary) setSalaryStats(d.salary); })
-        .catch(() => {}); // échec silencieux : repli sur le salaire IA
     } catch (err) {
-      setError("Erreur lors de la préparation de l'enquête métier.");
+      if (activeJobKeyRef.current === key) {
+        setError("Erreur lors de la préparation de l'enquête métier.");
+      }
     } finally {
-      setIsGeneratingReport(false);
+      if (activeJobKeyRef.current === key) setIsGeneratingReport(false);
     }
   };
 
@@ -428,6 +554,36 @@ export default function App({ user, availableProviders = ['mistral'] }) {
   useEffect(() => {
     if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
   }, [chatHistory]);
+
+  // Recopie la fiche active (rapport, salaire, ROME, conversation) dans la liste
+  // mémorisée, pour que passer d'un métier à l'autre ne perde rien. Le garde-fou
+  // d'égalité évite toute réécriture inutile (et toute boucle de rendu).
+  useEffect(() => {
+    if (!activeJobKey) return;
+    setDiscoveredJobs((prev) => {
+      const idx = prev.findIndex((j) => j.key === activeJobKey);
+      if (idx === -1) return prev;
+      const cur = prev[idx];
+      const merged = {
+        ...cur,
+        report: jobReport ?? cur.report,
+        salaryStats: salaryStats ?? cur.salaryStats,
+        rome: selectedRome ?? cur.rome,
+        chatHistory: chatHistory.length ? chatHistory : cur.chatHistory,
+      };
+      if (
+        merged.report === cur.report &&
+        merged.salaryStats === cur.salaryStats &&
+        merged.rome === cur.rome &&
+        merged.chatHistory === cur.chatHistory
+      ) {
+        return prev;
+      }
+      const copy = prev.slice();
+      copy[idx] = merged;
+      return copy;
+    });
+  }, [activeJobKey, jobReport, salaryStats, selectedRome, chatHistory]);
 
   const searchFranceTravail = async () => {
     if (!selectedJob && !searchKeywords) return;
@@ -876,6 +1032,16 @@ export default function App({ user, availableProviders = ['mistral'] }) {
             </span>
           </div>
 
+          {/* Astuce : mettre un métier de côté avec l'étoile */}
+          <p className="flex items-start gap-2 text-sm text-teal-700/80 bg-amber-50/60 border border-amber-100 rounded-xl px-4 py-2.5">
+            <Star className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="currentColor" />
+            <span>
+              Une piste vous intéresse mais vous voulez d'abord en voir d'autres ? Cliquez sur
+              l'<strong>étoile</strong> à côté du métier pour le mettre de côté. Vous le
+              retrouvez à tout moment dans <strong>« Mes métiers »</strong>, dans le menu de gauche.
+            </span>
+          </p>
+
           {['proches', 'logiques', 'eloignes'].map((type) => {
             const config = {
               proches:  { title: 'Métiers Proches',              desc: 'Similaires en termes de responsabilités.',        accent: 'border-l-teal-400'  },
@@ -1016,6 +1182,48 @@ export default function App({ user, availableProviders = ['mistral'] }) {
             </div>
           </div>
 
+          {/* Onglets des métiers explorés : on bascule sans rien perdre, pour comparer. */}
+          {discoveredJobs.length > 1 && (
+            <div className="flex items-center gap-2 flex-wrap bg-cream-50/70 border border-cream-200 rounded-xl px-3 py-2">
+              <span className="text-[11px] font-bold tracking-wider text-teal-700/60 uppercase mr-1">
+                Métiers explorés
+              </span>
+              {discoveredJobs.map((j) => {
+                const active = j.key === activeJobKey;
+                return (
+                  <span
+                    key={j.key}
+                    className={`inline-flex items-center rounded-lg border text-sm transition-all ${
+                      active
+                        ? 'bg-teal-600 border-teal-600 text-white shadow-soft'
+                        : 'bg-white border-cream-200 text-teal-700 hover:border-teal-300'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => activateDiscovered(j)}
+                      className="pl-3 pr-1.5 py-1.5 font-medium max-w-[14rem] truncate"
+                      title={active ? j.title : `Revenir à « ${j.title} »`}
+                    >
+                      {j.title}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeDiscovered(j.key)}
+                      title={`Fermer « ${j.title} »`}
+                      aria-label={`Fermer ${j.title}`}
+                      className={`pr-2 pl-0.5 py-1.5 rounded-r-lg ${
+                        active ? 'text-white/70 hover:text-white' : 'text-teal-300 hover:text-rose-500'
+                      }`}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
+          )}
+
           {isGeneratingReport ? (
             <Card className="p-12 flex flex-col items-center justify-center text-center">
               <CatMascot className="w-16 h-16 mb-4 animate-pulse" />
@@ -1114,19 +1322,27 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                       </ul>
                     </div>
                     <div>
-                      <span className="block font-semibold text-teal-800 mb-2">Salaire</span>
+                      <span className="font-semibold text-teal-800 mb-2 flex items-center gap-1.5">
+                        Salaire
+                        <HelpTip
+                          label="D'où vient ce salaire ?"
+                          description="La fourchette est calculée sur les salaires des offres réellement publiées (source Adzuna). Le référentiel métier ROME sert aux missions et aux compétences, mais il n'indique aucun salaire : si aucune offre chiffrée n'est disponible, on affiche une estimation."
+                        />
+                      </span>
                       {salaryStats ? (
                         <div className="space-y-1">
                           <Badge variant="teal" className="text-sm">{salaryStats.rangeLabel}</Badge>
                           <p className="text-xs text-teal-700/70">
                             Médiane {salaryStats.median.toLocaleString('fr-FR')} €/an ·
-                            source {salaryStats.source} ({salaryStats.sampleSize} offres, {salaryStats.year})
+                            d'après {salaryStats.sampleSize} offres réelles ({salaryStats.source}, {salaryStats.year})
                           </p>
                         </div>
                       ) : (
                         <div className="space-y-1">
                           <Badge variant="teal" className="text-sm">{jobReport.salaire}</Badge>
-                          <p className="text-xs text-teal-700/60">Estimation indicative</p>
+                          <p className="text-xs text-teal-700/60">
+                            Estimation indicative : pas assez d'offres chiffrées pour ce métier.
+                          </p>
                         </div>
                       )}
                     </div>

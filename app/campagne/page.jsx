@@ -20,9 +20,10 @@ import { Button, Badge, Card } from '@/components/ui';
 // ─── Config statuts campagnes spontanées ─────────────────────────────────
 
 const CAMPAIGN_STATUS = {
-  draft:              { label: 'Brouillon',             variant: 'gray' },
-  pending_validation: { label: 'Validée',               variant: 'emerald' },
-  validated:          { label: 'Validée',               variant: 'emerald' },
+  draft:              { label: 'En cours',              variant: 'gray' },
+  // Statuts historiques (campagnes créées avant le retrait de la validation) :
+  pending_validation: { label: 'En cours',              variant: 'gray' },
+  validated:          { label: 'Prête',                 variant: 'emerald' },
   sending:            { label: 'Candidatures envoyées', variant: 'teal' },
   done:               { label: 'Candidatures envoyées', variant: 'teal' },
 };
