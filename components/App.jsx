@@ -638,6 +638,24 @@ export default function App({ user, availableProviders = ['mistral'] }) {
               </div>
             </div>
 
+            {/* Pas encore de CV : création externe via CVdesignR */}
+            <div className="px-6 pb-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-teal-100 bg-teal-50/50 px-4 py-3">
+                <p className="text-sm text-teal-700/80">
+                  Pas encore de CV ? Créez-le en ligne, puis revenez l'importer ici.
+                </p>
+                <a
+                  href="https://cvdesignr.com/fr"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold shadow-soft hover:bg-teal-700 transition-colors shrink-0"
+                >
+                  <FileText className="w-4 h-4" /> Je réalise mon CV avec CVdesignR
+                  <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                </a>
+              </div>
+            </div>
+
             <div className="px-6 pb-6">
               {cvInputMode === 'paste' ? (
                 <div className="space-y-2">

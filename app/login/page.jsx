@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client';
 import { googleErrorMessage } from '@/lib/firebase/auth-errors';
-import { Loader2, Mail, Lock, AlertCircle } from 'lucide-react';
+import { Loader2, Mail, Lock, AlertCircle, KeyRound, Users } from 'lucide-react';
 import { BrandLogo, CatMascot } from '@/components/brand';
 import AccessibilityBar from '@/components/layout/AccessibilityBar';
 import Footer from '@/components/layout/Footer';
@@ -27,15 +27,23 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Après connexion, on aiguille selon le rôle : un conseiller arrive sur son
+  // espace, tout le monde sinon sur l'accueil.
+  async function routeByRole(user) {
+    await setSessionCookie(user);
+    let role = null;
+    try { role = (await user.getIdTokenResult()).claims.role; } catch { /* défaut */ }
+    router.push(role === 'conseiller' ? '/conseiller' : '/');
+    router.refresh();
+  }
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
       const { user } = await signInWithEmailAndPassword(auth, email, password);
-      await setSessionCookie(user);
-      router.push('/');
-      router.refresh();
+      await routeByRole(user);
     } catch (err) {
       setError(err.code === 'auth/invalid-credential' ? 'Email ou mot de passe incorrect.' : err.message);
       setLoading(false);
@@ -47,9 +55,7 @@ export default function LoginPage() {
     setError(null);
     try {
       const { user } = await signInWithPopup(auth, new GoogleAuthProvider());
-      await setSessionCookie(user);
-      router.push('/');
-      router.refresh();
+      await routeByRole(user);
     } catch (err) {
       setError(googleErrorMessage(err));
       setLoading(false);
@@ -159,20 +165,32 @@ export default function LoginPage() {
               Continuer avec Google
             </button>
 
-            <p className="mt-6 text-center text-sm text-teal-700/80">
-              Pas encore de compte ?{' '}
-              <Link href="/signup" className="text-teal-700 hover:text-teal-900 hover:underline font-semibold">
-                Créer un compte
-              </Link>
-            </p>
-
-            <div className="mt-4 pt-4 border-t border-cream-200 text-center">
-              <p className="text-sm text-teal-700/80">
-                Vous êtes accompagné ?{' '}
-                <Link href="/acces" className="text-teal-700 hover:text-teal-900 hover:underline font-semibold">
-                  Accès par code
-                </Link>
+            <div className="mt-6 pt-5 border-t border-cream-200">
+              <p className="text-xs font-bold tracking-[0.12em] text-teal-700/60 text-center mb-3">
+                PREMIÈRE FOIS ICI ?
               </p>
+              <div className="grid gap-2">
+                <Link
+                  href="/acces"
+                  className="flex items-center gap-3 p-3 rounded-xl border border-cream-300 hover:border-teal-300 hover:bg-cream-50 transition-colors"
+                >
+                  <KeyRound className="w-5 h-5 text-teal-600 shrink-0" />
+                  <span className="text-sm">
+                    <span className="font-semibold text-teal-800">J'ai un code</span>
+                    <span className="block text-xs text-teal-700/70">Vous êtes accompagné par un conseiller.</span>
+                  </span>
+                </Link>
+                <Link
+                  href="/conseiller/connexion"
+                  className="flex items-center gap-3 p-3 rounded-xl border border-cream-300 hover:border-teal-300 hover:bg-cream-50 transition-colors"
+                >
+                  <Users className="w-5 h-5 text-teal-600 shrink-0" />
+                  <span className="text-sm">
+                    <span className="font-semibold text-teal-800">Je suis conseiller</span>
+                    <span className="block text-xs text-teal-700/70">Accès réservé aux conseillers autorisés.</span>
+                  </span>
+                </Link>
+              </div>
             </div>
           </div>
 

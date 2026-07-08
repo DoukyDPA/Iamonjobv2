@@ -6,6 +6,9 @@ export function middleware(request) {
     '/login', '/signup', '/api/auth',
     // Accès bénéficiaire par code : activation et connexion sont publiques.
     '/activer', '/acces', '/api/activation',
+    // Accès conseiller : la page de connexion/inscription et la demande de rôle
+    // sont publiques (pas encore de session au moment où on les atteint).
+    '/conseiller/connexion', '/api/conseiller/claim',
     '/api/health', '/api/beta-signup',
     // Promotion d'un conseiller : protégée par un secret d'en-tête, pas par le
     // cookie de session. Elle doit donc échapper à la redirection /login.
