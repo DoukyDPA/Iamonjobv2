@@ -27,6 +27,16 @@ import AvisConseiller from './AvisConseiller';
 const MAX_CHAT_MESSAGES = 30;
 const CHAT_HISTORY_WINDOW = 10;
 
+// Le chat s'affiche en texte brut : on retire le markdown que le modèle glisse
+// parfois (astérisques d'emphase, titres #, backticks, chevrons de citation).
+const stripMarkdown = (s) =>
+  String(s ?? '')
+    .replace(/\*\*/g, '')
+    .replace(/[*`]/g, '')
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+    .replace(/^\s*>\s?/gm, '')
+    .trim();
+
 const loadPdfJs = async () => {
   if (typeof window === 'undefined') return null;
   if (window.pdfjsLib) return window.pdfjsLib;
@@ -81,7 +91,10 @@ export default function App({ user, availableProviders = ['mistral'] }) {
   const [analysis, setAnalysis] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [userLocation, setUserLocation] = useState('');
+  // Une ville nommée donne de meilleurs résultats qu'un code département sur les
+  // API d'offres. Défaut « Créteil » ; on ne l'écrase que par une vraie ville
+  // (voir analyzeCV), pas par un code département nu type « 11 ».
+  const [userLocation, setUserLocation] = useState('Créteil');
   const [provider, setProvider] = useState(availableProviders[0] || 'mistral');
 
   useEffect(() => {
@@ -295,7 +308,11 @@ export default function App({ user, availableProviders = ['mistral'] }) {
     try {
       const result = await callAI('analyze_cv', { cvText });
       setAnalysis(result);
-      if (result.location) setUserLocation(result.location);
+      // On garde « Créteil » si le CV ne donne qu'un code département nu (1 à 3
+      // chiffres), qui rend mal côté offres. Une ville ou un code postal passe.
+      if (result.location && !/^\d{1,3}$/.test(String(result.location).trim())) {
+        setUserLocation(result.location);
+      }
       await saveCvToFirestore(user.id, cvText, result);
       goToStep(2);
     } catch (err) {
@@ -333,13 +350,13 @@ export default function App({ user, availableProviders = ['mistral'] }) {
     }
 
     try {
-      const result = await callAI('discover_job', { jobTitle });
+      const result = await callAI('discover_job', { jobTitle, codeRome });
       if (result?.report) {
         setJobReport(result.report);
         const accueil = typeof result.initialMessage === 'string' && result.initialMessage.trim()
           ? result.initialMessage
           : `Bonjour, je fais ce métier depuis des années. Posez-moi vos questions sur le quotidien de ${jobTitle}, je vous réponds d'après le terrain.`;
-        setChatHistory([{ role: 'assistant', content: accueil }]);
+        setChatHistory([{ role: 'assistant', content: stripMarkdown(accueil) }]);
       } else {
         throw new Error('Format de réponse invalide');
       }
@@ -370,8 +387,8 @@ export default function App({ user, availableProviders = ['mistral'] }) {
     setIsChatLoading(true);
     try {
       const recentHistory = newHistory.slice(-CHAT_HISTORY_WINDOW);
-      const res = await callAI('job_chat', { selectedJob, history: recentHistory });
-      if (res?.reply) setChatHistory([...newHistory, { role: 'assistant', content: res.reply }]);
+      const res = await callAI('job_chat', { selectedJob, history: recentHistory, codeRome: selectedRome?.codeRome || null });
+      if (res?.reply) setChatHistory([...newHistory, { role: 'assistant', content: stripMarkdown(res.reply) }]);
     } catch (e) {
       setChatHistory([...newHistory, { role: 'assistant', content: "Désolé, j'ai une petite urgence sur le terrain. Pouvons-nous reprendre dans un instant ?" }]);
     } finally {
@@ -865,7 +882,7 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                     type="text"
                     value={userLocation}
                     onChange={(e) => setUserLocation(e.target.value)}
-                    placeholder="Dépt (ex: 75)…"
+                    placeholder="Ville (ex : Créteil)…"
                     className="w-28 sm:w-36 py-1.5 bg-transparent text-sm outline-none placeholder:text-teal-700/40"
                   />
                 </div>
@@ -889,7 +906,54 @@ export default function App({ user, availableProviders = ['mistral'] }) {
               <p className="text-teal-700/70">Le professionnel analyse le poste et se prépare à vous répondre.</p>
             </Card>
           ) : jobReport ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="space-y-6">
+              {/* En quoi consiste le métier : le cœur, ancré sur la fiche ROME officielle */}
+              <Card className="p-6 border-l-4 border-l-teal-500">
+                <h3 className="font-bold text-teal-800 mb-3 flex items-center gap-2">
+                  <Compass className="w-5 h-5 text-teal-600" /> En quoi consiste le métier
+                </h3>
+                {jobReport.description && (
+                  <p className="text-sm text-teal-700/90 leading-relaxed whitespace-pre-wrap">{asText(jobReport.description)}</p>
+                )}
+                {Array.isArray(jobReport.missions) && jobReport.missions.length > 0 && (
+                  <div className="mt-4">
+                    <span className="block font-semibold text-teal-800 mb-2">Missions principales</span>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
+                      {jobReport.missions.map((m, i) => (
+                        <li key={i} className="flex items-start gap-1.5 text-sm text-teal-700/80">
+                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0" />{asText(m)}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {(jobReport.skills?.hardSkills?.length > 0 || jobReport.skills?.softSkills?.length > 0) && (
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {jobReport.skills?.hardSkills?.length > 0 && (
+                      <div>
+                        <span className="block font-semibold text-teal-800 mb-2">Compétences techniques</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {jobReport.skills.hardSkills.map((s, i) => (
+                            <Badge key={i} variant="teal" className="text-xs">{asText(s)}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {jobReport.skills?.softSkills?.length > 0 && (
+                      <div>
+                        <span className="block font-semibold text-teal-800 mb-2">Qualités humaines</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {jobReport.skills.softSkills.map((s, i) => (
+                            <Badge key={i} variant="pink" className="text-xs">{asText(s)}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Card>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-1 space-y-4">
                 <Card className="p-5 border-l-4 border-l-teal-400">
                   <h3 className="font-bold text-teal-800 mb-4 flex items-center gap-2">
@@ -1029,6 +1093,7 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                   )}
                 </div>
               </Card>
+              </div>
             </div>
           ) : null}
 
@@ -1080,7 +1145,7 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                   type="text"
                   value={userLocation}
                   onChange={(e) => setUserLocation(e.target.value)}
-                  placeholder="Dépt…"
+                  placeholder="Ville…"
                   className="w-24 py-1.5 bg-transparent text-sm outline-none placeholder:text-teal-700/40"
                 />
               </div>
@@ -1200,6 +1265,16 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                   <div>
                     <h2 className="text-2xl font-extrabold mb-1 text-teal-800">Diagnostic de Compatibilité</h2>
                     <p className="text-teal-700/80">Poste : <strong>{selectedOffer.intitule}</strong> chez {selectedOffer.entreprise}</p>
+                    {selectedOffer.url && (
+                      <a
+                        href={selectedOffer.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 mt-2 text-sm font-semibold text-teal-600 hover:text-teal-800 hover:underline"
+                      >
+                        <ExternalLink className="w-4 h-4" /> Voir l'annonce d'origine
+                      </a>
+                    )}
                   </div>
                 </div>
 

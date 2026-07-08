@@ -20,7 +20,7 @@
 
 import { useState } from 'react';
 import {
-  X, MapPin, Loader2, CheckCircle2, AlertCircle,
+  X, MapPin, Loader2, CheckCircle2, AlertCircle, Info,
   Building2, Send, ChevronRight, Sliders,
 } from 'lucide-react';
 import { Button } from './ui';
@@ -70,6 +70,7 @@ export default function CampaignLauncher({ isOpen, onClose, cvText, selectedJob,
   const [stepStatuses, setStepStatuses] = useState({});
   const [stepDetails, setStepDetails]   = useState({});
   const [error, setError]   = useState(null);
+  const [info, setInfo]     = useState(null);
   const [campaignId, setCampaignId] = useState(null);
 
   if (!isOpen) return null;
@@ -88,6 +89,7 @@ export default function CampaignLauncher({ isOpen, onClose, cvText, selectedJob,
 
     setRunning(true);
     setError(null);
+    setInfo(null);
     setCampaignId(null);
     setStepStatuses({});
     setStepDetails({});
@@ -145,12 +147,14 @@ export default function CampaignLauncher({ isOpen, onClose, cvText, selectedJob,
         // un modèle qui repère les employeurs à fort volume d'embauche (données
         // DPAE). Il couvre mal les métiers transversaux ou de niche (RSE, qualité,
         // conseil…), pour lesquels il ne fléche personne, même en élargissant la
-        // zone. Élargir le rayon n'y change rien : on l'explique au lieu de le
-        // suggérer à tort, et on renvoie vers les offres, qui nomment de vraies
-        // entreprises en train de recruter ce profil.
-        throw new Error(
+        // zone. Ce n'est donc PAS une erreur : on l'affiche comme une information
+        // (verte, une seule fois), on marque l'étape terminée sans rouge, et on
+        // arrête proprement le pipeline en renvoyant vers les offres.
+        setStep('lbb', 'done', 'Métier transversal : aucune entreprise référencée');
+        setInfo(
           "La Bonne Boîte ne référence aucune entreprise pour ce métier. Ce n'est pas un bug : cet outil de France Travail repère surtout les métiers à fort volume d'embauche et couvre mal les profils transversaux comme celui-ci. Élargir la zone n'y changerait rien. Appuyez-vous plutôt sur les offres d'emploi de l'étape précédente : elles nomment des entreprises qui recrutent ce profil en ce moment."
         );
+        return;
       }
       setStep('lbb', 'done', `${companies.length} entreprise${companies.length > 1 ? 's' : ''} trouvée${companies.length > 1 ? 's' : ''}`);
 
@@ -195,6 +199,7 @@ export default function CampaignLauncher({ isOpen, onClose, cvText, selectedJob,
     setStepStatuses({});
     setStepDetails({});
     setError(null);
+    setInfo(null);
     setCampaignId(null);
     setCity(userLocation);
     setRadius(30);
@@ -294,6 +299,12 @@ export default function CampaignLauncher({ isOpen, onClose, cvText, selectedJob,
                   detail={stepDetails[s.id]}
                 />
               ))}
+              {info && (
+                <div className="mt-3 flex items-start gap-2 text-sm text-white bg-emerald-600 rounded-xl px-4 py-3">
+                  <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{info}</span>
+                </div>
+              )}
               {error && (
                 <div className="pt-3 flex items-start gap-2 text-sm text-rose-600">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />

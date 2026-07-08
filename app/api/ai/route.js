@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase/admin';
 import { callAI, availableProviders } from '@/lib/ai';
-import { normalizeSuggestionsToRome } from '@/lib/france-travail';
+import { normalizeSuggestionsToRome, fetchFicheRome } from '@/lib/france-travail';
 import { buildAIRequest } from '@/lib/ai/prompts';
 import { validateAIResult } from '@/lib/ai/validate';
 import { enforceRateLimit } from '@/lib/rate-limit';
@@ -81,9 +81,27 @@ export async function POST(request) {
   // Garantie affichée à l'activation d'un traitement 100% européen du CV.
   const effectiveProvider = role === 'beneficiaire' ? 'mistral' : provider;
 
+  // Enrichissement enquête métier : on ancre la découverte ET le chat sur la
+  // fiche ROME officielle (compétences, savoirs) au lieu de laisser le modèle
+  // tout inventer. La fiche est mise en cache (lib/france-travail), donc les
+  // messages successifs du chat ne retapent pas l'API.
+  // Non bloquant : si le référentiel répond mal, on poursuit sans la fiche.
+  let effectiveParams = params;
+  if ((action === 'discover_job' || action === 'job_chat') && params?.codeRome) {
+    try {
+      const fiche = await fetchFicheRome(params.codeRome);
+      effectiveParams = { ...params, fiche };
+    } catch (err) {
+      logEvent({
+        event: 'ai', requestId, uid, action, status: 'rome_fiche_skipped',
+        error: err.message, level: 'warn',
+      });
+    }
+  }
+
   let aiRequest;
   try {
-    aiRequest = buildAIRequest({ action, params });
+    aiRequest = buildAIRequest({ action, params: effectiveParams });
   } catch {
     return NextResponse.json({ error: 'Action IA non autorisée.' }, { status: 400 });
   }
