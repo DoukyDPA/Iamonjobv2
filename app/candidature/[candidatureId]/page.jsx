@@ -22,6 +22,8 @@ import {
   MapPin, Clock,
 } from 'lucide-react';
 import { Button, Badge, Card } from '@/components/ui';
+import NotesBlock from '@/components/NotesBlock';
+import ShareToConseiller from '@/components/ShareToConseiller';
 
 const TYPE_LABEL = {
   classique: { label: 'Classique',  color: 'bg-teal-100 text-teal-700' },
@@ -329,6 +331,34 @@ export default function CandidatureDetailPage() {
             </div>
           )}
         </Section>
+
+        {/* Partage avec le conseiller */}
+        <ShareToConseiller
+          shared={{
+            kind: 'candidature',
+            id: candidatureId,
+            title: offer.intitule || 'Candidature',
+            subtitle: [offer.entreprise, offer.lieu].filter(Boolean).join(' · '),
+            score: typeof compatibility.score === 'number' ? compatibility.score : null,
+            summary: compatibility.conseilGlobal || '',
+          }}
+        />
+
+        {/* Notes personnelles de suivi */}
+        <NotesBlock
+          initialValue={cand?.notes || ''}
+          onSave={async (text) => {
+            const res = await fetch(`/api/candidature/${candidatureId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ notes: text }),
+            });
+            if (!res.ok) {
+              const d = await res.json().catch(() => ({}));
+              throw new Error(d.error || `Erreur ${res.status}`);
+            }
+          }}
+        />
 
       </main>
     </div>

@@ -32,6 +32,7 @@ function formatTokens(n) {
 import { BrandLogo } from '@/components/brand';
 import AccessibilityBar from '@/components/layout/AccessibilityBar';
 import Footer from '@/components/layout/Footer';
+import { SharedContext } from '@/components/MonConseiller';
 
 // ─── Libellés et styles des statuts ─────────────────────────────────────────
 
@@ -428,6 +429,7 @@ function AvisQueue({ avis, drafts, setDrafts, onReply, replyingId }) {
               </p>
             )}
             <OffersPreview offers={a.context?.offers} />
+            <SharedContext context={a.context} />
 
             <div className="mt-3">
               <label htmlFor={`reply-${a.id}`} className="sr-only">Votre réponse</label>
@@ -461,7 +463,15 @@ function AvisQueue({ avis, drafts, setDrafts, onReply, replyingId }) {
               <span className="font-mono font-semibold text-teal-800">{a.beneficiaireCode}</span>
               <span className="text-teal-700/60">— {a.context?.metier || 'emplois'} · répondu</span>
             </div>
-            <p className="mt-2 text-sm text-teal-800 whitespace-pre-wrap">{a.reply}</p>
+            {a.note && (
+              <p className="mt-2 text-sm text-teal-800/90 bg-cream-50 border border-cream-200 rounded-lg px-3 py-2 whitespace-pre-wrap">
+                {a.note}
+              </p>
+            )}
+            <SharedContext context={a.context} />
+            <p className="mt-2 text-sm text-teal-800 whitespace-pre-wrap">
+              <span className="font-semibold text-teal-700">Votre réponse : </span>{a.reply}
+            </p>
           </div>
         ))}
       </div>

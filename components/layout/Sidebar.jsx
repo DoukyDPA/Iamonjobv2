@@ -10,8 +10,10 @@ import {
   Gauge,
   Loader2,
   Info,
+  X,
 } from 'lucide-react';
 import { CatMascot } from '../brand';
+import MonConseiller from '../MonConseiller';
 
 const STEPS = [
   { n: 1, label: 'Mon CV',         icon: FileText },
@@ -42,6 +44,9 @@ export default function Sidebar({
   canRateCv = false,
   onRateCv,
   onShowRatingDetails,
+  favoriteJobs = [],
+  onOpenFavorite,
+  onRemoveFavorite,
 }) {
   return (
     <aside className="hidden lg:flex flex-col w-64 shrink-0 border-r border-cream-200 bg-cream-100 px-5 py-6">
@@ -96,6 +101,43 @@ export default function Sidebar({
           );
         })}
       </nav>
+
+      {/* ─────── Contact conseiller (toujours visible) ─────── */}
+      <MonConseiller variant="sidebar" />
+
+      {/* ─────── Bloc « Mes métiers » (favoris) ─────── */}
+      {favoriteJobs.length > 0 && (
+        <div className="mt-6 pt-5 border-t border-cream-200">
+          <div className="text-xs font-bold tracking-[0.15em] text-teal-700/70 mb-3 flex items-center gap-1.5">
+            <Star className="w-3.5 h-3.5 text-amber-500" fill="currentColor" />
+            MES MÉTIERS
+          </div>
+          <ul className="space-y-1.5">
+            {favoriteJobs.map((job) => (
+              <li key={job.title} className="group flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => onOpenFavorite?.(job)}
+                  title={`Reprendre l'enquête métier : ${job.title}`}
+                  className="flex-1 min-w-0 flex items-center gap-2 px-3 py-2 rounded-xl text-left bg-white border border-cream-200 hover:border-amber-300 hover:bg-amber-50/40 transition-all"
+                >
+                  <Star className="w-3.5 h-3.5 text-amber-500 shrink-0" fill="currentColor" />
+                  <span className="text-sm font-medium text-teal-800 truncate">{job.title}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onRemoveFavorite?.(job)}
+                  title="Retirer de mes métiers"
+                  aria-label={`Retirer ${job.title} de mes métiers`}
+                  className="shrink-0 p-1.5 rounded-lg text-teal-300 hover:text-rose-500 hover:bg-rose-50 opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* ─────── Bloc « Noter mon CV » ─────── */}
       <div className="mt-6 pt-5 border-t border-cream-200">

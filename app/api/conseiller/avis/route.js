@@ -10,6 +10,7 @@
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/session';
 import { listAvisForConseiller } from '@/lib/avis';
+import { attachSignedUrls } from '@/lib/attachments';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,7 +20,7 @@ export async function GET(request) {
   if (!uid) return NextResponse.json({ error }, { status });
 
   try {
-    const avis = await listAvisForConseiller(uid);
+    const avis = await attachSignedUrls(await listAvisForConseiller(uid));
     return NextResponse.json({ avis });
   } catch (err) {
     return NextResponse.json({ error: err.message || 'Erreur chargement.' }, { status: 500 });

@@ -12,6 +12,7 @@ import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/session';
 import { getBeneficiaireByAuthUid } from '@/lib/beneficiaires';
 import { createAvisRequest, listAvisForBeneficiaire } from '@/lib/avis';
+import { attachSignedUrls } from '@/lib/attachments';
 import { logEvent, newRequestId } from '@/lib/logger';
 
 export const runtime = 'nodejs';
@@ -28,7 +29,7 @@ export async function GET(request) {
     // `linked` : la personne a un conseiller rattaché. Un utilisateur inscrit
     // librement (hors accompagnement) n'en a pas ; le bouton reste alors masqué.
     if (!beneficiaire) return NextResponse.json({ linked: false, avis: [] });
-    const avis = await listAvisForBeneficiaire(beneficiaire.id);
+    const avis = await attachSignedUrls(await listAvisForBeneficiaire(beneficiaire.id));
     return NextResponse.json({ linked: Boolean(beneficiaire.conseillerUid), avis });
   } catch (err) {
     return NextResponse.json({ error: err.message || 'Erreur chargement.' }, { status: 500 });

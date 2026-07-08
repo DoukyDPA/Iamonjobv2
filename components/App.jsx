@@ -21,6 +21,7 @@ import {
   getCvFromFirestore,
   saveCvRatingToFirestore,
   clearCvRatingInFirestore,
+  saveFavoriteJobsToFirestore,
 } from '@/lib/firebase/client';
 import AvisConseiller from './AvisConseiller';
 
@@ -115,8 +116,34 @@ export default function App({ user, availableProviders = ['mistral'] }) {
           setCvRating(data.rating);
         }
       }
+      // Métiers mis de côté lors des visites précédentes.
+      if (Array.isArray(data?.favoriteJobs)) setFavoriteJobs(data.favoriteJobs);
     });
   }, [user.id]);
+
+  // Métiers cochés par la personne, réaffichés dans la colonne de gauche.
+  const [favoriteJobs, setFavoriteJobs] = useState([]);
+
+  const isFavorite = (title) =>
+    favoriteJobs.some((f) => f.title === title);
+
+  // Ajoute ou retire un métier des favoris, puis persiste la liste.
+  const toggleFavorite = (job) => {
+    if (!job?.title) return;
+    setFavoriteJobs((prev) => {
+      const exists = prev.some((f) => f.title === job.title);
+      const next = exists
+        ? prev.filter((f) => f.title !== job.title)
+        : [...prev, { title: job.title, codeRome: job.codeRome ?? null }];
+      saveFavoriteJobsToFirestore(user.id, next);
+      return next;
+    });
+  };
+
+  // Ouvre l'enquête métier d'un favori depuis la colonne de gauche.
+  const openFavorite = (job) => {
+    if (job?.title) discoverJob(job.title, job.codeRome);
+  };
 
   const resumeSession = () => {
     setAnalysis(savedSession);
@@ -165,6 +192,8 @@ export default function App({ user, availableProviders = ['mistral'] }) {
   const [savedSession, setSavedSession] = useState(null);
   const [showCvEditor, setShowCvEditor] = useState(false);
   const [anonymizeWords, setAnonymizeWords] = useState('');
+  // Deux façons de fournir son CV : import PDF ('upload') ou copier/coller ('paste').
+  const [cvInputMode, setCvInputMode] = useState('upload');
 
   // Évaluation du CV (note /20 + critères détaillés)
   const [cvRating, setCvRating] = useState(null);
@@ -550,6 +579,9 @@ export default function App({ user, availableProviders = ['mistral'] }) {
       canRateCv={Boolean(cvText.trim())}
       onRateCv={rateCV}
       onShowRatingDetails={() => setShowRatingModal(true)}
+      favoriteJobs={favoriteJobs}
+      onOpenFavorite={openFavorite}
+      onRemoveFavorite={toggleFavorite}
     >
 
       {/* ═══════════════ Étape 1 : Mon CV ═══════════════ */}
@@ -571,15 +603,67 @@ export default function App({ user, availableProviders = ['mistral'] }) {
           {/* Carte « Importer votre CV » */}
           <Card className="border-l-4 border-l-teal-600">
             <div className="px-6 pt-5 pb-2 flex items-center gap-2">
-              <h2 className="text-lg font-bold text-teal-800">Étape 1 — Importer votre CV</h2>
+              <h2 className="text-lg font-bold text-teal-800">Étape 1 — Ajouter votre CV</h2>
               <HelpTip
-                label="Importer votre CV"
-                description="Téléchargez votre CV au format PDF. Il sera lu automatiquement et son contenu extrait pour permettre l'analyse."
+                label="Ajouter votre CV"
+                description="Importez votre CV au format PDF, ou collez directement son texte. Le contenu est ensuite analysé."
               />
             </div>
 
+            {/* Choix du mode : import PDF ou copier/coller */}
+            <div className="px-6 pt-1 pb-3">
+              <div className="inline-flex rounded-xl border border-cream-200 bg-cream-50 p-1 gap-1">
+                <button
+                  type="button"
+                  onClick={() => setCvInputMode('upload')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                    cvInputMode === 'upload'
+                      ? 'bg-white text-teal-800 shadow-soft border border-cream-200'
+                      : 'text-teal-700/70 hover:text-teal-800'
+                  }`}
+                >
+                  <Upload className="w-4 h-4" /> Importer un PDF
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCvInputMode('paste')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                    cvInputMode === 'paste'
+                      ? 'bg-white text-teal-800 shadow-soft border border-cream-200'
+                      : 'text-teal-700/70 hover:text-teal-800'
+                  }`}
+                >
+                  <PenTool className="w-4 h-4" /> Coller le texte
+                </button>
+              </div>
+            </div>
+
             <div className="px-6 pb-6">
-              {fileName && !isExtractingPdf ? (
+              {cvInputMode === 'paste' ? (
+                <div className="space-y-2">
+                  <label htmlFor="cv-paste" className="block text-sm font-semibold text-teal-800">
+                    Collez ici le texte de votre CV
+                  </label>
+                  <textarea
+                    id="cv-paste"
+                    value={cvText}
+                    onChange={(e) => {
+                      setCvText(e.target.value);
+                      // Le texte collé remplace tout PDF précédent : on nettoie l'aperçu fichier.
+                      if (fileName) { setFileName(''); setFileSize(0); setFilePages(0); setOcrUsed(false); }
+                      if (cvRating) { setCvRating(null); clearCvRatingInFirestore(user.id); }
+                    }}
+                    rows={12}
+                    placeholder="Copiez le contenu de votre CV depuis Word, un PDF ou tout autre document, puis collez-le ici (Ctrl+V)…"
+                    className="w-full p-4 border border-cream-200 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-transparent outline-none transition-all bg-cream-50/50 resize-y text-sm"
+                  />
+                  <p className="text-xs text-teal-700/60">
+                    {cvText.trim().length > 0
+                      ? `${cvText.trim().length} caractères collés.`
+                      : 'Astuce : sélectionnez tout votre CV, copiez, puis collez ici.'}
+                  </p>
+                </div>
+              ) : fileName && !isExtractingPdf ? (
                 <>
                   <FilePreview
                     fileName={fileName}
@@ -811,10 +895,25 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                           onClick={() => discoverJob(job.title, job.codeRome)}
                         >
                           <td className="p-4 align-top">
-                            <span className="font-semibold text-teal-700 group-hover:underline flex items-center gap-2">
-                              {job.title}
-                              <ExternalLink className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </span>
+                            <div className="flex items-start gap-2">
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); toggleFavorite(job); }}
+                                aria-pressed={isFavorite(job.title)}
+                                title={isFavorite(job.title) ? 'Retirer de mes métiers' : 'Mettre ce métier de côté'}
+                                className={`shrink-0 mt-0.5 rounded-md p-0.5 transition-colors ${
+                                  isFavorite(job.title)
+                                    ? 'text-amber-500 hover:text-amber-600'
+                                    : 'text-teal-300 hover:text-amber-500'
+                                }`}
+                              >
+                                <Star className="w-4 h-4" fill={isFavorite(job.title) ? 'currentColor' : 'none'} />
+                              </button>
+                              <span className="font-semibold text-teal-700 group-hover:underline flex items-center gap-2">
+                                {job.title}
+                                <ExternalLink className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </span>
+                            </div>
                           </td>
                           <td className="p-4 align-top">
                             <ul className="list-none text-sm text-teal-800 space-y-1">
@@ -1233,8 +1332,7 @@ export default function App({ user, availableProviders = ['mistral'] }) {
         <div className="space-y-6 animate-slide-in-from-right-4">
           <GuidedIntro mascot={<CatMascot className="w-14 h-14 shrink-0" />}>
             Mesure de compatibilité entre votre profil et l'offre choisie. Vous pouvez
-            ensuite générer une lettre de motivation, anticiper l'entretien et
-            recevoir un plan d'action de 4 semaines.
+            ensuite générer une lettre de motivation et anticiper l'entretien.
           </GuidedIntro>
 
           <div className="flex items-center gap-2">

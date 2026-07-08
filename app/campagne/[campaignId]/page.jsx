@@ -25,6 +25,8 @@ import {
   ClipboardList, ShieldCheck, Info, X, Download,
 } from 'lucide-react';
 import { Button, Badge, Card } from '@/components/ui';
+import NotesBlock from '@/components/NotesBlock';
+import ShareToConseiller from '@/components/ShareToConseiller';
 
 // ─── Constantes ───────────────────────────────────────────────────────────
 
@@ -423,6 +425,34 @@ export default function CampaignValidationPage() {
       )}
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+
+        {/* ══ Notes personnelles de suivi ═════════════════════════════════ */}
+        <NotesBlock
+          initialValue={campaign?.notes || ''}
+          onSave={async (text) => {
+            const res = await fetch(`/api/campaign/${campaignId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ notes: text }),
+            });
+            if (!res.ok) {
+              const d = await res.json().catch(() => ({}));
+              throw new Error(d.error || `Erreur ${res.status}`);
+            }
+          }}
+        />
+
+        {/* ══ Partage avec le conseiller ══════════════════════════════════ */}
+        <ShareToConseiller
+          shared={{
+            kind: 'campaign',
+            id: campaignId,
+            title: campaign.jobTitle || 'Campagne',
+            subtitle: `${companies.length} entreprise${companies.length > 1 ? 's' : ''} · ${keepCount} retenue${keepCount > 1 ? 's' : ''}`,
+            score: null,
+            summary: profile.summary || '',
+          }}
+        />
 
         {/* ══ 1. Profil candidat ══════════════════════════════════════════ */}
         <Card>

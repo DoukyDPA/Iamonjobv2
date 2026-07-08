@@ -1,10 +1,63 @@
 'use client';
 
-import { Gauge, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Gauge, Loader2, X } from 'lucide-react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
+import MonConseiller from '../MonConseiller';
+import { CatMascot } from '../brand';
 import { ErrorBanner } from '../ui';
+
+const PSEUDO_NOTICE_KEY = 'hide_pseudo_notice';
+
+/**
+ * Bandeau rassurant : quand la personne se connecte par code, son nom affiché
+ * ressemble à un identifiant technique. On explique pourquoi, une fois, avec le
+ * ton juste. La fermeture est mémorisée.
+ */
+function PseudoNotice({ user }) {
+  const isCoded = Boolean(user?.email?.endsWith('@iamonjob.local'));
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    if (!isCoded) return;
+    try {
+      if (localStorage.getItem(PSEUDO_NOTICE_KEY) !== '1') setShow(true);
+    } catch {
+      setShow(true);
+    }
+  }, [isCoded]);
+
+  if (!show) return null;
+
+  const dismiss = () => {
+    try { localStorage.setItem(PSEUDO_NOTICE_KEY, '1'); } catch {}
+    setShow(false);
+  };
+
+  return (
+    <div className="bg-teal-50 border-b border-teal-100">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-3 flex items-start gap-3">
+        <CatMascot className="w-9 h-9 shrink-0" />
+        <p className="flex-1 text-sm text-teal-800/90 leading-relaxed">
+          <strong>Non, vous n'êtes pas devenu un petit robot de science-fiction !</strong>{' '}
+          Ce code un peu étrange à la place de votre nom protège vos données personnelles :
+          IAMONJOB préfère vous identifier ainsi. L'essentiel reste ailleurs, dans le lien
+          humain avec votre conseiller.
+        </p>
+        <button
+          type="button"
+          onClick={dismiss}
+          aria-label="Fermer ce message"
+          className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-teal-600 hover:bg-teal-100"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 /** Couleur de la pastille mobile selon le score /20 (cohérent avec la sidebar). */
 const mobileRatingTile = (n) => {
@@ -31,11 +84,16 @@ export default function AppShell({
   canRateCv,
   onRateCv,
   onShowRatingDetails,
+  favoriteJobs = [],
+  onOpenFavorite,
+  onRemoveFavorite,
   children,
 }) {
   return (
     <div className="min-h-screen bg-cream-100 text-teal-900 flex flex-col">
       <Header user={user} sessionLabel={sessionLabel} />
+
+      <PseudoNotice user={user} />
 
       {/* ─── Bande "Évaluation du CV" — visible UNIQUEMENT sur mobile ───
           La sidebar (lg+) porte déjà ce bloc. Sur mobile, sans cette bande,
@@ -110,9 +168,12 @@ export default function AppShell({
           )}
         </div>
         <p className="mt-2 text-[10px] leading-snug text-teal-700/70">
-          Note <strong>indicative</strong> — un CV ne prend vraiment du sens que <strong>face à un poste précis</strong>.
+          Note <strong>indicative</strong> : un CV ne prend vraiment du sens que <strong>face à un poste précis</strong>.
           N'hésitez pas à en discuter avec un conseiller bien <strong>humain</strong>.
         </p>
+        <div className="mt-3 flex justify-start">
+          <MonConseiller variant="mobile" />
+        </div>
       </div>
 
       <div className="flex-1 flex">
@@ -125,6 +186,9 @@ export default function AppShell({
           canRateCv={canRateCv}
           onRateCv={onRateCv}
           onShowRatingDetails={onShowRatingDetails}
+          favoriteJobs={favoriteJobs}
+          onOpenFavorite={onOpenFavorite}
+          onRemoveFavorite={onRemoveFavorite}
         />
 
         <div className="flex-1 flex flex-col">

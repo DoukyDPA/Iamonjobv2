@@ -65,7 +65,7 @@ export async function GET(request, { params }) {
 // ─── PATCH /api/campaign/[campaignId] ────────────────────────────────────
 
 // Champs autorisés depuis le client
-const PATCHABLE = ['status', 'companies', 'emailTemplate', 'validationLog'];
+const PATCHABLE = ['status', 'companies', 'emailTemplate', 'validationLog', 'notes'];
 
 // Statuts autorisés pour un passage manuel
 const VALID_STATUSES = ['draft', 'pending_validation', 'validated'];
@@ -100,6 +100,8 @@ export async function PATCH(request, { params }) {
   for (const key of PATCHABLE) {
     if (body[key] !== undefined) updates[key] = body[key];
   }
+  // Notes personnelles de suivi : simple texte, plafonné.
+  if (updates.notes !== undefined) updates.notes = String(updates.notes).slice(0, 4000);
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'Aucun champ modifiable fourni.' }, { status: 400 });

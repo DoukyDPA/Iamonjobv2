@@ -40,7 +40,7 @@ const STEPS = [
     n: 5,
     icon: Star,
     title: 'Préparez votre candidature',
-    body: 'Score de compatibilité, lettre de motivation, questions d\'entretien, plan d\'action sur 4 semaines.',
+    body: 'Score de compatibilité, lettre de motivation et questions d\'entretien.',
   },
 ];
 

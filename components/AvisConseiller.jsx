@@ -96,7 +96,7 @@ export default function AvisConseiller({ metier, codeRome, offers = [] }) {
           <h3 className="text-base font-bold text-teal-800">Un doute sur ces pistes ?</h3>
           <p className="text-sm text-teal-700/80 mt-1">
             Votre conseiller peut regarder ces emplois et vous donner son avis. Vous
-            gardez la main, il vous répond quand il peut.
+            gardez la main, il vous répondra dès que possible.
           </p>
 
           <div className="mt-3">
