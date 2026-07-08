@@ -20,7 +20,7 @@ import { auth } from '@/lib/firebase/client';
 import {
   Loader2, Users, UserPlus, ShieldCheck, ShieldAlert, ShieldX,
   Compass, Copy, Check, X, AlertCircle, Send,
-  MessageSquareHeart, Clock, CheckCircle2, ExternalLink, Coins, Eye,
+  MessageSquareHeart, Clock, CheckCircle2, ExternalLink, Coins, Eye, Trash2,
 } from 'lucide-react';
 
 // Format court des grands nombres : 12 340 → « 12,3 k », lisible d'un coup d'œil.
@@ -75,6 +75,8 @@ export default function ConseillerPage() {
   const [drafts, setDrafts] = useState({});
   const [replyingId, setReplyingId] = useState(null);
   const [openFiche, setOpenFiche] = useState(null); // { avisId, code } | null
+  const [confirmDelete, setConfirmDelete] = useState(null); // bénéficiaire | null
+  const [deletingId, setDeletingId] = useState(null);
 
   async function load() {
     const res = await fetch('/api/conseiller/beneficiaires');
@@ -139,6 +141,21 @@ export default function ConseillerPage() {
       setError('La création a échoué. Réessayez.');
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function handleDelete(id) {
+    setDeletingId(id);
+    setError(null);
+    try {
+      const res = await fetch(`/api/conseiller/beneficiaires/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      setConfirmDelete(null);
+      await load();
+    } catch {
+      setError('La suppression a échoué. Réessayez.');
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -253,6 +270,7 @@ export default function ConseillerPage() {
                   <th className="px-4 py-3 font-semibold">Tokens (mois)</th>
                   <th className="px-4 py-3 font-semibold">Tokens (total)</th>
                   <th className="px-4 py-3 font-semibold">Accès</th>
+                  <th className="px-4 py-3 font-semibold text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -268,6 +286,16 @@ export default function ConseillerPage() {
                       <span className={`text-xs font-medium ${b.status === 'active' ? 'text-teal-600' : 'text-amber-600'}`}>
                         {b.status === 'active' ? 'Actif' : 'Code non activé'}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => setConfirmDelete(b)}
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-400"
+                        aria-label={`Supprimer le dossier ${b.code}`}
+                        title="Supprimer ce dossier"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -286,6 +314,45 @@ export default function ConseillerPage() {
           onOpenFiche={(a) => setOpenFiche({ avisId: a.id, code: a.beneficiaireCode })}
         />
       </main>
+
+      {/* Modale : confirmation de suppression d'un dossier */}
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-teal-900/40"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => deletingId ? null : setConfirmDelete(null)}
+        >
+          <div className="bg-white rounded-2xl shadow-card p-7 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="w-12 h-12 rounded-xl bg-rose-100 flex items-center justify-center mx-auto mb-3">
+              <Trash2 className="w-6 h-6 text-rose-600" />
+            </div>
+            <h2 className="text-lg font-extrabold text-teal-800 text-center">Supprimer ce dossier ?</h2>
+            <p className="text-sm text-teal-700/80 mt-2 text-center">
+              Le dossier <span className="font-mono font-semibold">{confirmDelete.code}</span> et toutes ses
+              données (candidatures, campagnes, CV, échanges) seront effacés définitivement. Cette action est
+              irréversible.
+            </p>
+            <div className="mt-6 flex gap-2">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                disabled={!!deletingId}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-cream-300 text-teal-700 font-semibold hover:bg-cream-50 disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => handleDelete(confirmDelete.id)}
+                disabled={!!deletingId}
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 text-white font-semibold hover:bg-rose-700 disabled:bg-rose-300"
+              >
+                {deletingId ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modale : fiche partagée en entier */}
       {openFiche && (
