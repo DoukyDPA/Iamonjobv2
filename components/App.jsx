@@ -109,6 +109,9 @@ export default function App({ user, availableProviders = ['mistral'] }) {
     getCvFromFirestore(user.id).then((data) => {
       if (data?.cvText) {
         setCvText(data.cvText);
+        // CV déjà enregistré : on rend l'édition/anonymisation accessible d'emblée,
+        // même sans réimport (le nom du fichier, lui, n'est pas conservé).
+        setShowCvEditor(true);
         if (data.analysis) setSavedSession(data.analysis);
         // Restauration de la note précédente si elle correspond toujours
         // au CV en base (elle est nettoyée côté Firestore dès que le CV change).
@@ -367,6 +370,9 @@ export default function App({ user, availableProviders = ['mistral'] }) {
       }
 
       setCvText(fullText);
+      // On ouvre d'emblée l'éditeur : la personne voit tout de suite qu'elle peut
+      // retirer nom, e-mail, téléphone et corriger le texte avant l'analyse.
+      setShowCvEditor(true);
     } catch (err) {
       setError('Erreur lors de la lecture du PDF. Le fichier est peut-être protégé ou illisible.');
     } finally {
@@ -837,15 +843,32 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                       : 'Astuce : sélectionnez tout votre CV, copiez, puis collez ici.'}
                   </p>
                 </div>
-              ) : fileName && !isExtractingPdf ? (
+              ) : (fileName || cvText.trim().length > 0) && !isExtractingPdf ? (
                 <>
-                  <FilePreview
-                    fileName={fileName}
-                    fileSize={formatBytes(fileSize)}
-                    pages={filePages}
-                    onChange={resetFile}
-                    status="ok"
-                  />
+                  {fileName ? (
+                    <FilePreview
+                      fileName={fileName}
+                      fileSize={formatBytes(fileSize)}
+                      pages={filePages}
+                      onChange={resetFile}
+                      status="ok"
+                    />
+                  ) : (
+                    // CV restauré d'une session précédente : pas de fichier, mais un
+                    // texte à vérifier/anonymiser. On propose de le remplacer si besoin.
+                    <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 rounded-xl border border-cream-200 bg-cream-50/60">
+                      <span className="text-sm font-medium text-teal-800 flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-teal-600" /> Votre CV enregistré
+                      </span>
+                      <button
+                        type="button"
+                        onClick={resetFile}
+                        className="text-xs font-medium text-teal-700 hover:text-teal-900 hover:underline"
+                      >
+                        Importer un autre CV
+                      </button>
+                    </div>
+                  )}
 
                   {/* Avertissement PDF graphique non lisible */}
                   {ocrUsed && (
