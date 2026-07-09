@@ -24,6 +24,7 @@ import {
 import { Button, Badge, Card } from '@/components/ui';
 import NotesBlock from '@/components/NotesBlock';
 import ShareToConseiller from '@/components/ShareToConseiller';
+import CoverLetterText from '@/components/CoverLetterText';
 
 const TYPE_LABEL = {
   classique: { label: 'Classique',  color: 'bg-teal-100 text-teal-700' },
@@ -267,9 +268,7 @@ export default function CandidatureDetailPage() {
         {/* Lettre de motivation */}
         <Section title="Lettre de motivation" icon={FileText} defaultOpen={!!coverLetter}>
           {coverLetter ? (
-            <div className="prose prose-sm max-w-none text-teal-900 whitespace-pre-wrap leading-relaxed text-sm mt-1">
-              {coverLetter}
-            </div>
+            <CoverLetterText text={coverLetter} className="text-teal-900 text-sm mt-1" />
           ) : (
             <div className="flex flex-col items-start gap-3 mt-1">
               <p className="text-sm text-teal-700/70">

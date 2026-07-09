@@ -15,6 +15,7 @@ import {
   X, Loader2, AlertCircle, Briefcase, Building2, MapPin, ExternalLink,
   CheckCircle2, AlertTriangle, FileText, MessageSquare, Star, Mail, Users,
 } from 'lucide-react';
+import CoverLetterText from './CoverLetterText';
 
 const DECISION = {
   keep:    { label: 'Retenue',   cls: 'bg-teal-50 text-teal-700 border-teal-200' },
@@ -105,7 +106,7 @@ function CandidatureView({ fiche }) {
 
       {coverLetter && (
         <Block title="Lettre de motivation" icon={FileText}>
-          <p className="whitespace-pre-wrap leading-relaxed">{coverLetter}</p>
+          <CoverLetterText text={coverLetter} />
         </Block>
       )}
 

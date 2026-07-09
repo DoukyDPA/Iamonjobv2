@@ -24,6 +24,7 @@ import {
   saveFavoriteJobsToFirestore,
 } from '@/lib/firebase/client';
 import AvisConseiller from './AvisConseiller';
+import CoverLetterText from './CoverLetterText';
 
 const MAX_CHAT_MESSAGES = 30;
 const CHAT_HISTORY_WINDOW = 10;
@@ -1689,8 +1690,8 @@ export default function App({ user, availableProviders = ['mistral'] }) {
               {coverLetter && (
                 <Card className="p-6 border-l-4 border-l-teal-400">
                   <SectionTitle icon={FileText} className="mb-4">Proposition de Lettre</SectionTitle>
-                  <div className="whitespace-pre-wrap text-sm text-teal-900 bg-cream-50 p-6 rounded-xl border border-cream-200">
-                    {coverLetter}
+                  <div className="text-sm text-teal-900 bg-cream-50 p-6 rounded-xl border border-cream-200">
+                    <CoverLetterText text={coverLetter} />
                   </div>
                 </Card>
               )}
