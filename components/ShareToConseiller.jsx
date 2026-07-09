@@ -9,13 +9,15 @@
 // sa file). Ne s'affiche que si un conseiller est rattaché.
 //
 // Props :
-//   shared  { kind: 'candidature' | 'campaign', id, title, subtitle, score, summary }
+//   shared   { kind: 'candidature' | 'campaign', id, title, subtitle, score, summary }
+//   compact  true → bouton seul en ligne (fin de section) au lieu de la carte
+//   label    texte du bouton en mode compact (défaut : « Partager avec mon conseiller »)
 // ════════════════════════════════════════════════════════════════════════════
 
 import { useEffect, useState } from 'react';
 import { Share2, Send, Loader2, CheckCircle2 } from 'lucide-react';
 
-export default function ShareToConseiller({ shared }) {
+export default function ShareToConseiller({ shared, compact = false, label = 'Partager avec mon conseiller' }) {
   const [linked, setLinked] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [open, setOpen] = useState(false);
@@ -69,6 +71,55 @@ export default function ShareToConseiller({ shared }) {
       <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
         <CheckCircle2 className="w-4 h-4 shrink-0" />
         Partagé avec votre conseiller. Il pourra le consulter et vous répondre.
+      </div>
+    );
+  }
+
+  // ── Mode compact : bouton seul en fin de section ─────────────────────────
+  if (compact) {
+    if (!open) {
+      return (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-teal-200 text-teal-700 text-sm font-semibold hover:bg-teal-50 transition-colors"
+        >
+          <Share2 className="w-4 h-4" /> {label}
+        </button>
+      );
+    }
+    return (
+      <div className="space-y-3 bg-teal-50/50 border border-teal-100 rounded-2xl px-5 py-4">
+        <p className="font-semibold text-teal-800 flex items-center gap-2">
+          <Share2 className="w-4 h-4 text-teal-600" /> {label}
+        </p>
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          rows={3}
+          maxLength={2000}
+          placeholder="Un mot pour votre conseiller ? (facultatif)"
+          className="w-full p-3 text-sm rounded-lg border border-teal-200 bg-white outline-none focus:ring-2 focus:ring-teal-400 placeholder:text-teal-700/40"
+        />
+        {error && <p className="text-sm text-rose-600">{error}</p>}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={share}
+            disabled={sending}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold shadow-soft hover:bg-teal-700 disabled:bg-teal-200 transition-colors"
+          >
+            {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            {sending ? 'Envoi…' : 'Envoyer à mon conseiller'}
+          </button>
+          <button
+            type="button"
+            onClick={() => { setOpen(false); setError(null); }}
+            className="px-3 py-2 rounded-lg text-sm text-teal-700 hover:bg-teal-100"
+          >
+            Annuler
+          </button>
+        </div>
       </div>
     );
   }

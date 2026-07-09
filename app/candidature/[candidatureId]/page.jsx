@@ -168,6 +168,15 @@ export default function CandidatureDetailPage() {
 
   const { offer = {}, compatibility = {}, createdAt } = cand || {};
 
+  const sharedFiche = {
+    kind: 'candidature',
+    id: candidatureId,
+    title: offer.intitule || 'Candidature',
+    subtitle: [offer.entreprise, offer.lieu].filter(Boolean).join(' · '),
+    score: typeof compatibility.score === 'number' ? compatibility.score : null,
+    summary: compatibility.conseilGlobal || '',
+  };
+
   return (
     <div className="min-h-screen bg-cream-100">
       {/* En-tête */}
@@ -268,7 +277,12 @@ export default function CandidatureDetailPage() {
         {/* Lettre de motivation */}
         <Section title="Lettre de motivation" icon={FileText} defaultOpen={!!coverLetter}>
           {coverLetter ? (
-            <CoverLetterText text={coverLetter} className="text-teal-900 text-sm mt-1" />
+            <>
+              <CoverLetterText text={coverLetter} className="text-teal-900 text-sm mt-1" />
+              <div className="mt-4 flex justify-end">
+                <ShareToConseiller shared={sharedFiche} compact label="Partager avec mon conseiller" />
+              </div>
+            </>
           ) : (
             <div className="flex flex-col items-start gap-3 mt-1">
               <p className="text-sm text-teal-700/70">
@@ -313,6 +327,9 @@ export default function CandidatureDetailPage() {
                   </div>
                 );
               })}
+              <div className="flex justify-end">
+                <ShareToConseiller shared={sharedFiche} compact label="Partager avec mon conseiller" />
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-start gap-3 mt-1">
@@ -332,16 +349,7 @@ export default function CandidatureDetailPage() {
         </Section>
 
         {/* Partage avec le conseiller */}
-        <ShareToConseiller
-          shared={{
-            kind: 'candidature',
-            id: candidatureId,
-            title: offer.intitule || 'Candidature',
-            subtitle: [offer.entreprise, offer.lieu].filter(Boolean).join(' · '),
-            score: typeof compatibility.score === 'number' ? compatibility.score : null,
-            summary: compatibility.conseilGlobal || '',
-          }}
-        />
+        <ShareToConseiller shared={sharedFiche} />
 
         {/* Notes personnelles de suivi */}
         <NotesBlock
