@@ -4,7 +4,43 @@ Ce projet collecte deux types de données personnelles. Voici comment chacune es
 
 ## CV des utilisateurs (`cvs/{uid}`)
 
-Le CV est lié au compte. Il disparaît dans deux cas : l'utilisateur supprime son compte (bouton « Supprimer mon compte » dans l'en-tête), ou tu le supprimes manuellement. La route `app/api/account/delete/route.js` efface le document CV, les compteurs de rate limit et le compte Firebase Auth, en une fois. L'action est irréversible.
+Le CV est lié au compte. Il disparaît dans trois cas : l'utilisateur supprime son compte (bouton « Supprimer mon compte » dans l'en-tête), tu le supprimes manuellement, ou la purge automatique retire un compte inactif (voir plus bas). La route `app/api/account/delete/route.js` efface le document CV, les compteurs de rate limit et le compte Firebase Auth, en une fois. Elle passe par le helper partagé `lib/account-deletion.js`, qui décrit à un seul endroit ce qu'on efface. L'action est irréversible.
+
+## Comptes inactifs (purge automatique)
+
+IAMONJOB vise les demandeurs d'emploi actifs. Passé `INACTIVE_ACCOUNT_DAYS` jours sans activité (30 par défaut), un compte utilisateur est supprimé, avec les mêmes effets que la suppression manuelle. Les conseillers ne sont jamais concernés : tout compte portant le custom claim `role: 'conseiller'` est écarté.
+
+L'activité vient des métadonnées Firebase Auth : dernière connexion et dernier rafraîchissement de jeton (ce dernier bouge tant que la personne utilise l'app). Aucun champ à stocker.
+
+La logique est dans `lib/purge-inactive.js`, déclenchée par la route `app/api/admin/purge-inactive`. Cette route est protégée par un secret d'en-tête (`x-cron-secret`, variable `CRON_SECRET`) et attend un appel d'un ordonnanceur externe, une fois par jour.
+
+### Changer la durée
+
+Change `INACTIVE_ACCOUNT_DAYS` (par exemple 45 ou 60) et redéploie. Rien d'autre. Un plancher de 7 jours protège contre une valeur trop basse posée par erreur. Pense alors à mettre à jour `/confidentialite`, qui doit annoncer la durée réelle.
+
+### Observer avant d'effacer
+
+Un mode « à blanc » compte ce qui partirait sans rien supprimer :
+
+```bash
+curl -X POST "https://<app>/api/admin/purge-inactive?dryRun=1" \
+  -H "x-cron-secret: $CRON_SECRET"
+```
+
+La réponse donne `scanned`, `conseillersSkipped`, `matched` (comptes qui seraient effacés) et `deleted` (0 en mode à blanc). Lance-le quelques jours avant d'activer la vraie purge pour vérifier le volume.
+
+### Planifier
+
+Programme un appel quotidien depuis l'ordonnanceur de ton choix (Railway Cron, cron-job.org, GitHub Actions) :
+
+```bash
+curl -X POST https://<app>/api/admin/purge-inactive \
+  -H "x-cron-secret: $CRON_SECRET"
+```
+
+### Limite : pas de préavis email
+
+Le système ne conserve pas les adresses email des utilisateurs, par choix de conception. Impossible donc de prévenir avant l'effacement. La purge est silencieuse. La page `/confidentialite` doit l'annoncer clairement : durée de conservation et suppression automatique sans notification.
 
 ## Inscriptions bêta (`beta_signups`)
 

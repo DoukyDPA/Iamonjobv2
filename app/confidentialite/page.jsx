@@ -104,10 +104,16 @@ export default function ConfidentialitePage() {
       <section>
         <h2 className="text-xl font-bold text-teal-800 mb-3">Conservation et effacement</h2>
         <p>
-          Votre CV et vos données restent tant que votre compte existe. La suppression de votre
-          compte efface votre CV et votre compte d'authentification, de façon définitive. L'effacement
-          est immédiat, et au plus tard sous 30 jours. Vous pouvez le déclencher vous-même depuis
-          l'application, ou nous le demander par email.
+          IAMONJOB s'adresse aux personnes en recherche active. Un compte sans activité pendant
+          30 jours est supprimé automatiquement : votre CV et votre compte d'authentification sont
+          effacés de façon définitive. Comme nous ne conservons pas votre adresse email, cette
+          suppression a lieu sans message d'avertissement préalable. Il vous suffit de vous
+          reconnecter et d'utiliser le service pour que ce délai reparte de zéro. Les comptes des
+          conseillers ne sont pas concernés.
+        </p>
+        <p className="mt-3">
+          Vous pouvez aussi supprimer votre compte vous-même, à tout moment, depuis l'application,
+          ou nous le demander par email. L'effacement est alors immédiat, et au plus tard sous 30 jours.
         </p>
         <p className="mt-3">
           Nous ne revendons jamais vos données et ne les utilisons pas à des fins publicitaires.

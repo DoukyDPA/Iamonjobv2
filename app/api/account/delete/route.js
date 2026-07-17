@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebase/admin';
+import { adminAuth } from '@/lib/firebase/admin';
+import { deleteAccountData } from '@/lib/account-deletion';
 import { logEvent, newRequestId } from '@/lib/logger';
 
 export const runtime = 'nodejs';
@@ -30,14 +31,8 @@ export async function POST(request) {
   }
 
   try {
-    // 1. Données applicatives. On efface ce qui existe ; l'absence n'est pas une
-    //    erreur (delete sur un doc inexistant ne lève rien côté Admin SDK).
-    await adminDb.doc(`cvs/${uid}`).delete();
-    await adminDb.doc(`rate_limits/ai__${uid}`).delete();
-    await adminDb.doc(`rate_limits/france-travail__${uid}`).delete();
-
-    // 2. Compte d'authentification.
-    await adminAuth.deleteUser(uid);
+    // Effacement complet (CV, compteurs, compte Auth) via la logique partagée.
+    await deleteAccountData(uid);
 
     // Trace d'audit : on journalise l'uid effacé, jamais email ni nom.
     logEvent({ event: 'account-delete', requestId, uid, status: 'deleted' });

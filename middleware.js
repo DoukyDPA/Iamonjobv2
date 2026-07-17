@@ -13,6 +13,9 @@ export function middleware(request) {
     // Promotion d'un conseiller : protégée par un secret d'en-tête, pas par le
     // cookie de session. Elle doit donc échapper à la redirection /login.
     '/api/admin/promote',
+    // Purge des comptes inactifs : appelée par un cron avec un secret d'en-tête,
+    // sans cookie de session. Doit aussi échapper à la redirection /login.
+    '/api/admin/purge-inactive',
     '/mentions-legales', '/confidentialite', '/cgu', '/accessibilite',
   ];
   const isPublic = publicRoutes.some((r) => pathname.startsWith(r));
