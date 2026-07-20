@@ -205,13 +205,20 @@ export default function MonConseiller({ variant = 'sidebar' }) {
         className="relative w-full flex items-center gap-3 p-3 rounded-xl bg-teal-600 text-white shadow-card hover:bg-teal-700 transition-colors text-left"
       >
         {photoUrl ? (
-          <img src={photoUrl} alt="" className="w-10 h-10 rounded-full object-cover shrink-0 border-2 border-white/40" />
+          <img src={photoUrl} alt="" className="w-14 h-14 rounded-full object-cover shrink-0 border-2 border-white/60" />
         ) : (
-          <MessageSquareHeart className="w-5 h-5 shrink-0" />
+          <div className="w-14 h-14 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+            <MessageSquareHeart className="w-6 h-6" />
+          </div>
         )}
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-bold leading-tight truncate">{titre}</div>
-          <div className="text-[11px] text-white/85 leading-tight">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-white/70 leading-tight">
+            Mon conseiller
+          </div>
+          <div className="text-base font-bold leading-tight truncate">
+            {prenom || 'Votre conseiller'}
+          </div>
+          <div className="text-[11px] text-white/85 leading-tight mt-0.5">
             {unseenAnswers > 0 ? 'Nouvelle réponse !' : 'Lui écrire un message'}
           </div>
         </div>
