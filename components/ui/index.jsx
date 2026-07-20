@@ -8,6 +8,7 @@ export const Button = ({
   children,
   onClick,
   disabled,
+  loading = false,
   variant = 'primary',
   size = 'md',
   className = '',
@@ -36,10 +37,11 @@ export const Button = ({
     <button
       type={type}
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
       className={`${base} ${variants[variant]} ${className}`}
     >
-      {disabled && variant === 'primary' ? (
+      {loading ? (
         <Loader2 className="w-5 h-5 animate-spin" />
       ) : (
         Icon && <Icon className="w-4 h-4 shrink-0" />

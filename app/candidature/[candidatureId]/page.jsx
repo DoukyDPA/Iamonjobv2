@@ -293,7 +293,7 @@ export default function CandidatureDetailPage() {
                   <AlertCircle className="w-4 h-4 shrink-0" />{coverError}
                 </div>
               )}
-              <Button onClick={generateCoverLetter} disabled={isGenCover} icon={isGenCover ? Loader2 : Sparkles}>
+              <Button onClick={generateCoverLetter} loading={isGenCover} icon={Sparkles}>
                 {isGenCover ? 'Génération en cours…' : 'Générer la lettre'}
               </Button>
             </div>
@@ -341,7 +341,7 @@ export default function CandidatureDetailPage() {
                   <AlertCircle className="w-4 h-4 shrink-0" />{interviewError}
                 </div>
               )}
-              <Button onClick={generateInterview} disabled={isGenInterview} icon={isGenInterview ? Loader2 : Sparkles}>
+              <Button onClick={generateInterview} loading={isGenInterview} icon={Sparkles}>
                 {isGenInterview ? 'Génération en cours…' : 'Préparer l\'entretien'}
               </Button>
             </div>

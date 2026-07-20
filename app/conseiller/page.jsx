@@ -12,7 +12,7 @@
 // d'afficher, et bascule en message clair si l'API répond 403.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -21,6 +21,7 @@ import {
   Loader2, Users, UserPlus, ShieldCheck, ShieldAlert, ShieldX,
   Compass, Copy, Check, X, AlertCircle, Send,
   MessageSquareHeart, Clock, CheckCircle2, ExternalLink, Coins, Eye, Trash2,
+  Camera, UserCircle,
 } from 'lucide-react';
 
 // Format court des grands nombres : 12 340 → « 12,3 k », lisible d'un coup d'œil.
@@ -233,6 +234,9 @@ export default function ConseillerPage() {
             <span>{error}</span>
           </div>
         )}
+
+        {/* Mon profil : prénom + photo, visibles par les personnes accompagnées */}
+        <ProfilePanel />
 
         {/* Cartes de synthèse */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
@@ -468,6 +472,140 @@ function Header() {
   );
 }
 
+// « Mon profil » : le conseiller renseigne un prénom et une photo. La personne
+// accompagnée les voit ensuite sous « Mon conseiller : prénom ». Composant
+// autonome : il charge et enregistre son propre état.
+function ProfilePanel() {
+  const [profile, setProfile] = useState(null);
+  const [prenom, setPrenom] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const [err, setErr] = useState(null);
+  const fileRef = useRef(null);
+
+  async function loadProfile() {
+    try {
+      const res = await fetch('/api/conseiller/profile');
+      if (!res.ok) return;
+      const d = await res.json();
+      setProfile(d.profile || null);
+      setPrenom(d.profile?.prenom || '');
+    } catch { /* silencieux */ }
+  }
+
+  useEffect(() => { loadProfile(); }, []);
+
+  async function savePrenom() {
+    setSaving(true); setErr(null); setMsg(null);
+    try {
+      const res = await fetch('/api/conseiller/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prenom }),
+      });
+      if (!res.ok) throw new Error();
+      const d = await res.json();
+      setProfile(d.profile);
+      setMsg('Profil enregistré.');
+    } catch {
+      setErr("L'enregistrement a échoué. Réessayez.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function uploadPhoto(file) {
+    if (!file) return;
+    setUploading(true); setErr(null); setMsg(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/conseiller/profile/photo', { method: 'POST', body: fd });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || "L'envoi de la photo a échoué.");
+      setProfile(d.profile);
+      setMsg('Photo mise à jour.');
+    } catch (e) {
+      setErr(e.message || "L'envoi de la photo a échoué.");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  }
+
+  return (
+    <div className="mb-6 bg-white border border-cream-200 rounded-2xl shadow-card p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <UserCircle className="w-5 h-5 text-teal-700" aria-hidden="true" />
+        <h2 className="text-base font-extrabold text-teal-800">Mon profil</h2>
+        <span className="text-xs text-teal-700/60">visible par les personnes que vous accompagnez</span>
+      </div>
+
+      <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+        {/* Photo + bouton de changement */}
+        <div className="flex items-center gap-3 shrink-0">
+          {profile?.photoUrl ? (
+            <img src={profile.photoUrl} alt="Votre photo" className="w-16 h-16 rounded-full object-cover border-2 border-cream-200" />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center">
+              <UserCircle className="w-9 h-9 text-teal-500" aria-hidden="true" />
+            </div>
+          )}
+          <div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".png,.jpg,.jpeg,.webp"
+              className="sr-only"
+              onChange={(e) => uploadPhoto(e.target.files?.[0] || null)}
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-cream-300 text-teal-700 text-sm font-semibold hover:bg-cream-50 disabled:opacity-50"
+            >
+              {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+              {profile?.photoUrl ? 'Changer la photo' : 'Ajouter une photo'}
+            </button>
+            <p className="mt-1 text-[11px] text-teal-700/50">PNG, JPEG ou WebP · 3 Mo maximum.</p>
+          </div>
+        </div>
+
+        {/* Prénom + enregistrement */}
+        <div className="flex-1 min-w-0">
+          <label htmlFor="conseiller-prenom" className="block text-sm font-semibold text-teal-800 mb-1.5">
+            Votre prénom
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              id="conseiller-prenom"
+              type="text"
+              value={prenom}
+              onChange={(e) => setPrenom(e.target.value)}
+              maxLength={40}
+              placeholder="Ex : Camille"
+              className="flex-1 p-2.5 text-sm rounded-lg border border-cream-300 bg-white outline-none focus:ring-2 focus:ring-teal-400 placeholder:text-teal-700/40"
+            />
+            <button
+              type="button"
+              onClick={savePrenom}
+              disabled={saving}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 disabled:bg-teal-200"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              Enregistrer
+            </button>
+          </div>
+          {msg && <p className="mt-2 text-sm text-teal-700">{msg}</p>}
+          {err && <p className="mt-2 text-sm text-rose-600">{err}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Stat({ icon: Icon, label, value, tone }) {
   const tones = {
     teal: 'bg-teal-100 text-teal-700',
@@ -538,7 +676,7 @@ function AvisQueue({ avis, drafts, setDrafts, onReply, replyingId, onOpenFiche }
     <section className="mt-8">
       <div className="flex items-center gap-2 mb-4">
         <MessageSquareHeart className="w-5 h-5 text-teal-700" aria-hidden="true" />
-        <h2 className="text-xl font-extrabold text-teal-800">Avis demandés</h2>
+        <h2 className="text-xl font-extrabold text-teal-800">Messages</h2>
         {pending.length > 0 && (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">
             {pending.length} en attente

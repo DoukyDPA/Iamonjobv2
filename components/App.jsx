@@ -1443,9 +1443,7 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                         className="flex-1 px-4 py-2 border border-cream-200 rounded-xl focus:ring-2 focus:ring-teal-400 outline-none bg-cream-50/30 text-sm"
                         disabled={isChatLoading}
                       />
-                      <Button type="submit" disabled={!chatInput.trim() || isChatLoading} size="md">
-                        <Send className="w-4 h-4" />
-                      </Button>
+                      <Button type="submit" icon={Send} loading={isChatLoading} disabled={!chatInput.trim()} size="md" />
                     </form>
                   )}
                 </div>
@@ -1506,7 +1504,7 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                   className="w-24 py-1.5 bg-transparent text-sm outline-none placeholder:text-teal-700/40"
                 />
               </div>
-              <Button type="submit" disabled={isSearchingOffers} icon={Search} size="md">
+              <Button type="submit" loading={isSearchingOffers} icon={Search} size="md">
                 {isSearchingOffers ? 'Recherche…' : 'Actualiser'}
               </Button>
             </form>
@@ -1673,7 +1671,7 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                 <Card className="p-6 border-l-4 border-l-teal-400">
                   <SectionTitle icon={PenTool} className="mb-3">Lettre de Motivation</SectionTitle>
                   <p className="text-sm text-teal-700/70 mb-4">Génère un premier jet adapté à cette offre et à votre profil.</p>
-                  <Button onClick={generateCoverLetter} disabled={isGeneratingLetter} className="w-full" icon={PenTool}>
+                  <Button onClick={generateCoverLetter} loading={isGeneratingLetter} className="w-full" icon={PenTool}>
                     Rédiger la lettre
                   </Button>
                 </Card>
@@ -1681,7 +1679,7 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                 <Card className="p-6 border-l-4 border-l-pink-400">
                   <SectionTitle icon={MessageSquare} className="mb-3">Préparer l'Entretien</SectionTitle>
                   <p className="text-sm text-teal-700/70 mb-4">Simule les questions probables pour ce poste précis.</p>
-                  <Button onClick={generateInterviewPrep} disabled={isGeneratingPrep} variant="secondary" className="w-full" icon={MessageSquare}>
+                  <Button onClick={generateInterviewPrep} loading={isGeneratingPrep} variant="secondary" className="w-full" icon={MessageSquare}>
                     Générer les questions
                   </Button>
                 </Card>

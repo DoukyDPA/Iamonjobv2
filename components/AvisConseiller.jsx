@@ -15,7 +15,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { useEffect, useState } from 'react';
-import { Loader2, MessageSquareHeart, Send, CheckCircle2, Clock } from 'lucide-react';
+import { MessageSquareHeart, Send, CheckCircle2, Clock } from 'lucide-react';
 import { Button, Card } from './ui';
 
 function formatDate(ms) {
@@ -115,7 +115,7 @@ export default function AvisConseiller({ metier, codeRome, offers = [] }) {
           {error && <p className="text-sm text-rose-600 mt-2">{error}</p>}
 
           <div className="mt-3">
-            <Button onClick={send} disabled={sending} icon={sending ? Loader2 : Send}>
+            <Button onClick={send} loading={sending} icon={Send}>
               {sending ? 'Envoi…' : "Demander l'avis de mon conseiller"}
             </Button>
           </div>

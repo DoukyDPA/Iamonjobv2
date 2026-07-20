@@ -61,6 +61,15 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Demandes d'avis et profils conseiller : serveur uniquement (Admin SDK),
+    // via /api/avis et /api/conseiller/*. Aucun accès client direct.
+    match /avisRequests/{doc} {
+      allow read, write: if false;
+    }
+    match /conseillers/{doc} {
+      allow read, write: if false;
+    }
+
     // Tout le reste : refusé.
     match /{document=**} {
       allow read, write: if false;

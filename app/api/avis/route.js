@@ -11,8 +11,9 @@
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/session';
 import { getBeneficiaireByAuthUid } from '@/lib/beneficiaires';
-import { createAvisRequest, listAvisForBeneficiaire } from '@/lib/avis';
+import { createAvisRequest, listAvisForBeneficiaire, notifyConseillerNewMessage } from '@/lib/avis';
 import { attachSignedUrls } from '@/lib/attachments';
+import { getConseillerPublicProfile } from '@/lib/conseiller-profile';
 import { logEvent, newRequestId } from '@/lib/logger';
 
 export const runtime = 'nodejs';
@@ -28,9 +29,16 @@ export async function GET(request) {
     const beneficiaire = await getBeneficiaireByAuthUid(uid);
     // `linked` : la personne a un conseiller rattaché. Un utilisateur inscrit
     // librement (hors accompagnement) n'en a pas ; le bouton reste alors masqué.
-    if (!beneficiaire) return NextResponse.json({ linked: false, avis: [] });
+    if (!beneficiaire) return NextResponse.json({ linked: false, conseiller: null, avis: [] });
+    const linked = Boolean(beneficiaire.conseillerUid);
     const avis = await attachSignedUrls(await listAvisForBeneficiaire(beneficiaire.id));
-    return NextResponse.json({ linked: Boolean(beneficiaire.conseillerUid), avis });
+    // Profil du conseiller (prénom + photo), pour humaniser le contact côté
+    // personne accompagnée. Un échec ici ne bloque pas le reste.
+    let conseiller = null;
+    if (linked) {
+      try { conseiller = await getConseillerPublicProfile(beneficiaire.conseillerUid); } catch { /* silencieux */ }
+    }
+    return NextResponse.json({ linked, conseiller, avis });
   } catch (err) {
     return NextResponse.json({ error: err.message || 'Erreur chargement.' }, { status: 500 });
   }
@@ -54,6 +62,13 @@ export async function POST(request) {
       beneficiaire,
       context: body.context || {},
       note: body.note || '',
+    });
+
+    // Notifie le conseiller par email, sans bloquer la réponse ni la faire
+    // échouer si l'envoi rate (best-effort).
+    await notifyConseillerNewMessage({
+      conseillerUid: beneficiaire.conseillerUid,
+      beneficiaireCode: beneficiaire.code,
     });
 
     logEvent({ event: 'avis-create', requestId, uid, status: 'ok', avisId });

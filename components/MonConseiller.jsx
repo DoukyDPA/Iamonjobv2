@@ -16,7 +16,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import {
-  MessageSquareHeart, Send, Loader2, CheckCircle2, Clock, X,
+  MessageSquareHeart, Send, CheckCircle2, Clock, X,
   Paperclip, Download, FileText, Briefcase,
 } from 'lucide-react';
 import { Button } from './ui';
@@ -90,6 +90,7 @@ export default function MonConseiller({ variant = 'sidebar' }) {
   const [linked, setLinked] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [avis, setAvis] = useState([]);
+  const [conseiller, setConseiller] = useState(null);
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState('');
   const [sending, setSending] = useState(false);
@@ -104,6 +105,7 @@ export default function MonConseiller({ variant = 'sidebar' }) {
       if (!res.ok) { setLoaded(true); return; }
       const data = await res.json();
       setLinked(Boolean(data.linked));
+      setConseiller(data.conseiller || null);
       setAvis(Array.isArray(data.avis) ? data.avis : []);
     } catch {
       // silencieux : le bouton reste masqué
@@ -173,6 +175,10 @@ export default function MonConseiller({ variant = 'sidebar' }) {
   // Rien tant qu'on n'a pas confirmé le rattachement à un conseiller.
   if (!loaded || !linked) return null;
 
+  const prenom = conseiller?.prenom || '';
+  const photoUrl = conseiller?.photoUrl || null;
+  const titre = prenom ? `Mon conseiller : ${prenom}` : 'Mon conseiller';
+
   const trigger =
     variant === 'mobile' ? (
       <button
@@ -180,8 +186,12 @@ export default function MonConseiller({ variant = 'sidebar' }) {
         onClick={openPanel}
         className="relative inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-teal-600 text-white text-xs font-semibold shadow-soft hover:bg-teal-700 shrink-0"
       >
-        <MessageSquareHeart className="w-4 h-4" />
-        Mon conseiller
+        {photoUrl ? (
+          <img src={photoUrl} alt="" className="w-5 h-5 rounded-full object-cover border border-white/50" />
+        ) : (
+          <MessageSquareHeart className="w-4 h-4" />
+        )}
+        {titre}
         {unseenAnswers > 0 && (
           <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-cream-50">
             {unseenAnswers}
@@ -194,9 +204,13 @@ export default function MonConseiller({ variant = 'sidebar' }) {
         onClick={openPanel}
         className="relative w-full flex items-center gap-3 p-3 rounded-xl bg-teal-600 text-white shadow-card hover:bg-teal-700 transition-colors text-left"
       >
-        <MessageSquareHeart className="w-5 h-5 shrink-0" />
+        {photoUrl ? (
+          <img src={photoUrl} alt="" className="w-10 h-10 rounded-full object-cover shrink-0 border-2 border-white/40" />
+        ) : (
+          <MessageSquareHeart className="w-5 h-5 shrink-0" />
+        )}
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-bold leading-tight">Mon conseiller</div>
+          <div className="text-sm font-bold leading-tight truncate">{titre}</div>
           <div className="text-[11px] text-white/85 leading-tight">
             {unseenAnswers > 0 ? 'Nouvelle réponse !' : 'Lui écrire un message'}
           </div>
@@ -241,10 +255,14 @@ export default function MonConseiller({ variant = 'sidebar' }) {
           >
             {/* En-tête */}
             <div className="px-6 py-5 border-b border-cream-200 bg-teal-50/60 flex items-start gap-3">
-              <MessageSquareHeart className="w-6 h-6 text-teal-600 shrink-0 mt-0.5" aria-hidden="true" />
+              {photoUrl ? (
+                <img src={photoUrl} alt="" className="w-11 h-11 rounded-full object-cover shrink-0 border-2 border-teal-200" />
+              ) : (
+                <MessageSquareHeart className="w-6 h-6 text-teal-600 shrink-0 mt-0.5" aria-hidden="true" />
+              )}
               <div className="flex-1 min-w-0">
                 <h2 id="conseiller-title" className="text-lg font-bold text-teal-800">
-                  Mon conseiller
+                  {titre}
                 </h2>
                 <p className="text-sm text-teal-700/80 mt-0.5">
                   Écrivez-lui quand vous voulez. Il vous répondra dès que possible.
@@ -315,8 +333,9 @@ export default function MonConseiller({ variant = 'sidebar' }) {
                 <div className="mt-2">
                   <Button
                     onClick={send}
-                    disabled={sending || (!note.trim() && !file)}
-                    icon={sending ? Loader2 : Send}
+                    loading={sending}
+                    disabled={!note.trim() && !file}
+                    icon={Send}
                   >
                     {sending ? 'Envoi…' : 'Envoyer à mon conseiller'}
                   </Button>
