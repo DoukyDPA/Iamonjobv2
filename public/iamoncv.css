@@ -1,0 +1,161 @@
+        /* --- THEMES DYNAMIQUES --- */
+        :root {
+            --th-sidebar: #123F39; /* Teal IAMONJOB par défaut */
+            --th-avatar: #1E7A6B;
+            --th-avatar-border: #2A8C79;
+            --th-text-light: #8FD4C4;
+            --th-text-lighter: #B9E4D9;
+            --th-text-accent: #F0857A;
+            --th-main: #1E7A6B;
+            --th-sidebar-text: #ffffff;
+            --th-sidebar-text-muted: rgba(255, 255, 255, 0.85);
+        }
+        
+        .th-bg-sidebar { background-color: var(--th-sidebar) !important; }
+        .th-bg-avatar { background-color: var(--th-avatar) !important; }
+        .th-border-avatar { border-color: var(--th-avatar-border) !important; }
+        .th-text-light { color: var(--th-text-light) !important; }
+        .th-text-lighter { color: var(--th-text-lighter) !important; }
+        .th-text-accent { color: var(--th-text-accent) !important; }
+        .th-border-main { border-color: var(--th-main) !important; }
+        .th-text-main { color: var(--th-main) !important; }
+        .th-text-sidebar { color: var(--th-sidebar-text) !important; }
+        .th-text-sidebar-muted { color: var(--th-sidebar-text-muted) !important; }
+        .th-marker li::marker { color: var(--th-text-accent) !important; }
+
+        /* --- CONFIGURATION IMPRESSION (PDF texte sélectionnable / ATS) --- */
+        @media print {
+            @page { size: A4; margin: 0; }
+            html, body {
+                height: auto !important;
+                overflow: visible !important;
+                background: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+
+            /* Masquer tout ce qui n'est pas le CV */
+            .no-print { display: none !important; }
+            header { display: none !important; }
+            #db-panel { display: none !important; }        /* colonne base de données */
+            #generation-overlay { display: none !important; }
+            #chat-modal, #api-modal { display: none !important; }
+
+            /* Remettre les conteneurs en flux normal, pleine largeur, sans scroll */
+            main {
+                display: block !important;
+                overflow: visible !important;
+                height: auto !important;
+                max-width: none !important;
+                margin: 0 !important;
+            }
+            #cv-panel {
+                display: block !important;
+                overflow: visible !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: #ffffff !important;
+            }
+            #cv-wrapper {
+                position: static !important;
+                width: 100% !important;
+                margin: 0 !important;
+            }
+            #cv-wrapper > .absolute { display: none !important; } /* bulle "Cliquez pour modifier" */
+
+            #cv-content {
+                display: flex !important;
+                flex-direction: row !important;
+                width: 210mm !important;
+                min-height: 297mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                max-width: none !important;
+            }
+            .sidebar {
+                width: 33% !important;
+                background-color: var(--th-sidebar) !important;
+                color: var(--th-sidebar-text) !important;
+                padding: calc(13mm * var(--cvspace, 1)) 8mm !important;
+            }
+            .main-content {
+                width: 67% !important;
+                padding: calc(13mm * var(--cvspace, 1)) 11mm !important;
+                background: #ffffff !important;
+            }
+            /* Resserrement vertical piloté par --cvspace / --cvline (voir constante JS CVL) */
+            #cv-content section { margin-bottom: calc(1.7rem * var(--cvspace, 1)) !important; }
+            #cv-content .experience-item { margin-bottom: calc(1.05rem * var(--cvspace, 1)) !important; }
+            #cv-content h2 { margin-bottom: calc(0.85rem * var(--cvspace, 1)) !important; }
+            #cv-content p, #cv-content li { line-height: calc(1.45 * var(--cvline, 1)) !important; }
+
+            /* Édition : pas de contours ni surlignage à l'impression */
+            [contenteditable] {
+                outline: none !important;
+                background: transparent !important;
+                border-radius: 0 !important;
+            }
+            a { text-decoration: none !important; color: inherit !important; }
+
+            /* ATS : masquer les pictogrammes (une police d'icônes ressort en caractères parasites à l'extraction) */
+            #cv-content i, #cv-content .fa, #cv-content .fas, #cv-content .far, #cv-content .fab, #cv-content svg { display: none !important; }
+            /* ATS : forcer une police standard et extractible (évite les polices système Apple converties en Type 3) */
+            #cv-content, #cv-content * { font-family: Arial, Helvetica, "Helvetica Neue", sans-serif !important; }
+
+            /* Éviter de couper un bloc entre deux pages */
+            h2, h3, li, .experience-item { page-break-inside: avoid !important; }
+
+            /* Rubriques vides : ne pas les imprimer ; placeholders masqués à l'impression */
+            .empty-section { display: none !important; }
+            [data-ph]:empty:before { content: '' !important; }
+        }
+
+        /* --- STYLES ECRAN --- */
+        .loading-dots:after { content: '.'; animation: dots 1s steps(5, end) infinite; }
+
+        /* Placeholder cliquable pour un champ éditable vide (dates, niveau de langue…) */
+        [contenteditable][data-ph]:empty:before {
+            content: attr(data-ph);
+            opacity: 0.45;
+            font-style: italic;
+            font-weight: 400;
+        }
+        [contenteditable][data-ph]:empty { min-width: 3.5em; display: inline-block; }
+
+        /* Rubrique vide à l'écran : atténuée, mais toujours modifiable (bouton Ajouter visible) */
+        .empty-section { opacity: 0.55; }
+        @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60% { content: '...'; } 80%, 100% { content: ''; } }
+        
+        [contenteditable="true"]:hover {
+            background-color: rgba(30, 122, 107, 0.06);
+            outline: 1px dashed #1E7A6B;
+            cursor: text;
+        }
+        .sidebar [contenteditable="true"]:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            outline: 1px dashed rgba(255, 255, 255, 0.3);
+        }
+        [contenteditable="true"]:focus {
+            background-color: rgba(30, 122, 107, 0.1);
+            outline: 2px solid #1E7A6B;
+            border-radius: 4px;
+        }
+
+        /* Curseur de redimensionnement de la colonne */
+        body.col-resizing { cursor: col-resize !important; user-select: none !important; }
+        
+        /* Custom scrollbar pour les zones de défilement */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Chat messages animations */
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .msg-animate { animation: slideUp 0.3s ease-out forwards; }
