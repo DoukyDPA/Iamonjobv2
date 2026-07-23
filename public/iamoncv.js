@@ -424,10 +424,10 @@
             expList.innerHTML = db.experiences.map((exp, i) => `
                 <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-sm relative group">
                     <button onclick="removeDBItem('experiences', ${i})" class="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash"></i></button>
-                    <input type="text" placeholder="Titre (ex: Directeur)" value="${exp.title}" onchange="updateDBItem('experiences', ${i}, 'title', this.value)" class="w-full text-sm font-bold text-slate-800 border-none focus:ring-0 p-0 mb-1 outline-none bg-transparent placeholder-slate-300">
+                    <input type="text" autocomplete="off" placeholder="Titre (ex: Directeur)" value="${exp.title}" onchange="updateDBItem('experiences', ${i}, 'title', this.value)" class="w-full text-sm font-bold text-slate-800 border-none focus:ring-0 p-0 mb-1 outline-none bg-transparent placeholder-slate-300">
                     <div class="flex gap-2 mb-2">
-                        <input type="text" placeholder="Entreprise" value="${exp.company}" onchange="updateDBItem('experiences', ${i}, 'company', this.value)" class="w-2/3 text-xs text-slate-600 border-none focus:ring-0 p-0 outline-none bg-transparent placeholder-slate-300">
-                        <input type="text" placeholder="Dates (ex: 2020-2023)" value="${exp.date}" onchange="updateDBItem('experiences', ${i}, 'date', this.value)" class="w-1/3 text-xs text-slate-400 text-right border-none focus:ring-0 p-0 outline-none bg-transparent placeholder-slate-300">
+                        <input type="text" autocomplete="off" placeholder="Entreprise" value="${exp.company}" onchange="updateDBItem('experiences', ${i}, 'company', this.value)" class="w-2/3 text-xs text-slate-600 border-none focus:ring-0 p-0 outline-none bg-transparent placeholder-slate-300">
+                        <input type="text" autocomplete="off" placeholder="Dates (ex: 2020-2023)" value="${exp.date}" onchange="updateDBItem('experiences', ${i}, 'date', this.value)" class="w-1/3 text-xs text-slate-400 text-right border-none focus:ring-0 p-0 outline-none bg-transparent placeholder-slate-300">
                     </div>
                     ${briefBlock('experiences', i, exp.brief)}
                     ${detailsBlock('experiences', i, exp.details)}
@@ -441,10 +441,10 @@
             eduList.innerHTML = db.education.map((edu, i) => `
                 <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-sm relative group">
                     <button onclick="removeDBItem('education', ${i})" class="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash"></i></button>
-                    <input type="text" placeholder="Diplôme (ex: Master RH)" value="${edu.title}" onchange="updateDBItem('education', ${i}, 'title', this.value)" class="w-full text-sm font-bold text-slate-800 border-none focus:ring-0 p-0 mb-1 outline-none bg-transparent placeholder-slate-300">
+                    <input type="text" autocomplete="off" placeholder="Diplôme (ex: Master RH)" value="${edu.title}" onchange="updateDBItem('education', ${i}, 'title', this.value)" class="w-full text-sm font-bold text-slate-800 border-none focus:ring-0 p-0 mb-1 outline-none bg-transparent placeholder-slate-300">
                     <div class="flex gap-2 mb-2">
-                        <input type="text" placeholder="École" value="${edu.school}" onchange="updateDBItem('education', ${i}, 'school', this.value)" class="w-2/3 text-xs text-slate-600 border-none focus:ring-0 p-0 outline-none bg-transparent placeholder-slate-300">
-                        <input type="text" placeholder="Année" value="${edu.date}" onchange="updateDBItem('education', ${i}, 'date', this.value)" class="w-1/3 text-xs text-slate-400 text-right border-none focus:ring-0 p-0 outline-none bg-transparent placeholder-slate-300">
+                        <input type="text" autocomplete="off" placeholder="École" value="${edu.school}" onchange="updateDBItem('education', ${i}, 'school', this.value)" class="w-2/3 text-xs text-slate-600 border-none focus:ring-0 p-0 outline-none bg-transparent placeholder-slate-300">
+                        <input type="text" autocomplete="off" placeholder="Année" value="${edu.date}" onchange="updateDBItem('education', ${i}, 'date', this.value)" class="w-1/3 text-xs text-slate-400 text-right border-none focus:ring-0 p-0 outline-none bg-transparent placeholder-slate-300">
                     </div>
                     ${briefBlock('education', i, edu.brief)}
                     ${detailsBlock('education', i, edu.details)}
@@ -458,7 +458,7 @@
             intList.innerHTML = db.interests.map((int, i) => `
                 <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-sm relative group">
                     <button onclick="removeDBItem('interests', ${i})" class="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash"></i></button>
-                    <input type="text" placeholder="Activité (ex: Bénévolat associatif)" value="${int.title}" onchange="updateDBItem('interests', ${i}, 'title', this.value)" class="w-full text-sm font-bold text-slate-800 border-none focus:ring-0 p-0 mb-1 outline-none bg-transparent placeholder-slate-300">
+                    <input type="text" autocomplete="off" placeholder="Activité (ex: Bénévolat associatif)" value="${int.title}" onchange="updateDBItem('interests', ${i}, 'title', this.value)" class="w-full text-sm font-bold text-slate-800 border-none focus:ring-0 p-0 mb-1 outline-none bg-transparent placeholder-slate-300">
                     ${briefBlock('interests', i, int.brief)}
                     ${detailsBlock('interests', i, int.details)}
                     <button onclick="openChatbot('interests', ${i})" class="w-full text-xs font-bold bg-[#EAF3F0] border border-[#CBE0DA] text-[#1E7A6B] py-1.5 rounded hover:bg-[#d9ece6] transition shadow-sm">
@@ -471,8 +471,8 @@
             if (langList) langList.innerHTML = (db.languages || []).map((lg, i) => `
                 <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-sm relative group">
                     <button onclick="removeDBItem('languages', ${i})" class="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash"></i></button>
-                    <input type="text" placeholder="Langue (ex : Anglais)" value="${escapeHtml(lg.title)}" onchange="updateDBItem('languages', ${i}, 'title', this.value)" class="w-full text-sm font-bold text-slate-800 border-none focus:ring-0 p-0 mb-1 outline-none bg-transparent placeholder-slate-300">
-                    <input type="text" placeholder="Affichage du niveau (ex : Courant, Notions)" value="${escapeHtml(lg.level || '')}" onchange="updateDBItem('languages', ${i}, 'level', this.value)" class="w-full text-xs text-slate-600 border-none focus:ring-0 p-0 mb-2 outline-none bg-transparent placeholder-slate-300">
+                    <input type="text" autocomplete="off" placeholder="Langue (ex : Anglais)" value="${escapeHtml(lg.title)}" onchange="updateDBItem('languages', ${i}, 'title', this.value)" class="w-full text-sm font-bold text-slate-800 border-none focus:ring-0 p-0 mb-1 outline-none bg-transparent placeholder-slate-300">
+                    <input type="text" autocomplete="off" placeholder="Affichage du niveau (ex : Courant, Notions)" value="${escapeHtml(lg.level || '')}" onchange="updateDBItem('languages', ${i}, 'level', this.value)" class="w-full text-xs text-slate-600 border-none focus:ring-0 p-0 mb-2 outline-none bg-transparent placeholder-slate-300">
                     ${detailsBlock('languages', i, lg.details)}
                     <button onclick="openChatbot('languages', ${i})" class="w-full text-xs font-bold bg-[#EAF3F0] border border-[#CBE0DA] text-[#1E7A6B] py-1.5 rounded hover:bg-[#d9ece6] transition shadow-sm">
                         <i class="fas fa-comment-dots mr-1"></i> ${lg.details ? "Revoir le niveau" : "Faire le point sur mon niveau ✨"}
@@ -483,7 +483,7 @@
             const toolsList = document.getElementById('db-tools-list');
             if (toolsList) toolsList.innerHTML = (db.tools || []).map((tl, i) => `
                 <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-sm relative group flex items-center">
-                    <input type="text" placeholder="Outil (ex : Excel, Canva, logiciel de caisse…)" value="${escapeHtml(tl.title)}" onchange="updateDBItem('tools', ${i}, 'title', this.value)" class="w-full text-sm text-slate-800 border-none focus:ring-0 p-0 pr-6 outline-none bg-transparent placeholder-slate-300">
+                    <input type="text" autocomplete="off" placeholder="Outil (ex : Excel, Canva, logiciel de caisse…)" value="${escapeHtml(tl.title)}" onchange="updateDBItem('tools', ${i}, 'title', this.value)" class="w-full text-sm text-slate-800 border-none focus:ring-0 p-0 pr-6 outline-none bg-transparent placeholder-slate-300">
                     <button onclick="removeDBItem('tools', ${i})" class="absolute top-1/2 -translate-y-1/2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash"></i></button>
                 </div>
             `).join('');
