@@ -11,7 +11,7 @@ L'IA prépare un document de proposition de campagne. Une séance avec le consei
 ## Stack et repo
 
 - Repo : github.com/DoukyDPA/Iamonjobv2 — dossier local : `Iamonjobv2-clean/`
-- Next.js 14 App Router, React, Tailwind, Supabase (auth), Firestore (Admin SDK), IA Gemini + Mistral, API France Travail, Railway
+- Next.js 14 App Router, React, Tailwind, Firebase Auth, Firestore (Admin SDK), IA Gemini + Mistral, API France Travail, Railway
 - Dossier monté dans Cowork : `PROJETS CBE/IAMONJOB/Iamonjobv2-clean/`
 
 ---
