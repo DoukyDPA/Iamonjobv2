@@ -93,6 +93,8 @@
             #cv-content section { margin-bottom: calc(1.7rem * var(--cvspace, 1)) !important; }
             #cv-content .experience-item { margin-bottom: calc(1.05rem * var(--cvspace, 1)) !important; }
             #cv-content h2 { margin-bottom: calc(0.85rem * var(--cvspace, 1)) !important; }
+            /* Colonne de gauche : ses blocs (mb-8) se resserrent aussi (voir CVL.side) */
+            #cv-content .sidebar > .mb-8 { margin-bottom: calc(2rem * var(--cvspace, 1)) !important; }
             #cv-content p, #cv-content li { line-height: calc(1.45 * var(--cvline, 1)) !important; }
 
             /* Édition : pas de contours ni surlignage à l'impression */

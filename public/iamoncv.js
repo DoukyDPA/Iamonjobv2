@@ -376,7 +376,7 @@
         // Échappe le texte pour l'insérer sans risque dans un <textarea>
         function escapeHtml(s) {
             return (s == null ? '' : String(s))
-                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
         // Libellé du bouton d'entretien selon l'état (neuf / en cours / déjà synthétisé)
@@ -424,10 +424,10 @@
             expList.innerHTML = db.experiences.map((exp, i) => `
                 <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-sm relative group">
                     <button onclick="removeDBItem('experiences', ${i})" class="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash"></i></button>
-                    <input type="text" autocomplete="off" placeholder="Titre (ex: Directeur)" value="${exp.title}" onchange="updateDBItem('experiences', ${i}, 'title', this.value)" class="w-full text-sm font-bold text-slate-800 border-none focus:ring-0 p-0 mb-1 outline-none bg-transparent placeholder-slate-300">
+                    <input type="text" autocomplete="off" placeholder="Titre (ex: Directeur)" value="${escapeHtml(exp.title)}" onchange="updateDBItem('experiences', ${i}, 'title', this.value)" class="w-full text-sm font-bold text-slate-800 border-none focus:ring-0 p-0 mb-1 outline-none bg-transparent placeholder-slate-300">
                     <div class="flex gap-2 mb-2">
-                        <input type="text" autocomplete="off" placeholder="Entreprise" value="${exp.company}" onchange="updateDBItem('experiences', ${i}, 'company', this.value)" class="w-2/3 text-xs text-slate-600 border-none focus:ring-0 p-0 outline-none bg-transparent placeholder-slate-300">
-                        <input type="text" autocomplete="off" placeholder="Dates (ex: 2020-2023)" value="${exp.date}" onchange="updateDBItem('experiences', ${i}, 'date', this.value)" class="w-1/3 text-xs text-slate-400 text-right border-none focus:ring-0 p-0 outline-none bg-transparent placeholder-slate-300">
+                        <input type="text" autocomplete="off" placeholder="Entreprise" value="${escapeHtml(exp.company)}" onchange="updateDBItem('experiences', ${i}, 'company', this.value)" class="w-2/3 text-xs text-slate-600 border-none focus:ring-0 p-0 outline-none bg-transparent placeholder-slate-300">
+                        <input type="text" autocomplete="off" placeholder="Dates (ex: 2020-2023)" value="${escapeHtml(exp.date)}" onchange="updateDBItem('experiences', ${i}, 'date', this.value)" class="w-1/3 text-xs text-slate-400 text-right border-none focus:ring-0 p-0 outline-none bg-transparent placeholder-slate-300">
                     </div>
                     ${briefBlock('experiences', i, exp.brief)}
                     ${detailsBlock('experiences', i, exp.details)}
@@ -441,10 +441,10 @@
             eduList.innerHTML = db.education.map((edu, i) => `
                 <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-sm relative group">
                     <button onclick="removeDBItem('education', ${i})" class="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash"></i></button>
-                    <input type="text" autocomplete="off" placeholder="Diplôme (ex: Master RH)" value="${edu.title}" onchange="updateDBItem('education', ${i}, 'title', this.value)" class="w-full text-sm font-bold text-slate-800 border-none focus:ring-0 p-0 mb-1 outline-none bg-transparent placeholder-slate-300">
+                    <input type="text" autocomplete="off" placeholder="Diplôme (ex: Master RH)" value="${escapeHtml(edu.title)}" onchange="updateDBItem('education', ${i}, 'title', this.value)" class="w-full text-sm font-bold text-slate-800 border-none focus:ring-0 p-0 mb-1 outline-none bg-transparent placeholder-slate-300">
                     <div class="flex gap-2 mb-2">
-                        <input type="text" autocomplete="off" placeholder="École" value="${edu.school}" onchange="updateDBItem('education', ${i}, 'school', this.value)" class="w-2/3 text-xs text-slate-600 border-none focus:ring-0 p-0 outline-none bg-transparent placeholder-slate-300">
-                        <input type="text" autocomplete="off" placeholder="Année" value="${edu.date}" onchange="updateDBItem('education', ${i}, 'date', this.value)" class="w-1/3 text-xs text-slate-400 text-right border-none focus:ring-0 p-0 outline-none bg-transparent placeholder-slate-300">
+                        <input type="text" autocomplete="off" placeholder="École" value="${escapeHtml(edu.school)}" onchange="updateDBItem('education', ${i}, 'school', this.value)" class="w-2/3 text-xs text-slate-600 border-none focus:ring-0 p-0 outline-none bg-transparent placeholder-slate-300">
+                        <input type="text" autocomplete="off" placeholder="Année" value="${escapeHtml(edu.date)}" onchange="updateDBItem('education', ${i}, 'date', this.value)" class="w-1/3 text-xs text-slate-400 text-right border-none focus:ring-0 p-0 outline-none bg-transparent placeholder-slate-300">
                     </div>
                     ${briefBlock('education', i, edu.brief)}
                     ${detailsBlock('education', i, edu.details)}
@@ -458,7 +458,7 @@
             intList.innerHTML = db.interests.map((int, i) => `
                 <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-sm relative group">
                     <button onclick="removeDBItem('interests', ${i})" class="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash"></i></button>
-                    <input type="text" autocomplete="off" placeholder="Activité (ex: Bénévolat associatif)" value="${int.title}" onchange="updateDBItem('interests', ${i}, 'title', this.value)" class="w-full text-sm font-bold text-slate-800 border-none focus:ring-0 p-0 mb-1 outline-none bg-transparent placeholder-slate-300">
+                    <input type="text" autocomplete="off" placeholder="Activité (ex: Bénévolat associatif)" value="${escapeHtml(int.title)}" onchange="updateDBItem('interests', ${i}, 'title', this.value)" class="w-full text-sm font-bold text-slate-800 border-none focus:ring-0 p-0 mb-1 outline-none bg-transparent placeholder-slate-300">
                     ${briefBlock('interests', i, int.brief)}
                     ${detailsBlock('interests', i, int.details)}
                     <button onclick="openChatbot('interests', ${i})" class="w-full text-xs font-bold bg-[#EAF3F0] border border-[#CBE0DA] text-[#1E7A6B] py-1.5 rounded hover:bg-[#d9ece6] transition shadow-sm">
@@ -707,6 +707,162 @@
             };
             reader.onerror = function() { alert("Impossible de lire ce fichier."); };
             reader.readAsText(file);
+        }
+
+        // --- REPRISE DU CV CHARGÉ DANS IAMONJOB ---
+        // La personne a déjà chargé (et anonymisé) son CV à l'étape 1 d'IAMONJOB.
+        // On le récupère via /api/cv-source (même session), l'IA le range dans
+        // la base (expériences, formations, langues, outils, centres d'intérêt)
+        // et la personne n'a plus qu'à vérifier puis enrichir par les entretiens.
+        // Le contenu de chaque poste va dans « brief » (infos de départ), pas
+        // dans « details » : les entretiens partent de là au lieu de repartir de zéro.
+        function dbIsEmpty(d) {
+            return !d || (
+                !(d.experiences || []).length && !(d.education || []).length &&
+                !(d.interests || []).length && !(d.languages || []).length && !(d.tools || []).length
+            );
+        }
+
+        async function fetchIamonjobCv() {
+            const res = await fetch('/api/cv-source', { credentials: 'same-origin', cache: 'no-store' });
+            if (res.status === 401) {
+                const e = new Error("Session IAMONJOB expirée. Reconnectez-vous, puis rouvrez cette page.");
+                e.isAuth = true;
+                throw e;
+            }
+            if (!res.ok) throw new Error("Impossible de récupérer le CV depuis IAMONJOB.");
+            const data = await res.json();
+            return (data && data.cvText) ? data : null;
+        }
+
+        function asText(v) {
+            if (Array.isArray(v)) return v.map(x => String(x || '').trim()).filter(Boolean).map(x => '- ' + x.replace(/^[-•]\s*/, '')).join('\n');
+            return String(v || '').trim();
+        }
+
+        async function importFromIamonjob() {
+            let source;
+            try {
+                source = await fetchIamonjobCv();
+            } catch (err) {
+                alert(err.message);
+                return;
+            }
+            if (!source) {
+                alert("Aucun CV trouvé dans IAMONJOB.\n\nChargez d'abord votre CV à l'étape 1 d'IAMONJOB (et anonymisez-le si besoin), puis revenez ici.");
+                return;
+            }
+
+            // Ne jamais écraser un travail en cours : profil non vide = nouveau profil.
+            const createNew = !dbIsEmpty(db);
+            if (createNew && !confirm("Ce profil contient déjà des données.\n\nLe CV d'IAMONJOB sera repris dans un NOUVEAU profil « Mon CV IAMONJOB ». Continuer ?")) return;
+
+            const overlay = document.getElementById('generation-overlay');
+            overlay.classList.remove('hidden');
+            setOverlayMessage('Reprise de votre CV IAMONJOB', "L'IA range votre parcours dans la base…");
+
+            const sysPrompt = `Tu reçois le texte brut d'un CV (extrait d'un PDF, parfois désordonné, déjà anonymisé : les mentions [retiré] remplacent des données personnelles).
+            Ta tâche : le RANGER dans une base de données structurée, sans rien rédiger ni embellir.
+
+            RÈGLES ABSOLUES :
+            - N'invente rien : ni poste, ni employeur, ni date, ni diplôme, ni chiffre. Reprends fidèlement ce qui est écrit.
+            - Ne cherche jamais à reconstituer une donnée [retiré]. Ignore nom, adresse, e-mail, téléphone, âge, photo, permis.
+            - Si un employeur ou une école a été retiré, laisse le champ vide.
+            - Dates : garde le format du CV (ex. « 2019-2023 », « Depuis mars 2021 »). Champ vide si absente.
+            - "tasks" : missions, réalisations et résultats du poste, tels qu'écrits (une entrée par puce, phrases courtes).
+            - Les compétences listées à part dans le CV (savoir-faire, savoir-être) : rattache-les dans "tasks" du poste où elles s'exercent le plus clairement ; sinon mets-les dans "otherSkills".
+            - "tools" : uniquement logiciels, outils, machines, engins (pas les compétences générales). Un libellé court par outil (ex. « 16PF », « PerformanSe », pas de longue phrase).
+            - Expériences et formations de la plus récente à la plus ancienne.
+
+            Réponds STRICTEMENT en JSON valide, sans texte autour, au format :
+            {
+              "experiences": [{"title": "", "company": "", "date": "", "tasks": [""]}],
+              "education": [{"title": "", "school": "", "date": "", "content": ""}],
+              "languages": [{"title": "", "level": ""}],
+              "tools": [""],
+              "interests": [""],
+              "otherSkills": [""]
+            }`;
+
+            let parsed;
+            try {
+                const raw = await callGeminiAPI("Voici le CV à ranger :\n\n" + source.cvText.slice(0, 30000), sysPrompt);
+                parsed = parseCvJson(raw);
+            } catch (err) {
+                showGenerationError(escapeHtml(err.message || "L'IA n'a pas pu lire ce CV."));
+                return;
+            }
+
+            const imported = emptyDB();
+            imported.experiences = (parsed.experiences || []).filter(e => e && (e.title || e.company)).map(e => ({
+                title: String(e.title || '').trim(),
+                company: String(e.company || '').trim(),
+                date: String(e.date || '').trim(),
+                brief: asText(e.tasks),
+                details: ''
+            }));
+            imported.education = (parsed.education || []).filter(e => e && (e.title || e.school)).map(e => ({
+                title: String(e.title || '').trim(),
+                school: String(e.school || '').trim(),
+                date: String(e.date || '').trim(),
+                brief: asText(e.content),
+                details: ''
+            }));
+            imported.languages = (parsed.languages || []).map(l =>
+                typeof l === 'string' ? { title: l, level: '', details: '' } : { title: String(l.title || l.name || '').trim(), level: String(l.level || '').trim(), details: '' }
+            ).filter(l => l.title);
+            imported.tools = (parsed.tools || []).map(t => ({ title: String(typeof t === 'string' ? t : (t && t.title) || '').trim() })).filter(t => t.title);
+            imported.interests = (parsed.interests || []).map(t => ({ title: String(typeof t === 'string' ? t : (t && t.title) || '').trim(), details: '' })).filter(t => t.title);
+            // Compétences orphelines : versées dans la consigne libre, pour que l'IA les voie à la génération.
+            const others = (parsed.otherSkills || []).map(s => String(s || '').trim()).filter(Boolean);
+            if (others.length) imported.userNote = "Compétences mentionnées dans mon CV : " + others.join(', ') + '.';
+            imported.importedFromIamonjob = new Date().toISOString();
+
+            if (!imported.experiences.length && !imported.education.length) {
+                showGenerationError("Le CV d'IAMONJOB n'a pas pu être découpé en expériences et formations. Vérifiez à l'étape 1 que le texte extrait est lisible.");
+                return;
+            }
+
+            if (createNew) {
+                persistActive();
+                const meta = getProfilesMeta() || { active: '', list: [] };
+                const id = genProfileId();
+                meta.list.push({ id, name: "Mon CV IAMONJOB" });
+                meta.active = id;
+                setProfilesMeta(meta);
+                try { localStorage.setItem(profileKey(id), JSON.stringify({ db: imported, cv: emptyCV() })); } catch (e) {}
+                loadActiveProfile();
+            } else {
+                // Profil vide : on garde l'accord en genre éventuellement déjà choisi.
+                imported.gender = db.gender || '';
+                db = imported;
+                persistActive();
+            }
+
+            resetGenerationOverlay();
+            applyActiveProfileToUI();
+            hideIamonjobBanner();
+
+            const nE = imported.experiences.length, nF = imported.education.length;
+            alert(`CV IAMONJOB repris : ${nE} expérience${nE > 1 ? 's' : ''} et ${nF} formation${nF > 1 ? 's' : ''}.\n\nRelisez la colonne de gauche, choisissez l'accord (féminin ou masculin), puis enrichissez chaque poste avec « Détailler avec IAMONCV ».`);
+        }
+
+        function hideIamonjobBanner() {
+            const b = document.getElementById('iamonjob-import-banner');
+            if (b) b.classList.add('hidden');
+        }
+
+        // À l'ouverture : si le profil actif est vide et qu'un CV existe dans
+        // IAMONJOB, on propose la reprise d'un clic (aucun appel IA à ce stade).
+        async function suggestIamonjobImport() {
+            if (!dbIsEmpty(db)) return;
+            try {
+                const source = await fetchIamonjobCv();
+                if (source) {
+                    const b = document.getElementById('iamonjob-import-banner');
+                    if (b) b.classList.remove('hidden');
+                }
+            } catch (e) { /* silencieux : page ouverte hors session, etc. */ }
         }
 
         // --- GESTION DU CHATBOT UNIVERSEL ---
@@ -1194,7 +1350,7 @@ ${genderDirective()}`;
         // L'IA n'intervient que si le dépassement reste trop important même resserré au maximum.
 
         // Constantes de mise en page (DOIVENT rester synchronisées avec le bloc @media print).
-        const CVL = { pad: 13, sec: 1.7, exp: 1.05, h2: 0.85, line: 1.45 };
+        const CVL = { pad: 13, sec: 1.7, exp: 1.05, h2: 0.85, line: 1.45, side: 2 };
 
         // Marge de sécurité : on vise à remplir ~96% de la page, jamais 100%,
         // pour absorber les petits écarts entre la mesure et le rendu réel de l'impression
@@ -1217,9 +1373,16 @@ ${genderDirective()}`;
         let appliedSpace = 1, appliedLine = 1;
 
         // Mesure le rapport hauteur/A4 en simulant l'impression au niveau de resserrement donné.
+        // Renvoie la colonne la plus haute (c'est elle qui fait déborder la page).
         function measureRatio(space, line) {
+            return measureColumns(space, line).ratio;
+        }
+
+        // Mesure chaque colonne séparément : la gauche (sidebar) et la droite (contenu)
+        // ne se raccourcissent pas de la même façon, il faut savoir laquelle déborde.
+        function measureColumns(space, line) {
             const src = document.getElementById('cv-content');
-            if (!src) return 1;
+            if (!src) return { ratio: 1, side: 1, main: 1 };
             const clone = src.cloneNode(true);
             clone.removeAttribute('id');
             clone.querySelectorAll('[id]').forEach(e => e.removeAttribute('id')); // éviter tout doublon d'id (ex: profile-upload)
@@ -1232,10 +1395,11 @@ ${genderDirective()}`;
             const mc = clone.querySelector('.main-content');
             if (sb) { sb.classList.remove('md:w-1/3', 'w-full', 'p-6', 'md:p-8'); sb.style.cssText += `;width:33%;padding:${CVL.pad * space}mm 8mm;`; }
             if (mc) { mc.classList.remove('md:w-2/3', 'w-full', 'p-6', 'md:p-10'); mc.style.cssText += `;width:67%;padding:${CVL.pad * space}mm 11mm;`; }
-            clone.style.cssText += ';width:210mm;min-height:0;display:flex;flex-direction:row;box-shadow:none;margin:0;max-width:none;';
+            clone.style.cssText += ';width:210mm;min-height:0;display:flex;flex-direction:row;align-items:flex-start;box-shadow:none;margin:0;max-width:none;';
             clone.querySelectorAll('section').forEach(s => s.style.marginBottom = (CVL.sec * space) + 'rem');
             clone.querySelectorAll('.experience-item').forEach(s => s.style.marginBottom = (CVL.exp * space) + 'rem');
             clone.querySelectorAll('h2').forEach(s => s.style.marginBottom = (CVL.h2 * space) + 'rem');
+            clone.querySelectorAll('.sidebar > .mb-8').forEach(s => s.style.marginBottom = (CVL.side * space) + 'rem');
             clone.querySelectorAll('p, li').forEach(s => s.style.lineHeight = (CVL.line * line));
             const wrap = document.createElement('div');
             wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;background:#fff;';
@@ -1243,9 +1407,12 @@ ${genderDirective()}`;
             document.body.appendChild(wrap);
             const pxPerMm = clone.offsetWidth / 210;
             const pageH = 297 * pxPerMm;
-            const ratio = clone.scrollHeight / pageH;
+            // align-items:flex-start : chaque colonne prend sa hauteur naturelle.
+            const side = sb ? sb.offsetHeight / pageH : 0;
+            const main = mc ? mc.offsetHeight / pageH : 0;
+            const ratio = Math.max(side, main, sb || mc ? 0 : clone.scrollHeight / pageH);
             document.body.removeChild(wrap);
-            return ratio;
+            return { ratio, side, main };
         }
 
         // Applique un niveau de resserrement au CV réel (variables CSS lues à l'impression).
@@ -1307,6 +1474,34 @@ ${genderDirective()}`;
             return true;
         }
 
+        // Condensation de la colonne de GAUCHE (compétences, outils, centres d'intérêt).
+        // Raccourcir les expériences ne sert à rien quand c'est la colonne de gauche qui déborde.
+        async function condenseSidebarPass(overflowPct) {
+            const current = {
+                skills: cvData.skills || [],
+                tools: cvData.tools || [],
+                interests: cvData.interests || []
+            };
+            const pct = overflowPct || 12;
+            const sys = `Tu es un expert CV. La colonne latérale (étroite, environ un tiers de la page) d'un CV dépasse d'environ ${pct}% la hauteur d'une page A4.
+            Raccourcis-la LE STRICT MINIMUM pour qu'elle tienne, sans rien inventer :
+            1. Libellés courts : 2 à 5 mots par compétence ou outil. Supprime les parenthèses explicatives longues.
+            2. Regroupe les outils de même nature en une seule entrée (ex. « Tests de personnalité (16PF, PerformanSe) », « Pack Office »).
+            3. Si ça ne suffit pas : garde au plus 6 compétences et 8 outils, en retirant les moins utiles.
+            4. Centres d'intérêt : 3 au plus, une ligne courte chacun.
+            Ne réintroduis aucune donnée personnelle.
+            Réponds STRICTEMENT en JSON valide, sans texte autour : {"skills": [""], "tools": [""], "interests": [""]}`;
+            const user = `Colonne latérale actuelle (JSON) :\n${JSON.stringify(current)}\n\nElle dépasse d'environ ${pct}%. Raccourcis-la juste assez.`;
+            const resp = await callGeminiAPI(user, sys);
+            const data = parseCvJson(resp);
+            if (!data) return false;
+            const clean = (arr, fallback) => Array.isArray(arr) ? arr.map(x => String(x || '').trim()).filter(Boolean) : fallback;
+            cvData.skills = clean(data.skills, cvData.skills);
+            cvData.tools = clean(data.tools, cvData.tools);
+            cvData.interests = clean(data.interests, cvData.interests);
+            return true;
+        }
+
         // Ajustement complet : resserrement d'abord, condensation IA seulement si nécessaire.
         // maxAiPasses = 0 : ne jamais appeler l'IA (resserrement pur).
         async function fitToOnePage(maxAiPasses) {
@@ -1317,10 +1512,16 @@ ${genderDirective()}`;
             // 2) Toujours trop long même au resserrement maximal : on demande à l'IA de raccourcir un peu.
             const maxStep = COMPACTION_STEPS[COMPACTION_STEPS.length - 1];
             for (let p = 0; p < (maxAiPasses || 0); p++) {
-                const ratioTight = measureRatio(maxStep.s, maxStep.l); // dépassement résiduel une fois resserré au max
+                // Dépassement résiduel une fois resserré au max, colonne par colonne :
+                // on raccourcit la colonne qui déborde, pas l'autre.
+                const cols = measureColumns(maxStep.s, maxStep.l);
+                const sideFirst = cols.side > FIT_TARGET && cols.side >= cols.main;
+                const ratioTight = sideFirst ? cols.side : cols.main;
                 const overflowPct = Math.max(5, Math.round((ratioTight - FIT_TARGET) * 100));
-                setOverlayMessage('Ajustement sur 1 page…', `Le CV reste un peu long (~${overflowPct}%). L'IA raccourcit le minimum nécessaire.`);
-                const ok = await condensePass(overflowPct);
+                setOverlayMessage('Ajustement sur 1 page…', sideFirst
+                    ? `La colonne de gauche est un peu longue (~${overflowPct}%). L'IA raccourcit les libellés.`
+                    : `Le CV reste un peu long (~${overflowPct}%). L'IA raccourcit le minimum nécessaire.`);
+                const ok = sideFirst ? await condenseSidebarPass(overflowPct) : await condensePass(overflowPct);
                 if (!ok) break;
                 renderCV();
                 step = findFittingCompaction();
@@ -1421,9 +1622,10 @@ ${genderDirective()}`;
             - Expériences pertinentes pour l'offre : 2 à 4 'tasks' fortes, orientées résultat et alignées sur les attentes de l'offre.
             - Expériences anciennes ou hors sujet : 0 ou 1 'task' maximum.
             - Si le parcours est long, REGROUPE les postes anciens, courts ou peu pertinents en une seule entrée synthétique (ex. title "Expériences antérieures", company vide, date couvrant la plage d'années, 1 puce résumant). Sélectionne l'essentiel, ne cherche pas à tout caser.
-            - "skills" : 4 à 8 compétences tirées de l'ensemble du parcours et réellement en lien avec l'offre. Priorise les compétences nommées dans l'annonce.
+            - "skills" : 4 à 8 compétences tirées de l'ensemble du parcours et réellement en lien avec l'offre. Priorise les compétences nommées dans l'annonce. Libellés courts (2 à 5 mots) : ils s'affichent dans une colonne étroite.
             - "languages" : reprends les langues fournies. Pour chaque langue, "name" = la langue, "level" = l'affichage du niveau. Si le champ "level" fourni est rempli, reprends-le tel quel ; sinon déduis un affichage prudent à partir des notes ("details") sans inventer de niveau officiel. Si aucune langue n'est fournie, renvoie un tableau vide.
-            - "tools" : reprends les outils numériques fournis (titres), sans en inventer. Renvoie un tableau de chaînes. Vide si rien n'est fourni.
+            - "tools" : reprends les outils numériques fournis (titres), sans en inventer. Renvoie un tableau de chaînes. Vide si rien n'est fourni. Libellés courts (2 à 4 mots, sans longue parenthèse) ; regroupe les outils de même nature ; 8 au maximum, les plus utiles pour l'offre.
+            - "interests" : 3 au maximum, une ligne courte chacun.
             - Conserve les titres, entreprises, écoles et dates d'origine sans les modifier (sauf regroupement explicite ci-dessus).
 
             TON (impératif) : rédige sobrement, sans autopromotion excessive ni superlatifs. Bannis « parfaitement adapté », « profil idéal », « candidat parfait », « atout majeur », « excellence », « passionné(e) par », « dynamique et motivé(e) ». L'accroche décrit des faits et un savoir-faire, elle ne se vante pas. Préfère des formulations neutres et concrètes.
@@ -2440,6 +2642,7 @@ ${genderDirective()}`;
         loadActiveProfile();
         applyActiveProfileToUI();
         initAvatarDrag();
+        suggestIamonjobImport();
 
         // Envoi de la clé avec la touche Entrée
         document.getElementById('api-key-input').addEventListener('keydown', function(e) {
