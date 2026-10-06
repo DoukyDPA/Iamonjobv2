@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { CatMascot } from '../brand';
 import MonConseiller from '../MonConseiller';
+import MesQuestionnaires from '../MesQuestionnaires';
 
 const STEPS = [
   { n: 1, label: 'Mon CV',         icon: FileText },
@@ -104,6 +105,9 @@ export default function Sidebar({
 
       {/* ─────── Contact conseiller (toujours visible) ─────── */}
       <MonConseiller variant="sidebar" />
+
+      {/* ─────── Questionnaires de suivi (si un parcours est affecté) ─────── */}
+      <MesQuestionnaires variant="sidebar" />
 
       {/* ─────── Bloc « Mes métiers » (favoris) ─────── */}
       {favoriteJobs.length > 0 && (

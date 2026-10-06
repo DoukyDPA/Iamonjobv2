@@ -35,6 +35,7 @@ import AccessibilityBar from '@/components/layout/AccessibilityBar';
 import Footer from '@/components/layout/Footer';
 import { SharedContext } from '@/components/MonConseiller';
 import FicheConseiller from '@/components/FicheConseiller';
+import SuiviQuestionnaires from '@/components/conseiller/SuiviQuestionnaires';
 
 // ─── Libellés et styles des statuts ─────────────────────────────────────────
 
@@ -347,6 +348,9 @@ export default function ConseillerPage() {
             </div>
           </>
         )}
+
+        {/* Questionnaires de suivi, promo par promo */}
+        <SuiviQuestionnaires beneficiaires={list} onAssigned={load} />
 
         {/* File des avis demandés */}
         <AvisQueue

@@ -6,6 +6,7 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
 import MonConseiller from '../MonConseiller';
+import MesQuestionnaires from '../MesQuestionnaires';
 import { CatMascot } from '../brand';
 import { ErrorBanner } from '../ui';
 
@@ -171,8 +172,9 @@ export default function AppShell({
           Note <strong>indicative</strong> : un CV ne prend vraiment du sens que <strong>face à un poste précis</strong>.
           N'hésitez pas à en discuter avec un conseiller bien <strong>humain</strong>.
         </p>
-        <div className="mt-3 flex justify-start">
+        <div className="mt-3 flex flex-wrap justify-start gap-2">
           <MonConseiller variant="mobile" />
+          <MesQuestionnaires variant="mobile" />
         </div>
       </div>
 

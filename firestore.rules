@@ -70,6 +70,11 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Réponses aux questionnaires de suivi : serveur uniquement (Admin SDK).
+    match /questionnaireReponses/{doc} {
+      allow read, write: if false;
+    }
+
     // Tout le reste : refusé.
     match /{document=**} {
       allow read, write: if false;
