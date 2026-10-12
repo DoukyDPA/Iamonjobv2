@@ -23,6 +23,7 @@ import {
   saveCvRatingToFirestore,
   clearCvRatingInFirestore,
   saveFavoriteJobsToFirestore,
+  auth,
 } from '@/lib/firebase/client';
 import AvisConseiller from './AvisConseiller';
 import CoverLetterText from './CoverLetterText';
@@ -99,6 +100,19 @@ export default function App({ user, availableProviders = ['mistral'] }) {
   // (voir analyzeCV), pas par un code département nu type « 11 ».
   const [userLocation, setUserLocation] = useState('Créteil');
   const [provider, setProvider] = useState(availableProviders[0] || 'mistral');
+
+  // Un conseiller qui ouvre l'outil y dépose le CV de la personne qu'il
+  // accompagne, pas le sien : l'accueil s'adapte. Rôle lu dans le jeton déjà
+  // en mémoire, comme dans l'en-tête.
+  const [isConseiller, setIsConseiller] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    auth.currentUser
+      ?.getIdTokenResult()
+      .then((res) => { if (alive) setIsConseiller(res?.claims?.role === 'conseiller'); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     try {
@@ -766,8 +780,22 @@ export default function App({ user, availableProviders = ['mistral'] }) {
         <div className="space-y-6 animate-fade-in">
           <GuidedIntro mascot={<CatMascot className="w-14 h-14 shrink-0" />}>
             Bonjour <strong className="text-pink-500">{displayName}</strong> !
-            Pour commencer, montrez-moi votre CV. Je vais lire vos compétences et vous
-            proposer des pistes de reconversion réalistes.
+            {isConseiller ? (
+              <>
+                {' '}Pour commencer, montrez-moi le CV de la personne que vous accompagnez.
+                Je vais lire ses compétences et lui proposer des pistes de reconversion réalistes.
+                <div className="mt-3 rounded-xl border border-pink-200 bg-pink-50 px-3 py-2 text-sm text-pink-800">
+                  <strong>Avant d'importer :</strong> retirez du CV toutes ses coordonnées
+                  (nom, adresse, téléphone, e-mail, date de naissance, photo, liens vers ses profils).
+                  Ces informations ne doivent en aucun cas être partagées ici.
+                </div>
+              </>
+            ) : (
+              <>
+                {' '}Pour commencer, montrez-moi votre CV. Je vais lire vos compétences et vous
+                proposer des pistes de reconversion réalistes.
+              </>
+            )}
             <div className="text-xs text-teal-700/60 mt-2 flex items-center gap-1.5">
               Vos informations restent privées
               <HelpTip
@@ -780,7 +808,9 @@ export default function App({ user, availableProviders = ['mistral'] }) {
           {/* Carte « Importer votre CV » */}
           <Card className="border-l-4 border-l-teal-600">
             <div className="px-6 pt-5 pb-2 flex items-center gap-2">
-              <h2 className="text-lg font-bold text-teal-800">Étape 1 — Ajouter votre CV</h2>
+              <h2 className="text-lg font-bold text-teal-800">
+                {isConseiller ? 'Étape 1 — Ajouter le CV de la personne accompagnée' : 'Étape 1 — Ajouter votre CV'}
+              </h2>
               <HelpTip
                 label="Ajouter votre CV"
                 description="Importez votre CV au format PDF, ou collez directement son texte. Le contenu est ensuite analysé."
