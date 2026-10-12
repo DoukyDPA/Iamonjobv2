@@ -22,6 +22,15 @@ export function middleware(request) {
   const token = request.cookies.get('__session')?.value;
 
   if (!token && !isPublic) {
+    // Appel d'API sans session (cookie expiré au bout d'une heure, par exemple) :
+    // on répond 401 en JSON. Rediriger vers /login transformerait un POST en
+    // POST /login, que Next.js refuse avec un 405 incompréhensible.
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json(
+        { error: 'Ta session a expiré. Reconnecte-toi pour continuer.' },
+        { status: 401 }
+      );
+    }
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
