@@ -99,7 +99,8 @@ export default function App({ user, availableProviders = ['mistral'] }) {
   // API d'offres. Défaut « Créteil » ; on ne l'écrase que par une vraie ville
   // (voir analyzeCV), pas par un code département nu type « 11 ».
   const [userLocation, setUserLocation] = useState('Créteil');
-  const [provider, setProvider] = useState(availableProviders[0] || 'mistral');
+  // Mistral est l'unique provider IA (traitement en Europe).
+  const provider = 'mistral';
 
   // Un conseiller qui ouvre l'outil y dépose le CV de la personne qu'il
   // accompagne, pas le sien : l'accueil s'adapte. Rôle lu dans le jeton déjà
@@ -113,13 +114,6 @@ export default function App({ user, availableProviders = ['mistral'] }) {
       .catch(() => {});
     return () => { alive = false; };
   }, []);
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('ai_provider');
-      if (saved && availableProviders.includes(saved)) setProvider(saved);
-    } catch {}
-  }, [availableProviders]);
 
   useEffect(() => {
     getCvFromFirestore(user.id).then((data) => {
@@ -927,10 +921,10 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                         <p className="text-amber-800/80 leading-relaxed">
                           Son format graphique (Canva, image, PDF scanné…) empêche l'extraction automatique du texte.
                           La plupart des ATS le rejetteront ou liront un document vide.
-                          <strong> L'anonymisation est également impossible</strong> dans ce cas.
+                          Nous avons pu le lire grâce à une reconnaissance de texte : <strong>vérifiez le texte extrait</strong> ci-dessous et retirez-y vos coordonnées avant l'analyse.
                         </p>
                         <p className="text-amber-800 font-medium">
-                          Conseil : recréez ce CV dans Word, LibreOffice ou Google Docs et exportez-le en PDF — votre candidature passera beaucoup mieux les filtres automatiques.
+                          Conseil : recréez ce CV dans Word, LibreOffice ou Google Docs et exportez-le en PDF. Votre candidature passera beaucoup mieux les filtres automatiques.
                         </p>
                       </div>
                     </div>

@@ -2,10 +2,11 @@
 // Route API — /api/ocr
 //
 // POST → reçoit un tableau d'images (pages PDF rendues en canvas côté client)
-//         et retourne le texte extrait via Gemini Vision.
+//         et retourne le texte extrait via Mistral OCR (traitement UE).
 //
-// Usage : fallback quand pdf.js échoue à extraire le texte d'un PDF complexe
-//         (mise en page graphique, texte en image, fond coloré, etc.).
+// Usage : repli rare, quand pdf.js n'extrait presque aucun texte d'un PDF
+//         (CV Canva, Illustrator, PDF scanné). Le client affiche alors un
+//         avertissement : un tel CV ne passera pas la plupart des ATS.
 //
 // Body attendu :
 //   { images: [{ data: "<base64>", mimeType: "image/png" }] }
@@ -21,13 +22,42 @@ import { logEvent, newRequestId } from '@/lib/logger';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const MODEL = 'gemini-2.5-flash';
+const OCR_URL = 'https://api.mistral.ai/v1/ocr';
+const MODEL = 'mistral-ocr-latest';
 const MAX_IMAGES = 10;
+const PAGE_TIMEOUT_MS = 30_000;
 
-const SYSTEM = `Tu es un outil d'extraction de texte sur des images de CV.
-Extrais TOUT le texte visible dans l'image, dans l'ordre de lecture naturel (de gauche à droite, de haut en bas).
-Conserve la structure : sauts de ligne entre les sections, tirets devant les listes.
-Ne reformule rien. Ne commente pas. Retourne uniquement le texte brut.`;
+// Mistral OCR renvoie du Markdown. On retire les références d'images
+// (![img-0.jpeg](img-0.jpeg)) et les espaces invisibles qu'il insère.
+function cleanMarkdown(md = '') {
+  return md
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+async function ocrPage({ data, mimeType = 'image/png' }, apiKey) {
+  const res = await fetchWithTimeout(OCR_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      document: { type: 'image_url', image_url: `data:${mimeType};base64,${data}` },
+    }),
+  }, PAGE_TIMEOUT_MS);
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`Mistral OCR ${res.status} : ${err.message || err.error?.message || 'erreur inconnue'}`);
+  }
+  const json = await res.json();
+  return (json.pages || []).map((p) => cleanMarkdown(p.markdown)).join('\n\n');
+}
 
 export async function POST(request) {
   const requestId = newRequestId();
@@ -64,51 +94,23 @@ export async function POST(request) {
     );
   }
 
-  // ── Appel Gemini Vision ───────────────────────────────────────────────────
-  const apiKey = process.env.GEMINI_API_KEY;
+  // ── Appel Mistral OCR (une requête par page, en parallèle) ────────────────
+  const apiKey = process.env.MISTRAL_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: 'GEMINI_API_KEY non configurée.' }, { status: 500 });
+    return NextResponse.json({ error: 'MISTRAL_API_KEY non configurée.' }, { status: 500 });
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
-
-  // Chaque page est un "part" image, suivi d'une instruction texte.
-  const parts = [];
-  images.forEach(({ data, mimeType = 'image/png' }, i) => {
-    parts.push({ inline_data: { mime_type: mimeType, data } });
-    if (images.length > 1) {
-      parts.push({ text: `--- Page ${i + 1} ---` });
-    }
-  });
-  parts.push({ text: 'Extrais tout le texte de ce CV.' });
-
-  const payload = {
-    system_instruction: { parts: [{ text: SYSTEM }] },
-    contents: [{ parts }],
-  };
-
   try {
-    const res = await fetchWithTimeout(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey,
-      },
-      body: JSON.stringify(payload),
-    }, 30_000);
+    const pages = await Promise.all(images.map((img) => ocrPage(img, apiKey)));
+    const text = pages
+      .map((t, i) => (images.length > 1 ? `--- Page ${i + 1} ---\n${t}` : t))
+      .join('\n\n')
+      .trim();
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(`Gemini ${res.status} : ${err.error?.message || 'erreur inconnue'}`);
-    }
-
-    const data = await res.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-
-    logEvent({ event: 'ocr', requestId, uid, status: 'ok', pages: images.length });
+    logEvent({ event: 'ocr', requestId, uid, status: 'ok', provider: 'mistral', pages: images.length });
     return NextResponse.json({ text });
   } catch (err) {
-    logEvent({ event: 'ocr', requestId, uid, status: 'error', error: err.message, level: 'error' });
+    logEvent({ event: 'ocr', requestId, uid, status: 'error', provider: 'mistral', error: err.message, level: 'error' });
     return NextResponse.json(
       { error: err.message || 'Erreur OCR.' },
       { status: 500 }
