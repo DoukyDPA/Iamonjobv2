@@ -177,12 +177,14 @@ export default function MesQuestionnaires({ variant = 'sidebar' }) {
                     <li key={e.n}>
                       <button
                         type="button"
-                        disabled={!e.disponible}
+                        disabled={!e.disponible || e.importe}
                         onClick={() => setCurrent(e.questionnaireId)}
                         className={[
                           'w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-colors',
                           !e.disponible
                             ? 'border-cream-200 bg-cream-50 opacity-60 cursor-not-allowed'
+                            : e.importe
+                            ? 'border-cream-200 bg-white cursor-default'
                             : e === prochaine
                             ? 'border-pink-300 bg-pink-50/50 hover:bg-pink-50'
                             : 'border-cream-200 bg-white hover:bg-teal-50/50 hover:border-teal-200',
@@ -201,12 +203,14 @@ export default function MesQuestionnaires({ variant = 'sidebar' }) {
                           <span className="block text-xs text-teal-700/70">
                             {!e.disponible
                               ? 'Bientôt disponible'
+                              : e.importe
+                              ? 'Déjà transmis à votre conseiller.'
                               : e.rempli
                               ? `Envoyé le ${formatDate(e.submittedAt)}. Vous pouvez le relire ou le corriger.`
                               : e === prochaine ? 'À remplir maintenant' : 'À remplir'}
                           </span>
                         </span>
-                        {e.disponible ? <ChevronRight className="w-4 h-4 text-teal-600 shrink-0" /> : <Lock className="w-4 h-4 text-teal-700/40 shrink-0" />}
+                        {e.importe ? null : e.disponible ? <ChevronRight className="w-4 h-4 text-teal-600 shrink-0" /> : <Lock className="w-4 h-4 text-teal-700/40 shrink-0" />}
                       </button>
                     </li>
                   ))}

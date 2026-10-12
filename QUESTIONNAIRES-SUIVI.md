@@ -43,3 +43,27 @@ node scripts/import-questionnaires-archive.mjs \
 ```
 
 Ajouter `--dry-run` pour vérifier sans rien écrire. Relancer remplace les fiches importées, sans doublon.
+
+### Rattacher les fiches aux dossiers
+
+Une fois les personnes de la promo inscrites dans Iamonjob, leurs fiches archivées sont rattachées à leur dossier : elles s'affichent sur la même ligne que les fiches remplies dans l'app, dans la promo du dossier.
+
+```bash
+node --env-file=.env.local scripts/rattacher-archives-questionnaires.mjs \
+  --promo-archive="PROMO 45+ · octobre 2026" --promo-dossiers="Promo 21" [--apply]
+```
+
+Le code d'archive est la fin du code du dossier (NKCC → AC-2026-018-NKCC). Écart d'un caractère toléré s'il est unique, appariement forcé possible avec `--force=CODE:SUFFIXE`. Une fiche rattachée garde `source: 'archive'`, son code d'origine (`archiveCode`) et reste en lecture seule pour la personne. Ne pas relancer l'import après le rattachement : il recréerait les fiches sous les anciens codes.
+
+Fait le 12 octobre 2026 pour la PROMO 45+ d'octobre (Promo 21) : 40 fiches, 13 dossiers. Rapprochements non exacts : BACB → B9CB, HTGA → HT6A, ZCES → ZCE5. XXXX n'est pas 3DYP : son dossier est chez une autre conseillère. Ses 3 fiches restent dans la Promo 21 sous le code XXXX, sans dossier (`archive__promo-21__xxxx-sN`), pour garder la promo complète. Pour les autres promos, vérifier avant de laisser jouer l'appariement « par élimination ».
+
+## Rapport de synthèse et export d'une promo
+
+Dans le tableau de suivi, au-dessus de la promo affichée :
+
+- **Rapport** : le serveur rassemble toutes les fiches de la promo, calcule les moyennes par semaine et le taux d'engagements tenus, puis Mistral (`mistral-large`, repli `mistral-small`) rédige la synthèse au format JSON. Le rapport est enregistré dans `questionnaireRapports` et relisible sans relancer l'IA (10 derniers par promo). Copier, imprimer / PDF, supprimer. Limite : 2 par minute, 20 par jour et par conseiller.
+- **Exporter les fiches** : `.md` (consigne de synthèse + chiffres + toutes les réponses, à coller dans l'IA de son choix) ou `.csv` (une ligne par réponse, pour un tableur).
+
+Code : `lib/questionnaires/rapport.js` (collecte, chiffres, prompt, export), `app/api/conseiller/questionnaires/rapport/route.js`, `app/api/conseiller/questionnaires/export/route.js`. Le prompt est la constante `SYSTEM` de `rapport.js`.
+
+À savoir : les rapports contiennent des extraits de réponses sous les codes. Ils ne sont pas effacés par la purge d'un dossier : les supprimer à la main en fin de promo.

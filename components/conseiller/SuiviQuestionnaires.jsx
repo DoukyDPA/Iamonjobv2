@@ -18,7 +18,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   ClipboardList, Loader2, AlertTriangle, TrendingUp, TrendingDown, Minus, X,
-  UsersRound, CheckCircle2, Archive,
+  UsersRound, CheckCircle2, Archive, Sparkles, Download, Copy, Printer, Trash2,
 } from 'lucide-react';
 
 const SCORES = [
@@ -73,6 +73,7 @@ export default function SuiviQuestionnaires({ beneficiaires = [], onAssigned }) 
   const [promoKey, setPromoKey] = useState(null);
   const [openId, setOpenId] = useState(null);
   const [assignOpen, setAssignOpen] = useState(false);
+  const [rapportOpen, setRapportOpen] = useState(false);
 
   async function load() {
     try {
@@ -185,11 +186,13 @@ export default function SuiviQuestionnaires({ beneficiaires = [], onAssigned }) 
               ))}
             </div>
           )}
+          {promo && <PromoActions promo={promo} onRapport={() => setRapportOpen(true)} />}
           {promo && <PromoTable promo={promo} onOpen={setOpenId} />}
         </>
       )}
 
       {openId && <FicheModal id={openId} onClose={() => setOpenId(null)} />}
+      {rapportOpen && promo && <RapportModal promo={promo} onClose={() => setRapportOpen(false)} />}
       {assignOpen && data && (
         <AssignModal
           parcours={data.parcours}
@@ -405,6 +408,234 @@ function FicheModal({ id, onClose }) {
         </div>
       </div>
     </div>
+  );
+}
+
+// ─── Rapport de synthèse et export ───────────────────────────────────────────
+
+const exportUrl = (promo, format) =>
+  `/api/conseiller/questionnaires/export?${new URLSearchParams({ parcoursId: promo.parcoursId, promo: promo.promo || '', format })}`;
+
+function PromoActions({ promo, onRapport }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 mb-4">
+      <button
+        onClick={onRapport}
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 text-white font-semibold text-sm hover:bg-teal-700"
+      >
+        <Sparkles className="w-4 h-4" aria-hidden="true" /> Rapport
+      </button>
+      <span className="text-xs text-teal-700/60 ml-1">Exporter les fiches :</span>
+      <a href={exportUrl(promo, 'md')} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-200 bg-white text-teal-800 text-sm font-semibold hover:bg-teal-50" title="Consigne + toutes les réponses, à donner à l'IA de votre choix">
+        <Download className="w-4 h-4" aria-hidden="true" /> Texte pour IA (.md)
+      </a>
+      <a href={exportUrl(promo, 'csv')} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-200 bg-white text-teal-800 text-sm font-semibold hover:bg-teal-50" title="Une ligne par réponse, pour un tableur">
+        <Download className="w-4 h-4" aria-hidden="true" /> Tableur (.csv)
+      </a>
+    </div>
+  );
+}
+
+function rapportToText(promo, r) {
+  const x = r.rapport || {};
+  const L = [`Rapport de synthèse · ${promo.label}`, `Généré le ${formatDateLong(r.createdAt)} · ${r.nbFiches} fiches, ${r.nbParticipants} participants`, ''];
+  const sec = (t) => { L.push('', t.toUpperCase()); };
+  sec('Synthèse'); L.push(x.synthese || '');
+  sec('Dynamique'); L.push(x.dynamique || '');
+  (r.stats?.etapes || []).forEach((e) => L.push(`- ${e.label} : ${e.fiches} fiche(s), ${Object.entries(e.moyennes).map(([k, v]) => `${k} ${v}`).join(', ')}${e.engagementsTenus == null ? '' : `, engagements tenus ${e.engagementsTenus} %`}`));
+  sec('Points forts'); (x.pointsForts || []).forEach((t) => L.push(`- ${t}`));
+  sec('Freins récurrents'); (x.freins || []).forEach((f) => L.push(`- ${f.theme} : ${f.detail}`));
+  sec('Personnes à surveiller'); (x.vigilance || []).forEach((v) => L.push(`- ${v.code} : ${v.motif} Action : ${v.suggestion}`));
+  sec('Pistes collectives'); (x.pistesCollectives || []).forEach((t) => L.push(`- ${t}`));
+  sec('Par personne'); (x.parPersonne || []).forEach((p) => L.push(`- ${p.code} : ${p.trajectoire} À suivre : ${p.aSuivre}`));
+  L.push('', 'Synthèse générée par IA (Mistral) à partir de réponses déclaratives. À relire avant diffusion.');
+  return L.join('\n');
+}
+
+function formatDateLong(ms) {
+  if (!ms) return '';
+  try { return new Date(ms).toLocaleString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch { return ''; }
+}
+
+function RapportModal({ promo, onClose }) {
+  const [rapports, setRapports] = useState(null);
+  const [current, setCurrent] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const qs = new URLSearchParams({ parcoursId: promo.parcoursId, promo: promo.promo || '' });
+
+  async function load() {
+    try {
+      const r = await fetch(`/api/conseiller/questionnaires/rapport?${qs}`);
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || 'Chargement impossible.');
+      setRapports(d.rapports || []);
+      setCurrent((c) => c || d.rapports?.[0] || null);
+    } catch (e) { setError(e.message); setRapports([]); }
+  }
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function generate() {
+    setBusy(true); setError(null);
+    try {
+      const r = await fetch('/api/conseiller/questionnaires/rapport', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parcoursId: promo.parcoursId, promo: promo.promo || '' }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || 'La génération a échoué.');
+      setCurrent(d.rapport);
+      setRapports((l) => [d.rapport, ...(l || [])]);
+    } catch (e) { setError(e.message); }
+    setBusy(false);
+  }
+
+  async function remove(id) {
+    const r = await fetch(`/api/conseiller/questionnaires/rapport?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!r.ok) return;
+    const rest = (rapports || []).filter((x) => x.id !== id);
+    setRapports(rest);
+    setCurrent(rest[0] || null);
+  }
+
+  async function copy() {
+    try { await navigator.clipboard.writeText(rapportToText(promo, current)); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* ignore */ }
+  }
+
+  function print() {
+    const esc = (t) => String(t).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    const html = rapportToText(promo, current).split('\n').map((l) =>
+      /^[A-ZÀ-Ý' ]{4,}$/.test(l) ? `<h2>${esc(l)}</h2>` : l.startsWith('- ') ? `<li>${esc(l.slice(2))}</li>` : l ? `<p>${esc(l)}</p>` : '').join('');
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(`<!doctype html><meta charset="utf-8"><title>Rapport ${esc(promo.label)}</title><style>body{font:14px/1.5 system-ui,sans-serif;max-width:760px;margin:32px auto;color:#123}h2{font-size:13px;letter-spacing:.06em;color:#0f766e;margin-top:24px}li{margin:4px 0 4px 18px}</style>${html}`);
+    w.document.close(); w.focus(); w.print();
+  }
+
+  const x = current?.rapport || {};
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-teal-900/50" role="dialog" aria-modal="true" aria-labelledby="rapport-title" onClick={() => !busy && onClose()}>
+      <div className="relative w-full max-w-3xl max-h-[92vh] bg-white border border-cream-200 rounded-2xl shadow-card overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="px-6 py-5 border-b border-cream-200 bg-teal-50/60 flex items-start gap-3">
+          <div className="flex-1 min-w-0">
+            <h2 id="rapport-title" className="text-lg font-bold text-teal-800">Rapport de synthèse · {promo.label}</h2>
+            <p className="text-sm text-teal-700/70 mt-0.5">
+              {current ? `Généré le ${formatDateLong(current.createdAt)} · ${current.nbFiches} fiches, ${current.nbParticipants} participants` : 'Analyse de toutes les fiches de la promo par Mistral (hébergé en Europe).'}
+            </p>
+          </div>
+          <button type="button" onClick={onClose} disabled={busy} aria-label="Fermer" className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-teal-700 hover:bg-cream-200/70">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="px-6 py-3 border-b border-cream-100 flex flex-wrap items-center gap-2">
+          <button onClick={generate} disabled={busy} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 text-white font-semibold text-sm hover:bg-teal-700 disabled:bg-teal-300">
+            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            {busy ? 'Analyse en cours (30 s à 1 min)…' : current ? 'Nouveau rapport' : 'Générer le rapport'}
+          </button>
+          {current && !busy && (
+            <>
+              <button onClick={copy} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-teal-200 text-teal-800 text-sm font-semibold hover:bg-teal-50">
+                <Copy className="w-4 h-4" /> {copied ? 'Copié' : 'Copier'}
+              </button>
+              <button onClick={print} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-teal-200 text-teal-800 text-sm font-semibold hover:bg-teal-50">
+                <Printer className="w-4 h-4" /> Imprimer / PDF
+              </button>
+            </>
+          )}
+          {rapports && rapports.length > 1 && (
+            <select
+              value={current?.id || ''}
+              onChange={(e) => setCurrent(rapports.find((r) => r.id === e.target.value))}
+              className="ml-auto p-2 text-sm rounded-lg border border-teal-200 bg-white"
+              aria-label="Rapports précédents"
+            >
+              {rapports.map((r) => <option key={r.id} value={r.id}>{formatDateLong(r.createdAt)}</option>)}
+            </select>
+          )}
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 iamj-scrollbar">
+          {error && <p className="text-sm text-rose-600" role="alert">{error}</p>}
+          {!rapports && <Loader2 className="w-6 h-6 animate-spin text-teal-600 mx-auto" />}
+          {rapports && !current && !busy && (
+            <p className="text-sm text-teal-700/80">
+              Aucun rapport pour cette promo. Le rapport reprend les chiffres calculés par l'application et les réponses
+              libres, sous les codes uniquement. Il est enregistré : tu pourras le relire sans relancer l'analyse.
+            </p>
+          )}
+          {current && (
+            <>
+              <RSection titre="Synthèse"><p className="whitespace-pre-wrap">{x.synthese}</p></RSection>
+              <RSection titre="Dynamique">
+                <div className="overflow-x-auto mb-2">
+                  <table className="text-xs w-full">
+                    <thead><tr className="text-teal-700/60 text-left"><th className="py-1 pr-3">Semaine</th><th className="pr-3">Fiches</th>{SCORES.map((sc) => <th key={sc.key} className="pr-3">{sc.label}</th>)}<th>Engagements tenus</th></tr></thead>
+                    <tbody>
+                      {(current.stats?.etapes || []).map((e) => (
+                        <tr key={e.n} className="border-t border-cream-100">
+                          <td className="py-1 pr-3 font-semibold">{e.label}</td><td className="pr-3">{e.fiches}</td>
+                          {SCORES.map((sc) => <td key={sc.key} className={`pr-3 font-bold ${scoreCls(e.moyennes?.[sc.key])}`}>{e.moyennes?.[sc.key] ?? '–'}</td>)}
+                          <td>{e.engagementsTenus == null ? '–' : `${e.engagementsTenus} %`}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p>{x.dynamique}</p>
+              </RSection>
+              <RList titre="Points forts" items={x.pointsForts} />
+              <RSection titre="Freins récurrents">
+                <ul className="space-y-1.5">{(x.freins || []).map((f, i) => <li key={i}><span className="font-semibold text-teal-800">{f.theme}.</span> {f.detail}</li>)}</ul>
+              </RSection>
+              <RSection titre="Personnes à surveiller">
+                <ul className="space-y-2">{(x.vigilance || []).map((v, i) => (
+                  <li key={i} className="rounded-xl border border-rose-200 bg-rose-50/40 p-3">
+                    <span className="font-mono font-semibold text-teal-800">{v.code}</span> · {v.motif}
+                    <div className="text-teal-700 mt-1"><span className="font-semibold">Action :</span> {v.suggestion}</div>
+                  </li>
+                ))}</ul>
+              </RSection>
+              <RList titre="Pistes collectives" items={x.pistesCollectives} />
+              <RSection titre="Par personne">
+                <ul className="space-y-2">{(x.parPersonne || []).map((p, i) => (
+                  <li key={i}>
+                    <span className="font-mono font-semibold text-teal-800">{p.code}</span> · {p.trajectoire}
+                    {p.aSuivre && <div className="text-teal-700/80 text-xs mt-0.5">À suivre : {p.aSuivre}</div>}
+                  </li>
+                ))}</ul>
+              </RSection>
+              <div className="flex items-center justify-between pt-2">
+                <p className="text-[11px] text-teal-700/50">Synthèse générée par IA à partir de réponses déclaratives. À relire avant diffusion.</p>
+                <button onClick={() => remove(current.id)} className="inline-flex items-center gap-1 text-xs text-rose-600 hover:underline">
+                  <Trash2 className="w-3.5 h-3.5" /> Supprimer ce rapport
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RSection({ titre, children }) {
+  return (
+    <section className="text-sm text-teal-900">
+      <h3 className="text-xs font-bold text-teal-800 uppercase tracking-wider mb-2">{titre}</h3>
+      {children}
+    </section>
+  );
+}
+
+function RList({ titre, items }) {
+  if (!items?.length) return null;
+  return (
+    <RSection titre={titre}>
+      <ul className="list-disc pl-5 space-y-1">{items.map((t, i) => <li key={i}>{t}</li>)}</ul>
+    </RSection>
   );
 }
 
