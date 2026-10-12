@@ -7,7 +7,7 @@ import { logEvent, newRequestId } from '@/lib/logger';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Partage le quota IA (cette route consomme Gemini, pas l'API France Travail).
+// Partage le quota IA (cette route consomme Mistral, pas l'API France Travail).
 const ROME_PER_MINUTE = parseInt(process.env.AI_RATE_PER_MINUTE || '15', 10);
 const ROME_PER_DAY    = parseInt(process.env.AI_RATE_PER_DAY    || '200', 10);
 

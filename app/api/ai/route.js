@@ -100,9 +100,9 @@ export async function POST(request) {
     );
   }
 
-  // Bénéficiaire : traitement forcé sur Mistral (France), sans repli Google.
-  // Garantie affichée à l'activation d'un traitement 100% européen du CV.
-  const effectiveProvider = role === 'beneficiaire' ? 'mistral' : provider;
+  // Traitement 100 % Mistral (France) pour tous les comptes.
+  void provider; void role;
+  const effectiveProvider = 'mistral';
 
   // La fiche ROME est déjà en cours de chargement : on la récupère juste avant
   // de construire le prompt.

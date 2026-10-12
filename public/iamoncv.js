@@ -1,32 +1,3 @@
-        // --- CLÉ API (saisie par l'utilisateur, mémorisée dans le navigateur) ---
-        let apiKey = "";
-
-        function loadApiKey() {
-            try {
-                apiKey = localStorage.getItem('iamoncv_api_key') || "";
-            } catch (e) {
-                apiKey = "";
-            }
-            return apiKey;
-        }
-
-        function saveApiKey(value) {
-            apiKey = (value || "").trim();
-            // Une nouvelle clé peut donner accès à d'autres modèles : on relance la découverte
-            resolvedModel = null;
-            if (typeof badModels !== 'undefined') badModels.clear();
-            try {
-                localStorage.removeItem('iamoncv_model');
-                if (apiKey) {
-                    localStorage.setItem('iamoncv_api_key', apiKey);
-                } else {
-                    localStorage.removeItem('iamoncv_api_key');
-                }
-            } catch (e) {
-                console.warn("Impossible de mémoriser la clé :", e);
-            }
-        }
-
         // Intégré à IAMONJOB : plus de clé côté navigateur. L'accès à l'IA est
         // garanti par la session IAMONJOB, donc on considère l'IA toujours prête.
         function hasApiKey() {
@@ -35,7 +6,6 @@
 
         // --- COMPTEUR DE CONSOMMATION (période de test) ---
         // Tarifs INDICATIFS par million de tokens (à ajuster selon le modèle réellement utilisé).
-        // Ordre de grandeur pour un modèle "Flash" : entrée ~0,30 € / sortie ~2,50 € par million.
         // Tarifs indicatifs Mistral Large (le provider réel côté IAMONJOB).
         const PRICING = { inputPerMillion: 2.00, outputPerMillion: 6.00, currency: '€' };
         let tokenUsage = { input: 0, output: 0, total: 0, calls: 0 };
@@ -79,107 +49,10 @@
             updateTokenMeter();
         }
 
-        // --- UI CONFIGURATION DE LA CLÉ API ---
-        function updateApiKeyIndicator() {
-            const dot = document.getElementById('api-key-dot');
-            if (!dot) return;
-            if (hasApiKey()) {
-                dot.classList.remove('bg-red-400');
-                dot.classList.add('bg-green-400');
-                dot.title = "Clé configurée";
-            } else {
-                dot.classList.remove('bg-green-400');
-                dot.classList.add('bg-red-400');
-                dot.title = "Aucune clé configurée";
-            }
-        }
-
-        function openApiModal(firstRun = false) {
-            const input = document.getElementById('api-key-input');
-            input.value = apiKey || "";
-            input.type = "password";
-            document.getElementById('api-key-toggle').innerHTML = '<i class="fas fa-eye"></i>';
-            hideApiStatus();
-            // Au tout premier lancement, on ne propose pas de fermer sans configurer
-            document.getElementById('api-modal-close').style.display = firstRun ? 'none' : 'block';
-            document.getElementById('api-modal').classList.remove('hidden');
-            input.focus();
-        }
-
-        function closeApiModal() {
-            document.getElementById('api-modal').classList.add('hidden');
-        }
-
-        function toggleApiKeyVisibility() {
-            const input = document.getElementById('api-key-input');
-            const toggle = document.getElementById('api-key-toggle');
-            if (input.type === "password") {
-                input.type = "text";
-                toggle.innerHTML = '<i class="fas fa-eye-slash"></i>';
-            } else {
-                input.type = "password";
-                toggle.innerHTML = '<i class="fas fa-eye"></i>';
-            }
-        }
-
-        function showApiStatus(message, type) {
-            const box = document.getElementById('api-key-status');
-            const styles = {
-                ok: 'bg-green-50 border border-green-200 text-green-700',
-                error: 'bg-red-50 border border-red-200 text-red-700',
-                info: 'bg-[#EAF3F0] border border-[#CBE0DA] text-[#1E7A6B]'
-            };
-            box.className = `text-sm rounded-lg p-3 ${styles[type] || styles.info}`;
-            box.innerHTML = message;
-            box.classList.remove('hidden');
-        }
-
-        function hideApiStatus() {
-            document.getElementById('api-key-status').classList.add('hidden');
-        }
-
-        function submitApiKey() {
-            const value = document.getElementById('api-key-input').value.trim();
-            if (!value) {
-                showApiStatus("Veuillez coller une clé API avant d'enregistrer.", "error");
-                return;
-            }
-            saveApiKey(value);
-            updateApiKeyIndicator();
-            showApiStatus("Clé enregistrée. Vous pouvez fermer cette fenêtre.", "ok");
-            setTimeout(closeApiModal, 900);
-        }
-
-        function clearApiKey() {
-            saveApiKey("");
-            document.getElementById('api-key-input').value = "";
-            updateApiKeyIndicator();
-            showApiStatus("Clé effacée de ce navigateur.", "info");
-        }
-
-        async function testApiKey() {
-            const value = document.getElementById('api-key-input').value.trim();
-            if (!value) {
-                showApiStatus("Collez d'abord une clé à tester.", "error");
-                return;
-            }
-            const btn = document.getElementById('btn-test-api');
-            const original = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Test...';
-            btn.disabled = true;
-            const previousKey = apiKey;
-            apiKey = value; // test avec la clé saisie
-            try {
-                await callGeminiAPI("Réponds uniquement par OK.", "Tu es un service de test. Réponds OK.");
-                const modelInfo = resolvedModel ? ` <span class="opacity-70">(modèle : ${resolvedModel})</span>` : "";
-                showApiStatus("<i class='fas fa-check-circle mr-1'></i> Clé valide ! L'IA répond correctement." + modelInfo, "ok");
-            } catch (e) {
-                apiKey = previousKey; // on ne garde pas une clé qui échoue
-                showApiStatus("<i class='fas fa-times-circle mr-1'></i> La clé semble invalide ou l'API est injoignable. Vérifiez la clé.", "error");
-            } finally {
-                btn.innerHTML = original;
-                btn.disabled = false;
-            }
+        // Erreur bloquante côté IA (session expirée, quota atteint) : on affiche
+        // le message renvoyé par le serveur, sans réessayer.
+        function showAiAccessError(e) {
+            alert(e && e.message ? e.message : "L'assistant IA est momentanément indisponible.");
         }
 
         // Intégré à IAMONJOB : l'IA est toujours disponible via la session.
@@ -786,7 +659,7 @@
 
             let parsed;
             try {
-                const raw = await callGeminiAPI("Voici le CV à ranger :\n\n" + source.cvText.slice(0, 30000), sysPrompt);
+                const raw = await callAssistantAPI("Voici le CV à ranger :\n\n" + source.cvText.slice(0, 30000), sysPrompt);
                 parsed = parseCvJson(raw);
             } catch (err) {
                 showGenerationError(escapeHtml(err.message || "L'IA n'a pas pu lire ce CV."));
@@ -1183,7 +1056,7 @@
                 : "";
 
             try {
-                const response = await callGeminiAPI(text, sysPrompt + limitNote, chatState.history.slice(0, -1));
+                const response = await callAssistantAPI(text, sysPrompt + limitNote, chatState.history.slice(0, -1));
                 addMessageToUI('model', response);
                 chatState.history.push({ role: 'model', parts: [{ text: response }] });
                 persistChatHistory();
@@ -1229,7 +1102,7 @@
             let convoText = chatState.history.map(m => `${m.role === 'user' ? 'Candidat' : 'Coach'}: ${m.parts[0].text}`).join('\n\n');
 
             try {
-                const summary = await callGeminiAPI("Produis la synthèse consolidée de cet élément.", sysPrompt + priorBlock + "\n\nCONVERSATION:\n" + convoText);
+                const summary = await callAssistantAPI("Produis la synthèse consolidée de cet élément.", sysPrompt + priorBlock + "\n\nCONVERSATION:\n" + convoText);
                 db[chatState.type][chatState.index].details = stripMarkdown(summary);
                 saveDB();
                 renderDB();
@@ -1303,13 +1176,12 @@ ${genderDirective()}`;
             const userPrompt = `Offre visée :\n${targetJob}\n\nMes expériences, formations et intérêts :\n${items.join('\n')}`;
 
             try {
-                const tips = await callGeminiAPI(userPrompt, sysPrompt);
+                const tips = await callAssistantAPI(userPrompt, sysPrompt);
                 box.innerHTML = formatChatText(tips);
                 box.classList.remove('hidden');
             } catch (e) {
                 if (e.isKeyError) {
-                    openApiModal();
-                    showApiStatus("Ta clé API est invalide ou non autorisée. Vérifie-la puis réessaie.", "error");
+                    showAiAccessError(e);
                 } else {
                     box.innerHTML = "⚠️ Impossible d'obtenir les conseils pour l'instant. Réessaie dans un moment.";
                     box.classList.remove('hidden');
@@ -1463,7 +1335,7 @@ ${genderDirective()}`;
 
             const user = `CV actuel (JSON) :\n${JSON.stringify(current)}\n\nCe CV dépasse d'environ ${pct}% une fois resserré. Raccourcis-le juste assez pour qu'il tienne, en gardant la page bien remplie.`;
 
-            const resp = await callGeminiAPI(user, sys);
+            const resp = await callAssistantAPI(user, sys);
             const data = parseCvJson(resp);
             if (!data) return false;
             cvData.profile = (data.profile != null) ? data.profile : cvData.profile;
@@ -1492,7 +1364,7 @@ ${genderDirective()}`;
             Ne réintroduis aucune donnée personnelle.
             Réponds STRICTEMENT en JSON valide, sans texte autour : {"skills": [""], "tools": [""], "interests": [""]}`;
             const user = `Colonne latérale actuelle (JSON) :\n${JSON.stringify(current)}\n\nElle dépasse d'environ ${pct}%. Raccourcis-la juste assez.`;
-            const resp = await callGeminiAPI(user, sys);
+            const resp = await callAssistantAPI(user, sys);
             const data = parseCvJson(resp);
             if (!data) return false;
             const clean = (arr, fallback) => Array.isArray(arr) ? arr.map(x => String(x || '').trim()).filter(Boolean) : fallback;
@@ -1562,7 +1434,7 @@ ${genderDirective()}`;
             try {
                 await fitToOnePage(2);
             } catch (e) {
-                if (e.isKeyError) { openApiModal(); showApiStatus("Votre clé API est invalide ou non autorisée.", "error"); }
+                if (e.isKeyError) { showAiAccessError(e); }
             }
             renderCV();
             resetGenerationOverlay();
@@ -1652,7 +1524,7 @@ ${genderDirective()}`;
             const userPrompt = `Base de données brute :\n${safeDbJson}\n\nOffre ou cible visée :\n${safeTargetJob}\n\n${userNote ? `Consigne personnelle du candidat (à respecter en priorité) :\n${safeUserNote}\n\n` : ''}${genderDirective()}\n\nGénère le CV JSON conforme aux règles.`;
 
             try {
-                const response = await callGeminiAPI(userPrompt, sysPrompt);
+                const response = await callAssistantAPI(userPrompt, sysPrompt);
                 const generatedData = parseCvJson(response);
 
                 // Infos perso : jamais issues de l'IA. On garde ce que l'utilisateur a saisi
@@ -1684,8 +1556,7 @@ ${genderDirective()}`;
                 console.error("Erreur de génération :", e);
                 if (e.isKeyError) {
                     resetGenerationOverlay();
-                    openApiModal();
-                    showApiStatus("Votre clé API est invalide ou non autorisée. Vérifiez-la puis réessayez.", "error");
+                    showAiAccessError(e);
                 } else {
                     showGenerationError("Le texte de l'offre copiée contient des éléments qui ont perturbé l'analyse (ou l'IA est surchargée). Essayez de copier uniquement le texte principal de l'offre (sans les menus ou boutons du site).");
                 }
@@ -2434,7 +2305,7 @@ ${genderDirective()}`;
             const userPrompt = `CV à relire (JSON) :\n${JSON.stringify(payload)}\n\nRenvoie le même JSON corrigé.`;
 
             try {
-                const response = await callGeminiAPI(userPrompt, sysPrompt);
+                const response = await callAssistantAPI(userPrompt, sysPrompt);
                 const fixed = parseCvJson(response);
                 if (fixed.profile !== undefined) cvData.profile = fixed.profile;
                 if (Array.isArray(fixed.skills)) cvData.skills = fixed.skills;
@@ -2453,8 +2324,7 @@ ${genderDirective()}`;
                 console.error("Erreur de relecture :", e);
                 if (e.isKeyError) {
                     resetGenerationOverlay();
-                    openApiModal();
-                    showApiStatus("Votre clé API est invalide ou non autorisée. Vérifiez-la puis réessayez.", "error");
+                    showAiAccessError(e);
                 } else {
                     resetGenerationOverlay();
                     alert("La relecture IA a échoué, mais le CV renvoyé reste bien réintégré. Vous pouvez le relire à la main.");
@@ -2462,76 +2332,12 @@ ${genderDirective()}`;
             }
         }
 
-        // --- UTILITAIRE API GEMINI ---
-        // --- SÉLECTION AUTOMATIQUE DU MODÈLE ---
-        // Les noms de modèles Gemini changent régulièrement. Plutôt qu'un nom figé,
-        // on découvre les modèles disponibles sur la clé et on choisit le meilleur "flash".
-        let resolvedModel = null;
-        const badModels = new Set();
-        const FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.0-flash', 'gemini-2.5-flash-lite', 'gemini-1.5-flash'];
-
-        function scoreModel(name) {
-            // Écarter ce qui ne sert pas à générer du texte de CV
-            if (!/^gemini-/.test(name)) return -1000;
-            if (/embedding|aqa|imagen|vision|tts|image|-live|native-audio|learnlm/.test(name)) return -1000;
-            let s = 0;
-            if (/flash/.test(name)) s += 100;   // rapide et économique : idéal ici
-            if (/pro/.test(name)) s += 60;
-            const v = name.match(/gemini-(\d+(?:\.\d+)?)/);
-            if (v) s += parseFloat(v[1]) * 10;  // privilégier la version la plus récente
-            if (/latest/.test(name)) s += 15;
-            if (/lite/.test(name)) s -= 8;
-            if (/preview|exp|thinking/.test(name)) s -= 20; // privilégier les versions stables
-            return s;
-        }
-
-        function invalidateModel(m) {
-            if (m) badModels.add(m);
-            resolvedModel = null;
-            try { localStorage.removeItem('iamoncv_model'); } catch (e) {}
-        }
-
-        async function resolveModel() {
-            if (resolvedModel && !badModels.has(resolvedModel)) return resolvedModel;
-
-            // 1) modèle mémorisé lors d'une session précédente
-            try {
-                const cached = localStorage.getItem('iamoncv_model');
-                if (cached && !badModels.has(cached)) { resolvedModel = cached; return cached; }
-            } catch (e) {}
-
-            // 2) découverte via la liste des modèles disponibles sur la clé
-            try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    const usable = (data.models || [])
-                        .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
-                        .map(m => (m.name || '').replace('models/', ''))
-                        .filter(n => n && !badModels.has(n));
-                    if (usable.length) {
-                        usable.sort((a, b) => scoreModel(b) - scoreModel(a));
-                        if (scoreModel(usable[0]) > -1000) {
-                            resolvedModel = usable[0];
-                            try { localStorage.setItem('iamoncv_model', resolvedModel); } catch (e) {}
-                            return resolvedModel;
-                        }
-                    }
-                }
-            } catch (e) { /* on bascule sur la liste de repli */ }
-
-            // 3) repli sur une liste connue
-            const fb = FALLBACK_MODELS.find(m => !badModels.has(m)) || FALLBACK_MODELS[0];
-            resolvedModel = fb;
-            return fb;
-        }
-
+        // --- APPEL À L'ASSISTANT IA ---
         // Intégré à IAMONJOB : l'IA passe par le backend Mistral (France), via la
-        // route /api/cv-assistant. Plus de clé Gemini côté navigateur ni d'appel
-        // direct à Google. L'authentification se fait par le cookie de session
-        // IAMONJOB (envoyé automatiquement, même origine). On conserve la même
+        // route /api/cv-assistant, sans aucune clé côté navigateur. L'authentification
+        // se fait par le cookie de session IAMONJOB (envoyé automatiquement, même origine). On conserve la même
         // signature (query, sysInstruction, history) pour ne rien changer ailleurs.
-        async function callGeminiAPI(query, sysInstruction, history = []) {
+        async function callAssistantAPI(query, sysInstruction, history = []) {
             const delays = [1000, 2000, 4000];
 
             const payload = {
@@ -2567,7 +2373,7 @@ ${genderDirective()}`;
 
                     const data = await res.json();
                     // Suivi de la consommation : on remappe l'usage Mistral sur la
-                    // forme attendue par le compteur (héritée de Gemini).
+                    // forme attendue par le compteur ci-dessus.
                     if (data.usage) {
                         recordUsage({
                             promptTokenCount: data.usage.promptTokens || 0,
@@ -2636,20 +2442,8 @@ ${genderDirective()}`;
 
         // Init
         changeTheme('iamonjob');
-        loadApiKey();
-        updateApiKeyIndicator();
         updateTokenMeter();
         loadActiveProfile();
         applyActiveProfileToUI();
         initAvatarDrag();
         suggestIamonjobImport();
-
-        // Envoi de la clé avec la touche Entrée
-        document.getElementById('api-key-input').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') { e.preventDefault(); submitApiKey(); }
-        });
-
-        // Au tout premier lancement, si aucune clé n'est configurée, on ouvre la fenêtre de config
-        if (!hasApiKey()) {
-            openApiModal(true);
-        }

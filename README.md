@@ -2,7 +2,7 @@
 
 Application web d'accompagnement à la reconversion professionnelle : analyse de CV, suggestions de métiers, simulation d'enquête métier, recherche d'offres France Travail, analyse de compatibilité CV/offre, lettre de motivation, préparation d'entretien et plan d'action 30 jours.
 
-**Stack :** Next.js 14 (App Router) · React · Tailwind CSS · Firebase Auth · Firestore · API Gemini & Mistral · API France Travail · déploiement Railway.
+**Stack :** Next.js 14 (App Router) · React · Tailwind CSS · Firebase Auth · Firestore · API Mistral · API France Travail · déploiement Railway.
 
 ---
 
@@ -11,7 +11,7 @@ Application web d'accompagnement à la reconversion professionnelle : analyse de
 ### Prérequis
 - Node.js 18.17+
 - Un projet Firebase (gratuit) : https://console.firebase.google.com (Authentication + Firestore)
-- Au moins une clé d'API IA : Gemini (https://aistudio.google.com/apikey) **ou** Mistral (https://console.mistral.ai/api-keys/)
+- Une clé d'API Mistral : https://console.mistral.ai/api-keys/
 - (Optionnel) Identifiants France Travail : https://francetravail.io
 
 ### Installation
@@ -47,12 +47,11 @@ Un compte devient conseiller si son email figure dans `CONSEILLER_EMAILS`, ou
 si son domaine figure dans `CONSEILLER_DOMAINS` (listes séparées par des
 virgules, voir `.env.example`).
 
-### IA — au moins l'une des deux
+### IA
 
-- `GEMINI_API_KEY` : récupérée sur https://aistudio.google.com/apikey
 - `MISTRAL_API_KEY` : récupérée sur https://console.mistral.ai/api-keys/
 
-Si les deux sont configurées, un sélecteur apparaît dans l'app permettant à l'utilisateur de choisir.
+Tout le traitement IA passe par Mistral (France) : analyses, assistant CV, et OCR des CV graphiques (`mistral-ocr-latest`).
 
 ### France Travail (optionnel)
 
@@ -91,7 +90,7 @@ git push -u origin main
 4. Pendant le build, allez dans **Variables** et ajoutez **toutes** les variables d'environnement de `.env.example` :
    - les six variables `NEXT_PUBLIC_FIREBASE_*`
    - `FIREBASE_ADMIN_PROJECT_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL`, `FIREBASE_ADMIN_PRIVATE_KEY`
-   - `GEMINI_API_KEY` et/ou `MISTRAL_API_KEY`
+   - `MISTRAL_API_KEY`
    - `FRANCE_TRAVAIL_CLIENT_ID` et `FRANCE_TRAVAIL_CLIENT_SECRET` (si vous voulez la recherche d'offres)
    - `NEXT_PUBLIC_SITE_URL` (laissez vide pour le moment, on y revient)
 5. Une fois le premier déploiement terminé, allez dans **Settings → Networking → Generate Domain**.
@@ -110,7 +109,7 @@ L'app est en ligne.
 Iamonjobv2-clean/
 ├── app/                            # Routes Next.js App Router
 │   ├── api/                        # Routes serveur
-│   │   ├── ai/                     # Proxy IA (Gemini / Mistral) + suivi des tokens
+│   │   ├── ai/                     # Proxy IA (Mistral) + suivi des tokens
 │   │   ├── france-travail/         # Agrégateur d'offres (FT + Adzuna + Jooble)
 │   │   ├── rome/  salary/  labonneboite/
 │   │   ├── campaign/  candidature/  contact-resolver/   # Candidatures spontanées
@@ -130,7 +129,6 @@ Iamonjobv2-clean/
 │   └── CampaignLauncher.jsx, AvisConseiller.jsx, MonConseiller.jsx, …
 ├── lib/
 │   ├── ai/
-│   │   ├── gemini.js               # Client Gemini
 │   │   ├── mistral.js              # Client Mistral
 │   │   ├── index.js                # Abstraction unifiée
 │   │   ├── prompts.js              # Tous les prompts du conseiller emploi
@@ -169,7 +167,7 @@ Iamonjobv2-clean/
 
 ## 6. Personnalisation
 
-- **Changer les modèles IA** : éditez les constantes `GEMINI_MODEL` (`lib/ai/gemini.js`) et `MISTRAL_MODEL` (`lib/ai/mistral.js`).
+- **Changer les modèles IA** : éditez la table `MODELS` dans `lib/ai/index.js` (et `MODEL` dans `app/api/ocr/route.js` pour l'OCR).
 - **Modifier les prompts** : tous les prompts du conseiller emploi sont dans `lib/ai/prompts.js`.
 - **Ajuster les sources d'offres** : l'agrégateur et ses filtres de pertinence sont dans `lib/offers.js`.
 
@@ -179,7 +177,7 @@ Iamonjobv2-clean/
 
 | Symptôme | Cause probable | Solution |
 |---|---|---|
-| "GEMINI_API_KEY non configurée" | Variable manquante | Ajoutez-la dans Railway → Variables ou `.env.local` |
+| "MISTRAL_API_KEY non configurée" | Variable manquante | Ajoutez-la dans Railway → Variables ou `.env.local` |
 | Boucle de redirection /login | Cookie `__session` absent ou domaine non autorisé | Vérifiez `NEXT_PUBLIC_SITE_URL` et les domaines autorisés dans Firebase → Authentication → Settings |
 | "Authentification France Travail refusée" | Mauvaises clés ou app non validée | Vérifiez les identifiants et que l'app a bien l'accès "Offres d'emploi v2" |
 | Build qui échoue sur Railway | Mauvaise version Node | Forcez Node 18+ via la variable `NIXPACKS_NODE_VERSION=20` |

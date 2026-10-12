@@ -71,4 +71,4 @@ Les inscriptions créées avant l'ajout du champ `expireAt` n'ont pas de date de
 
 ## Pages légales
 
-Pense à vérifier que `/confidentialite` décrit bien la réalité : durée de conservation de 180 jours pour les inscriptions, traitement du CV par une IA tierce (Gemini ou Mistral), hébergement, et la façon d'exercer le droit à l'effacement (le bouton dans l'app, plus le contact email).
+Pense à vérifier que `/confidentialite` décrit bien la réalité : durée de conservation de 180 jours pour les inscriptions, traitement du CV par une IA tierce (Mistral, France), hébergement, et la façon d'exercer le droit à l'effacement (le bouton dans l'app, plus le contact email).

@@ -35,7 +35,7 @@ const MAX_QUERY = 50000;
 const MAX_SYS = 40000;
 const MAX_HISTORY_MESSAGES = 40;
 
-// Convertit l'historique au format Gemini ({ role, parts:[{text}] }) — utilisé
+// Convertit l'historique au format historique d'IAMONCV ({ role, parts:[{text}] }) — utilisé
 // par IAMONCV — en messages Mistral ({ role, content }). Un rôle « model »
 // devient « assistant ».
 function toMistralMessages(systemInstruction, history, query) {

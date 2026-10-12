@@ -50,12 +50,10 @@ export default function ConfidentialitePage() {
         </p>
         <p className="mt-3">
           Ce n'est qu'ensuite, quand vous lancez l'analyse, que ce texte est envoyé à un modèle
-          d'intelligence artificielle. Le modèle par défaut est <strong>Mistral, une entreprise
-          française</strong>, donc un traitement en Europe. Pour les personnes accompagnées par un
-          conseiller, ce traitement européen est <strong>garanti</strong> : aucun recours à un
-          service hors Union européenne. Pour les comptes classiques, le modèle Google Gemini peut
-          servir de secours en cas d'indisponibilité, auquel cas le traitement peut avoir lieu hors
-          Union européenne.
+          d'intelligence artificielle : <strong>Mistral, une entreprise française</strong>. Ce
+          traitement en Europe vaut pour tous les comptes, sans recours à un service hors Union
+          européenne. Si votre CV est un PDF graphique (Canva, scan), sa lecture passe aussi par
+          Mistral, avec le service de reconnaissance de texte Mistral OCR.
         </p>
         <p className="mt-3">
           Votre CV est ensuite enregistré de façon chiffrée sur votre compte, pour vos prochaines
@@ -74,7 +72,7 @@ export default function ConfidentialitePage() {
         <p className="mt-3">
           Vos données personnelles (CV, préférences) sont stockées sur Google Cloud Firestore, dans
           une <strong>région européenne</strong> (Belgique et Pays-Bas), avec chiffrement au repos.
-          L'analyse par IA des personnes accompagnées est réalisée en <strong>Europe</strong>
+          L'analyse par IA est réalisée en <strong>Europe</strong>
           (Mistral, France), sans recours à un service hors Union européenne. La partie logicielle de
           l'application est exécutée par Railway (États-Unis) ; ce serveur traite les requêtes le
           temps d'un échange, mais ne conserve pas votre CV.
@@ -85,8 +83,7 @@ export default function ConfidentialitePage() {
         <h2 className="text-xl font-bold text-teal-800 mb-3">Sous-traitants</h2>
         <p>Pour fournir le service, nous faisons appel aux prestataires suivants :</p>
         <ul className="list-disc ml-6 mt-2 space-y-1 text-sm">
-          <li><strong>Mistral</strong> (France) : analyse du CV par intelligence artificielle ;</li>
-          <li><strong>Google Gemini</strong> (Google) : secours d'analyse pour les comptes classiques uniquement ;</li>
+          <li><strong>Mistral</strong> (France) : analyse du CV par intelligence artificielle et lecture des CV graphiques ;</li>
           <li><strong>Google Cloud / Firebase</strong> : authentification et stockage des données ;</li>
           <li><strong>Railway</strong> (États-Unis) : hébergement de l'application, sans conservation du CV.</li>
         </ul>

@@ -33,10 +33,6 @@
                     <button onclick="changeTheme('purple')" class="w-5 h-5 rounded-full bg-[#581c87] border border-white shadow-sm hover:scale-110 transition"></button>
                     <button onclick="changeTheme('slate')" class="w-5 h-5 rounded-full bg-[#0f172a] border border-white shadow-sm hover:scale-110 transition"></button>
                 </div>
-                <button onclick="openApiModal()" id="btn-api-key" style="display:none" class="bg-white/10 border border-white/20 text-white px-3 py-2 rounded-lg text-sm font-bold hover:bg-white/20 transition flex items-center" title="Configurer votre clé API Gemini">
-                    <i class="fas fa-key mr-2 text-[#EE6E5E]"></i> <span class="hidden sm:inline">Clé API</span>
-                    <span id="api-key-dot" class="ml-2 w-2 h-2 rounded-full bg-red-400 inline-block" title="Aucune clé configurée"></span>
-                </button>
                 <!-- Compteur de consommation (période de test) -->
                 <div id="token-meter" class="flex items-center gap-1.5 bg-white/10 border border-white/20 px-3 py-2 rounded-lg text-xs font-bold" title="Consommation IA sur ce CV (indicatif)">
                     <i class="fas fa-coins text-[#EE6E5E]"></i>
@@ -376,50 +372,6 @@
                     <button onclick="summarizeAndCloseChat()" class="text-sm font-bold bg-green-100 text-green-700 hover:bg-green-200 px-4 py-2 rounded-lg transition shadow-sm border border-green-200">
                         <i class="fas fa-check mr-1"></i> Terminer l'interview
                     </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL CONFIGURATION CLÉ API -->
-    <div id="api-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden">
-            <div class="bg-gradient-to-r from-[#123F39] to-[#0d2e2a] p-5 text-white flex justify-between items-center shrink-0">
-                <div>
-                    <h3 class="font-bold text-lg flex items-center"><i class="fas fa-key mr-2 text-[#EE6E5E]"></i> Votre clé API Gemini</h3>
-                    <p class="text-[#8FD4C4] text-xs mt-0.5">Nécessaire pour que l'IA rédige vos CV</p>
-                </div>
-                <button id="api-modal-close" onclick="closeApiModal()" class="text-[#8FD4C4] hover:text-white transition"><i class="fas fa-times text-xl"></i></button>
-            </div>
-
-            <div class="p-6 space-y-4">
-                <div class="bg-[#EAF3F0] border border-[#CBE0DA] rounded-lg p-4 text-sm text-slate-700 leading-relaxed">
-                    <p class="font-bold text-[#123F39] mb-1"><i class="fas fa-circle-info mr-1"></i> Comment obtenir une clé (gratuit)</p>
-                    <ol class="list-decimal pl-5 space-y-1 mt-2">
-                        <li>Ouvrez <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="text-[#1E7A6B] font-bold underline">Google AI Studio <i class="fas fa-external-link-alt text-xs"></i></a></li>
-                        <li>Connectez-vous avec un compte Google</li>
-                        <li>Cliquez sur « Create API key » puis copiez la clé</li>
-                        <li>Collez-la ci-dessous</li>
-                    </ol>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Clé API</label>
-                    <div class="flex gap-2">
-                        <input type="password" id="api-key-input" placeholder="Collez votre clé ici (AIza...)" class="flex-1 text-sm p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#1E7A6B] outline-none font-mono">
-                        <button onclick="toggleApiKeyVisibility()" id="api-key-toggle" class="px-3 border border-slate-300 rounded-lg text-slate-500 hover:bg-slate-50 transition" title="Afficher / masquer"><i class="fas fa-eye"></i></button>
-                    </div>
-                    <p class="text-xs text-slate-400 mt-2"><i class="fas fa-lock mr-1"></i> Votre clé est enregistrée uniquement dans ce navigateur. Elle n'est jamais envoyée ailleurs qu'à Google.</p>
-                </div>
-
-                <div id="api-key-status" class="hidden text-sm rounded-lg p-3"></div>
-            </div>
-
-            <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center shrink-0">
-                <button onclick="clearApiKey()" class="text-sm text-slate-500 hover:text-red-600 font-medium transition"><i class="fas fa-trash mr-1"></i> Effacer la clé</button>
-                <div class="flex gap-2">
-                    <button onclick="testApiKey()" id="btn-test-api" class="text-sm font-bold bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 px-4 py-2 rounded-lg transition"><i class="fas fa-vial mr-1"></i> Tester</button>
-                    <button onclick="submitApiKey()" class="text-sm font-bold bg-[#1E7A6B] hover:bg-[#17594E] text-white px-5 py-2 rounded-lg shadow-sm transition"><i class="fas fa-check mr-1"></i> Enregistrer</button>
                 </div>
             </div>
         </div>
