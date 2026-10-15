@@ -99,6 +99,9 @@ export default function App({ user, availableProviders = ['mistral'] }) {
   // API d'offres. Défaut « Créteil » ; on ne l'écrase que par une vraie ville
   // (voir analyzeCV), pas par un code département nu type « 11 ».
   const [userLocation, setUserLocation] = useState('Créteil');
+  // Types d'offres à écarter (« Sans stage », « Sans alternance »). Mémorisé par
+  // utilisateur : un candidat de 58 ans n'a pas à recocher à chaque recherche.
+  const [excludeTypes, setExcludeTypes] = useState({ stage: false, alternance: false });
   // Mistral est l'unique provider IA (traitement en Europe).
   const provider = 'mistral';
 
@@ -601,7 +604,48 @@ export default function App({ user, availableProviders = ['mistral'] }) {
     });
   }, [activeJobKey, jobReport, salaryStats, selectedRome, chatHistory]);
 
-  const searchFranceTravail = async () => {
+  const sameJob = (a, b) => {
+    const n = (x) => String(x || '').toLowerCase().normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+    return n(a) === n(b);
+  };
+
+  // Préférence d'exclusion relue/écrite en localStorage (par utilisateur).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(`iamj_exclude_${user.id}`);
+      if (raw) setExcludeTypes((prev) => ({ ...prev, ...JSON.parse(raw) }));
+    } catch { /* localStorage indisponible : on garde les valeurs par défaut */ }
+  }, [user.id]);
+
+  // Coche/décoche un type. Si des offres sont déjà affichées, on relance la
+  // recherche aussitôt avec le nouveau réglage.
+  const toggleExclude = (key) => {
+    const next = { ...excludeTypes, [key]: !excludeTypes[key] };
+    setExcludeTypes(next);
+    try { localStorage.setItem(`iamj_exclude_${user.id}`, JSON.stringify(next)); } catch { /* ignore */ }
+    if (step === 4) searchFranceTravail({ exclude: next });
+  };
+
+  const ExcludeToggles = () => (
+    <div className="flex flex-wrap items-center gap-3 text-sm text-teal-800">
+      {[['stage', 'Sans stage'], ['alternance', 'Sans alternance']].map(([key, label]) => (
+        <label key={key} className="flex items-center gap-1.5 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={excludeTypes[key]}
+            onChange={() => toggleExclude(key)}
+            className="w-4 h-4 accent-teal-600"
+          />
+          {label}
+        </label>
+      ))}
+    </div>
+  );
+
+  // `override` est ignoré s'il s'agit d'un événement de clic.
+  const searchFranceTravail = async (override) => {
+    const exclude = override?.exclude || excludeTypes;
     if (!selectedJob && !searchKeywords) return;
     goToStep(4);
     setIsSearchingOffers(true);
@@ -612,8 +656,14 @@ export default function App({ user, availableProviders = ['mistral'] }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           keywords: searchKeywords || selectedJob,
-          codeRome: selectedRome?.codeRome || null,
+          // Le code ROME n'accompagne la recherche que s'il correspond au métier
+          // affiché. Si l'utilisateur a retapé un autre intitulé dans la barre,
+          // l'ancien code ciblerait le mauvais métier : le serveur le résoudra.
+          codeRome: !searchKeywords || sameJob(searchKeywords, selectedJob)
+            ? (selectedRome?.codeRome || null)
+            : null,
           location: userLocation,
+          exclude,
           limit: 8,
         }),
       });
@@ -1236,6 +1286,7 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                 </div>
                 <Button onClick={searchFranceTravail} icon={Search} size="md">Voir les offres</Button>
               </div>
+              <ExcludeToggles />
               <Button
                 onClick={() => setShowCampaignLauncher(true)}
                 variant="secondary"
@@ -1548,6 +1599,7 @@ export default function App({ user, availableProviders = ['mistral'] }) {
               <Button type="submit" loading={isSearchingOffers} icon={Search} size="md">
                 {isSearchingOffers ? 'Recherche…' : 'Actualiser'}
               </Button>
+              <div className="px-2"><ExcludeToggles /></div>
             </form>
           </div>
 

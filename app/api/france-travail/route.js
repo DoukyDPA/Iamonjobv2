@@ -52,6 +52,11 @@ export async function POST(request) {
   }
 
   const { keywords, codeRome, location, limit } = body;
+  // Types de contrat à écarter (cases « Sans stage » / « Sans alternance »).
+  const exclude = {
+    stage: body.exclude?.stage === true,
+    alternance: body.exclude?.alternance === true,
+  };
   if (!keywords && !codeRome) {
     return NextResponse.json({ error: 'Un champ keywords ou codeRome est requis.' }, { status: 400 });
   }
@@ -59,7 +64,7 @@ export async function POST(request) {
   const requestId = newRequestId();
   const startedAt = Date.now();
   try {
-    const offers = await searchAllOffers({ keywords, codeRome, location, limit });
+    const offers = await searchAllOffers({ keywords, codeRome, location, limit, exclude });
     // On journalise le nombre de résultats, jamais les mots-clés (donnée perso).
     logEvent({
       event: 'france-travail', requestId, uid, status: 'ok',
