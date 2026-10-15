@@ -21,7 +21,7 @@ import {
   Loader2, Users, UserPlus, ShieldCheck, ShieldAlert, ShieldX,
   Compass, Copy, Check, X, AlertCircle, Send,
   MessageSquareHeart, Clock, CheckCircle2, ExternalLink, Coins, Eye, Trash2,
-  Camera, UserCircle,
+  Camera, UserCircle, Flag, Ban, ThumbsUp, Undo2,
 } from 'lucide-react';
 
 // Format court des grands nombres : 12 340 → « 12,3 k », lisible d'un coup d'œil.
@@ -361,6 +361,9 @@ export default function ConseillerPage() {
           replyingId={replyingId}
           onOpenFiche={(a) => setOpenFiche({ avisId: a.id, code: a.beneficiaireCode })}
         />
+
+        {/* Offres signalées « hors sujet » à valider */}
+        <OfferReportsPanel />
       </main>
 
       {/* Modale : confirmation de suppression d'un dossier */}
@@ -748,6 +751,171 @@ function AvisQueue({ avis, drafts, setDrafts, onReply, replyingId, onOpenFiche }
             <p className="mt-2 text-sm text-teal-800 whitespace-pre-wrap">
               <span className="font-semibold text-teal-700">Votre réponse : </span>{a.reply}
             </p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Offres signalées « hors sujet ».
+//
+// Un candidat qui signale une offre ne la masque que pour lui. Ici, le
+// conseiller tranche : « Exclure » la retire pour tous sur ce métier,
+// « Garder » la laisse visible (elle reste masquée pour qui l'a signalée).
+// Regroupement par métier : c'est ce qui fait voir les défauts récurrents.
+// ════════════════════════════════════════════════════════════════════════════
+function OfferReportsPanel() {
+  const [view, setView] = useState('pending');
+  const [reports, setReports] = useState([]);
+  const [busyId, setBusyId] = useState(null);
+  const [failed, setFailed] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  async function load(status = view) {
+    try {
+      const res = await fetch(`/api/conseiller/offer-reports?status=${status}`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setReports(data.reports || []);
+      if (status === 'pending') setPendingCount((data.reports || []).length);
+      setFailed(false);
+    } catch {
+      setFailed(true);
+    }
+  }
+
+  useEffect(() => { load(view); }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function decide(id, decision) {
+    setBusyId(id);
+    try {
+      const res = await fetch(`/api/conseiller/offer-reports/${encodeURIComponent(id)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision }),
+      });
+      if (!res.ok) throw new Error();
+      setReports((r) => r.filter((x) => x.id !== id));
+      if (view === 'pending') setPendingCount((n) => Math.max(0, n - 1));
+    } catch {
+      setFailed(true);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  // Regroupement par métier, métiers les plus signalés d'abord.
+  const groups = Object.values(
+    reports.reduce((acc, r) => {
+      const k = r.metierKey || r.metier;
+      if (!acc[k]) acc[k] = { metier: r.metier, codeRome: r.codeRome, total: 0, items: [] };
+      acc[k].items.push(r);
+      acc[k].total += r.reportCount;
+      return acc;
+    }, {})
+  ).sort((a, b) => b.total - a.total);
+
+  const tabs = [['pending', 'À valider'], ['excluded', 'Exclues'], ['kept', 'Gardées']];
+
+  return (
+    <section className="mt-8">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <Flag className="w-5 h-5 text-teal-700" aria-hidden="true" />
+        <h2 className="text-xl font-extrabold text-teal-800">Offres signalées « hors sujet »</h2>
+        {pendingCount > 0 && (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">
+            {pendingCount} à valider
+          </span>
+        )}
+        <div className="ml-auto flex gap-1 bg-cream-50 border border-cream-200 rounded-lg p-1">
+          {tabs.map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setView(key)}
+              className={`px-3 py-1 rounded-md text-sm ${view === key ? 'bg-white shadow-soft font-semibold text-teal-800' : 'text-teal-700/70 hover:text-teal-800'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {failed && (
+        <p className="text-sm text-rose-600 mb-3">Chargement ou décision impossible. Réessayez.</p>
+      )}
+
+      {!failed && groups.length === 0 && (
+        <p className="text-sm text-teal-700/60">
+          {view === 'pending' ? 'Aucun signalement en attente.' : 'Rien ici pour le moment.'}
+        </p>
+      )}
+
+      <div className="space-y-4">
+        {groups.map((g) => (
+          <div key={g.metier} className="bg-white border border-cream-200 rounded-2xl shadow-card p-5">
+            <div className="flex flex-wrap items-baseline gap-2 mb-3">
+              <span className="font-bold text-teal-800">{g.metier}</span>
+              {g.codeRome && <span className="font-mono text-xs text-teal-700/60">{g.codeRome}</span>}
+              <span className="text-xs text-teal-700/60">
+                · {g.items.length} offre{g.items.length > 1 ? 's' : ''}, {g.total} signalement{g.total > 1 ? 's' : ''}
+              </span>
+            </div>
+            <ul className="divide-y divide-cream-100">
+              {g.items.map((r) => (
+                <li key={r.id} className="py-2.5 flex flex-col sm:flex-row sm:items-center gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-teal-800 truncate">
+                      {r.offer?.url ? (
+                        <a href={r.offer.url} target="_blank" rel="noopener noreferrer" className="hover:underline inline-flex items-center gap-1">
+                          {r.offer?.intitule} <ExternalLink className="w-3 h-3 opacity-60" />
+                        </a>
+                      ) : r.offer?.intitule}
+                    </div>
+                    <div className="text-xs text-teal-700/60 truncate">
+                      {[r.offer?.entreprise, r.offer?.lieu, r.offer?.source, r.offer?.codeRome].filter(Boolean).join(' · ')}
+                      {' · '}{r.reportCount} signalement{r.reportCount > 1 ? 's' : ''}
+                    </div>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    {view === 'pending' ? (
+                      <>
+                        <button
+                          type="button"
+                          disabled={busyId === r.id}
+                          onClick={() => decide(r.id, 'excluded')}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-xs font-semibold hover:bg-rose-100 disabled:opacity-50"
+                          title="Hors sujet : l'offre disparaît pour tous sur ce métier"
+                        >
+                          <Ban className="w-3.5 h-3.5" /> Exclure
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busyId === r.id}
+                          onClick={() => decide(r.id, 'kept')}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-teal-50 text-teal-700 border border-teal-200 text-xs font-semibold hover:bg-teal-100 disabled:opacity-50"
+                          title="L'offre est pertinente : elle reste visible"
+                        >
+                          <ThumbsUp className="w-3.5 h-3.5" /> Garder
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={busyId === r.id}
+                        onClick={() => decide(r.id, 'pending')}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-cream-50 text-teal-700 border border-cream-200 text-xs font-semibold hover:bg-cream-100 disabled:opacity-50"
+                        title="Annuler la décision et remettre en file"
+                      >
+                        <Undo2 className="w-3.5 h-3.5" /> Annuler
+                      </button>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
         ))}
       </div>

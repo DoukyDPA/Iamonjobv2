@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase/admin';
 import { searchAllOffers } from '@/lib/offers';
+import { getHiddenOfferIds } from '@/lib/offer-reports';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { logEvent, newRequestId } from '@/lib/logger';
 
@@ -56,6 +57,9 @@ export async function POST(request) {
   const exclude = {
     stage: body.exclude?.stage === true,
     alternance: body.exclude?.alternance === true,
+    // Offres signalées « hors sujet » : exclusions validées par un conseiller
+    // pour ce métier, plus les propres signalements de l'utilisateur.
+    ids: await getHiddenOfferIds({ uid, keywords: keywords || '' }),
   };
   if (!keywords && !codeRome) {
     return NextResponse.json({ error: 'Un champ keywords ou codeRome est requis.' }, { status: 400 });

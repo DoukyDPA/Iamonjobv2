@@ -7,7 +7,7 @@ import {
   BrainCircuit, MapPin, Building2, PenTool, MessageSquare,
   Send, BookOpen, Clock, ThumbsUp, ThumbsDown,
   Info, Compass, Star, MessageCircle, RefreshCw,
-  Gauge, X, Mail, Phone, Scissors, EyeOff,
+  Gauge, X, Mail, Phone, Scissors, EyeOff, Flag,
 } from 'lucide-react';
 import {
   Button, Card, Badge, DifficultyBadge, getScoreColor,
@@ -648,6 +648,7 @@ export default function App({ user, availableProviders = ['mistral'] }) {
     const exclude = override?.exclude || excludeTypes;
     if (!selectedJob && !searchKeywords) return;
     goToStep(4);
+    setReportNotice(null);
     setIsSearchingOffers(true);
     setError(null);
     try {
@@ -679,6 +680,30 @@ export default function App({ user, availableProviders = ['mistral'] }) {
     } finally {
       setIsSearchingOffers(false);
     }
+  };
+
+  // Signalement « Hors sujet ». L'offre disparaît tout de suite de la liste.
+  // Pour un candidat, elle n'est masquée que pour lui, en attendant qu'un
+  // conseiller confirme ; le signalement d'un conseiller l'exclut pour tous.
+  const [reportNotice, setReportNotice] = useState(null);
+  const reportOffer = async (offer) => {
+    setSearchResults((prev) => prev.filter((o) => o.id !== offer.id));
+    setReportNotice(
+      isConseiller
+        ? `« ${offer.intitule} » est exclue pour tous sur ce métier.`
+        : `« ${offer.intitule} » est masquée. Merci : un conseiller vérifiera.`
+    );
+    try {
+      await fetch('/api/offer-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          metier: searchKeywords || selectedJob,
+          codeRome: selectedRome?.codeRome || null,
+          offer,
+        }),
+      });
+    } catch { /* non bloquant : l'offre reste masquée dans cette session */ }
   };
 
   const analyzeCompatibility = async (offer) => {
@@ -1617,6 +1642,14 @@ export default function App({ user, availableProviders = ['mistral'] }) {
             </Card>
           ) : (
             <div className="grid gap-3">
+              {reportNotice && (
+                <div className="flex items-center justify-between gap-3 px-4 py-2 rounded-lg bg-cream-50 border border-cream-200 text-sm text-teal-800">
+                  <span>{reportNotice}</span>
+                  <button type="button" onClick={() => setReportNotice(null)} className="text-teal-600 hover:text-teal-800" aria-label="Fermer">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
               {searchResults.map((offer, idx) => (
                 <Card key={idx} className="p-5 hover:border-teal-300 hover:shadow-card transition-all">
                   <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
@@ -1650,10 +1683,18 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                         ))}
                       </div>
                     </div>
-                    <div className="shrink-0">
+                    <div className="shrink-0 flex flex-col items-stretch md:items-end gap-2">
                       <Button onClick={() => analyzeCompatibility(offer)} icon={BrainCircuit}>
                         Vérifier ma compatibilité
                       </Button>
+                      <button
+                        type="button"
+                        onClick={() => reportOffer(offer)}
+                        className="inline-flex items-center justify-center gap-1.5 text-xs text-teal-700/60 hover:text-rose-600 transition-colors"
+                        title="Cette offre ne correspond pas au métier recherché"
+                      >
+                        <Flag className="w-3.5 h-3.5" /> Hors sujet
+                      </button>
                     </div>
                   </div>
                 </Card>

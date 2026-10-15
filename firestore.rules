@@ -75,6 +75,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Signalements « hors sujet » : serveur uniquement (Admin SDK), via
+    // /api/offer-report et /api/conseiller/offer-reports.
+    match /offerReports/{doc} {
+      allow read, write: if false;
+    }
+
     // Tout le reste : refusé.
     match /{document=**} {
       allow read, write: if false;
