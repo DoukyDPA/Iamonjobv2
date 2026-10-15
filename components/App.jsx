@@ -254,6 +254,7 @@ export default function App({ user, availableProviders = ['mistral'] }) {
     setMaxUnlocked((m) => Math.max(m, n));
   };
 
+
   const [selectedJob, setSelectedJob] = useState(null);
   const [jobReport, setJobReport] = useState(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
@@ -288,6 +289,18 @@ export default function App({ user, availableProviders = ['mistral'] }) {
   // true quand le texte vient de l'OCR vision (PDF graphique non lisible par pdf.js)
   const [ocrUsed, setOcrUsed] = useState(false);
   const [savedSession, setSavedSession] = useState(null);
+
+  // Les pistes (étape 2) vivent dans `analysis`, qui n'est rempli qu'à
+  // l'analyse du CV ou au clic sur « Reprendre ». Si l'on arrive plus loin par
+  // un autre chemin (un métier de « Mes métiers », par exemple), l'étape 2
+  // restait vide. On recharge donc la dernière analyse enregistrée dès qu'on
+  // quitte l'étape 1 sans en avoir une en mémoire.
+  useEffect(() => {
+    if (step >= 2 && !analysis && savedSession) {
+      setAnalysis(savedSession);
+      if (savedSession.location) setUserLocation((loc) => loc || savedSession.location);
+    }
+  }, [step, analysis, savedSession]);
   const [showCvEditor, setShowCvEditor] = useState(false);
   const [anonymizeWords, setAnonymizeWords] = useState('');
   // Deux façons de fournir son CV : import PDF ('upload') ou copier/coller ('paste').
@@ -1129,6 +1142,15 @@ export default function App({ user, availableProviders = ['mistral'] }) {
       )}
 
       {/* ═══════════════ Étape 2 : Mes pistes ═══════════════ */}
+      {step === 2 && !analysis && (
+        <Card className="p-12 text-center">
+          <Info className="w-10 h-10 text-teal-300 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2 text-teal-800">Pas encore de pistes</h3>
+          <p className="text-teal-700/70 mb-4">Analysez votre CV à l'étape 1 pour obtenir vos pistes de métiers.</p>
+          <Button variant="outline" onClick={() => setStep(1)} icon={ChevronLeft}>Aller à l'étape 1</Button>
+        </Card>
+      )}
+
       {step === 2 && analysis && (
         <div className="space-y-6 animate-fade-in">
           <GuidedIntro mascot={<CatMascot className="w-14 h-14 shrink-0" />}>
