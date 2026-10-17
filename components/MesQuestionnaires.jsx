@@ -49,7 +49,8 @@ export default function MesQuestionnaires({ variant = 'sidebar' }) {
   const etapes = state.etapes || [];
   const dispo = etapes.filter((e) => e.disponible);
   const remplis = etapes.filter((e) => e.rempli).length;
-  const prochaine = dispo.find((e) => !e.rempli) || null;
+  // Promo terminée : plus de relance, les fiches restent ouvertes.
+  const prochaine = state.promoArchivee ? null : dispo.find((e) => !e.rempli) || null;
 
   function openPanel(qid = null) {
     setOpen(true);
@@ -140,7 +141,7 @@ export default function MesQuestionnaires({ variant = 'sidebar' }) {
                 <p className="text-sm text-teal-700/80 mt-0.5">
                   {questionnaire
                     ? questionnaire.intro
-                    : `${state.parcours.label}${state.promo ? ` · ${state.promo}` : ''}. Vos réponses vont à votre conseiller, sous votre code.`}
+                    : `${state.parcours.label}${state.promo ? ` · ${state.promo}` : ''}${state.promoArchivee ? ' (promo terminée, votre accompagnement continue)' : ''}. Vos réponses vont à votre conseiller, sous votre code.`}
                 </p>
               </div>
               <button
@@ -230,7 +231,13 @@ export default function MesQuestionnaires({ variant = 'sidebar' }) {
 
 // ─── Formulaire ──────────────────────────────────────────────────────────────
 
-function QuestionnaireForm({ questionnaire, initial, dejaRempli, onDone }) {
+// Réutilisé par les questionnaires envoyés par le conseiller (EnvoisConseiller) :
+// `submitUrl` et `buildBody` changent la destination, le reste est identique.
+export function QuestionnaireForm({
+  questionnaire, initial, dejaRempli, onDone,
+  submitUrl = '/api/questionnaires',
+  buildBody = (answers) => ({ questionnaireId: questionnaire.id, answers }),
+}) {
   const [answers, setAnswers] = useState(initial || {});
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
@@ -267,10 +274,10 @@ function QuestionnaireForm({ questionnaire, initial, dejaRempli, onDone }) {
     setSending(true);
     setError(null);
     try {
-      const res = await fetch('/api/questionnaires', {
+      const res = await fetch(submitUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questionnaireId: questionnaire.id, answers }),
+        body: JSON.stringify(buildBody(answers)),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {

@@ -15,6 +15,7 @@ import { requireRole } from '@/lib/session';
 import { getBeneficiaireByAuthUid } from '@/lib/beneficiaires';
 import { getParcoursState, saveReponse } from '@/lib/questionnaires/reponses';
 import { getQuestionnaire } from '@/lib/questionnaires/catalogue';
+import { closeEnvoisForQuestionnaire } from '@/lib/envois';
 import { logEvent, newRequestId } from '@/lib/logger';
 
 export const runtime = 'nodejs';
@@ -54,6 +55,10 @@ export async function POST(request) {
       questionnaireId: String(body.questionnaireId || ''),
       answers: body.answers || {},
     });
+    // Un envoi du conseiller qui demandait ce questionnaire est soldé.
+    await closeEnvoisForQuestionnaire({
+      beneficiaireId: beneficiaire.id, questionnaireId: String(body.questionnaireId || ''), reponseId: result.id,
+    }).catch(() => {});
     logEvent({ event: 'questionnaire-submit', requestId, uid, status: 'ok', questionnaireId: body.questionnaireId });
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {

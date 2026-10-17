@@ -21,8 +21,11 @@ import {
   Loader2, Users, UserPlus, ShieldCheck, ShieldAlert, ShieldX,
   Compass, Copy, Check, X, AlertCircle, Send,
   MessageSquareHeart, Clock, CheckCircle2, ExternalLink, Coins, Eye, Trash2,
-  Camera, UserCircle, Flag, Ban, ThumbsUp, Undo2,
+  Camera, UserCircle, Flag, Ban, ThumbsUp, Undo2, FolderOpen, Download,
 } from 'lucide-react';
+import FichePersonne from '@/components/conseiller/FichePersonne';
+import BaseQuestionnaires from '@/components/conseiller/BaseQuestionnaires';
+import { downloadCodesCsv } from '@/components/conseiller/codesCsv';
 
 // Format court des grands nombres : 12 340 → « 12,3 k », lisible d'un coup d'œil.
 function formatTokens(n) {
@@ -73,6 +76,7 @@ export default function ConseillerPage() {
   const [openFiche, setOpenFiche] = useState(null); // { avisId, code } | null
   const [confirmDelete, setConfirmDelete] = useState(null); // bénéficiaire | null
   const [deletingId, setDeletingId] = useState(null);
+  const [fiche, setFiche] = useState(null); // bénéficiaire ouvert | null
 
   async function load() {
     const res = await fetch('/api/conseiller/beneficiaires');
@@ -216,9 +220,18 @@ export default function ConseillerPage() {
             </div>
             <div>
               <h1 className="text-2xl font-extrabold text-teal-800">Mon groupe accompagné</h1>
-              <p className="text-sm text-teal-700/70">Suivi en lecture seule, une ligne par personne.</p>
+              <p className="text-sm text-teal-700/70">Une ligne par personne. Cliquez sur un code pour ouvrir sa fiche : métiers, envois, transfert.</p>
             </div>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => downloadCodesCsv(list)}
+            disabled={list.length === 0}
+            title="Fichier à garder sur votre ordinateur : complétez les prénoms, ne le partagez pas"
+            className="inline-flex items-center gap-2 px-4 py-2.5 border border-teal-200 bg-white text-teal-800 rounded-xl font-semibold hover:bg-teal-50 disabled:opacity-50 transition-all"
+          >
+            <Download className="w-4 h-4" /> Télécharger mes codes
+          </button>
           <button
             onClick={handleCreate}
             disabled={creating}
@@ -227,6 +240,7 @@ export default function ConseillerPage() {
             {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
             Ajouter une personne
           </button>
+          </div>
         </div>
 
         {error && (
@@ -234,6 +248,14 @@ export default function ConseillerPage() {
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
+        )}
+
+        {list.length > 0 && (
+          <p className="mb-4 text-xs text-teal-700/70">
+            « Télécharger mes codes » produit un tableur avec une colonne Prénom à compléter. Gardez-le sur votre
+            ordinateur, ne l'envoyez à personne et ne le déposez jamais dans Iamonjob : c'est votre seule table de
+            correspondance entre codes et personnes.
+          </p>
         )}
 
         {/* Mon profil : prénom + photo, visibles par les personnes accompagnées */}
@@ -261,10 +283,11 @@ export default function ConseillerPage() {
           <>
             {/* Desktop : tableau (défile horizontalement si l'écran est étroit) */}
             <div className="hidden md:block bg-white border border-cream-200 rounded-2xl shadow-card overflow-x-auto">
-              <table className="w-full text-sm min-w-[680px]">
+              <table className="w-full text-sm min-w-[780px]">
                 <thead>
                   <tr className="bg-cream-50 text-teal-700/70 text-left text-xs uppercase tracking-wide">
                     <th className="px-4 py-3 font-semibold">Code</th>
+                    <th className="px-4 py-3 font-semibold">Promo</th>
                     <th className="px-4 py-3 font-semibold">Consentement</th>
                     <th className="px-4 py-3 font-semibold">Candidatures</th>
                     <th className="px-4 py-3 font-semibold">Tokens (mois)</th>
@@ -276,7 +299,12 @@ export default function ConseillerPage() {
                 <tbody>
                   {list.map((b) => (
                     <tr key={b.id} className="border-t border-cream-100 hover:bg-cream-50/50">
-                      <td className="px-4 py-3 font-mono font-semibold text-teal-800">{b.code}</td>
+                      <td className="px-4 py-3 font-mono font-semibold text-teal-800">
+                        <button onClick={() => setFiche(b)} className="hover:underline focus:outline-none focus:ring-2 focus:ring-teal-400 rounded" title="Ouvrir sa fiche">{b.code}</button>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-teal-700">
+                        {b.promo ? <span className={b.promoArchivee ? 'text-teal-700/50' : ''}>{b.promo}{b.promoArchivee ? ' · archivée' : ''}</span> : <span className="text-teal-700/40">–</span>}
+                      </td>
                       <td className="px-4 py-3"><Badge map={CONSENT} value={b.consentStatus} /></td>
                       <td className="px-4 py-3 text-teal-700">{b.candidaturesCount}</td>
                       <td className="px-4 py-3 font-medium text-teal-800">{formatTokens(b.usage?.tokensThisMonth)}</td>
@@ -286,7 +314,15 @@ export default function ConseillerPage() {
                           {b.status === 'active' ? 'Actif' : 'Code non activé'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                        <button
+                          onClick={() => setFiche(b)}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-teal-700 hover:bg-teal-50 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-400 mr-1"
+                          aria-label={`Ouvrir la fiche ${b.code}`}
+                          title="Métiers, envois, transfert"
+                        >
+                          <FolderOpen className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => setConfirmDelete(b)}
                           className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-400"
@@ -307,7 +343,9 @@ export default function ConseillerPage() {
               {list.map((b) => (
                 <div key={b.id} className="bg-white border border-cream-200 rounded-2xl shadow-card p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="font-mono font-bold text-teal-800 text-base">{b.code}</span>
+                    <button onClick={() => setFiche(b)} className="font-mono font-bold text-teal-800 text-base hover:underline inline-flex items-center gap-1.5">
+                      {b.code} <FolderOpen className="w-4 h-4 text-teal-600" />
+                    </button>
                     <button
                       onClick={() => setConfirmDelete(b)}
                       className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-400 shrink-0"
@@ -352,6 +390,9 @@ export default function ConseillerPage() {
         {/* Questionnaires de suivi, promo par promo */}
         <SuiviQuestionnaires beneficiaires={list} onAssigned={load} />
 
+        {/* Base de questionnaires : catalogue + créations de la structure */}
+        <BaseQuestionnaires beneficiaires={list} />
+
         {/* File des avis demandés */}
         <AvisQueue
           avis={avis}
@@ -365,6 +406,9 @@ export default function ConseillerPage() {
         {/* Offres signalées « hors sujet » à valider */}
         <OfferReportsPanel />
       </main>
+
+      {/* Fiche d'une personne : métiers, envois, transfert */}
+      {fiche && <FichePersonne beneficiaire={fiche} onClose={() => setFiche(null)} onChanged={load} />}
 
       {/* Modale : confirmation de suppression d'un dossier */}
       {confirmDelete && (

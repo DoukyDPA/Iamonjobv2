@@ -81,6 +81,15 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Envois du conseiller (offres, messages, questionnaires) et base de
+    // questionnaires créés dans l'appli : serveur uniquement (Admin SDK).
+    match /envois/{doc} {
+      allow read, write: if false;
+    }
+    match /questionnairesPerso/{doc} {
+      allow read, write: if false;
+    }
+
     // Tout le reste : refusé.
     match /{document=**} {
       allow read, write: if false;

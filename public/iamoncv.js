@@ -290,6 +290,10 @@
             // Les infos personnelles ne sont plus saisies ici (confidentialité) : uniquement la consigne perso
             const noteInput = document.getElementById('user-note-input');
             if (noteInput) noteInput.value = db.userNote || '';
+            // L'offre ou le poste visé est gardé avec le profil : il sert à la génération
+            // et à l'atelier profil, même après un rechargement de la page.
+            const offerInput = document.getElementById('job-offer-input');
+            if (offerInput && !offerInput.value.trim()) offerInput.value = db.jobOffer || '';
             const genderSel = document.getElementById('cv-gender');
             if (genderSel) genderSel.value = db.gender || '';
 
@@ -454,6 +458,9 @@
 
         // Applique le profil actif à l'écran : colonne données, CV, photo, sélecteur.
         function applyActiveProfileToUI() {
+            // Changement de personne : son offre visée remplace celle de la précédente.
+            const offerInput = document.getElementById('job-offer-input');
+            if (offerInput) offerInput.value = db.jobOffer || '';
             renderDB();
             renderCV();
             applyPhoto();
@@ -831,7 +838,11 @@
         // Sauvegarde l'historique du chat dans l'élément concerné (repris à la réouverture)
         function persistChatHistory() {
             if (!chatState.active) return;
-            db[chatState.type][chatState.index].chatHistory = JSON.parse(JSON.stringify(chatState.history));
+            if (chatState.type === 'profile') {
+                db.profileChat = JSON.parse(JSON.stringify(chatState.history));
+            } else {
+                db[chatState.type][chatState.index].chatHistory = JSON.parse(JSON.stringify(chatState.history));
+            }
             saveDB();
         }
 
@@ -882,6 +893,7 @@
             }
 
             chatState = { active: true, type, index, history: [] };
+            setChatFinishLabel(type);
 
             // Personnalisation du sous-titre
             let subtitle = "";
@@ -928,7 +940,217 @@
             updateChatProgress();
         }
 
-        function closeChatModal() { stopDictation(); document.getElementById('chat-modal').classList.add('hidden'); chatState.active = false; }
+        // ─── ATELIER PROFIL ────────────────────────────────────────────────────
+        // L'accroche en haut du CV est la partie la plus difficile à écrire seul.
+        // Même principe que pour les expériences : un échange court avec l'IA pour
+        // préciser la cible, les compétences à mettre en avant et les mots que la
+        // personne accepte (ou refuse). L'IA propose ensuite trois versions ; la
+        // personne en choisit une, qu'elle peut retoucher directement sur le CV.
+        // Ce qui a été dit est gardé (db.profileBrief) et sert aux générations
+        // suivantes du CV.
+
+        function profilePlaceholder(t) {
+            const v = (t || '').trim();
+            return !v || v === 'Profil...' || v.startsWith('Ce profil sera rédigé');
+        }
+
+        // Poste visé déjà saisi : champ « Offre d'emploi ou objectif cible », sinon
+        // l'offre gardée avec le profil, sinon le titre affiché sur le CV généré.
+        function currentTarget() {
+            const field = (document.getElementById('job-offer-input')?.value || '').trim();
+            if (field) return field;
+            if ((db.jobOffer || '').trim()) return db.jobOffer.trim();
+            const title = (cvData.job || '').trim();
+            return title && !/^Titre( du poste)? visé$/i.test(title) ? title : '';
+        }
+
+        // Contexte transmis à l'IA : parcours (sans nom ni coordonnées), cible, profil actuel.
+        function profileContextBlock() {
+            const target = currentTarget().slice(0, 3000);
+            const current = profilePlaceholder(cvData.profile) ? '' : String(cvData.profile).trim();
+            const exps = (db.experiences || []).slice(0, 12).map(e => {
+                const notes = (e.details || e.brief || '').trim().slice(0, 500);
+                return `- ${e.title || ''}${e.company ? ' (' + e.company + ')' : ''}${e.date ? ', ' + e.date : ''}${notes ? ' : ' + notes : ''}`;
+            }).join('\n');
+            const edus = (db.education || []).slice(0, 8).map(e => `- ${e.title || ''}${e.school ? ' (' + e.school + ')' : ''}${e.date ? ', ' + e.date : ''}`).join('\n');
+            const skills = (cvData.skills || []).filter(Boolean).slice(0, 12).join(', ');
+            const note = (db.userNote || '').trim().slice(0, 600);
+            const brief = (db.profileBrief || '').trim();
+            return [
+                `POSTE OU OFFRE VISÉE (déjà renseigné par la personne, ne le redemande pas) :\n"""${target}"""`,
+                current ? `PROFIL ACTUELLEMENT SUR LE CV :\n"""${current}"""` : '',
+                exps ? `EXPÉRIENCES :\n${exps}` : '',
+                edus ? `FORMATIONS :\n${edus}` : '',
+                skills ? `COMPÉTENCES AFFICHÉES : ${skills}` : '',
+                note ? `CONSIGNE DÉJÀ DONNÉE PAR LA PERSONNE : ${note}` : '',
+                brief ? `CE QUI A DÉJÀ ÉTÉ DÉCIDÉ LORS D'UN ÉCHANGE PRÉCÉDENT :\n${brief}` : '',
+            ].filter(Boolean).join('\n\n');
+        }
+
+        function setChatFinishLabel(type) {
+            const btn = document.getElementById('btn-chat-finish');
+            if (!btn) return;
+            btn.innerHTML = type === 'profile'
+                ? "<i class='fas fa-wand-magic-sparkles mr-1'></i> Proposer mon profil"
+                : "<i class='fas fa-check mr-1'></i> Terminer l'interview";
+        }
+
+        function openProfileCoach() {
+            if (!ensureApiKey()) return;
+            if (!currentTarget()) {
+                alert("Indiquez d'abord le poste visé ou collez l'offre dans le champ « Offre d'emploi ou objectif cible » : le profil s'écrit pour ce poste.");
+                const f = document.getElementById('job-offer-input');
+                if (f) { f.focus(); f.classList.add('ring-2', 'ring-[#EE6E5E]'); setTimeout(() => f.classList.remove('ring-2', 'ring-[#EE6E5E]'), 2500); }
+                return;
+            }
+            if (!(db.experiences || []).length && !(db.education || []).length) {
+                alert("Ajoutez d'abord au moins une expérience ou une formation dans la colonne de gauche : l'IA s'appuie dessus pour écrire votre profil.");
+                return;
+            }
+            chatState = { active: true, type: 'profile', index: null, history: [] };
+            document.getElementById('chat-modal-subtitle').innerText = "Votre profil : les 3 ou 4 lignes en haut du CV";
+            const chatBox = document.getElementById('chat-messages');
+            chatBox.innerHTML = '';
+            document.getElementById('chat-modal').classList.remove('hidden');
+            setChatFinishLabel('profile');
+            unlockChatInput();
+
+            if (db.profileChat && db.profileChat.length) {
+                chatState.history = JSON.parse(JSON.stringify(db.profileChat));
+                chatState.history.forEach(m => addMessageToUI(m.role === 'user' ? 'user' : 'model', m.parts[0].text));
+                if (chatAnswerCount() >= MAX_ANSWERS) lockChatInput();
+            } else {
+                const current = profilePlaceholder(cvData.profile) ? '' : String(cvData.profile).trim();
+                let initMsg;
+                if (current) {
+                    initMsg = `Voici le profil actuellement sur votre CV :\n« ${current} »\n\nQu'est-ce qui ne vous ressemble pas, ou qui manque ? Dites-le avec vos mots, même en vrac.`;
+                } else {
+                    initMsg = "On va écrire ensemble les quelques lignes du haut de votre CV, celles qu'un recruteur lit en premier.\nPour ce poste, qu'aimeriez-vous qu'il retienne de vous en dix secondes ?";
+                }
+                addMessageToUI('model', initMsg);
+                chatState.history.push({ role: 'model', parts: [{ text: initMsg }] });
+                persistChatHistory();
+            }
+            updateChatProgress();
+        }
+
+        // Repart de zéro (nouvel échange), sans effacer le profil du CV.
+        function resetProfileCoach() {
+            db.profileChat = [];
+            saveDB();
+            openProfileCoach();
+        }
+
+        function profileCoachSystemPrompt() {
+            return `Tu aides une personne à écrire le PROFIL de son CV (l'accroche de 3 à 4 lignes en haut de la page). Tu mènes un court échange pour savoir ce qu'elle veut mettre en avant, puis tu rédigeras.
+
+${profileContextBlock()}
+
+${genderDirective()}
+
+Le poste visé est connu (voir plus haut) : ne le redemande jamais, pars de lui.
+
+CE QUE TU CHERCHES À SAVOIR, une chose à la fois, dans l'ordre qui vient naturellement :
+- les 2 ou 3 compétences ou savoir-faire qu'elle veut voir en premier, et sur quoi ils s'appuient dans son parcours ;
+- ce qui la distingue : un secteur, un public, une façon de travailler, un résultat dont elle est fière ;
+- les mots qu'elle aime, et ceux qu'elle refuse (beaucoup de gens détestent « dynamique », « passionné », « polyvalent ») ;
+- le ton souhaité : sobre et factuel, ou un peu plus personnel ;
+- ce qu'elle préfère ne pas afficher (nombre d'années d'expérience, une période, une reconversion…). Ne pousse jamais à afficher l'âge.
+
+RÈGLES IMPÉRATIVES :
+- UNE SEULE question à la fois, courte et concrète. Rebondis sur sa réponse.
+- Si elle te demande une proposition ou un exemple de formulation, donne-en une ou deux, courtes, puis demande ce qu'elle en pense.
+- N'invente rien qui ne figure pas dans son parcours ou dans ce qu'elle dit.
+- Reste sobre : pas de « génial », « bravo », « excellent ». Un simple « d'accord », « je vois » suffit.
+- Mots simples, phrases courtes, pas de jargon RH.
+- TEXTE SIMPLE uniquement : aucun markdown, pas d'astérisques, pas de dièses, pas de puces.`;
+        }
+
+        // Fin de l'atelier : synthèse des choix + trois versions du profil.
+        async function proposeProfileVersions(btn) {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Rédaction...";
+            btn.disabled = true;
+            const convoText = chatState.history.map(m => `${m.role === 'user' ? 'Candidat' : 'Coach'}: ${m.parts[0].text}`).join('\n\n');
+            const sysPrompt = `Tu rédiges le PROFIL d'un CV (accroche de 3 à 4 lignes, 350 à 450 caractères) à partir du parcours et d'un échange avec la personne.
+
+${profileContextBlock()}
+
+${genderDirective()}
+
+RÈGLES :
+- N'invente aucune expérience, aucun diplôme, aucun chiffre. Appuie-toi sur le parcours et sur ce que la personne a dit.
+- Respecte les mots qu'elle a choisis, bannis ceux qu'elle refuse, respecte ce qu'elle ne veut pas afficher.
+- Ton sobre et concret, sans superlatifs : bannis « profil idéal », « passionné(e) », « dynamique et motivé(e) », « atout majeur », « excellence ».
+- Écris pour le poste visé ; si c'est une offre complète, reprends ses mots-clés quand c'est justifié (lecture par les logiciels de tri).
+- Trois versions réellement différentes : 1) sobre et factuelle, 2) centrée sur les compétences et le savoir-faire, 3) un peu plus personnelle (ce qui l'anime, sa façon de travailler), toujours professionnelle.
+
+RÉPONDS STRICTEMENT avec un objet JSON valide, sans texte autour, sans vrai retour à la ligne dans les valeurs :
+{"brief": "5 à 8 lignes : cible, compétences à mettre en avant, mots à employer, mots à éviter, ton, ce qu'il ne faut pas afficher", "versions": ["version 1", "version 2", "version 3"]}`;
+            try {
+                const response = await callAssistantAPI("Rédige la synthèse et les trois versions du profil.", sysPrompt + "\n\nÉCHANGE :\n" + convoText);
+                const data = parseCvJson(response);
+                const versions = (Array.isArray(data.versions) ? data.versions : []).map(v => stripMarkdown(String(v || ''))).filter(Boolean).slice(0, 3);
+                if (!versions.length) throw new Error('Réponse vide');
+                if (data.brief) { db.profileBrief = stripMarkdown(String(data.brief)).slice(0, 2000); saveDB(); }
+                showProfileChoices(versions);
+            } catch (e) {
+                alert("La rédaction n'a pas abouti. Réessayez dans un instant.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function showProfileChoices(versions) {
+            const box = document.getElementById('chat-messages');
+            const old = document.getElementById('profile-choices');
+            if (old) old.remove();
+            const wrap = document.createElement('div');
+            wrap.id = 'profile-choices';
+            wrap.className = 'msg-animate space-y-2';
+            const labels = ['Sobre et factuel', 'Compétences en avant', 'Plus personnel'];
+            wrap.innerHTML = `<div class="text-xs font-bold text-[#123F39] uppercase tracking-wider">Choisissez une version (vous pourrez la retoucher sur le CV)</div>` +
+                versions.map((v, i) => `
+                <div class="bg-white border border-[#CBE0DA] rounded-xl p-3">
+                    <div class="text-[11px] font-bold text-[#1E7A6B] mb-1">${escapeHtml(labels[i] || 'Version ' + (i + 1))}</div>
+                    <p class="text-sm text-slate-700 leading-relaxed">${escapeHtml(v)}</p>
+                    <div class="mt-2 flex gap-2">
+                        <button data-i="${i}" class="pc-use text-xs font-bold bg-[#1E7A6B] hover:bg-[#17594E] text-white px-3 py-1.5 rounded-lg"><i class="fas fa-check mr-1"></i> Utiliser celle-ci</button>
+                        <button data-i="${i}" class="pc-tweak text-xs font-bold bg-white border border-[#CBE0DA] text-[#1E7A6B] hover:bg-[#EAF3F0] px-3 py-1.5 rounded-lg">La retravailler</button>
+                    </div>
+                </div>`).join('') +
+                `<p class="text-[11px] text-slate-500 italic">Vos choix (mots, ton, compétences) sont gardés : la prochaine génération du CV s'en servira.</p>`;
+            box.appendChild(wrap);
+            box.scrollTop = box.scrollHeight;
+            wrap.querySelectorAll('.pc-use').forEach(b => b.addEventListener('click', () => {
+                const v = versions[Number(b.dataset.i)];
+                cvData.profile = v;
+                db.profileChoisi = v;
+                saveDB();
+                renderCV();
+                saveCV();
+                if (typeof updateOnePageStatus === 'function') updateOnePageStatus();
+                closeChatModal();
+            }));
+            wrap.querySelectorAll('.pc-tweak').forEach(b => b.addEventListener('click', () => {
+                const v = versions[Number(b.dataset.i)];
+                const input = document.getElementById('chat-input');
+                if (chatAnswerCount() >= MAX_ANSWERS) {
+                    // Échange plein : on repart d'un nouvel échange centré sur cette version.
+                    db.profileChat = [];
+                    cvData.profile = v;
+                    saveCV();
+                    renderCV();
+                    openProfileCoach();
+                    return;
+                }
+                input.value = `Je pars de cette version : « ${v} ». J'aimerais changer : `;
+                input.focus();
+            }));
+        }
+
+        function closeChatModal() { stopDictation(); document.getElementById('chat-modal').classList.add('hidden'); chatState.active = false; setChatFinishLabel(null); }
 
         // Retire tout balisage markdown et renvoie du TEXTE BRUT lisible.
         // Utilisé pour les zones de texte (synthèses) où le markdown ne doit jamais apparaître.
@@ -996,6 +1218,25 @@
             updateChatProgress();
 
             document.getElementById('chat-typing').classList.remove('hidden');
+
+            if (chatState.type === 'profile') {
+                const remainingP = MAX_ANSWERS - chatAnswerCount();
+                const noteP = remainingP <= 2
+                    ? `\n\nIMPORTANT : l'échange touche à sa fin. Pose une dernière question simple, ou invite la personne à cliquer sur « Proposer mon profil ».`
+                    : "";
+                try {
+                    const response = await callAssistantAPI(text, profileCoachSystemPrompt() + noteP, chatState.history.slice(0, -1));
+                    addMessageToUI('model', response);
+                    chatState.history.push({ role: 'model', parts: [{ text: response }] });
+                    persistChatHistory();
+                } catch (e) {
+                    addMessageToUI('model', "⚠️ Désolé, un problème réseau est survenu. Pouvez-vous répéter ?");
+                } finally {
+                    document.getElementById('chat-typing').classList.add('hidden');
+                    if (chatAnswerCount() >= MAX_ANSWERS) lockChatInput();
+                }
+                return;
+            }
 
             const item = db[chatState.type][chatState.index];
             
@@ -1070,6 +1311,7 @@
 
         async function summarizeAndCloseChat() {
             const btn = event.currentTarget;
+            if (chatState.type === 'profile') return proposeProfileVersions(btn);
             const originalText = btn.innerHTML;
             btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Extraction...";
             btn.disabled = true;
@@ -1446,6 +1688,7 @@ ${genderDirective()}`;
             if(!ensureApiKey()) return;
             const targetJob = document.getElementById('job-offer-input').value.trim();
             if(!targetJob) { alert("Veuillez coller l'offre d'emploi ou indiquer l'objectif cible pour permettre à l'IA d'adapter le CV."); return; }
+            if (db.jobOffer !== targetJob) { db.jobOffer = targetJob; saveDB(); }
             if(db.experiences.length === 0 && db.education.length === 0) { alert("Veuillez ajouter au moins une expérience ou une formation dans la base de données."); return; }
             if(!db.gender) {
                 alert("Veuillez d'abord indiquer l'accord du CV (féminin ou masculin) dans la colonne de gauche, pour que l'IA rédige au bon genre.");
@@ -1521,7 +1764,14 @@ ${genderDirective()}`;
                 "tools": ["Excel", "Canva"]
             }`;
 
-            const userPrompt = `Base de données brute :\n${safeDbJson}\n\nOffre ou cible visée :\n${safeTargetJob}\n\n${userNote ? `Consigne personnelle du candidat (à respecter en priorité) :\n${safeUserNote}\n\n` : ''}${genderDirective()}\n\nGénère le CV JSON conforme aux règles.`;
+            // Choix faits dans l'atelier profil : ils guident l'accroche.
+            const profileBrief = (db.profileBrief || '').trim();
+            const profileChoisi = (db.profileChoisi || '').trim();
+            const profileBlock = (profileBrief || profileChoisi)
+                ? `Pour le champ "profile", le candidat a précisé ses attentes lors d'un échange (à respecter en priorité : mots choisis, mots refusés, ton, ce qu'il ne veut pas afficher) :\n${JSON.stringify(profileBrief)}\n${profileChoisi ? `Accroche qu'il avait validée (pars de celle-ci et ajuste-la seulement à l'offre) :\n${JSON.stringify(profileChoisi)}\n` : ''}\n`
+                : '';
+
+            const userPrompt = `Base de données brute :\n${safeDbJson}\n\nOffre ou cible visée :\n${safeTargetJob}\n\n${userNote ? `Consigne personnelle du candidat (à respecter en priorité) :\n${safeUserNote}\n\n` : ''}${profileBlock}${genderDirective()}\n\nGénère le CV JSON conforme aux règles.`;
 
             try {
                 const response = await callAssistantAPI(userPrompt, sysPrompt);

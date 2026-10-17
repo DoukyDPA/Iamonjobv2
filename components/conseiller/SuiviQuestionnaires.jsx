@@ -19,7 +19,10 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   ClipboardList, Loader2, AlertTriangle, TrendingUp, TrendingDown, Minus, X,
   UsersRound, CheckCircle2, Archive, Sparkles, Download, Copy, Printer, Trash2,
+  Send, ArchiveRestore, FileSpreadsheet,
 } from 'lucide-react';
+import EnvoiModal from './EnvoiModal';
+import { downloadCodesCsv } from './codesCsv';
 
 const SCORES = [
   { key: 'confiance', short: 'C', label: 'Confiance' },
@@ -74,6 +77,9 @@ export default function SuiviQuestionnaires({ beneficiaires = [], onAssigned }) 
   const [openId, setOpenId] = useState(null);
   const [assignOpen, setAssignOpen] = useState(false);
   const [rapportOpen, setRapportOpen] = useState(false);
+  const [envoiOpen, setEnvoiOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   async function load() {
     try {
@@ -107,28 +113,61 @@ export default function SuiviQuestionnaires({ beneficiaires = [], onAssigned }) 
     };
     for (const b of beneficiaires) {
       if (!b.parcoursId) continue;
-      ensure(b.parcoursId, b.promo, false).participants.set(b.id, { id: b.id, code: b.code, fiches: [] });
+      ensure(b.parcoursId, b.promo, false).participants.set(b.id, { id: b.id, code: b.code, fiches: [], ponctuels: [], archivee: Boolean(b.promoArchivee) });
     }
     const benById = new Map(beneficiaires.map((b) => [b.id, b]));
     for (const r of data.reponses || []) {
       // Une fiche live suit la promo actuelle du dossier (si elle a changé depuis).
       const ben = r.beneficiaireId ? benById.get(r.beneficiaireId) : null;
+      // Questionnaire ponctuel d'une personne sans promo : visible dans sa fiche.
+      if (r.etape == null && !ben?.parcoursId) continue;
       const p = ben?.parcoursId
         ? ensure(ben.parcoursId, ben.promo, false)
         : ensure(r.parcoursId, r.promo, r.source === 'archive');
       const pid = r.beneficiaireId || `archive:${r.participant}`;
-      if (!p.participants.has(pid)) p.participants.set(pid, { id: pid, code: r.participant, fiches: [] });
-      p.participants.get(pid).fiches.push(r);
+      if (!p.participants.has(pid)) p.participants.set(pid, { id: pid, code: r.participant, fiches: [], ponctuels: [] });
+      // Questionnaire envoyé hors parcours : pas d'étape, rangé à part.
+      if (r.etape == null) p.participants.get(pid).ponctuels.push(r);
+      else p.participants.get(pid).fiches.push(r);
     }
     return [...map.values()].map((p) => {
       const participants = [...p.participants.values()];
       participants.forEach((x) => x.fiches.sort((a, b) => a.etape - b.etape));
       const etapeCourante = Math.max(0, ...participants.flatMap((x) => x.fiches.map((f) => f.etape)));
-      return { ...p, participants: participants.sort((a, b) => a.code.localeCompare(b.code)), etapeCourante };
+      // Promo archivée par le conseiller : tous ses dossiers sont marqués.
+      const dossiers = participants.filter((x) => x.archivee !== undefined);
+      const archivee = dossiers.length > 0 && dossiers.every((x) => x.archivee);
+      const ids = dossiers.map((x) => x.id);
+      return { ...p, participants: participants.sort((a, b) => a.code.localeCompare(b.code)), etapeCourante, archivee, ids };
     }).sort((a, b) => Number(a.archive) - Number(b.archive) || a.label.localeCompare(b.label));
   }, [data, beneficiaires]);
 
-  const promo = promos.find((p) => p.key === promoKey) || promos[0] || null;
+  // Promos en cours d'un côté ; promos archivées et fiches importées de l'autre.
+  const enCours = promos.filter((p) => !p.archive && !p.archivee);
+  const archivees = promos.filter((p) => p.archive || p.archivee);
+  const visibles = showArchived ? archivees : enCours;
+  const promo = visibles.find((p) => p.key === promoKey) || visibles[0] || null;
+
+  async function toggleArchive(p) {
+    const archivee = !p.archivee;
+    if (archivee && window.confirm && !window.confirm(`Archiver « ${p.label} » ? Rien n'est supprimé : les personnes restent suivies, leurs fiches restent lisibles et vous pouvez toujours leur écrire.`)) return;
+    setBusy(true);
+    try {
+      const r = await fetch('/api/conseiller/promos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parcoursId: p.parcoursId, promo: p.promo || '', archivee }),
+      });
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Échec.');
+      setShowArchived(archivee);
+      setPromoKey(p.key);
+      await onAssigned?.();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <section className="mt-8" aria-labelledby="suivi-q-title">
@@ -142,6 +181,15 @@ export default function SuiviQuestionnaires({ beneficiaires = [], onAssigned }) 
             <p className="text-sm text-teal-700/70">Les fiches hebdomadaires remplies par les personnes, promo par promo.</p>
           </div>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+        {archivees.length > 0 && (
+          <button
+            onClick={() => { setShowArchived((v) => !v); setPromoKey(null); }}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-cream-200 bg-white text-teal-700 font-semibold text-sm hover:bg-cream-50"
+          >
+            <Archive className="w-4 h-4" /> {showArchived ? 'Promos en cours' : `Promos archivées (${archivees.length})`}
+          </button>
+        )}
         <button
           onClick={() => setAssignOpen(true)}
           disabled={!data || beneficiaires.length === 0}
@@ -149,6 +197,7 @@ export default function SuiviQuestionnaires({ beneficiaires = [], onAssigned }) 
         >
           <UsersRound className="w-4 h-4" /> Constituer une promo
         </button>
+        </div>
       </div>
 
       {error && <p className="text-sm text-rose-600 mb-3">{error}</p>}
@@ -156,6 +205,13 @@ export default function SuiviQuestionnaires({ beneficiaires = [], onAssigned }) 
       {!data ? (
         <div className="bg-white border border-cream-200 rounded-2xl shadow-card p-8 flex justify-center">
           <Loader2 className="w-6 h-6 animate-spin text-teal-600" />
+        </div>
+      ) : promos.length > 0 && visibles.length === 0 ? (
+        <div className="bg-white border border-cream-200 rounded-2xl shadow-card p-8 text-center">
+          <p className="text-teal-800 font-semibold">{showArchived ? 'Aucune promo archivée' : 'Aucune promo en cours'}</p>
+          <p className="text-sm text-teal-700/70 mt-1">
+            {showArchived ? '' : 'Les promos terminées sont dans « Promos archivées ». « Constituer une promo » en démarre une nouvelle.'}
+          </p>
         </div>
       ) : promos.length === 0 ? (
         <div className="bg-white border border-cream-200 rounded-2xl shadow-card p-8 text-center">
@@ -167,9 +223,9 @@ export default function SuiviQuestionnaires({ beneficiaires = [], onAssigned }) 
         </div>
       ) : (
         <>
-          {promos.length > 1 && (
+          {visibles.length > 1 && (
             <div className="flex flex-wrap gap-2 mb-4" role="tablist" aria-label="Promos">
-              {promos.map((p) => (
+              {visibles.map((p) => (
                 <button
                   key={p.key}
                   role="tab"
@@ -186,18 +242,34 @@ export default function SuiviQuestionnaires({ beneficiaires = [], onAssigned }) 
               ))}
             </div>
           )}
-          {promo && <PromoActions promo={promo} onRapport={() => setRapportOpen(true)} />}
+          {promo && (
+            <PromoActions
+              promo={promo}
+              busy={busy}
+              onRapport={() => setRapportOpen(true)}
+              onEnvoi={() => setEnvoiOpen(true)}
+              onCodes={() => downloadCodesCsv(beneficiaires.filter((b) => promo.ids.includes(b.id)), { suffix: promo.label })}
+              onArchive={() => toggleArchive(promo)}
+            />
+          )}
           {promo && <PromoTable promo={promo} onOpen={setOpenId} />}
         </>
       )}
 
       {openId && <FicheModal id={openId} onClose={() => setOpenId(null)} />}
       {rapportOpen && promo && <RapportModal promo={promo} onClose={() => setRapportOpen(false)} />}
+      {envoiOpen && promo && (
+        <EnvoiModal
+          preset={{ beneficiaireIds: promo.ids, promo: promo.label, label: `la promo « ${promo.label} »` }}
+          onClose={() => setEnvoiOpen(false)}
+          onSent={load}
+        />
+      )}
       {assignOpen && data && (
         <AssignModal
           parcours={data.parcours}
           beneficiaires={beneficiaires}
-          current={promo && !promo.archive ? promo : null}
+          current={promo && !promo.archive && !promo.archivee ? promo : null}
           onClose={() => setAssignOpen(false)}
           onDone={async () => { setAssignOpen(false); await onAssigned?.(); await load(); }}
         />
@@ -213,6 +285,7 @@ function PromoTable({ promo, onOpen }) {
     const delta = first && last && first !== last ? (avg(last.socle) ?? 0) - (avg(first.socle) ?? 0) : null;
     return { ...p, delta, alerts: computeAlerts(p.fiches, promo.etapeCourante) };
   });
+  const hasPonctuels = promo.participants.some((p) => p.ponctuels?.length);
   const recues = rows.filter((r) => r.fiches.some((f) => f.etape === promo.etapeCourante)).length;
   const enAlerte = rows.filter((r) => r.alerts.some((a) => a.tone === 'rose')).length;
   const tenus = promo.participants.flatMap((p) => p.fiches).filter((f) => f.socle?.engagementTenu);
@@ -227,6 +300,11 @@ function PromoTable({ promo, onOpen }) {
         <Kpi label="Engagements tenus" value={tauxTenus == null ? '–' : `${tauxTenus} %`} />
       </div>
 
+      {promo.archivee && (
+        <p className="text-xs text-teal-700/70 mb-2 flex items-center gap-1.5">
+          <Archive className="w-3.5 h-3.5" /> Promo archivée : les fiches restent lisibles, les personnes restent suivies et peuvent encore recevoir vos envois.
+        </p>
+      )}
       {promo.archive && (
         <p className="text-xs text-teal-700/70 mb-2 flex items-center gap-1.5">
           <Archive className="w-3.5 h-3.5" /> Promo archivée : fiches importées, en lecture seule, sous les codes d'origine.
@@ -241,6 +319,7 @@ function PromoTable({ promo, onOpen }) {
               {etapes.map((e) => (
                 <th key={e.n} className="px-2 py-3 font-semibold text-center" title={e.titre || 'Questionnaire à venir'}>S{e.n}</th>
               ))}
+              {hasPonctuels && <th className="px-2 py-3 font-semibold text-center" title="Questionnaires envoyés hors parcours">Ponctuels</th>}
               <th className="px-3 py-3 font-semibold text-center">Tendance</th>
               <th className="px-4 py-3 font-semibold">Alertes</th>
             </tr>
@@ -280,6 +359,17 @@ function PromoTable({ promo, onOpen }) {
                     </td>
                   );
                 })}
+                {hasPonctuels && (
+                  <td className="px-1.5 py-2 text-center">
+                    <div className="flex flex-wrap justify-center gap-1">
+                      {(r.ponctuels || []).map((f) => (
+                        <button key={f.id} onClick={() => onOpen(f.id)} title={f.titre} className="px-1.5 py-0.5 rounded-md border border-amber-200 bg-amber-50 text-[10px] font-semibold text-amber-800 hover:border-amber-400 max-w-[90px] truncate">
+                          {f.titre}
+                        </button>
+                      ))}
+                    </div>
+                  </td>
+                )}
                 <td className="px-3 py-3 text-center">
                   {r.delta == null ? <span className="text-teal-700/30">–</span>
                     : r.delta >= 0.5 ? <TrendingUp className="w-4 h-4 text-teal-600 inline" aria-label="En hausse" />
@@ -325,7 +415,7 @@ function Kpi({ label, value, tone = 'teal' }) {
 
 // ─── Fiche complète ──────────────────────────────────────────────────────────
 
-function FicheModal({ id, onClose }) {
+export function FicheModal({ id, onClose }) {
   const [fiche, setFiche] = useState(null);
   const [error, setError] = useState(null);
 
@@ -357,7 +447,7 @@ function FicheModal({ id, onClose }) {
         <div className="px-6 py-5 border-b border-cream-200 bg-teal-50/60 flex items-start gap-3">
           <div className="flex-1 min-w-0">
             <h2 id="fiche-q-title" className="text-lg font-bold text-teal-800">
-              {fiche ? <><span className="font-mono">{fiche.participant}</span> · S{fiche.etape} · {fiche.titre}</> : 'Fiche'}
+              {fiche ? <><span className="font-mono">{fiche.participant}</span> · {fiche.etape != null ? `S${fiche.etape}` : 'Questionnaire ponctuel'} · {fiche.titre}</> : 'Fiche'}
             </h2>
             {fiche && (
               <p className="text-sm text-teal-700/70 mt-0.5">
@@ -416,9 +506,24 @@ function FicheModal({ id, onClose }) {
 const exportUrl = (promo, format) =>
   `/api/conseiller/questionnaires/export?${new URLSearchParams({ parcoursId: promo.parcoursId, promo: promo.promo || '', format })}`;
 
-function PromoActions({ promo, onRapport }) {
+function PromoActions({ promo, onRapport, onEnvoi, onCodes, onArchive, busy }) {
+  const btn = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-200 bg-white text-teal-800 text-sm font-semibold hover:bg-teal-50 disabled:opacity-50';
   return (
     <div className="flex flex-wrap items-center gap-2 mb-4">
+      {promo.ids?.length > 0 && (
+        <>
+          <button onClick={onEnvoi} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-pink-500 text-white font-semibold text-sm hover:bg-pink-600" title="Offre, message ou questionnaire à toute la promo">
+            <Send className="w-4 h-4" aria-hidden="true" /> Envoyer à la promo
+          </button>
+          <button onClick={onCodes} className={btn} title="Codes de la promo, à compléter avec les prénoms sur votre ordinateur">
+            <FileSpreadsheet className="w-4 h-4" aria-hidden="true" /> Codes
+          </button>
+          <button onClick={onArchive} disabled={busy} className={btn} title={promo.archivee ? 'Remettre la promo dans les promos en cours' : "Promo terminée : l'accompagnement continue à un autre rythme"}>
+            {promo.archivee ? <ArchiveRestore className="w-4 h-4" aria-hidden="true" /> : <Archive className="w-4 h-4" aria-hidden="true" />}
+            {promo.archivee ? 'Réactiver' : 'Archiver la promo'}
+          </button>
+        </>
+      )}
       <button
         onClick={onRapport}
         className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 text-white font-semibold text-sm hover:bg-teal-700"

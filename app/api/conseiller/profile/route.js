@@ -9,16 +9,18 @@
 
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/session';
-import { getConseillerPublicProfile, setConseillerPrenom } from '@/lib/conseiller-profile';
+import { getConseillerPublicProfile, setConseillerPrenom, registerConseiller } from '@/lib/conseiller-profile';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
-  const { uid, error, status } = await requireRole(request, 'conseiller');
+  const { uid, email, structureId, error, status } = await requireRole(request, 'conseiller');
   if (!uid) return NextResponse.json({ error }, { status });
 
   try {
+    // Annuaire de la structure (transferts de dossiers entre collègues).
+    await registerConseiller({ uid, email, structureId }).catch(() => {});
     const profile = await getConseillerPublicProfile(uid);
     return NextResponse.json({ profile });
   } catch (err) {

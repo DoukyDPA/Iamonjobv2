@@ -15,6 +15,7 @@ import {
 import { CatMascot } from '../brand';
 import MonConseiller from '../MonConseiller';
 import MesQuestionnaires from '../MesQuestionnaires';
+import EnvoisConseiller from '../EnvoisConseiller';
 
 const STEPS = [
   { n: 1, label: 'Mon CV',         icon: FileText },
@@ -105,6 +106,9 @@ export default function Sidebar({
 
       {/* ─────── Contact conseiller (toujours visible) ─────── */}
       <MonConseiller variant="sidebar" />
+
+      {/* ─────── Offres, messages, questionnaires envoyés par le conseiller ─────── */}
+      <EnvoisConseiller variant="sidebar" />
 
       {/* ─────── Questionnaires de suivi (si un parcours est affecté) ─────── */}
       <MesQuestionnaires variant="sidebar" />

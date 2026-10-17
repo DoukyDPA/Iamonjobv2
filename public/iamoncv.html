@@ -174,13 +174,18 @@
             <!-- Générateur (défile avec le reste du contenu) -->
             <div class="p-4 bg-[#EAF3F0] border-t border-[#CBE0DA] mt-2">
                 <label class="block text-xs font-bold text-[#123F39] mb-2">Offre d'emploi ou objectif cible :</label>
-                <textarea id="job-offer-input" rows="3" class="w-full text-sm p-3 border border-[#CBE0DA] rounded-lg focus:ring-2 focus:ring-[#1E7A6B] outline-none mb-2 resize-none custom-scrollbar" placeholder="Collez l'annonce ici pour que l'IA adapte le CV..."></textarea>
+                <textarea id="job-offer-input" onchange="updateDBInfo('jobOffer', this.value)" rows="3" class="w-full text-sm p-3 border border-[#CBE0DA] rounded-lg focus:ring-2 focus:ring-[#1E7A6B] outline-none mb-2 resize-none custom-scrollbar" placeholder="Collez l'annonce ici pour que l'IA adapte le CV..."></textarea>
 
                 <!-- ESPACE 1 : conseils de l'IA avant de rédiger -->
                 <button id="btn-coach" onclick="getCoachingTips()" class="w-full text-xs font-bold bg-white border border-[#CBE0DA] text-[#1E7A6B] hover:bg-[#d9ece6] py-2 rounded-lg transition flex justify-center items-center mb-2">
                     <i class="fas fa-lightbulb mr-2 text-[#EE6E5E]"></i> Que dois-je mettre en avant ?
                 </button>
                 <div id="coach-box" class="hidden text-xs text-slate-700 bg-white border border-[#CBE0DA] rounded-lg p-3 mb-3 leading-relaxed max-h-40 overflow-y-auto custom-scrollbar"></div>
+
+                <!-- ATELIER PROFIL : préciser l'accroche en dialoguant avec l'IA -->
+                <button onclick="openProfileCoach()" class="w-full text-xs font-bold bg-white border border-[#CBE0DA] text-[#1E7A6B] hover:bg-[#d9ece6] py-2 rounded-lg transition flex justify-center items-center mb-3">
+                    <i class="fas fa-comments mr-2 text-[#EE6E5E]"></i> Préciser mon profil avec l'IA
+                </button>
 
                 <!-- ESPACE 2 : consigne personnelle du candidat -->
                 <label class="block text-xs font-bold text-[#123F39] mb-1">Votre consigne à l'IA <span class="font-normal text-[#1E7A6B]">(optionnel)</span> :</label>
@@ -303,7 +308,12 @@
                     <!-- Main Content CV -->
                     <div class="main-content w-full md:w-2/3 p-6 md:p-10 bg-white">
                         <section class="mb-8">
-                            <h2 class="text-lg font-bold text-slate-800 border-l-4 th-border-main pl-4 mb-4 uppercase tracking-wider transition-colors duration-500">Profil</h2>
+                            <div class="flex items-center justify-between gap-2 mb-4">
+                                <h2 class="text-lg font-bold text-slate-800 border-l-4 th-border-main pl-4 uppercase tracking-wider transition-colors duration-500">Profil</h2>
+                                <button onclick="openProfileCoach()" class="no-print text-xs font-bold bg-[#EAF3F0] border border-[#CBE0DA] text-[#1E7A6B] hover:bg-[#d9ece6] px-3 py-1.5 rounded-lg transition" title="Préciser avec l'IA les compétences et les mots à mettre en avant">
+                                    <i class="fas fa-comments mr-1 text-[#EE6E5E]"></i> Travailler mon profil avec l'IA
+                                </button>
+                            </div>
                             <div id="cv-profile" class="text-slate-600 text-sm leading-relaxed italic" contenteditable="true" onblur="updateCVField('profile', this.innerText)">
                                 Ce profil sera rédigé sur mesure par l'IA en fonction de la cible visée.
                             </div>
@@ -369,7 +379,7 @@
                 <div id="dictation-hint" class="hidden mt-2 text-xs text-red-500 font-semibold"><i class="fas fa-circle animate-pulse mr-1 text-[8px] align-middle"></i> Écoute en cours… parlez, puis cliquez sur « Dicter » pour arrêter.</div>
                 <div class="mt-3 flex justify-between items-center">
                     <span class="text-xs text-slate-500 italic">Discutez naturellement, ne vous souciez pas de la forme. <span id="chat-progress" class="not-italic font-bold text-slate-400"></span></span>
-                    <button onclick="summarizeAndCloseChat()" class="text-sm font-bold bg-green-100 text-green-700 hover:bg-green-200 px-4 py-2 rounded-lg transition shadow-sm border border-green-200">
+                    <button id="btn-chat-finish" onclick="summarizeAndCloseChat()" class="text-sm font-bold bg-green-100 text-green-700 hover:bg-green-200 px-4 py-2 rounded-lg transition shadow-sm border border-green-200">
                         <i class="fas fa-check mr-1"></i> Terminer l'interview
                     </button>
                 </div>

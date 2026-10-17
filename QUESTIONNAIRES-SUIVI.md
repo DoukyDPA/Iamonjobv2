@@ -67,3 +67,47 @@ Dans le tableau de suivi, au-dessus de la promo affichée :
 Code : `lib/questionnaires/rapport.js` (collecte, chiffres, prompt, export), `app/api/conseiller/questionnaires/rapport/route.js`, `app/api/conseiller/questionnaires/export/route.js`. Le prompt est la constante `SYSTEM` de `rapport.js`.
 
 À savoir : les rapports contiennent des extraits de réponses sous les codes. Ils ne sont pas effacés par la purge d'un dossier : les supprimer à la main en fin de promo.
+
+## Interactions conseiller / accompagné (octobre 2026)
+
+### Envois du conseiller
+
+Le conseiller prend l'initiative depuis la fiche d'une personne (clic sur son code dans « Mon groupe accompagné »), depuis une promo (« Envoyer à la promo ») ou depuis la base de questionnaires (« Envoyer »). Trois types :
+
+| Type | Bouton chez la personne | Soldé quand |
+|---|---|---|
+| Offre (intitulé, entreprise, lieu, lien, mot) | « Offre de votre conseiller » | la personne l'ouvre |
+| Message | « Message de votre conseiller » | la personne l'ouvre |
+| Questionnaire | « Merci de répondre à quelques questions » | la personne y répond |
+
+La personne peut répondre librement à une offre ou un message : le conseiller voit la réponse dans la fiche et reçoit le mail habituel (code seulement). Aucun email n'est envoyé à la personne : son compte repose sur une adresse fictive tirée de son code. Le bouton apparaît à sa prochaine connexion.
+
+Un questionnaire du parcours de la personne (ex. PROMO 45+ S3) s'enregistre à sa place habituelle, dans la colonne S3 du tableau. Tout autre questionnaire est « ponctuel » : rangé dans `questionnaireReponses/envoi__{envoiId}` (sans étape), affiché dans la colonne « Ponctuels » de la promo et dans la fiche de la personne, exclu du rapport hebdomadaire.
+
+Code : `lib/envois.js`, `app/api/envois/…` (personne), `app/api/conseiller/envois/…`, `components/EnvoisConseiller.jsx`, `components/conseiller/EnvoiModal.jsx`. Firestore : `envois/{id}`.
+
+### Base de questionnaires
+
+Catalogue (PROMO 45+ S1 à S4, dans le code) + questionnaires créés dans l'appli, partagés avec toute la structure, modifiables par leur auteur seulement (version +1 à chaque modification). « Dupliquer » part d'un questionnaire existant, catalogue compris. « Retirer » archive sans effacer : les réponses reçues restent lisibles. Types : réponse courte ou longue, un choix, plusieurs choix, notes 0-10, liste.
+
+Code : `lib/questionnaires/base.js`, `app/api/conseiller/questionnaires/base/…`, `components/conseiller/BaseQuestionnaires.jsx`. Firestore : `questionnairesPerso/{id}`, id public `perso-{id}`.
+
+### Métiers de l'étape 2
+
+La fiche d'une personne affiche les métiers qu'elle a mis de côté avec l'étoile, puis les 9 pistes de sa dernière analyse, avec un lien vers les offres France Travail. Seuls les intitulés sont lus (`cvs/{authUid}`), jamais le texte du CV. Les métiers simplement consultés ne sont pas transmis (ils restent dans le navigateur de la personne).
+
+### Archiver une promo
+
+« Archiver la promo » pose `promoArchivee: true` sur ses dossiers. Rien n'est supprimé : la promo passe dans « Promos archivées », les fiches restent lisibles, les personnes restent suivies et peuvent recevoir des envois. Côté personne, plus de pastille de relance, ses questionnaires restent ouverts. « Réactiver » revient en arrière. Route : `/api/conseiller/promos`.
+
+### Transférer un dossier
+
+Fiche de la personne → « Transférer » → un collègue de la même structure. Le dossier, ses fiches, ses messages et les envois changent de `conseillerUid` ; la personne garde son code, sa promo et son historique (`transferts`). Le collègue reçoit un mail (code seulement). L'annuaire (`conseillers/{uid}` : role, email, structureId) se remplit à chaque ouverture de `/conseiller` : un collègue n'apparaît qu'après sa première visite.
+
+### Fichier des codes
+
+« Télécharger mes codes » (et « Codes » sur une promo) produit un CSV (points-virgules, BOM, lisible par Excel) : code, colonne Prénom vide à compléter, promo, statut. Généré dans le navigateur, il ne transite pas par le serveur. À garder sur l'ordinateur du conseiller, jamais à redéposer dans l'appli.
+
+### À déployer
+
+`firebase deploy --only firestore:rules` (collections `envois` et `questionnairesPerso` déclarées fermées ; le refus par défaut les couvrait déjà).

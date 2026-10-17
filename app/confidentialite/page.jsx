@@ -60,6 +60,11 @@ export default function ConfidentialitePage() {
           sessions. Il reste accessible par vous seul. Votre conseiller n'y accède qu'avec votre
           accord.
         </p>
+        <p className="mt-3">
+          Si vous êtes accompagné, votre conseiller voit les intitulés des métiers que vous mettez
+          de côté avec l'étoile et ceux que l'analyse vous propose, pour vous aider à trouver des
+          pistes. Il ne voit jamais le texte de votre CV.
+        </p>
       </section>
 
       <section>

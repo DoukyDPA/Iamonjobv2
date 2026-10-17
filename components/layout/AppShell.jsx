@@ -7,6 +7,7 @@ import Sidebar from './Sidebar';
 import Footer from './Footer';
 import MonConseiller from '../MonConseiller';
 import MesQuestionnaires from '../MesQuestionnaires';
+import EnvoisConseiller from '../EnvoisConseiller';
 import { CatMascot } from '../brand';
 import { ErrorBanner } from '../ui';
 
@@ -175,6 +176,7 @@ export default function AppShell({
         <div className="mt-3 flex flex-wrap justify-start gap-2">
           <MonConseiller variant="mobile" />
           <MesQuestionnaires variant="mobile" />
+          <EnvoisConseiller variant="mobile" />
         </div>
       </div>
 
