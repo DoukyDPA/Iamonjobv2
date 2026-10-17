@@ -15,7 +15,7 @@
 import { useEffect, useState } from 'react';
 import {
   X, Loader2, Star, Send, ArrowRightLeft, Briefcase, MessageCircle, ClipboardList,
-  ExternalLink, Trash2, Eye, CheckCircle2, Clock, Compass, FileSignature, PenLine,
+  ExternalLink, Trash2, Eye, CheckCircle2, Clock, Compass, FileSignature, PenLine, Route,
 } from 'lucide-react';
 import EnvoiModal from './EnvoiModal';
 import { FicheModal } from './SuiviQuestionnaires';
@@ -151,6 +151,9 @@ export default function FichePersonne({ beneficiaire, onClose, onChanged }) {
                   </>
                 )}
               </section>
+
+              {/* Parcours suivi */}
+              <ParcoursPersonne beneficiaire={beneficiaire} onChanged={async () => { await onChanged?.(); }} />
 
               {/* Envois */}
               <section>
@@ -308,5 +311,73 @@ function TransfertModal({ beneficiaire, onClose, onDone }) {
         </div>
       </div>
     </div>
+  );
+}
+
+// Parcours de la personne : sa promo, ou un parcours individuel à attribuer.
+function ParcoursPersonne({ beneficiaire, onChanged }) {
+  const [liste, setListe] = useState(null);
+  const [choix, setChoix] = useState(beneficiaire.promo ? '' : beneficiaire.parcoursId || '');
+  const [actuel, setActuel] = useState(beneficiaire.promo ? null : beneficiaire.parcoursId || null);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
+
+  useEffect(() => {
+    fetch('/api/conseiller/parcours-modeles').then((r) => r.json()).then((d) => setListe(d.parcours || [])).catch(() => setListe([]));
+  }, []);
+
+  async function enregistrer(parcoursId) {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const r = await fetch('/api/conseiller/parcours', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ beneficiaireIds: [beneficiaire.id], parcoursId: parcoursId || null, promo: '' }),
+      });
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Échec.');
+      setActuel(parcoursId || null);
+      setMsg(parcoursId ? 'Parcours attribué : la personne le voit dans « Mes questionnaires ».' : 'Parcours retiré. Ses fiches déjà remplies restent.');
+      await onChanged?.();
+    } catch (e) {
+      setMsg(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const individuels = (liste || []).filter((p) => p.usage === 'individuel' && !p.archived);
+  const nomActuel = (liste || []).find((p) => p.id === actuel)?.label;
+
+  return (
+    <section>
+      <h3 className="text-xs font-bold text-teal-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+        <Route className="w-4 h-4" /> Parcours de questionnaires
+      </h3>
+      {beneficiaire.promo ? (
+        <p className="text-sm text-teal-800">
+          Suit le parcours de la promo <strong>{beneficiaire.promo}</strong>{beneficiaire.promoArchivee ? ' (archivée)' : ''}. Pour lui proposer un parcours individuel, retirez-la d'abord de la promo (onglet Promos, « Modifier »). Vous pouvez toujours lui envoyer un questionnaire seul avec « Envoyer ».
+        </p>
+      ) : !liste ? <Loader2 className="w-5 h-5 animate-spin text-teal-600" /> : (
+        <div className="space-y-2">
+          <p className="text-sm text-teal-800">{actuel ? <>Suit le parcours individuel <strong>{nomActuel || actuel}</strong>.</> : 'Aucun parcours pour l’instant.'}</p>
+          {individuels.length === 0 ? (
+            <p className="text-xs text-teal-700/70">Aucun parcours individuel dans la base : créez-en un dans l'onglet Questionnaires (« Nouveau parcours », pour une personne).</p>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <select value={choix} onChange={(e) => setChoix(e.target.value)} className="p-2 text-sm rounded-lg border border-teal-200 bg-white">
+                <option value="">Choisir un parcours individuel…</option>
+                {individuels.map((p) => <option key={p.id} value={p.id}>{p.label} · {p.etapes.length} étapes</option>)}
+              </select>
+              <button onClick={() => enregistrer(choix)} disabled={!choix || choix === actuel || busy} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 disabled:bg-teal-200">
+                {busy && <Loader2 className="w-4 h-4 animate-spin" />} {actuel ? 'Changer' : 'Attribuer'}
+              </button>
+              {actuel && <button onClick={() => enregistrer(null)} disabled={busy} className="text-sm font-semibold text-rose-600 hover:underline">Retirer</button>}
+            </div>
+          )}
+          {msg && <p className="text-xs text-teal-700">{msg}</p>}
+        </div>
+      )}
+    </section>
   );
 }

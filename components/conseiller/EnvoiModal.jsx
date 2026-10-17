@@ -117,8 +117,14 @@ export default function EnvoiModal({ beneficiaires = [], preset = {}, onClose, o
       <div className="w-full max-w-xl max-h-[92vh] bg-white border border-cream-200 rounded-2xl shadow-card overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="px-6 py-5 border-b border-cream-200 bg-teal-50/60 flex items-start gap-3">
           <div className="flex-1">
-            <h2 id="envoi-title" className="text-lg font-bold text-teal-800">Envoyer {fixed && preset.label ? `à ${preset.label}` : ''}</h2>
-            <p className="text-sm text-teal-700/80 mt-0.5">{tab.hint}</p>
+            <h2 id="envoi-title" className="text-lg font-bold text-teal-800">
+              {preset.titre ? `Envoyer « ${preset.titre} »` : 'Envoyer'}{fixed && preset.label ? ` à ${preset.label}` : ''}
+            </h2>
+            <p className="text-sm text-teal-700/80 mt-0.5">
+              {type === 'questionnaire'
+                ? "Envoi unique : chaque destinataire le remplit une fois. Pour une personne dont le parcours contient ce questionnaire, la réponse s'inscrit à son étape."
+                : tab.hint}
+            </p>
           </div>
           <button type="button" onClick={onClose} aria-label="Fermer" className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-teal-700 hover:bg-cream-200/70">
             <X className="w-5 h-5" />

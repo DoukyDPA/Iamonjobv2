@@ -38,7 +38,8 @@ export default function PromosPanel({ beneficiaires = [], onChanged, onVoirSuivi
     const m = new Map();
     const parcoursById = Object.fromEntries((data?.parcours || []).map((p) => [p.id, p]));
     for (const b of beneficiaires) {
-      if (!b.parcoursId) continue;
+      // Parcours individuel (sans promo) : suivi dans l'onglet Questionnaires.
+      if (!b.parcoursId || !b.promo) continue;
       const key = `${b.parcoursId}::${b.promo || ''}`;
       if (!m.has(key)) {
         m.set(key, {

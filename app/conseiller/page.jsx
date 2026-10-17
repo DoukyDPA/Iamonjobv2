@@ -319,7 +319,7 @@ export default function ConseillerPage() {
         {onglet === 'questionnaires' && (
           <>
             <SuiviQuestionnaires beneficiaires={list} onAssigned={load} focusKey={suiviFocus} />
-            <BaseQuestionnaires beneficiaires={list} />
+            <BaseQuestionnaires beneficiaires={list} onChanged={load} />
           </>
         )}
 

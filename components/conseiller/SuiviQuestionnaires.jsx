@@ -104,7 +104,8 @@ export default function SuiviQuestionnaires({ beneficiaires = [], onAssigned, fo
       if (!map.has(k)) {
         map.set(k, {
           key: k, parcoursId, promo, archive,
-          label: promo || parcoursById[parcoursId]?.label || parcoursId,
+          // Sans promo : parcours individuel, toutes les personnes qui le suivent.
+          label: promo || `${parcoursById[parcoursId]?.label || parcoursId}${parcoursById[parcoursId]?.usage === 'individuel' ? ' (individuel)' : ''}`,
           parcours: parcoursById[parcoursId] || null,
           participants: new Map(),
         });
@@ -739,8 +740,10 @@ function RList({ titre, items }) {
 
 // ─── Constituer une promo ────────────────────────────────────────────────────
 
-export function AssignModal({ parcours, beneficiaires, current, onClose, onDone }) {
-  const [parcoursId, setParcoursId] = useState(current?.parcoursId || parcours[0]?.id || '');
+export function AssignModal({ parcours: tous, beneficiaires, current, defaultParcoursId = null, onClose, onDone }) {
+  // Une promo suit un parcours « promo » (les parcours individuels s'attribuent depuis la base).
+  const parcours = tous.filter((p) => (p.usage || 'promo') === 'promo' && (!p.archived || p.id === current?.parcoursId));
+  const [parcoursId, setParcoursId] = useState(current?.parcoursId || defaultParcoursId || parcours[0]?.id || '');
   const [promo, setPromo] = useState(current?.promo || '');
   const initial = useMemo(
     () => new Set(beneficiaires.filter((b) => current && b.parcoursId === current.parcoursId && (b.promo || '') === (current.promo || '')).map((b) => b.id)),

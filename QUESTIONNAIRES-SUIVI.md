@@ -86,11 +86,18 @@ Un questionnaire du parcours de la personne (ex. PROMO 45+ S3) s'enregistre à s
 
 Code : `lib/envois.js`, `app/api/envois/…` (personne), `app/api/conseiller/envois/…`, `components/EnvoisConseiller.jsx`, `components/conseiller/EnvoiModal.jsx`. Firestore : `envois/{id}`.
 
-### Base de questionnaires
+### Base de questionnaires : parcours et questionnaires
 
-Catalogue (PROMO 45+ S1 à S4, dans le code) + questionnaires créés dans l'appli, partagés avec toute la structure, modifiables par leur auteur seulement (version +1 à chaque modification). « Dupliquer » part d'un questionnaire existant, catalogue compris. « Retirer » archive sans effacer : les réponses reçues restent lisibles. Types : réponse courte ou longue, un choix, plusieurs choix, notes 0-10, liste.
+Deux niveaux, dans l'onglet Questionnaires :
 
-Code : `lib/questionnaires/base.js`, `app/api/conseiller/questionnaires/base/…`, `components/conseiller/BaseQuestionnaires.jsx`. Firestore : `questionnairesPerso/{id}`, id public `perso-{id}`.
+- **Parcours** : un enchaînement de questionnaires (Semaine 1, 2… ou Étape 1, 2…). Usage « promo » (tout un groupe, suivi comparé semaine par semaine, bouton « Démarrer une promo ») ou « individuel » (une personne à son rythme, bouton « Attribuer à des personnes », aussi depuis la fiche de la personne). Ouverture des étapes : toutes d'emblée, ou l'une après l'autre (une étape s'ouvre quand la précédente est remplie). PROMO 45+ est le parcours du catalogue ; les autres vivent dans `parcoursPerso/{id}` (id public `parcours-{id}`). Un parcours déjà suivi garde ses étapes à leur place : on ajoute à la fin, on renomme ; pour réorganiser, « Modifier une copie ».
+- **Questionnaires** : les fiches. Une même fiche peut être une étape d'un ou plusieurs parcours ET s'envoyer seule (« Envoyer une fois… », à une promo ou à des personnes). La ligne indique les parcours où elle sert.
+
+Réutiliser et adapter : « Modifier » sur les vôtres (version +1), « Modifier une copie » sur le catalogue ou ceux d'un collègue (l'original ne bouge pas). Chaque réponse fige son détail (`detail`) à l'envoi : une fiche reste lisible même après modification du questionnaire.
+
+Une personne suit un seul parcours à la fois : celui de sa promo, ou un parcours individuel. Les envois ponctuels restent toujours possibles.
+
+Code : `lib/questionnaires/base.js` (questionnaires), `lib/questionnaires/parcours.js` (parcours, `resolveParcours`), `app/api/conseiller/questionnaires/base/…`, `app/api/conseiller/parcours-modeles/…`, `components/conseiller/BaseQuestionnaires.jsx`.
 
 ### Métiers de l'étape 2
 
@@ -137,4 +144,4 @@ Code : `lib/documents.js`, `app/api/conseiller/documents/…`, signature dans `l
 
 ### À déployer
 
-`firebase deploy --only firestore:rules` (collections `envois`, `questionnairesPerso` et `documentsModeles` déclarées fermées ; le refus par défaut les couvrait déjà).
+`firebase deploy --only firestore:rules` (collections `envois`, `questionnairesPerso`, `documentsModeles` et `parcoursPerso` déclarées fermées ; le refus par défaut les couvrait déjà).

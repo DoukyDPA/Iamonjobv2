@@ -14,7 +14,6 @@ import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/session';
 import { getBeneficiaireByAuthUid } from '@/lib/beneficiaires';
 import { getParcoursState, saveReponse } from '@/lib/questionnaires/reponses';
-import { getQuestionnaire } from '@/lib/questionnaires/catalogue';
 import { closeEnvoisForQuestionnaire } from '@/lib/envois';
 import { logEvent, newRequestId } from '@/lib/logger';
 
@@ -29,11 +28,7 @@ export async function GET(request) {
     const beneficiaire = await getBeneficiaireByAuthUid(uid);
     if (!beneficiaire) return NextResponse.json({ parcours: null, etapes: [] });
     const state = await getParcoursState(beneficiaire);
-    const questionnaires = {};
-    for (const e of state.etapes) {
-      if (e.questionnaireId) questionnaires[e.questionnaireId] = getQuestionnaire(e.questionnaireId);
-    }
-    return NextResponse.json({ ...state, questionnaires });
+    return NextResponse.json(state);
   } catch (err) {
     return NextResponse.json({ error: err.message || 'Erreur chargement.' }, { status: 500 });
   }

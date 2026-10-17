@@ -11,28 +11,18 @@
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/session';
 import { listReponsesForConseiller } from '@/lib/questionnaires/reponses';
-import { PARCOURS, getQuestionnaire } from '@/lib/questionnaires/catalogue';
+import { listParcours } from '@/lib/questionnaires/parcours';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
-  const { uid, error, status } = await requireRole(request, 'conseiller');
+  const { uid, structureId, error, status } = await requireRole(request, 'conseiller');
   if (!uid) return NextResponse.json({ error }, { status });
 
   try {
     const reponses = await listReponsesForConseiller(uid);
-    const parcours = Object.values(PARCOURS).map((p) => ({
-      id: p.id,
-      label: p.label,
-      description: p.description,
-      etapes: p.etapes.map((e) => ({
-        n: e.n,
-        label: e.label,
-        questionnaireId: e.questionnaireId,
-        titre: getQuestionnaire(e.questionnaireId)?.titre || null,
-      })),
-    }));
+    const parcours = await listParcours({ conseillerUid: uid, structureId: structureId || 'default', withArchived: true });
     return NextResponse.json({ parcours, reponses });
   } catch (err) {
     return NextResponse.json({ error: err.message || 'Erreur chargement.' }, { status: 500 });

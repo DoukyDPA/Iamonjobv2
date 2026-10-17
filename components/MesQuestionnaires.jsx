@@ -203,7 +203,7 @@ export default function MesQuestionnaires({ variant = 'sidebar' }) {
                           </span>
                           <span className="block text-xs text-teal-700/70">
                             {!e.disponible
-                              ? 'Bientôt disponible'
+                              ? (e.verrouille ? "S'ouvre quand l'étape précédente est remplie" : 'Bientôt disponible')
                               : e.importe
                               ? 'Déjà transmis à votre conseiller.'
                               : e.rempli
