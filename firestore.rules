@@ -89,6 +89,9 @@ service cloud.firestore {
     match /questionnairesPerso/{doc} {
       allow read, write: if false;
     }
+    match /documentsModeles/{doc} {
+      allow read, write: if false;
+    }
 
     // Tout le reste : refusé.
     match /{document=**} {

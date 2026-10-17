@@ -4,6 +4,7 @@
 // POST → body { action: 'vu' }                       marque l'envoi comme lu
 //        body { action: 'reponse', texte }           répond à une offre / un message
 //        body { action: 'questionnaire', answers }   répond au questionnaire
+//        body { action: 'signer' }                   signe un document en ligne
 //
 // Accès : rôle `beneficiaire`, et l'envoi doit viser son dossier.
 // ════════════════════════════════════════════════════════════════════════════
@@ -11,7 +12,7 @@
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/session';
 import { getBeneficiaireByAuthUid } from '@/lib/beneficiaires';
-import { markVu, replyEnvoi, answerQuestionnaireEnvoi } from '@/lib/envois';
+import { markVu, replyEnvoi, answerQuestionnaireEnvoi, signDocumentEnvoi } from '@/lib/envois';
 import { notifyConseillerNewMessage } from '@/lib/avis';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { logEvent, newRequestId } from '@/lib/logger';
@@ -43,6 +44,11 @@ export async function POST(request, { params }) {
       notifyConseillerNewMessage({ conseillerUid: res.conseillerUid, beneficiaireCode: beneficiaire.code }).catch(() => {});
       logEvent({ event: 'envoi-reponse', requestId, uid, status: 'ok' });
       return NextResponse.json({ ok: true });
+    }
+    if (body.action === 'signer') {
+      const res = await signDocumentEnvoi({ envoiId, beneficiaire });
+      logEvent({ event: 'document-signe', requestId, uid, status: 'ok' });
+      return NextResponse.json({ ok: true, deja: Boolean(res.deja) });
     }
     if (body.action === 'questionnaire') {
       const res = await answerQuestionnaireEnvoi({ envoiId, beneficiaire, answers: body.answers || {} });

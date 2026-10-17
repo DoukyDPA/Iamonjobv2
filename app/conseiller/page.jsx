@@ -21,11 +21,24 @@ import {
   Loader2, Users, UserPlus, ShieldCheck, ShieldAlert, ShieldX,
   Compass, Copy, Check, X, AlertCircle, Send,
   MessageSquareHeart, Clock, CheckCircle2, ExternalLink, Coins, Eye, Trash2,
-  Camera, UserCircle, Flag, Ban, ThumbsUp, Undo2, FolderOpen, Download,
+  Camera, UserCircle, Flag, Ban, ThumbsUp, Undo2, LayoutDashboard, UsersRound,
+  ClipboardList, MessagesSquare, FileSignature, HeartHandshake,
 } from 'lucide-react';
 import FichePersonne from '@/components/conseiller/FichePersonne';
 import BaseQuestionnaires from '@/components/conseiller/BaseQuestionnaires';
-import { downloadCodesCsv } from '@/components/conseiller/codesCsv';
+import PromosPanel from '@/components/conseiller/PromosPanel';
+import AccompagnementsPanel from '@/components/conseiller/AccompagnementsPanel';
+import DocumentsPanel from '@/components/conseiller/DocumentsPanel';
+import ReponsesEnvois from '@/components/conseiller/ReponsesEnvois';
+
+// Onglets du tableau de bord (l'onglet ouvert est gardé dans l'adresse : #promos…).
+const ONGLETS = [
+  { id: 'promos', label: 'Promos', icon: UsersRound },
+  { id: 'accompagnements', label: 'Accompagnements', icon: HeartHandshake },
+  { id: 'questionnaires', label: 'Questionnaires', icon: ClipboardList },
+  { id: 'messages', label: 'Messages', icon: MessagesSquare },
+  { id: 'documents', label: 'Documents', icon: FileSignature },
+];
 
 // Format court des grands nombres : 12 340 → « 12,3 k », lisible d'un coup d'œil.
 function formatTokens(n) {
@@ -77,6 +90,20 @@ export default function ConseillerPage() {
   const [confirmDelete, setConfirmDelete] = useState(null); // bénéficiaire | null
   const [deletingId, setDeletingId] = useState(null);
   const [fiche, setFiche] = useState(null); // bénéficiaire ouvert | null
+  const [onglet, setOnglet] = useState('accompagnements');
+  const [profilOpen, setProfilOpen] = useState(false);
+  const [promoFiltre, setPromoFiltre] = useState('');
+  const [suiviFocus, setSuiviFocus] = useState(null);
+
+  // Onglet lu dans l'adresse au chargement, et mis à jour à chaque changement.
+  useEffect(() => {
+    const h = (typeof window !== 'undefined' ? window.location.hash : '').replace('#', '');
+    if (ONGLETS.some((o) => o.id === h)) setOnglet(h);
+  }, []);
+  function changerOnglet(id) {
+    setOnglet(id);
+    try { window.history.replaceState(null, '', `#${id}`); } catch { /* sans effet */ }
+  }
 
   async function load() {
     const res = await fetch('/api/conseiller/beneficiaires');
@@ -204,43 +231,32 @@ export default function ConseillerPage() {
   const total = list.length;
   const enAttente = list.filter((b) => b.consentStatus !== 'granted').length;
   const nonActives = list.filter((b) => b.status !== 'active').length;
-  const tokensMois = list.reduce((s, b) => s + (b.usage?.tokensThisMonth || 0), 0);
+  const promosEnCours = new Set(list.filter((b) => b.parcoursId && !b.promoArchivee).map((b) => `${b.parcoursId}::${b.promo || ''}`)).size;
+  const avisEnAttente = avis.filter((a) => a.status === 'pending').length;
 
   return (
     <div className="min-h-screen bg-cream-100 text-teal-900 flex flex-col">
       <Header />
 
-      <main className="flex-1 max-w-[1100px] w-full mx-auto px-6 py-8">
+      <main className="flex-1 max-w-[1200px] w-full mx-auto px-4 sm:px-6 py-6">
 
-        {/* Titre + action */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        {/* En-tête du tableau de bord */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-teal-100 flex items-center justify-center">
-              <Users className="w-6 h-6 text-teal-700" aria-hidden="true" />
+              <LayoutDashboard className="w-6 h-6 text-teal-700" aria-hidden="true" />
             </div>
             <div>
-              <h1 className="text-2xl font-extrabold text-teal-800">Mon groupe accompagné</h1>
-              <p className="text-sm text-teal-700/70">Une ligne par personne. Cliquez sur un code pour ouvrir sa fiche : métiers, envois, transfert.</p>
+              <h1 className="text-2xl font-extrabold text-teal-800">Tableau de bord</h1>
+              <p className="text-sm text-teal-700/70">Vos promos, vos accompagnements, vos échanges.</p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={() => downloadCodesCsv(list)}
-            disabled={list.length === 0}
-            title="Fichier à garder sur votre ordinateur : complétez les prénoms, ne le partagez pas"
-            className="inline-flex items-center gap-2 px-4 py-2.5 border border-teal-200 bg-white text-teal-800 rounded-xl font-semibold hover:bg-teal-50 disabled:opacity-50 transition-all"
+            onClick={() => setProfilOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-teal-200 bg-white text-teal-800 font-semibold text-sm hover:bg-teal-50"
           >
-            <Download className="w-4 h-4" /> Télécharger mes codes
+            <UserCircle className="w-4 h-4" /> Mon profil
           </button>
-          <button
-            onClick={handleCreate}
-            disabled={creating}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 disabled:bg-teal-200 transition-all shadow-soft focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
-          >
-            {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
-            Ajouter une personne
-          </button>
-          </div>
         </div>
 
         {error && (
@@ -250,162 +266,92 @@ export default function ConseillerPage() {
           </div>
         )}
 
-        {list.length > 0 && (
-          <p className="mb-4 text-xs text-teal-700/70">
-            « Télécharger mes codes » produit un tableur avec une colonne Prénom à compléter. Gardez-le sur votre
-            ordinateur, ne l'envoyez à personne et ne le déposez jamais dans Iamonjob : c'est votre seule table de
-            correspondance entre codes et personnes.
-          </p>
-        )}
-
-        {/* Mon profil : prénom + photo, visibles par les personnes accompagnées */}
-        <ProfilePanel />
-
-        {/* Cartes de synthèse */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        {/* Indicateurs */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
           <Stat icon={Users} label="Personnes suivies" value={total} tone="teal" />
-          <Stat icon={ShieldAlert} label="Consentement à obtenir" value={enAttente} tone="amber" />
+          <Stat icon={UsersRound} label="Promos en cours" value={promosEnCours} tone="teal" />
+          <Stat icon={MessageSquareHeart} label="Messages à traiter" value={avisEnAttente} tone={avisEnAttente > 0 ? 'amber' : 'teal'} />
           <Stat icon={Clock} label="Accès non activés" value={nonActives} tone={nonActives > 0 ? 'amber' : 'teal'} />
-          <Stat icon={Coins} label="Tokens IA ce mois" value={formatTokens(tokensMois)} tone="teal" />
         </div>
 
-        {/* Tableau radar */}
-        {total === 0 ? (
-          <div className="bg-white border border-cream-200 rounded-2xl shadow-card p-10 text-center">
-            <Compass className="w-10 h-10 text-teal-400 mx-auto mb-3" />
-            <p className="text-teal-800 font-semibold">Aucune personne pour l'instant</p>
-            <p className="text-sm text-teal-700/70 mt-1">
-              Cliquez sur « Ajouter une personne ». Un code sortira, à remettre à l'intéressé
-              pour qu'il crée son accès.
-            </p>
-          </div>
-        ) : (
+        {/* Onglets */}
+        <nav className="flex gap-1 overflow-x-auto border-b border-cream-200 mb-6 -mx-1 px-1" role="tablist" aria-label="Sections du tableau de bord">
+          {ONGLETS.map((o) => {
+            const Icon = o.icon;
+            const badge = o.id === 'messages' ? avisEnAttente : 0;
+            const actif = onglet === o.id;
+            return (
+              <button
+                key={o.id}
+                role="tab"
+                aria-selected={actif}
+                onClick={() => changerOnglet(o.id)}
+                className={`relative inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold whitespace-nowrap border-b-2 -mb-px transition-colors ${actif ? 'border-teal-600 text-teal-800' : 'border-transparent text-teal-700/70 hover:text-teal-800 hover:border-teal-200'}`}
+              >
+                <Icon className="w-4 h-4" aria-hidden="true" /> {o.label}
+                {badge > 0 && <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center">{badge}</span>}
+              </button>
+            );
+          })}
+        </nav>
+
+        {onglet === 'promos' && (
+          <PromosPanel
+            beneficiaires={list}
+            onChanged={load}
+            onVoirSuivi={(p) => { setSuiviFocus(p.key); changerOnglet('questionnaires'); }}
+            onVoirPersonnes={(p) => { setPromoFiltre(p.promo || ''); changerOnglet('accompagnements'); }}
+          />
+        )}
+
+        {onglet === 'accompagnements' && (
+          <AccompagnementsPanel
+            key={promoFiltre}
+            list={list}
+            promoFiltre={promoFiltre}
+            onOpen={setFiche}
+            onDelete={setConfirmDelete}
+            onCreate={handleCreate}
+            creating={creating}
+          />
+        )}
+
+        {onglet === 'questionnaires' && (
           <>
-            {/* Desktop : tableau (défile horizontalement si l'écran est étroit) */}
-            <div className="hidden md:block bg-white border border-cream-200 rounded-2xl shadow-card overflow-x-auto">
-              <table className="w-full text-sm min-w-[780px]">
-                <thead>
-                  <tr className="bg-cream-50 text-teal-700/70 text-left text-xs uppercase tracking-wide">
-                    <th className="px-4 py-3 font-semibold">Code</th>
-                    <th className="px-4 py-3 font-semibold">Promo</th>
-                    <th className="px-4 py-3 font-semibold">Consentement</th>
-                    <th className="px-4 py-3 font-semibold">Candidatures</th>
-                    <th className="px-4 py-3 font-semibold">Tokens (mois)</th>
-                    <th className="px-4 py-3 font-semibold">Tokens (total)</th>
-                    <th className="px-4 py-3 font-semibold">Accès</th>
-                    <th className="px-4 py-3 font-semibold text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {list.map((b) => (
-                    <tr key={b.id} className="border-t border-cream-100 hover:bg-cream-50/50">
-                      <td className="px-4 py-3 font-mono font-semibold text-teal-800">
-                        <button onClick={() => setFiche(b)} className="hover:underline focus:outline-none focus:ring-2 focus:ring-teal-400 rounded" title="Ouvrir sa fiche">{b.code}</button>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-teal-700">
-                        {b.promo ? <span className={b.promoArchivee ? 'text-teal-700/50' : ''}>{b.promo}{b.promoArchivee ? ' · archivée' : ''}</span> : <span className="text-teal-700/40">–</span>}
-                      </td>
-                      <td className="px-4 py-3"><Badge map={CONSENT} value={b.consentStatus} /></td>
-                      <td className="px-4 py-3 text-teal-700">{b.candidaturesCount}</td>
-                      <td className="px-4 py-3 font-medium text-teal-800">{formatTokens(b.usage?.tokensThisMonth)}</td>
-                      <td className="px-4 py-3 text-teal-700/70">{formatTokens(b.usage?.tokensTotal)}</td>
-                      <td className="px-4 py-3">
-                        <span className={`text-xs font-medium ${b.status === 'active' ? 'text-teal-600' : 'text-amber-600'}`}>
-                          {b.status === 'active' ? 'Actif' : 'Code non activé'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right whitespace-nowrap">
-                        <button
-                          onClick={() => setFiche(b)}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-teal-700 hover:bg-teal-50 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-400 mr-1"
-                          aria-label={`Ouvrir la fiche ${b.code}`}
-                          title="Métiers, envois, transfert"
-                        >
-                          <FolderOpen className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setConfirmDelete(b)}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-400"
-                          aria-label={`Supprimer le dossier ${b.code}`}
-                          title="Supprimer ce dossier"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile : une carte par personne, lisible sans défilement horizontal */}
-            <div className="md:hidden space-y-3">
-              {list.map((b) => (
-                <div key={b.id} className="bg-white border border-cream-200 rounded-2xl shadow-card p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <button onClick={() => setFiche(b)} className="font-mono font-bold text-teal-800 text-base hover:underline inline-flex items-center gap-1.5">
-                      {b.code} <FolderOpen className="w-4 h-4 text-teal-600" />
-                    </button>
-                    <button
-                      onClick={() => setConfirmDelete(b)}
-                      className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-400 shrink-0"
-                      aria-label={`Supprimer le dossier ${b.code}`}
-                      title="Supprimer ce dossier"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <Badge map={CONSENT} value={b.consentStatus} />
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-semibold ${
-                      b.status === 'active'
-                        ? 'bg-teal-50 text-teal-700 border-teal-200'
-                        : 'bg-amber-50 text-amber-700 border-amber-200'
-                    }`}>
-                      {b.status === 'active' ? 'Actif' : 'Code non activé'}
-                    </span>
-                  </div>
-
-                  <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
-                    <div className="rounded-xl bg-cream-50 border border-cream-100 py-2">
-                      <dt className="text-[11px] text-teal-700/60">Candidatures</dt>
-                      <dd className="text-lg font-bold text-teal-800 leading-tight">{b.candidaturesCount}</dd>
-                    </div>
-                    <div className="rounded-xl bg-cream-50 border border-cream-100 py-2">
-                      <dt className="text-[11px] text-teal-700/60">Tokens (mois)</dt>
-                      <dd className="text-lg font-bold text-teal-800 leading-tight">{formatTokens(b.usage?.tokensThisMonth)}</dd>
-                    </div>
-                    <div className="rounded-xl bg-cream-50 border border-cream-100 py-2">
-                      <dt className="text-[11px] text-teal-700/60">Tokens (total)</dt>
-                      <dd className="text-lg font-bold text-teal-800 leading-tight">{formatTokens(b.usage?.tokensTotal)}</dd>
-                    </div>
-                  </dl>
-                </div>
-              ))}
-            </div>
+            <SuiviQuestionnaires beneficiaires={list} onAssigned={load} focusKey={suiviFocus} />
+            <BaseQuestionnaires beneficiaires={list} />
           </>
         )}
 
-        {/* Questionnaires de suivi, promo par promo */}
-        <SuiviQuestionnaires beneficiaires={list} onAssigned={load} />
+        {onglet === 'messages' && (
+          <>
+            <AvisQueue
+              avis={avis}
+              drafts={drafts}
+              setDrafts={setDrafts}
+              onReply={sendReply}
+              replyingId={replyingId}
+              onOpenFiche={(a) => setOpenFiche({ avisId: a.id, code: a.beneficiaireCode })}
+            />
+            <ReponsesEnvois beneficiaires={list} onOpenPersonne={setFiche} />
+            <OfferReportsPanel />
+          </>
+        )}
 
-        {/* Base de questionnaires : catalogue + créations de la structure */}
-        <BaseQuestionnaires beneficiaires={list} />
-
-        {/* File des avis demandés */}
-        <AvisQueue
-          avis={avis}
-          drafts={drafts}
-          setDrafts={setDrafts}
-          onReply={sendReply}
-          replyingId={replyingId}
-          onOpenFiche={(a) => setOpenFiche({ avisId: a.id, code: a.beneficiaireCode })}
-        />
-
-        {/* Offres signalées « hors sujet » à valider */}
-        <OfferReportsPanel />
+        {onglet === 'documents' && <DocumentsPanel beneficiaires={list} onOpenPersonne={setFiche} />}
       </main>
+
+      {/* Mon profil : prénom + photo, visibles par les personnes accompagnées */}
+      {profilOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-teal-900/50" role="dialog" aria-modal="true" aria-label="Mon profil" onClick={() => setProfilOpen(false)}>
+          <div className="w-full max-w-xl relative" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setProfilOpen(false)} aria-label="Fermer" className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center text-teal-700 hover:bg-cream-200/70">
+              <X className="w-5 h-5" />
+            </button>
+            <ProfilePanel />
+          </div>
+        </div>
+      )}
 
       {/* Fiche d'une personne : métiers, envois, transfert */}
       {fiche && <FichePersonne beneficiaire={fiche} onClose={() => setFiche(null)} onChanged={load} />}

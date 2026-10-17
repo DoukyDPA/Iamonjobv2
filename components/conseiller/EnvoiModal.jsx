@@ -6,18 +6,19 @@
 //
 // Props :
 //   beneficiaires  dossiers du conseiller (pour choisir les destinataires)
-//   preset         { beneficiaireIds?, promo?, label?, type?, questionnaireId? }
+//   preset         { beneficiaireIds?, promo?, label?, type?, questionnaireId?, documentId? }
 //                  destinataires fixés (fiche d'une personne, promo) et/ou type
 //   onClose, onSent
 // ════════════════════════════════════════════════════════════════════════════
 
 import { useEffect, useMemo, useState } from 'react';
-import { Briefcase, MessageCircle, ClipboardList, X, Loader2, Send, CheckCircle2 } from 'lucide-react';
+import { Briefcase, MessageCircle, ClipboardList, FileSignature, X, Loader2, Send, CheckCircle2 } from 'lucide-react';
 
 const TABS = [
   { id: 'offre', label: 'Une offre', icon: Briefcase, hint: 'La personne verra le bouton « Offre de votre conseiller ».' },
   { id: 'message', label: 'Un message', icon: MessageCircle, hint: 'La personne verra le bouton « Message de votre conseiller ».' },
   { id: 'questionnaire', label: 'Un questionnaire', icon: ClipboardList, hint: 'La personne verra le bouton « Merci de répondre à quelques questions ».' },
+  { id: 'document', label: 'Un document', icon: FileSignature, hint: 'La personne verra le bouton « Document à lire et signer ».' },
 ];
 
 const input = 'w-full p-2.5 text-sm rounded-lg border border-teal-200 bg-white outline-none focus:ring-2 focus:ring-teal-400 placeholder:text-teal-700/40';
@@ -29,6 +30,8 @@ export default function EnvoiModal({ beneficiaires = [], preset = {}, onClose, o
   const [offre, setOffre] = useState({ intitule: '', entreprise: '', lieu: '', url: '' });
   const [questionnaireId, setQuestionnaireId] = useState(preset.questionnaireId || '');
   const [base, setBase] = useState(null);
+  const [documentId, setDocumentId] = useState(preset.documentId || '');
+  const [docs, setDocs] = useState(null);
   const [mode, setMode] = useState('promo');
   const [promoKey, setPromoKey] = useState('');
   const [selected, setSelected] = useState(new Set());
@@ -41,6 +44,10 @@ export default function EnvoiModal({ beneficiaires = [], preset = {}, onClose, o
       .then((r) => r.json())
       .then((d) => setBase(d.questionnaires || []))
       .catch(() => setBase([]));
+    fetch('/api/conseiller/documents')
+      .then((r) => r.json())
+      .then((d) => setDocs(d.documents || []))
+      .catch(() => setDocs([]));
   }, []);
 
   // Promos en cours d'abord, puis archivées (l'accompagnement continue).
@@ -76,6 +83,7 @@ export default function EnvoiModal({ beneficiaires = [], preset = {}, onClose, o
     if (type === 'offre' && !offre.intitule.trim()) { setError("Indiquez l'intitulé de l'offre."); return; }
     if (type === 'message' && !texte.trim()) { setError('Le message est vide.'); return; }
     if (type === 'questionnaire' && !questionnaireId) { setError('Choisissez un questionnaire.'); return; }
+    if (type === 'document' && !documentId) { setError('Choisissez un document.'); return; }
     setSending(true);
     try {
       const res = await fetch('/api/conseiller/envois', {
@@ -87,6 +95,7 @@ export default function EnvoiModal({ beneficiaires = [], preset = {}, onClose, o
           promo: cible.promo,
           offre: type === 'offre' ? offre : undefined,
           questionnaireId: type === 'questionnaire' ? questionnaireId : undefined,
+          documentId: type === 'document' ? documentId : undefined,
         }),
       });
       const d = await res.json().catch(() => ({}));
@@ -211,6 +220,20 @@ export default function EnvoiModal({ beneficiaires = [], preset = {}, onClose, o
                     <span className="block text-[11px] text-teal-700/70 mt-1">
                       Pour les personnes de ce parcours, la réponse s'inscrit dans leur suivi hebdomadaire (colonne S{qChoisi.parcours[0].etape}).
                     </span>
+                  )}
+                </label>
+              )}
+
+              {type === 'document' && (
+                <label className="block">
+                  <span className="block text-sm font-semibold text-teal-800 mb-1">Document</span>
+                  {!docs ? <Loader2 className="w-5 h-5 animate-spin text-teal-600" /> : docs.length === 0 ? (
+                    <span className="block text-sm text-amber-700">Aucun document pour l'instant : déposez-en un dans l'onglet « Documents ».</span>
+                  ) : (
+                    <select value={documentId} onChange={(e) => setDocumentId(e.target.value)} className={input}>
+                      <option value="">Choisir un document…</option>
+                      {docs.map((d) => <option key={d.id} value={d.id}>{d.titre} · {d.mode === 'papier' ? 'signature papier' : 'signature en ligne'}</option>)}
+                    </select>
                   )}
                 </label>
               )}

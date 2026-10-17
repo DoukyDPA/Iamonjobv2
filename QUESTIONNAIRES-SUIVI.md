@@ -50,12 +50,12 @@ Une fois les personnes de la promo inscrites dans Iamonjob, leurs fiches archiv�
 
 ```bash
 node --env-file=.env.local scripts/rattacher-archives-questionnaires.mjs \
-  --promo-archive="PROMO 45+ · octobre 2026" --promo-dossiers="Promo 21" [--apply]
+  --promo-archive="PROMO 45+ · octobre 2026" --promo-dossiers="Promo 20" [--apply]
 ```
 
 Le code d'archive est la fin du code du dossier (NKCC → AC-2026-018-NKCC). Écart d'un caractère toléré s'il est unique, appariement forcé possible avec `--force=CODE:SUFFIXE`. Une fiche rattachée garde `source: 'archive'`, son code d'origine (`archiveCode`) et reste en lecture seule pour la personne. Ne pas relancer l'import après le rattachement : il recréerait les fiches sous les anciens codes.
 
-Fait le 12 octobre 2026 pour la PROMO 45+ d'octobre (Promo 21) : 40 fiches, 13 dossiers. Rapprochements non exacts : BACB → B9CB, HTGA → HT6A, ZCES → ZCE5. XXXX n'est pas 3DYP : son dossier est chez une autre conseillère. Ses 3 fiches restent dans la Promo 21 sous le code XXXX, sans dossier (`archive__promo-21__xxxx-sN`), pour garder la promo complète. Pour les autres promos, vérifier avant de laisser jouer l'appariement « par élimination ».
+Fait le 12 octobre 2026 pour la PROMO 45+ d'octobre (Promo 20, d'abord nommée « Promo 21 » par erreur et renommée le 17 octobre avec `scripts/renommer-promo.mjs` ; les identifiants de documents gardent `promo-21`) : 40 fiches, 13 dossiers. Rapprochements non exacts : BACB → B9CB, HTGA → HT6A, ZCES → ZCE5. XXXX n'est pas 3DYP : son dossier est chez une autre conseillère. Ses 3 fiches restent dans la Promo 20 sous le code XXXX, sans dossier (`archive__promo-21__xxxx-sN`), pour garder la promo complète. Pour les autres promos, vérifier avant de laisser jouer l'appariement « par élimination ».
 
 ## Rapport de synthèse et export d'une promo
 
@@ -108,6 +108,33 @@ Fiche de la personne → « Transférer » → un collègue de la même structur
 
 « Télécharger mes codes » (et « Codes » sur une promo) produit un CSV (points-virgules, BOM, lisible par Excel) : code, colonne Prénom vide à compléter, promo, statut. Généré dans le navigateur, il ne transite pas par le serveur. À garder sur l'ordinateur du conseiller, jamais à redéposer dans l'appli.
 
+### Tableau de bord conseiller
+
+`/conseiller` est organisé en onglets (l'onglet ouvert est gardé dans l'adresse, ex. `/conseiller#promos`) :
+
+| Onglet | Contenu |
+|---|---|
+| Promos | une carte par promo (participants, codes activés, fiches reçues) : constituer, modifier, envoyer, codes, archiver, liens vers les participants et le suivi |
+| Accompagnements | une ligne par personne, filtre par promo, tri par date d'inscription (activation du code), par promo ou par code, recherche ; ajout d'une personne, fichier des codes |
+| Questionnaires | suivi semaine par semaine, rapport, export, puis la base de questionnaires |
+| Messages | messages des personnes (avis), réponses à vos envois, offres signalées hors sujet |
+| Documents | bibliothèque, envoi, suivi des signatures |
+
+Composants : `components/conseiller/PromosPanel.jsx`, `AccompagnementsPanel.jsx`, `ReponsesEnvois.jsx`, `DocumentsPanel.jsx`.
+
+### Documents à signer
+
+Fiche d'engagement, charte… Le conseiller dépose un PDF ou un Word (5 Mo maximum, bucket privé, dossier `documents/{structureId}/`) et/ou un texte, partagé avec sa structure, puis l'envoie (envoi de type `document`). Côté personne : bouton « Document à lire et signer ». Deux modes, choisis à la création :
+
+- en ligne : la personne coche « J'ai lu et j'accepte » ; on garde son code, la date et la version, aucun nom ;
+- papier : elle signe à la main avec son conseiller, qui clique « Marquer signé » (onglet Documents ou fiche de la personne). L'original reste à la structure.
+
+Code : `lib/documents.js`, `app/api/conseiller/documents/…`, signature dans `lib/envois.js` (`signDocumentEnvoi`, `setSignaturePapier`). Firestore : `documentsModeles/{id}`.
+
+### Renommer une promo
+
+`node --env-file=.env.local scripts/renommer-promo.mjs --from="ancien" --to="nouveau" [--apply]` : dossiers, fiches, rapports et envois. Sans `--apply`, simple décompte. Vérifier d'abord que le nouveau libellé n'existe pas déjà (sinon les deux promos fusionnent).
+
 ### À déployer
 
-`firebase deploy --only firestore:rules` (collections `envois` et `questionnairesPerso` déclarées fermées ; le refus par défaut les couvrait déjà).
+`firebase deploy --only firestore:rules` (collections `envois`, `questionnairesPerso` et `documentsModeles` déclarées fermées ; le refus par défaut les couvrait déjà).

@@ -70,7 +70,7 @@ function computeAlerts(fiches, etapeCourante) {
   return alerts;
 }
 
-export default function SuiviQuestionnaires({ beneficiaires = [], onAssigned }) {
+export default function SuiviQuestionnaires({ beneficiaires = [], onAssigned, focusKey = null }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [promoKey, setPromoKey] = useState(null);
@@ -148,6 +148,13 @@ export default function SuiviQuestionnaires({ beneficiaires = [], onAssigned }) 
   const visibles = showArchived ? archivees : enCours;
   const promo = visibles.find((p) => p.key === promoKey) || visibles[0] || null;
 
+  // Arrivée depuis l'onglet Promos : on ouvre directement la promo demandée.
+  useEffect(() => {
+    if (!focusKey || !promos.length) return;
+    const p = promos.find((x) => x.key === focusKey);
+    if (p) { setShowArchived(Boolean(p.archive || p.archivee)); setPromoKey(p.key); }
+  }, [focusKey, promos.length]);
+
   async function toggleArchive(p) {
     const archivee = !p.archivee;
     if (archivee && window.confirm && !window.confirm(`Archiver « ${p.label} » ? Rien n'est supprimé : les personnes restent suivies, leurs fiches restent lisibles et vous pouvez toujours leur écrire.`)) return;
@@ -190,13 +197,6 @@ export default function SuiviQuestionnaires({ beneficiaires = [], onAssigned }) 
             <Archive className="w-4 h-4" /> {showArchived ? 'Promos en cours' : `Promos archivées (${archivees.length})`}
           </button>
         )}
-        <button
-          onClick={() => setAssignOpen(true)}
-          disabled={!data || beneficiaires.length === 0}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-teal-200 bg-white text-teal-800 font-semibold text-sm hover:bg-teal-50 disabled:opacity-50"
-        >
-          <UsersRound className="w-4 h-4" /> Constituer une promo
-        </button>
         </div>
       </div>
 
@@ -210,15 +210,15 @@ export default function SuiviQuestionnaires({ beneficiaires = [], onAssigned }) 
         <div className="bg-white border border-cream-200 rounded-2xl shadow-card p-8 text-center">
           <p className="text-teal-800 font-semibold">{showArchived ? 'Aucune promo archivée' : 'Aucune promo en cours'}</p>
           <p className="text-sm text-teal-700/70 mt-1">
-            {showArchived ? '' : 'Les promos terminées sont dans « Promos archivées ». « Constituer une promo » en démarre une nouvelle.'}
+            {showArchived ? '' : 'Les promos terminées sont dans « Promos archivées ». Les nouvelles se constituent dans l\'onglet « Promos ».'}
           </p>
         </div>
       ) : promos.length === 0 ? (
         <div className="bg-white border border-cream-200 rounded-2xl shadow-card p-8 text-center">
           <p className="text-teal-800 font-semibold">Aucune promo pour l'instant</p>
           <p className="text-sm text-teal-700/70 mt-1">
-            « Constituer une promo » affecte un parcours (ex. PROMO 45+) à des personnes. Elles verront
-            alors leurs questionnaires dans leur espace.
+            Constituez une promo dans l'onglet « Promos » : ses participants verront alors leurs
+            questionnaires dans leur espace.
           </p>
         </div>
       ) : (
@@ -515,13 +515,6 @@ function PromoActions({ promo, onRapport, onEnvoi, onCodes, onArchive, busy }) {
           <button onClick={onEnvoi} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-pink-500 text-white font-semibold text-sm hover:bg-pink-600" title="Offre, message ou questionnaire à toute la promo">
             <Send className="w-4 h-4" aria-hidden="true" /> Envoyer à la promo
           </button>
-          <button onClick={onCodes} className={btn} title="Codes de la promo, à compléter avec les prénoms sur votre ordinateur">
-            <FileSpreadsheet className="w-4 h-4" aria-hidden="true" /> Codes
-          </button>
-          <button onClick={onArchive} disabled={busy} className={btn} title={promo.archivee ? 'Remettre la promo dans les promos en cours' : "Promo terminée : l'accompagnement continue à un autre rythme"}>
-            {promo.archivee ? <ArchiveRestore className="w-4 h-4" aria-hidden="true" /> : <Archive className="w-4 h-4" aria-hidden="true" />}
-            {promo.archivee ? 'Réactiver' : 'Archiver la promo'}
-          </button>
         </>
       )}
       <button
@@ -746,7 +739,7 @@ function RList({ titre, items }) {
 
 // ─── Constituer une promo ────────────────────────────────────────────────────
 
-function AssignModal({ parcours, beneficiaires, current, onClose, onDone }) {
+export function AssignModal({ parcours, beneficiaires, current, onClose, onDone }) {
   const [parcoursId, setParcoursId] = useState(current?.parcoursId || parcours[0]?.id || '');
   const [promo, setPromo] = useState(current?.promo || '');
   const initial = useMemo(

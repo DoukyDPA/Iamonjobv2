@@ -13,7 +13,7 @@
 //
 // Usage :
 //   node --env-file=.env.local scripts/rattacher-archives-questionnaires.mjs \
-//     --promo-archive="PROMO 45+ · octobre 2026" --promo-dossiers="Promo 21" \
+//     --promo-archive="PROMO 45+ · octobre 2026" --promo-dossiers="Promo 20" \
 //     [--force=CODE:SUFFIXE,…] [--apply]
 //
 // Sans --apply : simulation, rien n'est écrit. Une fiche déjà remplie dans

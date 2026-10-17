@@ -15,13 +15,13 @@
 import { useEffect, useState } from 'react';
 import {
   X, Loader2, Star, Send, ArrowRightLeft, Briefcase, MessageCircle, ClipboardList,
-  ExternalLink, Trash2, Eye, CheckCircle2, Clock, Compass,
+  ExternalLink, Trash2, Eye, CheckCircle2, Clock, Compass, FileSignature, PenLine,
 } from 'lucide-react';
 import EnvoiModal from './EnvoiModal';
 import { FicheModal } from './SuiviQuestionnaires';
 
-const ICONS = { offre: Briefcase, message: MessageCircle, questionnaire: ClipboardList };
-const LABELS = { offre: 'Offre', message: 'Message', questionnaire: 'Questionnaire' };
+const ICONS = { offre: Briefcase, message: MessageCircle, questionnaire: ClipboardList, document: FileSignature };
+const LABELS = { offre: 'Offre', message: 'Message', questionnaire: 'Questionnaire', document: 'Document' };
 const PISTES = [
   { key: 'proches', label: 'Métiers proches' },
   { key: 'logiques', label: 'En lien logique' },
@@ -37,6 +37,10 @@ function formatDate(ms) {
 const ftUrl = (title) => `https://candidat.francetravail.fr/offres/recherche?motsCles=${encodeURIComponent(title)}`;
 
 function statut(e) {
+  if (e.type === 'document') {
+    if (e.signature) return { text: `Signé ${e.signature.mode === 'papier' ? 'sur papier' : 'en ligne'} le ${formatDate(e.signature.at)}`, cls: 'text-teal-700', icon: CheckCircle2 };
+    return { text: e.status === 'vu' ? 'Lu, pas encore signé' : 'Pas encore ouvert', cls: 'text-amber-700', icon: Clock };
+  }
   if (e.status === 'repondu') return { text: e.type === 'questionnaire' ? 'Répondu' : 'A répondu', cls: 'text-teal-700', icon: CheckCircle2 };
   if (e.status === 'vu') return { text: `Lu le ${formatDate(e.vuAt)}`, cls: 'text-teal-700/70', icon: Eye };
   return { text: 'Pas encore ouvert', cls: 'text-amber-700', icon: Clock };
@@ -64,6 +68,15 @@ export default function FichePersonne({ beneficiaire, onClose, onChanged }) {
       await fetch(`/api/conseiller/envois/${encodeURIComponent(id)}`, { method: 'DELETE' });
       await load();
     }
+  }
+
+  async function signePapier(id, signe) {
+    await fetch(`/api/conseiller/envois/${encodeURIComponent(id)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'signe-papier', signe }),
+    });
+    await load();
   }
 
   const m = data?.metiers;
@@ -150,7 +163,7 @@ export default function FichePersonne({ beneficiaire, onClose, onChanged }) {
                       const Icon = ICONS[e.type];
                       const st = statut(e);
                       const StIcon = st.icon;
-                      const titre = e.type === 'offre' ? e.offre?.intitule : e.type === 'questionnaire' ? e.questionnaire?.titre : e.texte;
+                      const titre = e.type === 'offre' ? e.offre?.intitule : e.type === 'questionnaire' ? e.questionnaire?.titre : e.type === 'document' ? e.document?.titre : e.texte;
                       return (
                         <li key={e.id} className="rounded-xl border border-cream-200 p-3">
                           <div className="flex items-start gap-2">
@@ -171,6 +184,11 @@ export default function FichePersonne({ beneficiaire, onClose, onChanged }) {
                                 </div>
                               )}
                             </div>
+                            {e.type === 'document' && e.document?.mode === 'papier' && e.signature?.mode !== 'en-ligne' && (
+                              <button onClick={() => signePapier(e.id, !e.signature)} className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-teal-700 hover:underline">
+                                <PenLine className="w-3.5 h-3.5" /> {e.signature ? 'Annuler « signé »' : 'Marquer signé'}
+                              </button>
+                            )}
                             {e.type === 'questionnaire' && e.reponseId && (
                               <button onClick={() => setFicheId(e.reponseId)} className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-teal-700 hover:underline">
                                 <Eye className="w-3.5 h-3.5" /> Réponses

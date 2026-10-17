@@ -6,7 +6,7 @@
 //        body : { type: 'offre'|'message'|'questionnaire',
 //                 beneficiaireIds: string[], promo?: string,
 //                 texte?, offre?: { intitule, entreprise, lieu, url },
-//                 questionnaireId? }
+//                 questionnaireId?, documentId? }
 //
 // Accès : rôle `conseiller` ; seuls ses propres dossiers sont visés.
 // ════════════════════════════════════════════════════════════════════════════
@@ -48,7 +48,7 @@ export async function POST(request) {
       beneficiaireIds: Array.isArray(body.beneficiaireIds) ? body.beneficiaireIds : [],
       type: body.type,
       promo: body.promo || null,
-      payload: { texte: body.texte, offre: body.offre, questionnaireId: body.questionnaireId },
+      payload: { texte: body.texte, offre: body.offre, questionnaireId: body.questionnaireId, documentId: body.documentId },
     });
     logEvent({ event: 'conseiller-envoi', requestId, uid, status: 'ok', type: body.type, created: result.created });
     return NextResponse.json({ ok: true, ...result });

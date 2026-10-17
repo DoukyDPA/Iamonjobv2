@@ -19,7 +19,7 @@
 import { useEffect, useState } from 'react';
 import {
   Briefcase, MessageCircle, ClipboardList, X, ChevronLeft, ChevronRight,
-  ExternalLink, Send, CheckCircle2, MapPin, Building2, Inbox,
+  ExternalLink, Send, CheckCircle2, MapPin, Building2, Inbox, FileSignature, Download, PenLine,
 } from 'lucide-react';
 import { Button } from './ui';
 import { QuestionnaireForm } from './MesQuestionnaires';
@@ -28,6 +28,7 @@ const TYPES = {
   offre: { icon: Briefcase, bouton: 'Offre de votre conseiller', court: 'Offre', tone: 'bg-pink-500 hover:bg-pink-600 text-white' },
   message: { icon: MessageCircle, bouton: 'Message de votre conseiller', court: 'Message', tone: 'bg-teal-600 hover:bg-teal-700 text-white' },
   questionnaire: { icon: ClipboardList, bouton: 'Merci de répondre à quelques questions', court: 'Questions', tone: 'bg-amber-500 hover:bg-amber-600 text-white' },
+  document: { icon: FileSignature, bouton: 'Document à lire et signer', court: 'Document', tone: 'bg-indigo-600 hover:bg-indigo-700 text-white' },
 };
 
 function formatDate(ms) {
@@ -35,7 +36,13 @@ function formatDate(ms) {
   try { return new Date(ms).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }); } catch { return ''; }
 }
 
-const enAttente = (e) => (e.type === 'questionnaire' ? e.status !== 'repondu' : e.status === 'nouveau');
+// Un questionnaire attend une réponse, un document en ligne une signature ;
+// le reste (offre, message, document papier) est soldé dès l'ouverture.
+const enAttente = (e) => {
+  if (e.type === 'questionnaire') return e.status !== 'repondu';
+  if (e.type === 'document' && e.document?.mode === 'en-ligne') return e.status !== 'repondu';
+  return e.status === 'nouveau';
+};
 
 export default function EnvoisConseiller({ variant = 'sidebar' }) {
   const [data, setData] = useState(null);
@@ -56,7 +63,7 @@ export default function EnvoisConseiller({ variant = 'sidebar' }) {
   if (!envois.length) return null;
 
   const pending = envois.filter(enAttente);
-  const parType = ['offre', 'message', 'questionnaire']
+  const parType = ['document', 'offre', 'message', 'questionnaire']
     .map((t) => ({ type: t, items: pending.filter((e) => e.type === t) }))
     .filter((g) => g.items.length);
 
@@ -160,7 +167,13 @@ export default function EnvoisConseiller({ variant = 'sidebar' }) {
             </div>
 
             {current ? (
-              current.type === 'questionnaire' ? (
+              current.type === 'document' ? (
+                <DocumentEnvoi
+                  envoi={current}
+                  doc={data.documents?.[current.document?.id]}
+                  onSigned={async () => { await load(); setCurrentId(null); setFlash('Merci, votre signature est enregistrée et transmise à votre conseiller.'); }}
+                />
+              ) : current.type === 'questionnaire' ? (
                 <QuestionnaireEnvoi
                   envoi={current}
                   questionnaire={data.questionnaires?.[current.questionnaire?.id]}
@@ -186,7 +199,7 @@ export default function EnvoisConseiller({ variant = 'sidebar' }) {
                 {envois.map((e) => {
                   const T = TYPES[e.type];
                   const Icon = T.icon;
-                  const titre = e.type === 'offre' ? e.offre?.intitule : e.type === 'questionnaire' ? e.questionnaire?.titre : (e.texte || '').slice(0, 80);
+                  const titre = e.type === 'offre' ? e.offre?.intitule : e.type === 'questionnaire' ? e.questionnaire?.titre : e.type === 'document' ? e.document?.titre : (e.texte || '').slice(0, 80);
                   const attente = enAttente(e);
                   return (
                     <button
@@ -201,7 +214,7 @@ export default function EnvoisConseiller({ variant = 'sidebar' }) {
                       <span className="flex-1 min-w-0">
                         <span className="block text-sm font-semibold text-teal-800 truncate">{T.court} · {titre}</span>
                         <span className="block text-xs text-teal-700/70">
-                          {formatDate(e.createdAt)} · {e.status === 'repondu' ? (e.type === 'questionnaire' ? 'Répondu' : 'Vous avez répondu') : attente ? 'À ouvrir' : 'Lu'}
+                          {formatDate(e.createdAt)} · {e.status === 'repondu' ? (e.type === 'questionnaire' ? 'Répondu' : e.type === 'document' ? 'Signé' : 'Vous avez répondu') : attente ? (e.type === 'document' ? 'À signer' : 'À ouvrir') : 'Lu'}
                         </span>
                       </span>
                       <ChevronRight className="w-4 h-4 text-teal-600 shrink-0" />
@@ -321,5 +334,75 @@ function QuestionnaireEnvoi({ envoi, questionnaire, onDone }) {
         onDone={onDone}
       />
     </>
+  );
+}
+
+// Document : texte et/ou fichier à télécharger, puis signature en ligne
+// (« J'ai lu et j'accepte », sous le code) ou rappel de la signature papier.
+function DocumentEnvoi({ envoi, doc, onSigned }) {
+  const [ok, setOk] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState(null);
+
+  if (!doc) return <p className="px-6 py-8 text-sm text-teal-700/80">Ce document n'est plus disponible. Parlez-en à votre conseiller.</p>;
+
+  async function signer() {
+    setSending(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/envois/${encodeURIComponent(envoi.id)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'signer' }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || 'La signature a échoué.');
+      await onSigned();
+    } catch (err) {
+      setError(err.message);
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4 iamj-scrollbar">
+      <div>
+        <h3 className="text-base font-bold text-teal-900">{doc.titre}</h3>
+        {doc.description && <p className="text-sm text-teal-700/80 mt-1">{doc.description}</p>}
+        {envoi.texte && <p className="text-sm text-teal-800 mt-2 whitespace-pre-wrap"><strong>Votre conseiller : </strong>{envoi.texte}</p>}
+      </div>
+      {doc.fichier?.downloadUrl && (
+        <a href={doc.fichier.downloadUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-teal-200 bg-white text-teal-800 text-sm font-semibold hover:bg-teal-50">
+          <Download className="w-4 h-4" /> Ouvrir le document ({doc.fichier.name})
+        </a>
+      )}
+      {doc.texte && (
+        <div className="rounded-xl border border-cream-200 bg-cream-50/60 p-4 text-sm text-teal-900 whitespace-pre-wrap leading-relaxed max-h-72 overflow-y-auto iamj-scrollbar">{doc.texte}</div>
+      )}
+
+      {envoi.signature ? (
+        <div className="flex items-start gap-2 p-3 rounded-xl bg-teal-50 border border-teal-200 text-sm text-teal-800">
+          <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+          {envoi.signature.mode === 'papier' ? 'Signé avec votre conseiller' : 'Vous avez signé ce document'}{envoi.signature.at ? ` le ${formatDate(envoi.signature.at)}` : ''}.
+        </div>
+      ) : doc.mode === 'papier' ? (
+        <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
+          <PenLine className="w-4 h-4 shrink-0 mt-0.5" />
+          Prenez le temps de le lire. Vous le signerez sur papier avec votre conseiller, lors de votre prochain rendez-vous.
+        </div>
+      ) : (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4">
+          <label className="flex items-start gap-2 text-sm text-teal-900 cursor-pointer">
+            <input type="checkbox" checked={ok} onChange={(e) => setOk(e.target.checked)} className="accent-teal-600 mt-0.5" />
+            <span>J'ai lu ce document et je l'accepte.</span>
+          </label>
+          <p className="text-[11px] text-teal-700/60 mt-1 ml-6">Votre accord est enregistré sous votre code, avec la date. Aucun nom n'est demandé.</p>
+          {error && <p className="text-sm text-rose-600 mt-2">{error}</p>}
+          <div className="mt-3">
+            <Button onClick={signer} loading={sending} disabled={!ok} icon={PenLine}>Je signe</Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
