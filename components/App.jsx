@@ -28,6 +28,7 @@ import {
 import AvisConseiller from './AvisConseiller';
 import LetterTools from './LetterTools';
 import DictateButton from './DictateButton';
+import InterviewTrainer from './InterviewTrainer';
 import { extractDocxText } from '@/lib/docx-read';
 
 const MAX_CHAT_MESSAGES = 30;
@@ -1957,6 +1958,7 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                       </Card>
                     ))}
                   </div>
+                  <InterviewTrainer questions={interviewPrep} intitule={selectedOffer?.intitule || ''} />
                 </div>
               )}
 

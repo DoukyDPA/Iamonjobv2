@@ -63,8 +63,22 @@ export default function MesQuestionnaires({ variant = 'sidebar' }) {
     ? `À remplir : ${prochaine.label}`
     : remplis > 0 ? 'Tout est à jour, merci !' : 'Vos questionnaires';
 
+  // Relance automatique : en haut de chaque écran, tant que la fiche de la
+  // semaine n'est pas remplie. Rien quand tout est à jour.
+  if (variant === 'banner' && !prochaine && !open) return null;
+
   const trigger =
-    variant === 'mobile' ? (
+    variant === 'banner' ? (
+      <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border-2 border-pink-200 bg-pink-50/60 px-4 py-3">
+        <ClipboardList className="w-5 h-5 text-pink-600 shrink-0" aria-hidden="true" />
+        <p className="flex-1 min-w-[12rem] text-sm text-teal-900">
+          <strong>Votre questionnaire vous attend</strong> : {prochaine?.label}. Cinq minutes, et votre conseiller prépare mieux votre prochain échange.
+        </p>
+        <button type="button" onClick={() => openPanel(prochaine?.questionnaireId || null)} className="px-4 py-2 rounded-xl bg-pink-600 text-white text-sm font-semibold hover:bg-pink-700">
+          Le remplir maintenant
+        </button>
+      </div>
+    ) : variant === 'mobile' ? (
       <button
         type="button"
         onClick={() => openPanel()}

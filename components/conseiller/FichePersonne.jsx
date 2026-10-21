@@ -169,6 +169,8 @@ export default function FichePersonne({ beneficiaire, onClose, onChanged }) {
             <>
               {data.avancement && <Avancement a={data.avancement} />}
 
+              <RendezVous beneficiaire={beneficiaire} initial={data.dossier?.prochainRdv} onChanged={onChanged} />
+
               <SortiePersonne beneficiaire={beneficiaire} initial={data.dossier?.sortie} onChanged={onChanged} />
 
               {/* Métiers de l'étape 2 */}
@@ -541,6 +543,98 @@ function SortiePersonne({ beneficiaire, initial, onChanged }) {
         </button>
       </div>
       {msg && <p className="text-xs text-teal-700 mt-1">{msg}</p>}
+    </section>
+  );
+}
+
+// Prochain rendez-vous (rappel la veille dans l'espace de la personne) et
+// « Préparer mon rendez-vous » : synthèse du dossier en une dizaine de lignes.
+function RendezVous({ beneficiaire, initial, onChanged }) {
+  const [date, setDate] = useState(initial?.date || '');
+  const [heure, setHeure] = useState(initial?.heure || '');
+  const [lieu, setLieu] = useState(initial?.lieu || '');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const [synth, setSynth] = useState(null);
+  const [synthBusy, setSynthBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const base = `/api/conseiller/beneficiaires/${encodeURIComponent(beneficiaire.id)}`;
+
+  async function enregistrer(effacer = false) {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const r = await fetch(base, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prochainRdv: effacer ? null : { date, heure, lieu } }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || 'Échec.');
+      if (effacer) { setDate(''); setHeure(''); setLieu(''); }
+      setMsg(effacer ? 'Rendez-vous retiré.' : 'Rendez-vous enregistré : la personne le voit dans son espace, avec un rappel la veille.');
+      await onChanged?.();
+    } catch (e) {
+      setMsg(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function preparer() {
+    setSynthBusy(true);
+    setSynth(null);
+    try {
+      const r = await fetch(`${base}/synthese`, { method: 'POST' });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || 'Synthèse impossible.');
+      setSynth({ ok: true, text: d.synthese });
+    } catch (e) {
+      setSynth({ ok: false, text: e.message });
+    } finally {
+      setSynthBusy(false);
+    }
+  }
+
+  return (
+    <section>
+      <h3 className="text-xs font-bold text-teal-800 uppercase tracking-wider mb-2">Prochain rendez-vous</h3>
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="text-xs text-teal-800">Date
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="ml-1 p-1.5 text-sm rounded-lg border border-teal-200" />
+        </label>
+        <label className="text-xs text-teal-800">Heure
+          <input type="time" value={heure} onChange={(e) => setHeure(e.target.value)} className="ml-1 p-1.5 text-sm rounded-lg border border-teal-200" />
+        </label>
+        <input value={lieu} onChange={(e) => setLieu(e.target.value)} maxLength={160} placeholder="Lieu (ex. : CBE, bureau 2)" className="flex-1 min-w-[10rem] p-2 text-sm rounded-lg border border-teal-200" />
+        <button onClick={() => enregistrer(false)} disabled={busy || !date} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 disabled:bg-teal-200">
+          {busy && <Loader2 className="w-4 h-4 animate-spin" />} Enregistrer
+        </button>
+        {initial && <button onClick={() => enregistrer(true)} disabled={busy} className="text-sm font-semibold text-rose-600 hover:underline">Retirer</button>}
+      </div>
+      {msg && <p className="text-xs text-teal-700 mt-1">{msg}</p>}
+
+      <div className="mt-3">
+        <button onClick={preparer} disabled={synthBusy} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-800 text-sm font-semibold hover:bg-indigo-100 disabled:opacity-60">
+          {synthBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Compass className="w-4 h-4" />} Préparer mon rendez-vous
+        </button>
+        <span className="ml-2 text-[11px] text-teal-700/60">Synthèse du dossier par l'IA (Mistral), sans le CV ni aucun nom. Rien n'est enregistré.</span>
+        {synth && (
+          <div className={`mt-2 rounded-xl border px-4 py-3 text-sm whitespace-pre-wrap ${synth.ok ? 'bg-indigo-50/50 border-indigo-100 text-teal-900' : 'bg-rose-50 border-rose-200 text-rose-700'}`}>
+            {synth.text}
+            {synth.ok && (
+              <div className="mt-2">
+                <button
+                  onClick={async () => { try { await navigator.clipboard.writeText(synth.text); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* ignoré */ } }}
+                  className="text-xs font-semibold text-indigo-700 hover:underline"
+                >
+                  {copied ? 'Copiée' : 'Copier la synthèse'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </section>
   );
 }

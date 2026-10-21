@@ -6,7 +6,7 @@
     <title>IAMONCV</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="iamoncv.css?v=20261017c">
+    <link rel="stylesheet" href="iamoncv.css?v=20261021">
 </head>
 <body class="bg-[#F7F3EC] font-sans text-slate-900 h-screen flex flex-col overflow-hidden">
     <!-- Chargement des CV enregistrés sur le compte (retiré une fois prêt) -->
@@ -96,6 +96,11 @@
                     </div>
                     <input type="file" id="profile-import" accept="application/json,.json" onchange="importProfileFromFile(this.files && this.files[0])" class="hidden">
                     <button onclick="importFromIamonjob()" title="Reprendre le CV chargé et anonymisé à l'étape 1 d'IAMONJOB" class="w-full mt-1.5 text-[11px] font-bold text-white bg-[#1E7A6B] rounded-lg px-2 py-1.5 hover:bg-[#166457] transition"><i class="fas fa-file-import mr-1"></i> Reprendre mon CV IAMONJOB</button>
+                    <!-- Conseiller : échanges avec l'espace IAMONCV de la personne (affiché par cloudBoot) -->
+                    <div id="conseiller-cv-tools" class="hidden mt-1.5 grid grid-cols-2 gap-1.5">
+                        <button onclick="openPersonPicker('envoyer')" title="Déposer ce CV dans l'espace de la personne accompagnée : elle le retrouve et peut le modifier" class="text-[11px] font-bold text-[#1E7A6B] bg-white border border-[#CBE0DA] rounded-lg px-2 py-1.5 hover:bg-[#d9ece6] transition"><i class="fas fa-share mr-1"></i> Envoyer à la personne</button>
+                        <button onclick="openPersonPicker('recuperer')" title="Reprendre ici un CV de l'espace de la personne (par exemple après ses retouches)" class="text-[11px] font-bold text-[#1E7A6B] bg-white border border-[#CBE0DA] rounded-lg px-2 py-1.5 hover:bg-[#d9ece6] transition"><i class="fas fa-reply mr-1"></i> Récupérer son CV</button>
+                    </div>
                 </div>
             </div>
 
@@ -399,6 +404,6 @@
         </div>
     </div>
 
-    <script src="iamoncv.js?v=20261017c" charset="utf-8"></script>
+    <script src="iamoncv.js?v=20261021" charset="utf-8"></script>
 </body>
 </html>

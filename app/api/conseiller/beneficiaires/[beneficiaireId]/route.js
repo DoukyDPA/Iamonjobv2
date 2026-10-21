@@ -93,6 +93,7 @@ export async function GET(request, { params }) {
       dossier: {
         id: b.id, code: b.code, status: b.status || 'invited', promo: b.promo || null,
         sortie: b.sortie || null,
+        prochainRdv: b.prochainRdv || null,
         parcoursId: b.parcoursId || null, promoArchivee: Boolean(b.promoArchivee),
         transferts: (b.transferts || []).map((t) => ({ le: t.le, recu: t.vers === uid })),
       },
@@ -137,7 +138,8 @@ export async function DELETE(request, { params }) {
 }
 
 // PATCH → situation à la sortie : { sortie: { situation, date, precision } }
-//         ou { sortie: null } pour l'effacer.
+//         ou { sortie: null } pour l'effacer ; prochain rendez-vous :
+//         { prochainRdv: { date, heure, lieu } } ou { prochainRdv: null }.
 export async function PATCH(request, { params }) {
   const { uid, error, status } = await requireRole(request, 'conseiller');
   if (!uid) return NextResponse.json({ error }, { status });
@@ -146,6 +148,18 @@ export async function PATCH(request, { params }) {
     if (!b) return NextResponse.json({ error: 'Dossier introuvable.' }, { status: 404 });
     if (b.conseillerUid !== uid) return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
     const body = await request.json().catch(() => ({}));
+    // Prochain rendez-vous : { date: 'AAAA-MM-JJ', heure: 'HH:MM', lieu } ou null.
+    if (body.prochainRdv !== undefined) {
+      let rdv = null;
+      if (body.prochainRdv) {
+        const date = String(body.prochainRdv.date || '');
+        const heure = String(body.prochainRdv.heure || '');
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return NextResponse.json({ error: 'Date invalide.' }, { status: 400 });
+        rdv = { date, heure: /^\d{2}:\d{2}$/.test(heure) ? heure : '', lieu: String(body.prochainRdv.lieu || '').slice(0, 160) };
+      }
+      await adminDb.doc(`beneficiaires/${b.id}`).set({ prochainRdv: rdv, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+      return NextResponse.json({ ok: true, prochainRdv: rdv });
+    }
     let sortie = null;
     if (body.sortie) {
       const situation = String(body.sortie.situation || '');

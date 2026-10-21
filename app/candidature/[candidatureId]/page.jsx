@@ -25,6 +25,7 @@ import { Button, Badge, Card } from '@/components/ui';
 import NotesBlock from '@/components/NotesBlock';
 import ShareToConseiller from '@/components/ShareToConseiller';
 import LetterTools from '@/components/LetterTools';
+import InterviewTrainer from '@/components/InterviewTrainer';
 import CandidatureStatus, { RelanceReminder, patchCandidature } from '@/components/CandidatureStatus';
 
 const TYPE_LABEL = {
@@ -339,6 +340,7 @@ export default function CandidatureDetailPage() {
                   </div>
                 );
               })}
+              <InterviewTrainer questions={interviewPrep.questions} intitule={offer.intitule || ''} />
               <div className="flex justify-end">
                 <ShareToConseiller shared={sharedFiche} compact label="Partager avec mon conseiller" />
               </div>

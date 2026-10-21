@@ -301,6 +301,7 @@ export default function AppShell({
           <main className="flex-1 px-4 sm:px-6 lg:px-10 py-8 max-w-[1024px] mx-auto w-full">
             {error && <ErrorBanner message={error} onClose={onCloseError} />}
             <StepHelpLink step={currentStep} coded={Boolean(user?.email?.endsWith('@iamonjob.local'))} />
+            <MesQuestionnaires variant="banner" />
             {children}
           </main>
           <Footer />

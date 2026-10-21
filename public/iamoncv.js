@@ -637,6 +637,8 @@
             // Compteur de consommation : utile au conseiller, pas à la personne.
             const meter = document.getElementById('token-meter');
             if (meter && Cloud.role !== 'conseiller') meter.style.display = 'none';
+            const ctools = document.getElementById('conseiller-cv-tools');
+            if (ctools && Cloud.role === 'conseiller') ctools.classList.remove('hidden');
 
             // Ancien CV resté dans ce navigateur ?
             const declinedKey = 'iamoncv_legacy_declined_' + Cloud.who;
@@ -2274,6 +2276,116 @@ ${genderDirective()}`;
         function setLabel(id, text) {
             const el = document.getElementById(id);
             if (el && document.activeElement !== el) el.innerText = text;
+        }
+
+        // --- ÉCHANGES AVEC L'ESPACE D'UNE PERSONNE (conseiller) ---
+        // Le CV préparé ici part dans l'espace IAMONCV de la personne (nouveau
+        // profil qu'elle peut modifier), ou revient d'elle après ses retouches.
+        // Fini le fichier « version éditable » qui circule par clé USB.
+        function prenomLocal(code) {
+            // Prénoms du fichier des codes, si le conseiller a choisi de les garder
+            // sur cet ordinateur (tableau de bord). Jamais envoyés au serveur.
+            try {
+                const m = JSON.parse(localStorage.getItem('iamj_prenoms_' + Cloud.who) || '{}');
+                return m[code] || '';
+            } catch (e) { return ''; }
+        }
+
+        function closePicker() { const el = document.getElementById('person-picker'); if (el) el.remove(); }
+
+        function showPicker(title, bodyHtml) {
+            closePicker();
+            const wrap = document.createElement('div');
+            wrap.id = 'person-picker';
+            wrap.className = 'fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4';
+            wrap.innerHTML = `<div role="dialog" aria-modal="true" class="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[85vh] overflow-y-auto p-5">
+                <div class="flex items-start justify-between gap-2 mb-3"><h2 class="text-base font-bold text-[#123F39]">${escapeHtml(title)}</h2>
+                <button onclick="closePicker()" class="text-slate-400 hover:text-slate-700" aria-label="Fermer"><i class="fas fa-times"></i></button></div>
+                <div id="person-picker-body">${bodyHtml}</div></div>`;
+            wrap.addEventListener('click', (e) => { if (e.target === wrap) closePicker(); });
+            document.body.appendChild(wrap);
+        }
+
+        async function openPersonPicker(mode) {
+            persistActive();
+            showPicker(mode === 'envoyer' ? 'Envoyer ce CV à…' : 'Récupérer le CV de…', '<p class="text-sm text-slate-500"><i class="fas fa-spinner fa-spin mr-1"></i> Chargement…</p>');
+            try {
+                const r = await cloudFetch('/api/conseiller/beneficiaires');
+                const d = await r.json();
+                if (!r.ok) throw new Error(d.error || 'Liste indisponible.');
+                const list = (d.beneficiaires || []).filter(b => b.status === 'active');
+                const body = document.getElementById('person-picker-body');
+                if (!body) return;
+                if (!list.length) { body.innerHTML = '<p class="text-sm text-slate-600">Aucune personne avec un accès activé.</p>'; return; }
+                const meta = getProfilesMeta();
+                const cur = meta ? meta.list.find(p => p.id === meta.active) : null;
+                body.innerHTML = (mode === 'envoyer'
+                    ? `<p class="text-xs text-slate-600 mb-3">Le CV « ${escapeHtml(cur ? cur.name : 'actif')} » sera déposé dans l'espace IAMONCV de la personne. Elle le retrouvera et pourra le modifier.</p>`
+                    : `<p class="text-xs text-slate-600 mb-3">Choisissez la personne, puis le CV à reprendre ici, comme nouveau profil.</p>`)
+                    + `<input id="pp-filter" placeholder="Code ou prénom…" class="w-full mb-2 text-sm border border-[#CBE0DA] rounded-lg px-2 py-1.5" oninput="filterPicker(this.value)">`
+                    + '<ul class="space-y-1">' + list.map(b => {
+                        const pr = prenomLocal(b.code);
+                        return `<li data-k="${escapeHtml((b.code + ' ' + pr).toLowerCase())}"><button onclick="${mode === 'envoyer' ? 'sendCvTo' : 'listCvOf'}('${b.id}', '${escapeHtml(b.code)}')" class="w-full text-left text-sm px-3 py-2 rounded-lg border border-[#CBE0DA] hover:bg-[#EAF3F0]"><span class="font-mono font-bold text-[#123F39]">${escapeHtml(b.code)}</span>${pr ? ` <span class="text-[#B83B5E] font-semibold">· ${escapeHtml(pr)}</span>` : ''}</button></li>`;
+                    }).join('') + '</ul>';
+            } catch (e) {
+                const body = document.getElementById('person-picker-body');
+                if (body) body.innerHTML = `<p class="text-sm text-red-600">${escapeHtml(e.message)}</p>`;
+            }
+        }
+
+        function filterPicker(q) {
+            const k = String(q || '').toLowerCase().trim();
+            document.querySelectorAll('#person-picker li[data-k]').forEach(li => { li.style.display = !k || li.dataset.k.includes(k) ? '' : 'none'; });
+        }
+
+        async function sendCvTo(benId, code) {
+            if (!confirm(`Envoyer ce CV dans l'espace de ${code} ?`)) return;
+            try {
+                const data = JSON.parse(JSON.stringify({ db: db, cv: cvData }));
+                if (data.cv && typeof data.cv.image === 'string' && data.cv.image.length > 400000) data.cv.image = await shrinkPhoto(data.cv.image);
+                const r = await cloudFetch(`/api/conseiller/beneficiaires/${encodeURIComponent(benId)}/cv`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: `CV préparé avec votre conseiller (${new Date().toLocaleDateString('fr-FR')})`, data }),
+                });
+                const d = await r.json().catch(() => ({}));
+                if (!r.ok) throw new Error(d.error || 'Envoi impossible.');
+                closePicker();
+                alert(`CV envoyé. ${code} le trouvera dans « Créer mon CV », sous le nom « CV préparé avec votre conseiller ».`);
+            } catch (e) { alert(e.message); }
+        }
+
+        async function listCvOf(benId, code) {
+            const body = document.getElementById('person-picker-body');
+            if (body) body.innerHTML = '<p class="text-sm text-slate-500"><i class="fas fa-spinner fa-spin mr-1"></i> Chargement…</p>';
+            try {
+                const r = await cloudFetch(`/api/conseiller/beneficiaires/${encodeURIComponent(benId)}/cv`);
+                const d = await r.json();
+                if (!r.ok) throw new Error(d.error || 'Lecture impossible.');
+                if (!body) return;
+                if (!(d.profils || []).length) { body.innerHTML = `<p class="text-sm text-slate-600">${escapeHtml(code)} n'a pas encore de CV dans IAMONCV.</p>`; return; }
+                body.innerHTML = `<p class="text-xs text-slate-600 mb-2">CV de <span class="font-mono font-bold">${escapeHtml(code)}</span> :</p><ul class="space-y-1">`
+                    + d.profils.map(p => `<li><button onclick="takeCvFrom('${benId}', '${escapeHtml(code)}', '${p.id}', this)" class="w-full text-left text-sm px-3 py-2 rounded-lg border border-[#CBE0DA] hover:bg-[#EAF3F0]">${escapeHtml(p.name)}${p.updatedAt ? ` <span class="text-xs text-slate-500">· modifié le ${new Date(p.updatedAt).toLocaleDateString('fr-FR')}</span>` : ''}</button></li>`).join('')
+                    + '</ul>';
+            } catch (e) { if (body) body.innerHTML = `<p class="text-sm text-red-600">${escapeHtml(e.message)}</p>`; }
+        }
+
+        async function takeCvFrom(benId, code, profilId, btn) {
+            if (btn) btn.disabled = true;
+            try {
+                const r = await cloudFetch(`/api/conseiller/beneficiaires/${encodeURIComponent(benId)}/cv?profil=${encodeURIComponent(profilId)}`);
+                const d = await r.json();
+                if (!r.ok) throw new Error(d.error || 'Lecture impossible.');
+                persistActive();
+                const meta = getProfilesMeta() || { active: '', list: [] };
+                const id = genProfileId();
+                meta.list.push({ id, name: `${code} (repris le ${new Date().toLocaleDateString('fr-FR')})` });
+                meta.active = id;
+                writeProfile(id, { db: Object.assign(emptyDB(), (d.data && d.data.db) || {}), cv: Object.assign(emptyCV(), (d.data && d.data.cv) || {}) });
+                setProfilesMeta(meta);
+                loadActiveProfile();
+                applyActiveProfileToUI();
+                closePicker();
+            } catch (e) { alert(e.message); if (btn) btn.disabled = false; }
         }
 
         // --- PDF LISIBLE PAR LES LOGICIELS DE TRI (en un clic) ---

@@ -11,7 +11,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { useState } from 'react';
-import { MessageSquareHeart, KeyRound, Clock, UserX, ClipboardList, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { MessageSquareHeart, KeyRound, Clock, UserX, ClipboardList, ChevronDown, CheckCircle2, CalendarDays } from 'lucide-react';
 import { Prenom } from './Prenoms';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -27,7 +27,13 @@ export default function ATraiter({ list = [], avisEnAttente = 0, onOpenPersonne,
     .filter((b) => b.status === 'active' && b.lastSeenAt && now - b.lastSeenAt > 15 * DAY)
     .sort((a, b) => a.lastSeenAt - b.lastSeenAt);
 
+  // Rendez-vous du jour (date du dossier comparée à aujourd'hui, heure locale).
+  const auj = new Date();
+  const ymd = `${auj.getFullYear()}-${String(auj.getMonth() + 1).padStart(2, '0')}-${String(auj.getDate()).padStart(2, '0')}`;
+  const rdvJour = actifs.filter((b) => b.prochainRdv?.date === ymd).sort((a, b) => String(a.prochainRdv.heure).localeCompare(String(b.prochainRdv.heure)));
+
   const groupes = [
+    rdvJour.length > 0 && { id: 'rdv', icon: CalendarDays, tone: 'teal', text: `${rdvJour.length} rendez-vous aujourd'hui`, personnes: rdvJour, detail: (b) => `${b.prochainRdv.heure || 'heure ?'}${b.prochainRdv.lieu ? ` · ${b.prochainRdv.lieu}` : ''}` },
     avisEnAttente > 0 && { id: 'messages', icon: MessageSquareHeart, tone: 'amber', text: `${avisEnAttente} message${avisEnAttente > 1 ? 's' : ''} en attente de réponse`, action: () => onGoTo?.('messages') },
     decroches.length > 0 && { id: 'decroches', icon: UserX, tone: 'rose', text: `${decroches.length} personne${decroches.length > 1 ? 's' : ''} sans visite depuis plus de 15 jours (compte supprimé à 30 jours)`, personnes: decroches, detail: (b) => { const j = Math.floor((now - b.lastSeenAt) / DAY); return `vu il y a ${j} j · compte supprimé dans ${Math.max(0, 30 - j)} j`; } },
     nonActives.length > 0 && { id: 'codes', icon: Clock, tone: 'amber', text: `${nonActives.length} code${nonActives.length > 1 ? 's' : ''} non activé${nonActives.length > 1 ? 's' : ''} depuis plus de 7 jours`, personnes: nonActives, detail: (b) => `créé il y a ${Math.floor((now - b.createdAt) / DAY)} j` },
@@ -37,6 +43,7 @@ export default function ATraiter({ list = [], avisEnAttente = 0, onOpenPersonne,
   const tones = {
     amber: 'border-amber-200 bg-amber-50/60 text-amber-900',
     rose: 'border-rose-200 bg-rose-50/60 text-rose-900',
+    teal: 'border-teal-200 bg-teal-50/60 text-teal-900',
   };
 
   return (

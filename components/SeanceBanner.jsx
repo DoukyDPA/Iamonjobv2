@@ -14,7 +14,7 @@
 import { useEffect, useState } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client';
-import { Users, X } from 'lucide-react';
+import { Users, X, CalendarDays } from 'lucide-react';
 
 const SEANCE_KEY = 'iamj_seance';
 const VU_KEY = 'iamj_seance_vue';
@@ -22,6 +22,7 @@ const VU_KEY = 'iamj_seance_vue';
 export default function SeanceBanner({ user }) {
   const [enSeance, setEnSeance] = useState(null); // { code } | null
   const [derniere, setDerniere] = useState(null); // ms | null
+  const [rdv, setRdv] = useState(null); // { date, heure, lieu, quand } | null
 
   useEffect(() => {
     let alive = true;
@@ -35,7 +36,18 @@ export default function SeanceBanner({ user }) {
       }
       if (r?.claims?.role !== 'beneficiaire') return;
       fetch('/api/mon-dossier').then((x) => (x.ok ? x.json() : null)).then((d) => {
-        if (!alive || !d?.seances?.length) return;
+        if (!alive || !d) return;
+        // Rappel de rendez-vous : aujourd'hui, demain, ou dans les 3 jours.
+        if (d.prochainRdv?.date) {
+          const today = new Date(); today.setHours(0, 0, 0, 0);
+          const [y, m, j] = d.prochainRdv.date.split('-').map(Number);
+          const ecart = Math.round((new Date(y, m - 1, j) - today) / 86400000);
+          if (ecart >= 0 && ecart <= 3) {
+            const quand = ecart === 0 ? "aujourd'hui" : ecart === 1 ? 'demain' : `le ${new Date(y, m - 1, j).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}`;
+            setRdv({ ...d.prochainRdv, quand });
+          }
+        }
+        if (!d.seances?.length) return;
         const last = d.seances[0];
         let vu = 0;
         try { vu = Number(localStorage.getItem(`${VU_KEY}_${auth.currentUser?.uid}`)) || 0; } catch { /* ignoré */ }
@@ -64,6 +76,20 @@ export default function SeanceBanner({ user }) {
           <button type="button" onClick={terminer} className="px-3 py-1.5 rounded-lg bg-white text-indigo-800 font-semibold hover:bg-indigo-50">
             Terminer la séance
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (rdv) {
+    return (
+      <div className="bg-pink-50 border-b border-pink-100">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-2.5 flex items-center gap-3 text-sm text-pink-900">
+          <CalendarDays className="w-4 h-4 shrink-0" aria-hidden="true" />
+          <p className="flex-1">
+            <strong>Rendez-vous avec votre conseiller {rdv.quand}{rdv.heure ? ` à ${rdv.heure.replace(':', ' h ')}` : ''}</strong>
+            {rdv.lieu ? <>, {rdv.lieu}</> : null}. En cas d'empêchement, prévenez-le avec « Mon conseiller ».
+          </p>
         </div>
       </div>
     );

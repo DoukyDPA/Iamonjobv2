@@ -48,21 +48,21 @@ const avg = (s) => {
 };
 
 // Alertes d'une personne à partir de ses fiches triées par étape.
-function computeAlerts(fiches, etapeCourante) {
+function computeAlerts(fiches, etapeCourante, seuils = { baisse: 2, noteBasse: 4 }) {
   const alerts = [];
   for (let i = 1; i < fiches.length; i++) {
     const a = fiches[i - 1], b = fiches[i];
     for (const s of SCORES) {
       const x = a.socle?.[s.key], y = b.socle?.[s.key];
-      if (typeof x === 'number' && typeof y === 'number' && x - y >= 2) {
+      if (typeof x === 'number' && typeof y === 'number' && x - y >= seuils.baisse) {
         alerts.push({ tone: 'rose', text: `${s.label} −${x - y} (S${a.etape}→S${b.etape})` });
       }
     }
   }
   const last = fiches[fiches.length - 1];
   if (last) {
-    const low = SCORES.filter((s) => typeof last.socle?.[s.key] === 'number' && last.socle[s.key] <= 4);
-    if (low.length) alerts.push({ tone: 'rose', text: `${low.map((s) => s.label).join(', ')} ≤ 4 en S${last.etape}` });
+    const low = SCORES.filter((s) => typeof last.socle?.[s.key] === 'number' && last.socle[s.key] <= seuils.noteBasse);
+    if (low.length) alerts.push({ tone: 'rose', text: `${low.map((s) => s.label).join(', ')} ≤ ${seuils.noteBasse} en S${last.etape}` });
     if (last.socle?.engagementTenu === 'Non') alerts.push({ tone: 'amber', text: `Engagement non tenu (S${last.etape})` });
   }
   if (etapeCourante && !fiches.some((f) => f.etape === etapeCourante)) {
@@ -254,7 +254,19 @@ export default function SuiviQuestionnaires({ beneficiaires = [], onAssigned, fo
               onArchive={() => toggleArchive(promo)}
             />
           )}
-          {promo && <PromoTable promo={promo} onOpen={setOpenId} />}
+          {promo && (
+            <PromoTable
+              promo={promo}
+              onOpen={setOpenId}
+              seuils={{ baisse: 2, noteBasse: 4, ...(data?.seuils?.[promo.parcoursId] || {}) }}
+              onSeuils={promo.archive ? null : async (v) => {
+                const r = await fetch('/api/conseiller/questionnaires', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parcoursId: promo.parcoursId, ...v }) });
+                const d = await r.json().catch(() => ({}));
+                if (!r.ok) throw new Error(d.error || 'Échec.');
+                await load();
+              }}
+            />
+          )}
         </>
       )}
 
@@ -280,12 +292,12 @@ export default function SuiviQuestionnaires({ beneficiaires = [], onAssigned, fo
   );
 }
 
-function PromoTable({ promo, onOpen }) {
+function PromoTable({ promo, onOpen, seuils = { baisse: 2, noteBasse: 4 }, onSeuils }) {
   const etapes = promo.parcours?.etapes || [];
   const rows = promo.participants.map((p) => {
     const first = p.fiches[0], last = p.fiches[p.fiches.length - 1];
     const delta = first && last && first !== last ? (avg(last.socle) ?? 0) - (avg(first.socle) ?? 0) : null;
-    return { ...p, delta, alerts: computeAlerts(p.fiches, promo.etapeCourante) };
+    return { ...p, delta, alerts: computeAlerts(p.fiches, promo.etapeCourante, seuils) };
   });
   const hasPonctuels = promo.participants.some((p) => p.ponctuels?.length);
   const recues = rows.filter((r) => r.fiches.some((f) => f.etape === promo.etapeCourante)).length;
@@ -301,6 +313,8 @@ function PromoTable({ promo, onOpen }) {
         <Kpi label="En alerte" value={enAlerte} tone={enAlerte ? 'rose' : 'teal'} />
         <Kpi label="Engagements tenus" value={tauxTenus == null ? '–' : `${tauxTenus} %`} />
       </div>
+
+      {onSeuils && <SeuilsAlerte key={promo.parcoursId} seuils={seuils} onSave={onSeuils} />}
 
       {promo.archivee && (
         <p className="text-xs text-teal-700/70 mb-2 flex items-center gap-1.5">
@@ -829,6 +843,36 @@ export function AssignModal({ parcours: tous, beneficiaires, current, defaultPar
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Seuils d'alerte du parcours (pour toute la structure).
+function SeuilsAlerte({ seuils, onSave }) {
+  const [baisse, setBaisse] = useState(seuils.baisse);
+  const [note, setNote] = useState(seuils.noteBasse);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const changed = Number(baisse) !== seuils.baisse || Number(note) !== seuils.noteBasse;
+  const num = 'w-14 p-1 text-sm text-center rounded-lg border border-teal-200';
+  return (
+    <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-teal-800">
+      <AlertTriangle className="w-3.5 h-3.5 text-rose-500" aria-hidden="true" />
+      <span>Alerte si une note baisse de</span>
+      <input type="number" min={1} max={10} value={baisse} onChange={(e) => setBaisse(e.target.value)} className={num} aria-label="Baisse en points" />
+      <span>points ou plus, ou tombe à</span>
+      <input type="number" min={0} max={10} value={note} onChange={(e) => setNote(e.target.value)} className={num} aria-label="Note basse" />
+      <span>ou moins (sur 10). Réglage valable pour tout ce parcours.</span>
+      {changed && (
+        <button
+          disabled={busy}
+          onClick={async () => { setBusy(true); setMsg(null); try { await onSave({ baisse: Number(baisse), noteBasse: Number(note) }); setMsg('Seuils enregistrés.'); } catch (e) { setMsg(e.message); } finally { setBusy(false); } }}
+          className="px-2.5 py-1 rounded-lg bg-teal-600 text-white font-semibold hover:bg-teal-700 disabled:bg-teal-200"
+        >
+          Enregistrer
+        </button>
+      )}
+      {msg && <span className="text-teal-700">{msg}</span>}
     </div>
   );
 }

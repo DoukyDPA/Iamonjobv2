@@ -67,6 +67,7 @@ export default function AidePage() {
           <li>Le pourcentage indique la correspondance entre votre CV et l'offre. Ce n'est pas une note sur vous.</li>
           <li>Vous voyez vos points forts et ce qui manque.</li>
           <li>L'outil peut écrire une lettre de motivation et vous préparer à l'entretien.</li>
+          <li>Avec « S'entraîner à voix haute », l'outil vous lit une question de recruteur, vous répondez en parlant, et vous recevez un retour avec une version plus forte de votre réponse.</li>
           <li>Relisez toujours la lettre avant de l'envoyer. Vous pouvez aussi l'envoyer à votre conseiller pour avoir son avis.</li>
         </ul>
       </section>
