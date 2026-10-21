@@ -22,6 +22,7 @@ import {
   ExternalLink, Send, CheckCircle2, MapPin, Building2, Inbox, FileSignature, Download, PenLine,
 } from 'lucide-react';
 import { Button } from './ui';
+import DictateButton from './DictateButton';
 import { QuestionnaireForm } from './MesQuestionnaires';
 
 const TYPES = {
@@ -288,7 +289,10 @@ function MessageEnvoi({ envoi, onReplied }) {
         </div>
       ) : (
         <div>
-          <label htmlFor="envoi-reponse" className="block text-sm font-semibold text-teal-800 mb-1.5">Répondre à mon conseiller</label>
+          <div className="flex items-end justify-between gap-2 mb-1.5">
+            <label htmlFor="envoi-reponse" className="block text-sm font-semibold text-teal-800">Répondre à mon conseiller</label>
+            <DictateButton value={texte} onChange={(t) => setTexte(t.slice(0, 2000))} />
+          </div>
           <textarea
             id="envoi-reponse"
             value={texte}

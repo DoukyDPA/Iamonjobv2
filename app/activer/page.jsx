@@ -16,7 +16,7 @@ import { auth } from '@/lib/firebase/client';
 import { codeToEmail } from '@/lib/beneficiaire-auth';
 import {
   Loader2, KeyRound, Lock, AlertCircle, ShieldCheck,
-  EyeOff, MapPin, Trash2, ChevronDown, IdCard,
+  EyeOff, MapPin, Trash2, ChevronDown, IdCard, CalendarClock,
 } from 'lucide-react';
 import { BrandLogo, CatMascot } from '@/components/brand';
 import AccessibilityBar from '@/components/layout/AccessibilityBar';
@@ -129,6 +129,12 @@ export default function ActiverPage() {
                   <InfoLine icon={Trash2}>
                     <strong>Vous gardez la main.</strong> Votre CV reste sur votre compte,
                     accessible par vous. Vous pouvez le supprimer quand vous voulez.
+                  </InfoLine>
+                  <InfoLine icon={CalendarClock}>
+                    <strong>Venez au moins une fois par mois.</strong> Sans aucune connexion
+                    pendant 30 jours, votre compte, votre CV et vos candidatures sont supprimés
+                    automatiquement. Personne ne peut vous prévenir avant : nous n'avons pas
+                    votre e-mail.
                   </InfoLine>
                 </ul>
 

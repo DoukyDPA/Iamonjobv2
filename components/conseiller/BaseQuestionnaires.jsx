@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import EnvoiModal from './EnvoiModal';
 import { AssignModal } from './SuiviQuestionnaires';
+import { Prenom } from './Prenoms';
 
 const TYPES = [
   { id: 'textarea', label: 'Réponse libre (longue)' },
@@ -296,7 +297,7 @@ function AttribuerModal({ parcours, beneficiaires, onClose, onDone }) {
               <li key={b.id}>
                 <label className={`flex items-center gap-2 p-2 rounded-lg border border-cream-200 ${enPromo ? 'opacity-50' : 'hover:bg-cream-50 cursor-pointer'}`}>
                   <input type="checkbox" disabled={enPromo} checked={selected.has(b.id)} onChange={() => toggle(b.id)} className="accent-teal-600" />
-                  <span className="font-mono text-sm font-semibold text-teal-800">{b.code}</span>
+                  <span className="font-mono text-sm font-semibold text-teal-800">{b.code}<Prenom code={b.code} /></span>
                   {enPromo && <span className="text-[11px] text-teal-700/60">dans la promo « {b.promo} »</span>}
                   {autre && <span className="text-[11px] text-amber-700">suit déjà un autre parcours (il sera remplacé)</span>}
                 </label>

@@ -107,8 +107,10 @@ export default function ConfidentialitePage() {
         <h2 className="text-xl font-bold text-teal-800 mb-3">Conservation et effacement</h2>
         <p>
           IAMONJOB s'adresse aux personnes en recherche active. Un compte sans activité pendant
-          30 jours est supprimé automatiquement : votre CV et votre compte d'authentification sont
-          effacés de façon définitive. Comme nous ne conservons pas votre adresse email, cette
+          30 jours est supprimé automatiquement : votre CV, vos CV créés avec IAMONCV, vos
+          candidatures, vos campagnes et votre compte d'authentification sont effacés de façon
+          définitive. Le dossier tenu par votre conseiller (ses messages, vos réponses aux
+          questionnaires) est conservé pour la durée de l'accompagnement. Comme nous ne conservons pas votre adresse email, cette
           suppression a lieu sans message d'avertissement préalable. Il vous suffit de vous
           reconnecter et d'utiliser le service pour que ce délai reparte de zéro. Les comptes des
           conseillers ne sont pas concernés.

@@ -16,6 +16,7 @@ import {
   ChevronRight, AlertCircle, Plus, Trash2, X, Briefcase, Star,
 } from 'lucide-react';
 import { Button, Badge, Card } from '@/components/ui';
+import CandidatureStatus, { RelanceReminder } from '@/components/CandidatureStatus';
 
 // ─── Config statuts campagnes spontanées ─────────────────────────────────
 
@@ -26,16 +27,6 @@ const CAMPAIGN_STATUS = {
   validated:          { label: 'Prête',                 variant: 'emerald' },
   sending:            { label: 'Candidatures envoyées', variant: 'teal' },
   done:               { label: 'Candidatures envoyées', variant: 'teal' },
-};
-
-// ─── Config statuts candidatures FT ──────────────────────────────────────
-
-const FT_STATUS = {
-  saved:      { label: 'Analysée',  variant: 'amber' },
-  applying:   { label: 'En cours',  variant: 'amber' },
-  sent:       { label: 'Envoyée',   variant: 'emerald' },
-  rejected:   { label: 'Refus',     variant: 'rose' },
-  interview:  { label: 'Entretien', variant: 'teal' },
 };
 
 function formatDate(ts) {
@@ -239,7 +230,6 @@ export default function CampaignListPage() {
                 );
               } else {
                 // ── Candidature France Travail ── accent amber
-                const cfg = FT_STATUS[item.status] || FT_STATUS.saved;
                 return (
                   <Card
                     key={`ft-${item.id}`}
@@ -252,7 +242,11 @@ export default function CampaignListPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
                         <span className="font-semibold text-teal-800 truncate">{item.offer?.intitule}</span>
-                        <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                        <CandidatureStatus
+                          variant="select"
+                          candidature={item}
+                          onChange={(next) => setCandidatures((prev) => prev.map((c) => (c.id === next.id ? { ...c, ...next } : c)))}
+                        />
                         {item.compatibility?.score != null && (
                           <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
                             <Star className="w-3 h-3" />
@@ -272,6 +266,7 @@ export default function CampaignListPage() {
                           {formatDate(item.createdAt)}
                         </span>
                       </div>
+                      <RelanceReminder candidature={item} className="mt-2" />
                     </div>
                     {isConfirming ? (
                       <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>

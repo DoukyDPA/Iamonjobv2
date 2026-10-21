@@ -9,6 +9,7 @@
 import { useEffect, useState } from 'react';
 import { Loader2, Briefcase, MessageCircle, ClipboardList, FileSignature, Send } from 'lucide-react';
 import EnvoiModal from './EnvoiModal';
+import { Prenom } from './Prenoms';
 
 const ICONS = { offre: Briefcase, message: MessageCircle, questionnaire: ClipboardList, document: FileSignature };
 
@@ -65,7 +66,7 @@ export default function ReponsesEnvois({ beneficiaires = [], onOpenPersonne }) {
                 <Icon className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0 text-sm">
                   <div className="text-teal-900">
-                    <button onClick={() => ben && onOpenPersonne?.(ben)} className="font-mono font-semibold hover:underline">{e.beneficiaireCode}</button>
+                    <button onClick={() => ben && onOpenPersonne?.(ben)} className="font-mono font-semibold hover:underline">{e.beneficiaireCode}<Prenom code={e.beneficiaireCode} /></button>
                     <span className="text-teal-700/60"> · {formatDate(e.reponduAt)} · </span>{titre}
                   </div>
                   {e.reponse?.texte && <p className="text-teal-800 whitespace-pre-wrap mt-0.5">« {e.reponse.texte} »</p>}

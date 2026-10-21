@@ -11,7 +11,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { NextResponse } from 'next/server';
-import { adminAuth } from '@/lib/firebase/admin';
+import { adminAuth, adminDb, FieldValue } from '@/lib/firebase/admin';
 import { getBeneficiaireByCode, markBeneficiaireActive } from '@/lib/beneficiaires';
 import { recordConsent } from '@/lib/consent';
 import { codeToEmail, normalizeCode, isPlausibleCode } from '@/lib/beneficiaire-auth';
@@ -63,6 +63,32 @@ export async function POST(request) {
         { error: 'Ce code est déjà activé. Utilisez la page de connexion avec votre mot de passe.' },
         { status: 409 }
       );
+    }
+
+    // Accès réinitialisé par le conseiller (mot de passe oublié) : on garde le
+    // même compte, donc le même dossier, et on change seulement le mot de passe.
+    if (ben.status === 'reset' && ben.authUid) {
+      let exists = true;
+      try {
+        await adminAuth.updateUser(ben.authUid, { password });
+      } catch (err) {
+        if (err.code !== 'auth/user-not-found') throw err;
+        exists = false; // compte purgé entre-temps : on en recrée un plus bas
+      }
+      if (exists) {
+        await adminAuth.setCustomUserClaims(ben.authUid, {
+          role: 'beneficiaire',
+          beneficiaireId: ben.id,
+          structureId: ben.structureId || 'default',
+        });
+        // Pas markBeneficiaireActive : la date d'inscription d'origine reste.
+        await adminDb.doc(`beneficiaires/${ben.id}`).set(
+          { status: 'active', updatedAt: FieldValue.serverTimestamp() },
+          { merge: true }
+        );
+        logEvent({ event: 'activation', requestId, uid: ben.authUid, status: 'reset-ok' });
+        return NextResponse.json({ ok: true });
+      }
     }
 
     // Création du compte Firebase (email interne dérivé du code).

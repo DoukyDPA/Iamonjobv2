@@ -16,7 +16,9 @@ export function middleware(request) {
     // Purge des comptes inactifs : appelée par un cron avec un secret d'en-tête,
     // sans cookie de session. Doit aussi échapper à la redirection /login.
     '/api/admin/purge-inactive',
-    '/mentions-legales', '/confidentialite', '/cgu', '/accessibilite',
+    '/mentions-legales', '/confidentialite', '/cgu', '/accessibilite', '/aide',
+    // Icône et manifeste : le téléphone les lit pour « Ajouter à l'écran d'accueil ».
+    '/manifest.webmanifest',
   ];
   const isPublic = publicRoutes.some((r) => pathname.startsWith(r));
   const token = request.cookies.get('__session')?.value;
@@ -27,7 +29,7 @@ export function middleware(request) {
     // POST /login, que Next.js refuse avec un 405 incompréhensible.
     if (pathname.startsWith('/api/')) {
       return NextResponse.json(
-        { error: 'Ta session a expiré. Reconnecte-toi pour continuer.' },
+        { error: 'Votre session a expiré. Reconnectez-vous pour continuer.' },
         { status: 401 }
       );
     }

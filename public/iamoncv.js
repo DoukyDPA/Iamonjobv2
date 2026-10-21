@@ -119,12 +119,33 @@
             inp.click();
         }
 
+        function shrinkPhoto(dataUrl, max = 600) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const r = Math.min(1, max / Math.max(img.width, img.height));
+                    const c = document.createElement('canvas');
+                    c.width = Math.round(img.width * r);
+                    c.height = Math.round(img.height * r);
+                    const ctx = c.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, c.width, c.height);
+                    ctx.drawImage(img, 0, 0, c.width, c.height);
+                    try { resolve(c.toDataURL('image/jpeg', 0.85)); } catch (err) { resolve(dataUrl); }
+                };
+                img.onerror = () => resolve(dataUrl);
+                img.src = dataUrl;
+            });
+        }
+
         function handleProfileUpload(event) {
             const file = event.target.files && event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(e) {
-                cvData.image = e.target.result;
+            reader.onload = async function(e) {
+                // Photo réduite (600 px max) : une photo de téléphone pèse plusieurs
+                // Mo et ne passerait pas l'enregistrement sur le compte.
+                cvData.image = await shrinkPhoto(e.target.result);
                 // Nouveau cadrage par défaut : légèrement vers le haut pour ne pas couper le visage.
                 cvData.imgPos = { x: 50, y: 25, zoom: 1 };
                 cvData.showPhoto = true;
@@ -373,6 +394,289 @@
         const PROFILES_KEY = 'iamoncv_profiles_v2';
         const profileKey = (id) => 'iamoncv_profile_' + id;
 
+        // --- ENREGISTREMENT SUR LE COMPTE ---
+        // Les profils (données + CV) sont enregistrés sur le compte IAMONJOB, via
+        // /api/cv-workspace, et plus dans le navigateur. On retrouve donc son CV
+        // sur n'importe quel ordinateur ou téléphone, et rien ne reste sur un poste
+        // partagé (médiathèque). L'enregistrement est automatique, une ou deux
+        // secondes après chaque modification ; un témoin en haut de page le montre.
+        const Cloud = {
+            ready: false,
+            role: null,
+            meta: null,
+            profiles: {},
+            dirtyMeta: false,
+            dirtyProfiles: new Set(),
+            timer: null,
+            saving: false,
+            retryDelay: 5000,
+        };
+        const CLOUD_DEBOUNCE_MS = 1500;
+
+        function setSaveStatus(state, text) {
+            const el = document.getElementById('save-status');
+            if (!el) return;
+            const icons = { ok: 'fa-cloud', saving: 'fa-rotate fa-spin', error: 'fa-triangle-exclamation' };
+            el.dataset.state = state;
+            el.className = 'flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border ' +
+                (state === 'error' ? 'bg-[#EE6E5E] border-[#EE6E5E] text-white' : 'bg-white/10 border-white/20 text-white');
+            el.innerHTML = `<i class="fas ${icons[state] || 'fa-cloud'}"></i><span>${escapeHtml(text)}</span>`;
+        }
+
+        // Le cadre /cv renouvelle la session IAMONJOB à la demande : le jeton de
+        // connexion ne dure qu'une heure, une séance de CV peut durer plus.
+        function askParentToRefreshSession() {
+            return new Promise((resolve) => {
+                if (window.parent === window) return resolve(false);
+                let done = false;
+                const onMsg = (ev) => {
+                    if (ev.origin !== location.origin || !ev.data || ev.data.type !== 'iamoncv-session-refreshed') return;
+                    done = true;
+                    window.removeEventListener('message', onMsg);
+                    resolve(!!ev.data.ok);
+                };
+                window.addEventListener('message', onMsg);
+                window.parent.postMessage({ type: 'iamoncv-refresh-session' }, location.origin);
+                setTimeout(() => { if (!done) { window.removeEventListener('message', onMsg); resolve(false); } }, 8000);
+            });
+        }
+
+        async function cloudFetch(url, options, retried) {
+            const res = await fetch(url, Object.assign({ credentials: 'same-origin', cache: 'no-store' }, options || {}));
+            if (res.status === 401 && !retried && await askParentToRefreshSession()) {
+                return cloudFetch(url, options, true);
+            }
+            return res;
+        }
+
+        function scheduleCloudSave() {
+            if (!Cloud.ready) return;
+            setSaveStatus('saving', 'Enregistrement…');
+            clearTimeout(Cloud.timer);
+            Cloud.timer = setTimeout(flushCloudSave, CLOUD_DEBOUNCE_MS);
+        }
+
+        function buildCloudPayload() {
+            const payload = { profiles: {} };
+            if (Cloud.dirtyMeta) payload.meta = Cloud.meta;
+            Cloud.dirtyProfiles.forEach(id => { payload.profiles[id] = Cloud.profiles[id] || null; });
+            return payload;
+        }
+
+        async function flushCloudSave(opts) {
+            clearTimeout(Cloud.timer);
+            if (!Cloud.ready || (!Cloud.dirtyMeta && !Cloud.dirtyProfiles.size)) return true;
+            if (Cloud.saving) { Cloud.timer = setTimeout(flushCloudSave, 500); return false; }
+            Cloud.saving = true;
+            // Filet de sécurité : une photo trop lourde (ancien CV, fichier
+            // importé) est réduite avant l'envoi plutôt que refusée.
+            for (const id of Cloud.dirtyProfiles) {
+                const p = Cloud.profiles[id];
+                if (p && p.cv && typeof p.cv.image === 'string' && p.cv.image.length > 400000) {
+                    p.cv.image = await shrinkPhoto(p.cv.image);
+                    if (cvData && cvData.image && cvData.image.length > 400000 && getProfilesMeta()?.active === id) cvData.image = p.cv.image;
+                }
+            }
+            // On retire les marques AVANT l'envoi : une modification faite pendant
+            // l'envoi sera reprise au prochain tour au lieu d'être perdue.
+            const payload = buildCloudPayload();
+            const sentMeta = Cloud.dirtyMeta;
+            const sentIds = Array.from(Cloud.dirtyProfiles);
+            Cloud.dirtyMeta = false;
+            Cloud.dirtyProfiles.clear();
+            try {
+                const body = JSON.stringify(payload);
+                const res = await cloudFetch('/api/cv-workspace', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body,
+                    keepalive: !!(opts && opts.keepalive) && body.length < 60000,
+                });
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    const err = new Error(data.error || 'Enregistrement impossible.');
+                    err.status = res.status;
+                    throw err;
+                }
+                Cloud.retryDelay = 5000;
+                const t = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                setSaveStatus('ok', 'Enregistré sur votre compte · ' + t);
+                return true;
+            } catch (e) {
+                if (sentMeta) Cloud.dirtyMeta = true;
+                sentIds.forEach(id => Cloud.dirtyProfiles.add(id));
+                if (e.status === 413) {
+                    setSaveStatus('error', 'Non enregistré : photo trop lourde');
+                    alert(e.message);
+                } else if (e.status === 401) {
+                    setSaveStatus('error', 'Non enregistré : reconnectez-vous');
+                } else {
+                    setSaveStatus('error', 'Non enregistré, nouvel essai…');
+                    Cloud.timer = setTimeout(flushCloudSave, Cloud.retryDelay);
+                    Cloud.retryDelay = Math.min(Cloud.retryDelay * 2, 60000);
+                }
+                return false;
+            } finally {
+                Cloud.saving = false;
+            }
+        }
+
+        // Fermeture de l'onglet : on tente d'envoyer ce qui reste.
+        window.addEventListener('pagehide', () => { flushCloudSave({ keepalive: true }); });
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') flushCloudSave({ keepalive: true });
+        });
+        window.addEventListener('beforeunload', (e) => {
+            if (Cloud.ready && (Cloud.dirtyMeta || Cloud.dirtyProfiles.size || Cloud.saving)) {
+                flushCloudSave({ keepalive: true });
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        // Ancienne sauvegarde dans le navigateur (avant l'enregistrement sur le
+        // compte). Renvoie les profils non vides trouvés sur cet ordinateur.
+        function readLegacyLocalProfiles() {
+            const found = [];
+            try {
+                const rawMeta = localStorage.getItem(PROFILES_KEY);
+                const meta = rawMeta ? JSON.parse(rawMeta) : null;
+                (meta && Array.isArray(meta.list) ? meta.list : []).forEach(p => {
+                    try {
+                        const raw = localStorage.getItem(profileKey(p.id));
+                        const data = raw ? JSON.parse(raw) : null;
+                        if (data && (!dbIsEmpty(data.db) || (data.cv && (data.cv.experiences || []).length))) {
+                            found.push({ name: String(p.name || 'Profil'), data });
+                        }
+                    } catch (e) {}
+                });
+                if (!found.length) {
+                    const old = localStorage.getItem('iamoncv_db');
+                    const legacyDb = old ? JSON.parse(old) : null;
+                    if (legacyDb && !dbIsEmpty(legacyDb)) found.push({ name: 'Profil 1', data: { db: legacyDb, cv: emptyCV() } });
+                }
+            } catch (e) {}
+            return found;
+        }
+
+        function clearLegacyLocalProfiles() {
+            try {
+                const rawMeta = localStorage.getItem(PROFILES_KEY);
+                const meta = rawMeta ? JSON.parse(rawMeta) : null;
+                (meta && Array.isArray(meta.list) ? meta.list : []).forEach(p => localStorage.removeItem(profileKey(p.id)));
+                localStorage.removeItem(PROFILES_KEY);
+                localStorage.removeItem('iamoncv_db');
+            } catch (e) {}
+        }
+
+        // Fenêtre simple, deux gros boutons : « Oui, c'est mon CV » / « Non ».
+        function askLegacyImport(found) {
+            return new Promise((resolve) => {
+                const names = found.map(f => '« ' + escapeHtml(f.name) + ' »').join(', ');
+                const wrap = document.createElement('div');
+                wrap.className = 'fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4';
+                wrap.innerHTML = `
+                    <div role="dialog" aria-modal="true" aria-labelledby="legacy-title" class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+                        <h2 id="legacy-title" class="text-lg font-bold text-[#123F39] mb-2">Un CV est enregistré sur cet ordinateur</h2>
+                        <p class="text-sm text-slate-700 mb-1">Nous avons trouvé ${found.length > 1 ? found.length + ' CV' : 'un CV'} sur cet ordinateur : ${names}.</p>
+                        <p class="text-sm text-slate-700 mb-5">Si c'est le vôtre, nous le gardons sur votre compte : vous le retrouverez partout. Si ce n'est pas le vôtre (ordinateur partagé), répondez non.</p>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <button data-a="yes" class="flex-1 bg-[#1E7A6B] text-white font-bold rounded-xl px-4 py-3 hover:bg-[#123F39]">Oui, c'est mon CV</button>
+                            <button data-a="no" class="flex-1 bg-white border-2 border-slate-300 text-slate-700 font-bold rounded-xl px-4 py-3 hover:bg-slate-50">Non, ce n'est pas le mien</button>
+                        </div>
+                    </div>`;
+                wrap.addEventListener('click', (ev) => {
+                    const b = ev.target.closest('button[data-a]');
+                    if (!b) return;
+                    wrap.remove();
+                    resolve(b.dataset.a === 'yes');
+                });
+                document.body.appendChild(wrap);
+                const first = wrap.querySelector('button[data-a="yes"]');
+                if (first) first.focus();
+            });
+        }
+
+        function showCloudBootError(message) {
+            const ov = document.getElementById('cloud-boot');
+            if (!ov) { alert(message); return; }
+            ov.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 text-center">
+                    <i class="fas fa-triangle-exclamation text-3xl text-[#EE6E5E] mb-3"></i>
+                    <p class="text-slate-800 font-semibold mb-4">${escapeHtml(message)}</p>
+                    <button onclick="location.reload()" class="bg-[#1E7A6B] text-white font-bold rounded-xl px-5 py-3 hover:bg-[#123F39]">Réessayer</button>
+                </div>`;
+        }
+
+        // Démarrage : charge l'espace du compte, propose de récupérer un ancien
+        // CV resté dans ce navigateur, puis affiche le profil actif.
+        async function cloudBoot() {
+            let data;
+            try {
+                const res = await cloudFetch('/api/cv-workspace');
+                if (res.status === 401) throw Object.assign(new Error('Votre session a expiré. Reconnectez-vous à IAMONJOB, puis rouvrez « Créer mon CV ».'), { fatal: true });
+                if (!res.ok) throw new Error('Impossible de charger vos CV pour le moment. Vérifiez votre connexion internet.');
+                data = await res.json();
+            } catch (e) {
+                showCloudBootError(e.fatal ? e.message : (e.message || 'Impossible de charger vos CV.'));
+                return false;
+            }
+
+            Cloud.role = data.role || null;
+            Cloud.who = data.who || '';
+            Cloud.meta = data.meta && Array.isArray(data.meta.list) && data.meta.list.length ? data.meta : null;
+            Cloud.profiles = data.profiles || {};
+            // Profils listés mais absents (écriture interrompue) : on les retire.
+            if (Cloud.meta) {
+                Cloud.meta.list = Cloud.meta.list.filter(p => Cloud.profiles[p.id]);
+                if (!Cloud.meta.list.length) Cloud.meta = null;
+                else if (!Cloud.meta.list.some(p => p.id === Cloud.meta.active)) Cloud.meta.active = Cloud.meta.list[0].id;
+            }
+            Cloud.ready = true;
+
+            // Compteur de consommation : utile au conseiller, pas à la personne.
+            const meter = document.getElementById('token-meter');
+            if (meter && Cloud.role !== 'conseiller') meter.style.display = 'none';
+
+            // Ancien CV resté dans ce navigateur ?
+            const declinedKey = 'iamoncv_legacy_declined_' + Cloud.who;
+            let declined = false;
+            try { declined = localStorage.getItem(declinedKey) === '1'; } catch (e) {}
+            const legacy = declined ? [] : readLegacyLocalProfiles();
+            if (legacy.length) {
+                const ov = document.getElementById('cloud-boot');
+                if (ov) ov.style.display = 'none';
+                const yes = await askLegacyImport(legacy);
+                if (yes) {
+                    const meta = Cloud.meta || { active: null, list: [] };
+                    // Profil actif encore vierge : le CV retrouvé passe devant.
+                    const activeData = meta.active ? Cloud.profiles[meta.active] : null;
+                    const activeIsBlank = !activeData || (dbIsEmpty(activeData.db) && !((activeData.cv || {}).experiences || []).length);
+                    let firstId = null;
+                    legacy.forEach(f => {
+                        const id = genProfileId();
+                        if (!firstId) firstId = id;
+                        meta.list.push({ id, name: f.name });
+                        writeProfile(id, { db: Object.assign(emptyDB(), f.data.db || {}), cv: Object.assign(emptyCV(), f.data.cv || {}) });
+                    });
+                    if (activeIsBlank) meta.active = firstId;
+                    setProfilesMeta(meta);
+                    const ok = await flushCloudSave();
+                    if (ok) clearLegacyLocalProfiles();
+                } else {
+                    // Pas le sien (poste partagé) : on ne le récupère pas, mais on
+                    // ne l'efface pas non plus. Son auteur pourra le récupérer en
+                    // se connectant sur cet ordinateur. On ne repose pas la question.
+                    try { localStorage.setItem(declinedKey, '1'); } catch (e) {}
+                }
+            }
+
+            const ov = document.getElementById('cloud-boot');
+            if (ov) ov.remove();
+            if (!Cloud.dirtyMeta && !Cloud.dirtyProfiles.size) setSaveStatus('ok', 'Enregistré sur votre compte');
+            return true;
+        }
+
         function emptyDB() {
             return { name: "", contact: "", gender: "", experiences: [], education: [], interests: [], languages: [], tools: [] };
         }
@@ -392,15 +696,30 @@
             return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
         }
 
+        // Les profils vivent désormais sur le compte (voir « ENREGISTREMENT SUR
+        // LE COMPTE » plus bas). Ces fonctions lisent et écrivent la copie en
+        // mémoire ; chaque écriture programme un enregistrement automatique.
         function getProfilesMeta() {
-            try {
-                const raw = localStorage.getItem(PROFILES_KEY);
-                if (raw) return JSON.parse(raw);
-            } catch (e) {}
-            return null;
+            return Cloud.meta ? JSON.parse(JSON.stringify(Cloud.meta)) : null;
         }
         function setProfilesMeta(meta) {
-            try { localStorage.setItem(PROFILES_KEY, JSON.stringify(meta)); } catch (e) {}
+            Cloud.meta = JSON.parse(JSON.stringify(meta));
+            Cloud.dirtyMeta = true;
+            scheduleCloudSave();
+        }
+        function readProfile(id) {
+            const p = Cloud.profiles[id];
+            return p ? JSON.parse(JSON.stringify(p)) : null;
+        }
+        function writeProfile(id, data) {
+            Cloud.profiles[id] = JSON.parse(JSON.stringify(data));
+            Cloud.dirtyProfiles.add(id);
+            scheduleCloudSave();
+        }
+        function removeProfile(id) {
+            delete Cloud.profiles[id];
+            Cloud.dirtyProfiles.add(id);
+            scheduleCloudSave();
         }
 
         // Première ouverture : crée un profil par défaut et récupère d'éventuelles
@@ -410,16 +729,8 @@
             if (meta && meta.list && meta.list.length) return meta;
 
             const id = genProfileId();
-            meta = { active: id, list: [{ id, name: "Profil 1" }] };
-
-            let legacyDb = null;
-            try {
-                const old = localStorage.getItem('iamoncv_db');
-                if (old) legacyDb = JSON.parse(old);
-            } catch (e) {}
-
-            const data = { db: legacyDb || emptyDB(), cv: emptyCV() };
-            try { localStorage.setItem(profileKey(id), JSON.stringify(data)); } catch (e) {}
+            meta = { active: id, list: [{ id, name: Cloud.role === 'conseiller' ? "Profil 1" : "Mon CV" }] };
+            writeProfile(id, { db: emptyDB(), cv: emptyCV() });
             setProfilesMeta(meta);
             return meta;
         }
@@ -428,11 +739,7 @@
         function persistActive() {
             const meta = getProfilesMeta();
             if (!meta || !meta.active) return;
-            try {
-                localStorage.setItem(profileKey(meta.active), JSON.stringify({ db: db, cv: cvData }));
-            } catch (e) {
-                console.warn("Impossible de sauvegarder dans le navigateur :", e);
-            }
+            writeProfile(meta.active, { db: db, cv: cvData });
         }
         // Compat : les anciens appels sauvegardent désormais tout le profil actif.
         function saveDB() { persistActive(); }
@@ -441,11 +748,7 @@
         // Charge le profil actif en mémoire.
         function loadActiveProfile() {
             const meta = ensureProfiles();
-            let data = null;
-            try {
-                const raw = localStorage.getItem(profileKey(meta.active));
-                if (raw) data = JSON.parse(raw);
-            } catch (e) {}
+            let data = readProfile(meta.active);
             if (!data) data = { db: emptyDB(), cv: emptyCV() };
             db = Object.assign(emptyDB(), data.db || {});
             cvData = Object.assign(emptyCV(), data.cv || {});
@@ -495,7 +798,7 @@
             meta.list.push({ id, name });
             meta.active = id;
             setProfilesMeta(meta);
-            try { localStorage.setItem(profileKey(id), JSON.stringify({ db: emptyDB(), cv: emptyCV() })); } catch (e) {}
+            writeProfile(id, { db: emptyDB(), cv: emptyCV() });
             loadActiveProfile();
             applyActiveProfileToUI();
         }
@@ -520,7 +823,7 @@
             }
             const cur = meta.list.find(p => p.id === meta.active);
             if (!confirm(`Supprimer définitivement le profil « ${cur ? cur.name : ''} » ? Cette action est irréversible.`)) return;
-            try { localStorage.removeItem(profileKey(meta.active)); } catch (e) {}
+            removeProfile(meta.active);
             meta.list = meta.list.filter(p => p.id !== meta.active);
             meta.active = meta.list[0].id;
             setProfilesMeta(meta);
@@ -575,12 +878,10 @@
                 meta.list.push({ id, name });
                 meta.active = id;
                 setProfilesMeta(meta);
-                try {
-                    localStorage.setItem(profileKey(id), JSON.stringify({
-                        db: Object.assign(emptyDB(), importedDb),
-                        cv: Object.assign(emptyCV(), payload.cv || {})
-                    }));
-                } catch (err) {}
+                writeProfile(id, {
+                    db: Object.assign(emptyDB(), importedDb),
+                    cv: Object.assign(emptyCV(), payload.cv || {})
+                });
                 loadActiveProfile();
                 applyActiveProfileToUI();
                 alert(`Profil « ${name} » importé.`);
@@ -710,7 +1011,7 @@
                 meta.list.push({ id, name: "Mon CV IAMONJOB" });
                 meta.active = id;
                 setProfilesMeta(meta);
-                try { localStorage.setItem(profileKey(id), JSON.stringify({ db: imported, cv: emptyCV() })); } catch (e) {}
+                writeProfile(id, { db: imported, cv: emptyCV() });
                 loadActiveProfile();
             } else {
                 // Profil vide : on garde l'accord en genre éventuellement déjà choisi.
@@ -1083,6 +1384,7 @@ RÈGLES :
 - Respecte les mots qu'elle a choisis, bannis ceux qu'elle refuse, respecte ce qu'elle ne veut pas afficher.
 - Ton sobre et concret, sans superlatifs : bannis « profil idéal », « passionné(e) », « dynamique et motivé(e) », « atout majeur », « excellence ».
 - Écris pour le poste visé ; si c'est une offre complète, reprends ses mots-clés quand c'est justifié (lecture par les logiciels de tri).
+- Écris des phrases complètes, avec un sujet et un verbe conjugué (« Peintre en bâtiment pendant quinze ans, j'ai… », « Agent d'escale expérimenté, habitué à… »). Jamais de liste de verbes à l'infinitif (« Appliquer les procédures… ») : un profil n'est pas une fiche de poste.
 - Trois versions réellement différentes : 1) sobre et factuelle, 2) centrée sur les compétences et le savoir-faire, 3) un peu plus personnelle (ce qui l'anime, sa façon de travailler), toujours professionnelle.
 
 RÉPONDS STRICTEMENT avec un objet JSON valide, sans texte autour, sans vrai retour à la ligne dans les valeurs :
@@ -1743,6 +2045,7 @@ ${genderDirective()}`;
             - "interests" : 3 au maximum, une ligne courte chacun.
             - Conserve les titres, entreprises, écoles et dates d'origine sans les modifier (sauf regroupement explicite ci-dessus).
 
+            FORME DU PROFIL (impératif) : phrases complètes avec verbe conjugué, jamais une liste de verbes à l'infinitif façon fiche de poste.
             TON (impératif) : rédige sobrement, sans autopromotion excessive ni superlatifs. Bannis « parfaitement adapté », « profil idéal », « candidat parfait », « atout majeur », « excellence », « passionné(e) par », « dynamique et motivé(e) ». L'accroche décrit des faits et un savoir-faire, elle ne se vante pas. Préfère des formulations neutres et concrètes.
 
             CONSIGNE DU CANDIDAT : si une consigne personnelle est fournie plus bas, respecte-la en priorité (sans jamais enfreindre la règle légale ci-dessus).
@@ -1973,7 +2276,162 @@ ${genderDirective()}`;
             if (el && document.activeElement !== el) el.innerText = text;
         }
 
-        // --- EXPORT PDF ATS (texte sélectionnable, via impression native) ---
+        // --- PDF LISIBLE PAR LES LOGICIELS DE TRI (en un clic) ---
+        // Fabrique directement un PDF texte, sur une colonne, sans photo ni
+        // décor : c'est la forme que les logiciels de tri des candidatures lisent
+        // le mieux. Pas de fenêtre d'impression, pas de réglage de marges.
+        // La version mise en page (couleurs, photo) reste disponible par
+        // « Imprimer la mise en page ».
+        function loadJsPdf() {
+            if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+            return new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = 'vendor/jspdf.umd.min.js?v=2.5.2';
+                s.onload = () => (window.jspdf && window.jspdf.jsPDF ? resolve(window.jspdf.jsPDF) : reject(new Error('jsPDF absent')));
+                s.onerror = () => reject(new Error('Chargement du module PDF impossible.'));
+                document.head.appendChild(s);
+            });
+        }
+
+        // Les polices standard du PDF couvrent le français, pas certains signes
+        // typographiques : on les remplace par leur équivalent simple.
+        function pdfSafe(t) {
+            return String(t == null ? '' : t)
+                .replace(/[‘’ʼ]/g, "'")
+                .replace(/[“”«»]/g, '"')
+                .replace(/[–—]/g, '-')
+                .replace(/…/g, '...')
+                .replace(/œ/g, 'oe').replace(/Œ/g, 'OE')
+                .replace(/[  ]/g, ' ')
+                .replace(/[•●]/g, '-')
+                .replace(/€/g, 'EUR')
+                .replace(/[^\x09\x0A\x0D\x20-\x7E -ÿ]/g, '')
+                .replace(/\*\*/g, '')
+                .trim();
+        }
+
+        function buildAtsPdf(JsPDF, cv) {
+            const doc = new JsPDF({ unit: 'mm', format: 'a4' });
+            const M = 18, W = 210 - 2 * M, BOTTOM = 297 - 16;
+            let y = 20;
+            const ensure = (h) => { if (y + h > BOTTOM) { doc.addPage(); y = 18; } };
+            const text = (str, size, style, opts = {}) => {
+                const t = pdfSafe(str);
+                if (!t) return;
+                doc.setFont('helvetica', style || 'normal');
+                doc.setFontSize(size);
+                const lh = size * 0.42;
+                const lines = doc.splitTextToSize(t, opts.width || W - (opts.indent || 0));
+                lines.forEach((ln) => {
+                    ensure(lh);
+                    doc.text(ln, M + (opts.indent || 0), y);
+                    y += lh;
+                });
+                y += opts.after != null ? opts.after : 1;
+            };
+            const section = (title) => {
+                ensure(14);
+                y += 3;
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(12);
+                doc.setTextColor(18, 63, 57);
+                doc.text(pdfSafe(title).toUpperCase(), M, y);
+                y += 1.6;
+                doc.setDrawColor(30, 122, 107);
+                doc.setLineWidth(0.3);
+                doc.line(M, y, M + W, y);
+                y += 5;
+                doc.setTextColor(30, 30, 30);
+            };
+            const bullets = (items) => items.forEach((it) => {
+                const t = pdfSafe(it);
+                if (!t) return;
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                const lines = doc.splitTextToSize(t, W - 5);
+                lines.forEach((ln, i) => {
+                    ensure(4.3);
+                    if (i === 0) doc.text('-', M + 1, y);
+                    doc.text(ln, M + 5, y);
+                    y += 4.3;
+                });
+                y += 0.6;
+            });
+            const lbl = (k, f) => (cv.labels && cv.labels[k]) ? cv.labels[k] : f;
+
+            doc.setTextColor(18, 63, 57);
+            text(cv.name || '', 20, 'bold', { after: 1.5 });
+            doc.setTextColor(30, 122, 107);
+            text(cv.job || '', 13, 'bold', { after: 1.5 });
+            doc.setTextColor(60, 60, 60);
+            text(String(cv.contact || '').replace(/\s*\n\s*/g, ' | '), 10, 'normal', { after: 2 });
+            doc.setTextColor(30, 30, 30);
+
+            if (cv.profile) { section('Profil'); text(cv.profile, 10.5, 'normal'); }
+            const skills = (cv.skills || []).map(pdfSafe).filter(Boolean);
+            if (skills.length) { section('Compétences'); bullets(skills); }
+
+            const exps = cv.experiences || [];
+            if (exps.length) {
+                section(lbl('experiences', 'Expériences'));
+                exps.forEach((e) => {
+                    ensure(10);
+                    const head = [e.title, e.company].map(pdfSafe).filter(Boolean).join(' - ');
+                    const date = pdfSafe(e.date);
+                    doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+                    const dateW = date ? doc.getTextWidth(date) + 4 : 0;
+                    const lines = doc.splitTextToSize(head, W - dateW);
+                    lines.forEach((ln, i) => {
+                        ensure(4.8);
+                        doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+                        doc.text(ln, M, y);
+                        if (i === 0 && date) { doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.text(date, M + W, y, { align: 'right' }); }
+                        y += 4.8;
+                    });
+                    y += 0.5;
+                    bullets(e.tasks || []);
+                    y += 1.5;
+                });
+            }
+            const edus = cv.education || [];
+            if (edus.length) {
+                section(lbl('education', 'Formations'));
+                edus.forEach((e) => {
+                    const head = [e.title, e.school].map(pdfSafe).filter(Boolean).join(' - ');
+                    const date = pdfSafe(e.date);
+                    text(head + (date ? ` (${date})` : ''), 10.5, 'normal', { after: 1.2 });
+                });
+            }
+            const langs = (cv.languages || []).map((l) => [l.name, l.level].map(pdfSafe).filter(Boolean).join(' : ')).filter(Boolean);
+            if (langs.length) { section(lbl('languages', 'Langues')); bullets(langs); }
+            const tools = (cv.tools || []).map(pdfSafe).filter(Boolean);
+            if (tools.length) { section(lbl('tools', 'Outils numériques')); text(tools.join(', '), 10.5, 'normal'); }
+            if (cv.showLicense && cv.license) { section('Permis'); text(cv.license, 10.5, 'normal'); }
+            const ints = (cv.interests || []).map(pdfSafe).filter(Boolean);
+            if (ints.length) { section(lbl('interests', "Centres d'intérêt")); text(ints.join(', '), 10.5, 'normal'); }
+
+            doc.setProperties({ title: pdfSafe(`CV ${cv.name || ''} ${cv.job || ''}`).trim(), subject: 'Curriculum vitae', creator: 'IAMONJOB' });
+            return doc;
+        }
+
+        async function downloadAtsPdf() {
+            if (document.activeElement && typeof document.activeElement.blur === 'function') document.activeElement.blur();
+            const btn = document.getElementById('btn-pdf-ats');
+            const old = btn ? btn.innerHTML : '';
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> PDF…'; }
+            try {
+                const JsPDF = await loadJsPdf();
+                const doc = buildAtsPdf(JsPDF, cvData);
+                const base = (pdfSafe(cvData.name || 'cv').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')) || 'cv';
+                doc.save(`cv-${base}.pdf`);
+            } catch (e) {
+                alert("Le PDF n'a pas pu être fabriqué. Utilisez « Imprimer la mise en page » en attendant.");
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = old; }
+            }
+        }
+
+        // --- IMPRESSION DE LA MISE EN PAGE (couleurs, photo), via le navigateur ---
         document.getElementById('btn-print-native').addEventListener('click', function() {
             // Valider une éventuelle édition en cours avant d'imprimer
             if (document.activeElement && typeof document.activeElement.blur === 'function') {
@@ -2693,7 +3151,10 @@ ${genderDirective()}`;
         // Init
         changeTheme('iamonjob');
         updateTokenMeter();
-        loadActiveProfile();
-        applyActiveProfileToUI();
         initAvatarDrag();
-        suggestIamonjobImport();
+        cloudBoot().then((ok) => {
+            if (!ok) return;
+            loadActiveProfile();
+            applyActiveProfileToUI();
+            suggestIamonjobImport();
+        });

@@ -17,7 +17,7 @@ import MonConseiller from '../MonConseiller';
 import MesQuestionnaires from '../MesQuestionnaires';
 import EnvoisConseiller from '../EnvoisConseiller';
 
-const STEPS = [
+export const STEPS = [
   { n: 1, label: 'Mon CV',         icon: FileText },
   { n: 2, label: 'Mes pistes',     icon: Compass },
   { n: 3, label: 'Enquête métier', icon: MessageCircle },

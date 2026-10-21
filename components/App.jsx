@@ -26,7 +26,9 @@ import {
   auth,
 } from '@/lib/firebase/client';
 import AvisConseiller from './AvisConseiller';
-import CoverLetterText from './CoverLetterText';
+import LetterTools from './LetterTools';
+import DictateButton from './DictateButton';
+import { extractDocxText } from '@/lib/docx-read';
 
 const MAX_CHAT_MESSAGES = 30;
 const CHAT_HISTORY_WINDOW = 10;
@@ -348,7 +350,38 @@ export default function App({ user, availableProviders = ['mistral'] }) {
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.type !== 'application/pdf') { setError('Veuillez sélectionner un fichier PDF.'); return; }
+    const lower = file.name.toLowerCase();
+    const isDocx = lower.endsWith('.docx') || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    if (lower.endsWith('.doc') && !isDocx) {
+      setError("Ce fichier Word est dans un ancien format (.doc). Dans Word, faites « Enregistrer sous » et choisissez .docx ou PDF, puis réessayez.");
+      e.target.value = null;
+      return;
+    }
+    if (isDocx) {
+      // CV Word : lu directement dans le navigateur, comme le PDF.
+      setIsExtractingPdf(true);
+      setError(null);
+      setFileName(file.name);
+      setFileSize(file.size);
+      setFilePages(null);
+      setCvRating(null); setOcrUsed(false);
+      clearCvRatingInFirestore(user.id);
+      try {
+        const text = await extractDocxText(file);
+        if (text.length < 50) throw new Error('vide');
+        setCvText(text);
+        setShowCvEditor(true);
+      } catch (err) {
+        setError(err.message && err.message !== 'vide'
+          ? err.message
+          : "Ce fichier Word semble vide ou illisible. Essayez de l'enregistrer en PDF.");
+      } finally {
+        setIsExtractingPdf(false);
+        e.target.value = null;
+      }
+      return;
+    }
+    if (file.type !== 'application/pdf') { setError('Veuillez choisir un fichier PDF ou Word (.docx).'); return; }
     setIsExtractingPdf(true);
     setError(null);
     setFileName(file.name);
@@ -833,6 +866,27 @@ export default function App({ user, availableProviders = ['mistral'] }) {
     if (cvRating) { setCvRating(null); clearCvRatingInFirestore(user.id); }
   };
 
+  // Prochaine action conseillée sur l'accueil (étape 1), selon l'avancement
+  // enregistré. Rien pour une première visite : l'étape 1 suffit à guider.
+  const nextAction = () => {
+    if (!cvText.trim() || isConseiller) return null;
+    if (!savedSession) {
+      return { text: 'Votre CV est enregistré : lancez le diagnostic pour découvrir vos pistes.', button: 'Lancer le diagnostic', onClick: analyzeCV };
+    }
+    if (favoriteJobs.length > 0) {
+      const first = favoriteJobs[0];
+      const n = favoriteJobs.length;
+      return {
+        text: n === 1
+          ? `Vous avez mis un métier de côté (${first.title}) : lancez l'enquête sur ce métier.`
+          : `Vous avez mis ${n} métiers de côté : lancez l'enquête sur l'un d'eux, par exemple ${first.title}.`,
+        button: "Lancer l'enquête",
+        onClick: () => openFavorite(first),
+      };
+    }
+    return { text: "Vos pistes sont prêtes : choisissez un métier et mettez-le de côté avec l'étoile.", button: 'Voir mes pistes', onClick: resumeSession };
+  };
+
   const displayName = user?.name || user?.email?.split('@')[0] || '';
 
   /* ════════════════════════════════════════════════════════════════════════════
@@ -886,6 +940,23 @@ export default function App({ user, availableProviders = ['mistral'] }) {
               />
             </div>
           </GuidedIntro>
+
+          {/* Carte « Votre prochaine action » : pour une personne qui revient,
+              une seule chose à faire, dite simplement, avec le bouton qui va
+              avec. Calculée à partir de ce qui est déjà enregistré. */}
+          {(() => {
+            const next = nextAction();
+            if (!next) return null;
+            return (
+              <Card className="p-5 border-2 border-pink-200 bg-pink-50/40">
+                <p className="text-xs font-bold tracking-wider text-pink-600 mb-1">VOTRE PROCHAINE ACTION</p>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                  <p className="text-teal-900 font-semibold">{next.text}</p>
+                  <Button onClick={next.onClick} size="md" className="shrink-0">{next.button}</Button>
+                </div>
+              </Card>
+            );
+          })()}
 
           {/* Carte « Importer votre CV » */}
           <Card className="border-l-4 border-l-teal-600">
@@ -951,9 +1022,12 @@ export default function App({ user, availableProviders = ['mistral'] }) {
             <div className="px-6 pb-6">
               {cvInputMode === 'paste' ? (
                 <div className="space-y-2">
-                  <label htmlFor="cv-paste" className="block text-sm font-semibold text-teal-800">
-                    Collez ici le texte de votre CV
-                  </label>
+                  <div className="flex items-end justify-between gap-2">
+                    <label htmlFor="cv-paste" className="block text-sm font-semibold text-teal-800">
+                      Collez ici le texte de votre CV
+                    </label>
+                    <DictateButton value={cvText} onChange={(t) => { setCvText(t); if (cvRating) { setCvRating(null); clearCvRatingInFirestore(user.id); } }} />
+                  </div>
                   <textarea
                     id="cv-paste"
                     value={cvText}
@@ -1005,10 +1079,10 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                     <div className="mt-3 flex items-start gap-3 px-4 py-3 bg-amber-50 border border-amber-300 rounded-xl text-sm text-amber-900">
                       <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                       <div className="space-y-1">
-                        <p className="font-semibold">Ce CV n'est pas lisible par les logiciels de recrutement (ATS).</p>
+                        <p className="font-semibold">Ce CV n'est pas lisible par les logiciels de tri des candidatures.</p>
                         <p className="text-amber-800/80 leading-relaxed">
                           Son format graphique (Canva, image, PDF scanné…) empêche l'extraction automatique du texte.
-                          La plupart des ATS le rejetteront ou liront un document vide.
+                          La plupart de ces logiciels le rejetteront ou liront un document vide.
                           Nous avons pu le lire grâce à une reconnaissance de texte : <strong>vérifiez le texte extrait</strong> ci-dessous et retirez-y vos coordonnées avant l'analyse.
                         </p>
                         <p className="text-amber-800 font-medium">
@@ -1086,7 +1160,7 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                 <label className="block cursor-pointer">
                   <input
                     type="file"
-                    accept=".pdf"
+                    accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     onChange={handleFileUpload}
                     className="sr-only"
                     disabled={isExtractingPdf || isLoading}
@@ -1106,8 +1180,8 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                     ) : (
                       <>
                         <Upload className="w-7 h-7" />
-                        <span className="font-semibold">Cliquez pour choisir un PDF</span>
-                        <span className="text-xs text-teal-700/60">Format PDF, jusqu'à 5 Mo</span>
+                        <span className="font-semibold">Cliquez pour choisir votre CV</span>
+                        <span className="text-xs text-teal-700/60">PDF ou Word (.docx), jusqu'à 5 Mo</span>
                       </>
                     )}
                   </div>
@@ -1582,6 +1656,7 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                         className="flex-1 px-4 py-2 border border-cream-200 rounded-xl focus:ring-2 focus:ring-teal-400 outline-none bg-cream-50/30 text-sm"
                         disabled={isChatLoading}
                       />
+                      <DictateButton value={chatInput} onChange={setChatInput} label="" />
                       <Button type="submit" icon={Send} loading={isChatLoading} disabled={!chatInput.trim()} size="md" />
                     </form>
                   )}
@@ -1770,7 +1845,7 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                 <div className="flex flex-col md:flex-row items-center gap-8 mb-6">
                   <div className={`w-32 h-32 rounded-full flex flex-col items-center justify-center border-4 ${getScoreColor(compatibility.score)}`}>
                     <span className="text-4xl font-extrabold">{compatibility.score}%</span>
-                    <span className="text-xs uppercase font-bold tracking-wider opacity-70">Match</span>
+                    <span className="text-xs uppercase font-bold tracking-wider opacity-70">correspondance</span>
                   </div>
                   <div>
                     <h2 className="text-2xl font-extrabold mb-1 text-teal-800">Diagnostic de Compatibilité</h2>
@@ -1845,7 +1920,11 @@ export default function App({ user, availableProviders = ['mistral'] }) {
                 <Card className="p-6 border-l-4 border-l-teal-400">
                   <SectionTitle icon={FileText} className="mb-4">Proposition de Lettre</SectionTitle>
                   <div className="text-sm text-teal-900 bg-cream-50 p-6 rounded-xl border border-cream-200">
-                    <CoverLetterText text={coverLetter} />
+                    <LetterTools
+                      text={coverLetter}
+                      onSave={async (t) => setCoverLetter(t)}
+                      filename={`lettre-${String(selectedOffer?.entreprise || 'entreprise').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'entreprise'}.docx`}
+                    />
                   </div>
                 </Card>
               )}

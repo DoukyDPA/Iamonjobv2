@@ -16,6 +16,7 @@ import Link from 'next/link';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client';
@@ -38,6 +39,23 @@ export default function ConseillerConnexionPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [resetMsg, setResetMsg] = useState(null);
+
+  // Mot de passe oublié : un conseiller a un vrai e-mail, Firebase lui envoie
+  // un lien. Message identique que le compte existe ou non (pas d'énumération).
+  async function handleReset() {
+    setError(null);
+    setResetMsg(null);
+    if (!email.includes('@')) { setError("Tapez d'abord votre adresse e-mail dans la case ci-dessus."); return; }
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+    } catch (err) {
+      if (err.code === 'auth/invalid-email') { setError('Adresse e-mail invalide.'); return; }
+      if (err.code === 'auth/too-many-requests') { setError('Trop de demandes. Réessayez dans quelques minutes.'); return; }
+      /* autres cas (compte inconnu…) : même message, volontairement */
+    }
+    setResetMsg(`Si un compte existe pour ${email.trim()}, un e-mail vient de partir avec un lien pour choisir un nouveau mot de passe. Pensez à regarder dans les indésirables.`);
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -169,6 +187,13 @@ export default function ConseillerConnexionPage() {
                 Accéder à mon espace
               </button>
             </form>
+
+            <div className="mt-3 text-center">
+              <button type="button" onClick={handleReset} className="text-sm text-teal-700 hover:text-teal-900 hover:underline">
+                Mot de passe oublié ?
+              </button>
+              {resetMsg && <p className="mt-2 text-xs text-teal-800 bg-teal-50 border border-teal-200 rounded-xl px-3 py-2" role="status">{resetMsg}</p>}
+            </div>
 
             <p className="mt-6 text-center text-sm text-teal-700/80">
               Vous êtes accompagné ?{' '}

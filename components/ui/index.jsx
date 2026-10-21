@@ -98,9 +98,9 @@ export const getScoreColor = (score) => {
 
 export const DifficultyBadge = ({ difficulty }) => {
   const map = {
-    facile:   { color: 'emerald', label: 'Transfert Facile' },
-    moyenne:  { color: 'amber',   label: 'Transfert Moyen' },
-    difficile:{ color: 'rose',    label: 'Transfert Défi' },
+    facile:   { color: 'emerald', label: 'Passage facile' },
+    moyenne:  { color: 'amber',   label: 'Passage accessible' },
+    difficile:{ color: 'rose',    label: 'Demande un vrai effort' },
   };
   const style = map[difficulty?.toLowerCase()] || map['moyenne'];
   return <Badge variant={style.color}>{style.label}</Badge>;

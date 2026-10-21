@@ -2,7 +2,7 @@
 // Route API — /api/candidature/[candidatureId]
 //
 // GET    → récupérer une fiche candidature France Travail
-// PATCH  → mise à jour partielle (notes personnelles de suivi, statut)
+// PATCH  → mise à jour partielle (notes personnelles de suivi, statut, lettre)
 // DELETE → supprimer une fiche candidature France Travail
 //
 // Accès : authentifié uniquement, cookie __session requis.
@@ -14,7 +14,7 @@ import { adminAuth } from '@/lib/firebase/admin';
 import { getCandidatureById, deleteCandidature, updateCandidature } from '@/lib/candidature';
 import { logEvent, newRequestId } from '@/lib/logger';
 
-const VALID_STATUSES = ['saved', 'applying', 'sent', 'rejected', 'interview'];
+import { VALID_CANDIDATURE_STATUSES as VALID_STATUSES } from '@/lib/candidature-status';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -72,6 +72,15 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ error: `Statut invalide : ${body.status}.` }, { status: 400 });
     }
     updates.status = body.status;
+    // Dates utiles au rappel de relance (ms), posées quand on choisit ce statut.
+    if (body.status === 'sent') updates.sentAt = Date.now();
+    if (body.status === 'relaunched') updates.relanceAt = Date.now();
+  }
+  // Lettre retouchée par la personne dans l'outil.
+  if (body.coverLetter !== undefined) {
+    const t = String(body.coverLetter || '').trim();
+    if (!t) return NextResponse.json({ error: 'La lettre est vide.' }, { status: 400 });
+    updates.coverLetter = t.slice(0, 10000);
   }
 
   if (Object.keys(updates).length === 0) {

@@ -13,6 +13,7 @@ import {
   FileSignature, Plus, Send, Trash2, Download, X, Loader2, CheckCircle2, Clock, PenLine,
 } from 'lucide-react';
 import EnvoiModal from './EnvoiModal';
+import { Prenom } from './Prenoms';
 
 function formatDate(ms) {
   if (!ms) return '';
@@ -133,7 +134,7 @@ export default function DocumentsPanel({ beneficiaires = [], onOpenPersonne }) {
                   <ul className="border-t border-cream-100 divide-y divide-cream-100">
                     {liste.sort((a, b) => String(a.beneficiaireCode).localeCompare(String(b.beneficiaireCode))).map((e) => (
                       <li key={e.id} className="px-4 py-2 flex flex-wrap items-center gap-3 text-sm">
-                        <button onClick={() => benById.get(e.beneficiaireId) && onOpenPersonne?.(benById.get(e.beneficiaireId))} className="font-mono font-semibold text-teal-800 hover:underline">{e.beneficiaireCode}</button>
+                        <button onClick={() => benById.get(e.beneficiaireId) && onOpenPersonne?.(benById.get(e.beneficiaireId))} className="font-mono font-semibold text-teal-800 hover:underline">{e.beneficiaireCode}<Prenom code={e.beneficiaireCode} /></button>
                         {e.signature ? (
                           <span className="inline-flex items-center gap-1 text-teal-700 text-xs"><CheckCircle2 className="w-3.5 h-3.5" /> Signé {e.signature.mode === 'papier' ? 'sur papier' : 'en ligne'} le {formatDate(e.signature.at)}</span>
                         ) : (

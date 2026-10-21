@@ -56,8 +56,8 @@ export default function DeleteAccountButton({ email }) {
               Supprimer définitivement mon compte
             </h2>
             <p className="mt-3 text-sm text-teal-800">
-              Cette action efface ton compte ({email}), ton CV et toutes tes données.
-              Elle est irréversible. Pour confirmer, tape{' '}
+              Cette action efface votre compte{email && !email.endsWith('@iamonjob.local') ? ` (${email})` : ''}, votre CV et toutes vos données.
+              Elle est irréversible. Pour confirmer, tapez{' '}
               <strong className="font-semibold">SUPPRIMER</strong> ci-dessous.
             </p>
 

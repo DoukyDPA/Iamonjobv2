@@ -15,10 +15,15 @@
 import { useEffect, useState } from 'react';
 import {
   X, Loader2, Star, Send, ArrowRightLeft, Briefcase, MessageCircle, ClipboardList,
-  ExternalLink, Trash2, Eye, CheckCircle2, Clock, Compass, FileSignature, PenLine, Route,
+  ExternalLink, Trash2, Eye, CheckCircle2, Clock, Compass, FileSignature, PenLine, Route, KeyRound, MonitorSmartphone,
 } from 'lucide-react';
 import EnvoiModal from './EnvoiModal';
+import { signInWithCustomToken } from 'firebase/auth';
+import { auth } from '@/lib/firebase/client';
+import { statusInfo, relanceReminder } from '@/lib/candidature-status';
+import { SITUATIONS_SORTIE } from '@/lib/sortie';
 import { FicheModal } from './SuiviQuestionnaires';
+import { Prenom } from './Prenoms';
 
 const ICONS = { offre: Briefcase, message: MessageCircle, questionnaire: ClipboardList, document: FileSignature };
 const LABELS = { offre: 'Offre', message: 'Message', questionnaire: 'Questionnaire', document: 'Document' };
@@ -52,6 +57,44 @@ export default function FichePersonne({ beneficiaire, onClose, onChanged }) {
   const [envoiOpen, setEnvoiOpen] = useState(false);
   const [ficheId, setFicheId] = useState(null);
   const [transfertOpen, setTransfertOpen] = useState(false);
+  const [acces, setAcces] = useState(beneficiaire.status);
+  const [accesMsg, setAccesMsg] = useState(null);
+
+  // Rendez-vous : le conseiller ouvre l'espace de la personne, pour que le
+  // travail fait ensemble aille dans SON dossier. Séance tracée et visible.
+  async function travaillerAvec() {
+    if (!window.confirm(`Travailler avec ${beneficiaire.code} ?\n\nVous allez ouvrir son espace, avec elle, pendant votre rendez-vous. Tout ce que vous ferez sera enregistré dans son dossier, et elle verra que vous avez travaillé avec elle aujourd'hui.\n\nVous serez déconnecté de votre espace conseiller : « Terminer la séance » vous ramène à la connexion.`)) return;
+    setAccesMsg(null);
+    try {
+      const r = await fetch(`/api/conseiller/beneficiaires/${encodeURIComponent(beneficiaire.id)}/seance`, { method: 'POST' });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Impossible d'ouvrir son espace.");
+      const { user } = await signInWithCustomToken(auth, d.token);
+      const token = await user.getIdToken();
+      await fetch('/api/auth/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+      try { sessionStorage.setItem('iamj_seance', JSON.stringify({ code: d.code })); } catch { /* ignoré */ }
+      window.location.href = '/';
+    } catch (e) {
+      setAccesMsg({ ok: false, text: e.message });
+    }
+  }
+
+  // Mot de passe oublié : la personne n'a pas d'e-mail dans l'outil. On remet
+  // son code « à activer » ; son dossier ne bouge pas.
+  async function reinitialiserAcces() {
+    if (!window.confirm(`Réinitialiser l'accès de ${beneficiaire.code} ?\n\nSon mot de passe actuel cessera de fonctionner. La personne choisira un nouveau mot de passe sur la page d'activation, avec le même code. Son dossier, son CV et ses candidatures sont conservés.`)) return;
+    setAccesMsg(null);
+    try {
+      const r = await fetch(`/api/conseiller/beneficiaires/${encodeURIComponent(beneficiaire.id)}/acces`, { method: 'POST' });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || 'La réinitialisation a échoué.');
+      setAcces('reset');
+      setAccesMsg({ ok: true, text: `Accès réinitialisé. Dites à la personne d'aller sur la page de connexion, « Activer mon code », de taper ${beneficiaire.code} et de choisir un nouveau mot de passe.` });
+      await onChanged?.();
+    } catch (e) {
+      setAccesMsg({ ok: false, text: e.message });
+    }
+  }
 
   async function load() {
     try {
@@ -88,15 +131,25 @@ export default function FichePersonne({ beneficiaire, onClose, onChanged }) {
       <div className="w-full max-w-3xl max-h-[92vh] bg-white border border-cream-200 rounded-2xl shadow-card overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="px-6 py-5 border-b border-cream-200 bg-teal-50/60 flex items-start gap-3">
           <div className="flex-1 min-w-0">
-            <h2 id="fiche-p-title" className="text-lg font-bold text-teal-800 font-mono">{beneficiaire.code}</h2>
+            <h2 id="fiche-p-title" className="text-lg font-bold text-teal-800 font-mono">{beneficiaire.code}<Prenom code={beneficiaire.code} /></h2>
             <p className="text-sm text-teal-700/80 mt-0.5">
               {beneficiaire.promo ? `${beneficiaire.promo}${beneficiaire.promoArchivee ? ' (archivée)' : ''}` : 'Pas de promo'}
-              {' · '}{beneficiaire.status === 'active' ? 'Accès activé' : 'Code non activé'}
+              {' · '}{acces === 'active' ? 'Accès activé' : acces === 'reset' ? 'Accès réinitialisé, nouveau mot de passe à choisir' : 'Code non activé'}
             </p>
           </div>
           <button onClick={() => setEnvoiOpen(true)} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700">
             <Send className="w-4 h-4" /> Envoyer
           </button>
+          {acces === 'active' && (
+            <button onClick={travaillerAvec} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-800 text-sm font-semibold hover:bg-indigo-100" title="En rendez-vous : ouvrir son espace pour travailler ensemble, dans son dossier">
+              <MonitorSmartphone className="w-4 h-4" /> <span className="hidden sm:inline">Travailler avec</span>
+            </button>
+          )}
+          {(acces === 'active' || acces === 'reset') && (
+            <button onClick={reinitialiserAcces} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-teal-200 bg-white text-teal-800 text-sm font-semibold hover:bg-teal-50" title="Mot de passe oublié : la personne en choisira un nouveau avec son code">
+              <KeyRound className="w-4 h-4" /> <span className="hidden sm:inline">Réinitialiser l'accès</span>
+            </button>
+          )}
           <button onClick={() => setTransfertOpen(true)} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-teal-200 bg-white text-teal-800 text-sm font-semibold hover:bg-teal-50" title="Confier ce suivi à un collègue de la structure">
             <ArrowRightLeft className="w-4 h-4" /> Transférer
           </button>
@@ -107,10 +160,17 @@ export default function FichePersonne({ beneficiaire, onClose, onChanged }) {
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6 iamj-scrollbar">
           {error && <p className="text-sm text-rose-600">{error}</p>}
+          {accesMsg && (
+            <p className={`text-sm rounded-xl px-3 py-2 border ${accesMsg.ok ? 'bg-teal-50 border-teal-200 text-teal-900' : 'bg-rose-50 border-rose-200 text-rose-700'}`}>{accesMsg.text}</p>
+          )}
           {!data && !error && <Loader2 className="w-6 h-6 animate-spin text-teal-600 mx-auto" />}
 
           {data && (
             <>
+              {data.avancement && <Avancement a={data.avancement} />}
+
+              <SortiePersonne beneficiaire={beneficiaire} initial={data.dossier?.sortie} onChanged={onChanged} />
+
               {/* Métiers de l'étape 2 */}
               <section>
                 <h3 className="text-xs font-bold text-teal-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -378,6 +438,109 @@ function ParcoursPersonne({ beneficiaire, onChanged }) {
           {msg && <p className="text-xs text-teal-700">{msg}</p>}
         </div>
       )}
+    </section>
+  );
+}
+
+// Où en est la personne : étape atteinte, repères chiffrés, candidatures.
+// Pour préparer un rendez-vous en deux minutes. Ni CV ni lettre en clair.
+function Avancement({ a }) {
+  const etape = a.candidatures.length ? 5 : a.favoris ? 3 : a.analyse ? 2 : a.cv ? 1 : 0;
+  const reperes = [
+    a.noteCv != null && `CV noté ${a.noteCv}/20`,
+    a.favoris > 0 && `${a.favoris} métier${a.favoris > 1 ? 's' : ''} mis de côté`,
+    `${a.candidatures.length} offre${a.candidatures.length > 1 ? 's' : ''} analysée${a.candidatures.length > 1 ? 's' : ''}`,
+    `${a.campagnes.length} campagne${a.campagnes.length > 1 ? 's' : ''} spontanée${a.campagnes.length > 1 ? 's' : ''}`,
+  ].filter(Boolean);
+  const envoyees = a.candidatures.filter((c) => ['sent', 'relaunched', 'interview', 'rejected'].includes(c.status)).length;
+  return (
+    <section>
+      <h3 className="text-xs font-bold text-teal-800 uppercase tracking-wider mb-2">Où en est la personne</h3>
+      <div className="rounded-xl border border-teal-100 bg-teal-50/40 p-3">
+        <div className="flex items-center gap-1.5" aria-label={`Étape ${etape} sur 5`}>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <span key={n} className={`h-2 flex-1 rounded-full ${n <= etape ? 'bg-teal-600' : 'bg-cream-200'}`} />
+          ))}
+        </div>
+        <p className="mt-2 text-sm text-teal-900">
+          <strong>{etape === 0 ? 'Pas encore commencé' : `Étape ${etape} sur 5`}</strong>
+          {reperes.length > 0 && <> · {reperes.join(' · ')}</>}
+          {envoyees > 0 && <> · {envoyees} candidature{envoyees > 1 ? 's' : ''} envoyée{envoyees > 1 ? 's' : ''}</>}
+        </p>
+        {a.candidatures.length > 0 && (
+          <ul className="mt-2 space-y-1">
+            {a.candidatures.slice(0, 10).map((c) => (
+              <li key={c.id} className="text-xs text-teal-800 flex flex-wrap items-center gap-x-2">
+                <span className="font-semibold">{c.intitule || 'Offre'}</span>
+                {c.entreprise && <span className="text-teal-700/70">· {c.entreprise}</span>}
+                {c.score != null && <span className="text-amber-700">· {c.score} %</span>}
+                <span className="rounded-full bg-white border border-cream-300 px-1.5">{statusInfo(c.status).label}</span>
+                {c.lettre && <span className="text-teal-700/60">· lettre prête</span>}
+                {relanceReminder(c) && <span className="text-pink-700 font-semibold">· à relancer</span>}
+              </li>
+            ))}
+          </ul>
+        )}
+        {a.campagnes.length > 0 && (
+          <p className="mt-2 text-xs text-teal-700/80">
+            Campagnes : {a.campagnes.map((c) => `${c.metier} (${c.retenues}/${c.entreprises} entreprises retenues)`).join(' ; ')}
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// Situation à la sortie : alimente le bilan pour les financeurs.
+function SortiePersonne({ beneficiaire, initial, onChanged }) {
+  const [situation, setSituation] = useState(initial?.situation || '');
+  const [date, setDate] = useState(initial?.date || new Date().toISOString().slice(0, 10));
+  const [precision, setPrecision] = useState(initial?.precision || '');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
+
+  async function enregistrer(effacer = false) {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const r = await fetch(`/api/conseiller/beneficiaires/${encodeURIComponent(beneficiaire.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sortie: effacer ? null : { situation, date, precision } }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || 'Échec.');
+      if (effacer) { setSituation(''); setPrecision(''); }
+      setMsg(effacer ? 'Situation effacée.' : 'Situation enregistrée.');
+      await onChanged?.();
+    } catch (e) {
+      setMsg(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section>
+      <h3 className="text-xs font-bold text-teal-800 uppercase tracking-wider mb-2">Situation à la sortie</h3>
+      <div className="flex flex-wrap items-end gap-2">
+        <select value={situation} onChange={(e) => setSituation(e.target.value)} className="p-2 text-sm rounded-lg border border-teal-200 bg-white max-w-full">
+          <option value="">Toujours accompagnée (pas de sortie)</option>
+          {SITUATIONS_SORTIE.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+        </select>
+        {situation && (
+          <>
+            <label className="text-xs text-teal-800">Date
+              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="ml-1 p-1.5 text-sm rounded-lg border border-teal-200" />
+            </label>
+            <input value={precision} onChange={(e) => setPrecision(e.target.value)} maxLength={200} placeholder="Précision (métier, organisme…) sans nom" className="flex-1 min-w-[12rem] p-2 text-sm rounded-lg border border-teal-200" />
+          </>
+        )}
+        <button onClick={() => enregistrer(!situation)} disabled={busy || (!situation && !initial)} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 disabled:bg-teal-200">
+          {busy && <Loader2 className="w-4 h-4 animate-spin" />} Enregistrer
+        </button>
+      </div>
+      {msg && <p className="text-xs text-teal-700 mt-1">{msg}</p>}
     </section>
   );
 }

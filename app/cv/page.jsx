@@ -51,6 +51,36 @@ export default function CvPage() {
     return () => unsubscribe();
   }, [router]);
 
+  // Le cookie de session ne dure qu'une heure. Une séance de CV peut durer plus :
+  // on le renouvelle toutes les 40 minutes, et à la demande d'IAMONCV quand un
+  // enregistrement reçoit un refus de session (message same-origin uniquement).
+  useEffect(() => {
+    async function refreshSession() {
+      const u = auth.currentUser;
+      if (!u) return false;
+      try {
+        const token = await u.getIdToken(true);
+        const res = await fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+        return res.ok;
+      } catch {
+        return false;
+      }
+    }
+    const timer = setInterval(refreshSession, 40 * 60 * 1000);
+    async function onMessage(ev) {
+      if (ev.origin !== window.location.origin) return;
+      if (ev.data?.type !== 'iamoncv-refresh-session') return;
+      const ok = await refreshSession();
+      ev.source?.postMessage({ type: 'iamoncv-session-refreshed', ok }, window.location.origin);
+    }
+    window.addEventListener('message', onMessage);
+    return () => { clearInterval(timer); window.removeEventListener('message', onMessage); };
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-cream-100">

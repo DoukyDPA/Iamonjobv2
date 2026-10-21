@@ -1,14 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Gauge, Loader2, X } from 'lucide-react';
+import { Gauge, Loader2, X, HelpCircle, Star, Send } from 'lucide-react';
 import Header from './Header';
-import Sidebar from './Sidebar';
+import Sidebar, { STEPS } from './Sidebar';
 import Footer from './Footer';
 import MonConseiller from '../MonConseiller';
 import MesQuestionnaires from '../MesQuestionnaires';
 import EnvoisConseiller from '../EnvoisConseiller';
 import { CatMascot } from '../brand';
+import SeanceBanner from '../SeanceBanner';
 import { ErrorBanner } from '../ui';
 
 const PSEUDO_NOTICE_KEY = 'hide_pseudo_notice';
@@ -61,6 +62,98 @@ function PseudoNotice({ user }) {
   );
 }
 
+/**
+ * Barre des étapes sur téléphone et tablette. La sidebar n'apparaît qu'en
+ * grand écran : sans cette barre, une personne qui n'a qu'un téléphone ne
+ * voyait pas les 5 étapes, ni « Mes métiers », ni « Mes candidatures ».
+ * Collée sous l'en-tête pendant le défilement.
+ */
+function MobileStepBar({ currentStep, maxUnlocked, onNavigate, favoriteJobs, onOpenFavorite }) {
+  const current = STEPS.find((s) => s.n === currentStep);
+  return (
+    <div className="lg:hidden sticky top-16 z-10 bg-cream-50/95 backdrop-blur border-b border-cream-200 px-3 py-2">
+      <nav aria-label="Parcours en 5 étapes" className="flex items-center justify-between gap-1.5">
+        {STEPS.map((s) => {
+          const isActive = currentStep === s.n;
+          const isUnlocked = s.n <= maxUnlocked;
+          return (
+            <button
+              key={s.n}
+              type="button"
+              onClick={() => isUnlocked && onNavigate?.(s.n)}
+              disabled={!isUnlocked}
+              aria-current={isActive ? 'step' : undefined}
+              aria-label={`Étape ${s.n} : ${s.label}`}
+              title={s.label}
+              className={[
+                'flex-1 h-10 rounded-xl text-sm font-bold border transition-colors',
+                isActive
+                  ? 'bg-teal-600 text-white border-teal-600 shadow-soft'
+                  : isUnlocked
+                  ? 'bg-white text-teal-700 border-cream-300'
+                  : 'bg-cream-100 text-teal-700/40 border-cream-200',
+              ].join(' ')}
+            >
+              {s.n}
+            </button>
+          );
+        })}
+      </nav>
+      <div className="mt-1.5 flex items-center gap-2 text-xs">
+        <span className="font-semibold text-teal-800 truncate">
+          Étape {currentStep} : {current?.label}
+        </span>
+        <span className="flex-1" />
+        {favoriteJobs.length > 0 && (
+          <details className="relative">
+            <summary className="list-none cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-cream-300 text-teal-700 font-semibold">
+              <Star className="w-3 h-3 text-amber-500" fill="currentColor" aria-hidden="true" />
+              Mes métiers ({favoriteJobs.length})
+            </summary>
+            <ul className="absolute right-0 mt-1 w-64 max-w-[80vw] bg-white border border-cream-200 rounded-xl shadow-card p-1.5 space-y-1 z-20">
+              {favoriteJobs.map((job) => (
+                <li key={job.title}>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.currentTarget.closest('details')?.removeAttribute('open'); onOpenFavorite?.(job); }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-amber-50 text-sm text-teal-800"
+                  >
+                    {job.title}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
+        <a href="/campagne" className="sm:hidden inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-cream-300 text-teal-700 font-semibold">
+          <Send className="w-3 h-3" aria-hidden="true" /> Candidatures
+        </a>
+      </div>
+    </div>
+  );
+}
+
+/** Lien « Aide » vers la bonne section du mode d'emploi. */
+function StepHelpLink({ step, coded }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+      {coded ? (
+        <p className="text-xs text-teal-700/80">
+          Votre compte est gardé tant que vous venez <strong>au moins une fois par mois</strong>.
+        </p>
+      ) : <span />}
+      <a
+        href={`/aide#etape-${step}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-teal-700 hover:text-teal-900 hover:underline"
+      >
+        <HelpCircle className="w-4 h-4" aria-hidden="true" /> Aide sur cette étape
+      </a>
+    </div>
+  );
+}
+
 /** Couleur de la pastille mobile selon le score /20 (cohérent avec la sidebar). */
 const mobileRatingTile = (n) => {
   if (n == null) return 'bg-teal-600 border-teal-700';
@@ -95,7 +188,16 @@ export default function AppShell({
     <div className="min-h-screen bg-cream-100 text-teal-900 flex flex-col">
       <Header user={user} sessionLabel={sessionLabel} />
 
+      <SeanceBanner user={user} />
       <PseudoNotice user={user} />
+
+      <MobileStepBar
+        currentStep={currentStep}
+        maxUnlocked={maxUnlocked}
+        onNavigate={onNavigate}
+        favoriteJobs={favoriteJobs}
+        onOpenFavorite={onOpenFavorite}
+      />
 
       {/* ─── Bande "Évaluation du CV" — visible UNIQUEMENT sur mobile ───
           La sidebar (lg+) porte déjà ce bloc. Sur mobile, sans cette bande,
@@ -198,6 +300,7 @@ export default function AppShell({
         <div className="flex-1 flex flex-col">
           <main className="flex-1 px-4 sm:px-6 lg:px-10 py-8 max-w-[1024px] mx-auto w-full">
             {error && <ErrorBanner message={error} onClose={onCloseError} />}
+            <StepHelpLink step={currentStep} coded={Boolean(user?.email?.endsWith('@iamonjob.local'))} />
             {children}
           </main>
           <Footer />

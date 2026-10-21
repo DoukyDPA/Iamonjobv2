@@ -4,14 +4,18 @@ export const metadata = {
   title: 'Iamonjob — Reconversion & Recherche d\'emploi',
   description:
     'Analysez votre CV, explorez des pistes de reconversion, simulez des enquêtes métier, et trouvez des offres adaptées.',
-  // Favicon : le logo chat à cravate, déjà hébergé sur postimg (domaine
-  // autorisé dans next.config.js). Pour une icône plus nette, on pourra
-  // déposer plus tard un favicon.ico carré dans app/.
+  // Icônes locales (chat à cravate sur fond crème), aussi utilisées pour
+  // l'écran d'accueil du téléphone. Voir app/manifest.js.
   icons: {
-    icon: 'https://i.postimg.cc/cHR6mh41/Chat-cravate.png',
-    shortcut: 'https://i.postimg.cc/cHR6mh41/Chat-cravate.png',
-    apple: 'https://i.postimg.cc/cHR6mh41/Chat-cravate.png',
+    icon: '/icon-192.png',
+    shortcut: '/icon-192.png',
+    apple: '/apple-touch-icon.png',
   },
+  appleWebApp: { capable: true, title: 'IAMONJOB', statusBarStyle: 'default' },
+};
+
+export const viewport = {
+  themeColor: '#123F39',
 };
 
 export default function RootLayout({ children }) {

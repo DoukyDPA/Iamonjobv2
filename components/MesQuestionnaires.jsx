@@ -19,6 +19,7 @@ import {
   ClipboardList, ClipboardCheck, ChevronLeft, ChevronRight, Lock, X, CheckCircle2, Send,
 } from 'lucide-react';
 import { Button } from './ui';
+import DictateButton from './DictateButton';
 import { AUTRE, allQuestions } from '@/lib/questionnaires/catalogue';
 
 function formatDate(ms) {
@@ -484,7 +485,10 @@ function Question({ q, value, onChange, invalid }) {
       {q.type === 'text' ? (
         <input type="text" value={value || ''} maxLength={300} onChange={(e) => onChange(e.target.value)} className={inputCls} />
       ) : (
-        <textarea value={value || ''} rows={3} maxLength={3000} onChange={(e) => onChange(e.target.value)} className={inputCls} />
+        <>
+          <textarea value={value || ''} rows={3} maxLength={3000} onChange={(e) => onChange(e.target.value)} className={inputCls} />
+          <DictateButton value={value || ''} onChange={(t) => onChange(t.slice(0, 3000))} className="mt-1.5" />
+        </>
       )}
     </label>
   );

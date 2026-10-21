@@ -6,9 +6,16 @@
     <title>IAMONCV</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="iamoncv.css?v=20261017">
+    <link rel="stylesheet" href="iamoncv.css?v=20261017c">
 </head>
 <body class="bg-[#F7F3EC] font-sans text-slate-900 h-screen flex flex-col overflow-hidden">
+    <!-- Chargement des CV enregistrés sur le compte (retiré une fois prêt) -->
+    <div id="cloud-boot" class="fixed inset-0 z-[90] bg-[#F7F3EC]/95 flex items-center justify-center p-4">
+        <div class="text-center">
+            <i class="fas fa-rotate fa-spin text-3xl text-[#1E7A6B]"></i>
+            <p class="mt-3 font-semibold text-[#123F39]">Chargement de vos CV…</p>
+        </div>
+    </div>
 
     <!-- Header -->
     <header class="bg-[#123F39] text-white p-4 shadow-md shrink-0 z-10 relative">
@@ -33,6 +40,8 @@
                     <button onclick="changeTheme('purple')" class="w-5 h-5 rounded-full bg-[#581c87] border border-white shadow-sm hover:scale-110 transition"></button>
                     <button onclick="changeTheme('slate')" class="w-5 h-5 rounded-full bg-[#0f172a] border border-white shadow-sm hover:scale-110 transition"></button>
                 </div>
+                <!-- Témoin d'enregistrement sur le compte -->
+                <div id="save-status" role="status" aria-live="polite" class="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border bg-white/10 border-white/20 text-white"><i class="fas fa-rotate fa-spin"></i><span>Chargement…</span></div>
                 <!-- Compteur de consommation (période de test) -->
                 <div id="token-meter" class="flex items-center gap-1.5 bg-white/10 border border-white/20 px-3 py-2 rounded-lg text-xs font-bold" title="Consommation IA sur ce CV (indicatif)">
                     <i class="fas fa-coins text-[#EE6E5E]"></i>
@@ -48,8 +57,11 @@
                     <i class="fas fa-file-import mr-2 text-[#EE6E5E]"></i> <span class="hidden sm:inline">CV renvoyé</span>
                 </button>
                 <input type="file" id="edited-cv-import" accept="text/html,.html,.htm,application/json,.json" onchange="importEditedCvFile(this.files && this.files[0])" class="hidden">
-                <button id="btn-print-native" class="bg-white text-[#123F39] px-4 py-2 rounded-lg text-sm font-bold shadow-lg hover:bg-[#EAF3F0] transition flex items-center" title="PDF avec texte sélectionnable, lisible par les logiciels de recrutement (ATS). Recommandé.">
-                    <i class="fas fa-file-pdf mr-2 text-[#EE6E5E]"></i> PDF <span class="hidden sm:inline ml-1">(ATS)</span>
+                <button id="btn-print-native" class="bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-white/20 transition flex items-center" title="Imprimer ou enregistrer la mise en page (couleurs, photo) avec la fenêtre d'impression du navigateur.">
+                    <i class="fas fa-print mr-2 text-[#EE6E5E]"></i> <span class="hidden sm:inline">Imprimer la mise en page</span>
+                </button>
+                <button id="btn-pdf-ats" onclick="downloadAtsPdf()" class="bg-white text-[#123F39] px-4 py-2 rounded-lg text-sm font-bold shadow-lg hover:bg-[#EAF3F0] transition flex items-center" title="Télécharge directement un PDF simple, sur une colonne, que les logiciels de tri des candidatures lisent sans difficulté. Recommandé pour postuler.">
+                    <i class="fas fa-file-pdf mr-2 text-[#EE6E5E]"></i> Télécharger mon CV en PDF
                 </button>
             </div>
         </div>
@@ -387,6 +399,6 @@
         </div>
     </div>
 
-    <script src="iamoncv.js?v=20261017" charset="utf-8"></script>
+    <script src="iamoncv.js?v=20261017c" charset="utf-8"></script>
 </body>
 </html>

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import EnvoiModal from './EnvoiModal';
 import { downloadCodesCsv } from './codesCsv';
+import { Prenom } from './Prenoms';
 
 const SCORES = [
   { key: 'confiance', short: 'C', label: 'Confiance' },
@@ -328,7 +329,7 @@ function PromoTable({ promo, onOpen }) {
           <tbody>
             {rows.map((r) => (
               <tr key={r.id} className="border-t border-cream-100 align-top">
-                <td className="px-4 py-3 font-mono font-semibold text-teal-800 whitespace-nowrap">{r.code}</td>
+                <td className="px-4 py-3 font-mono font-semibold text-teal-800 whitespace-nowrap">{r.code}<Prenom code={r.code} /></td>
                 {etapes.map((e) => {
                   const f = r.fiches.find((x) => x.etape === e.n);
                   return (
@@ -692,7 +693,7 @@ function RapportModal({ promo, onClose }) {
               <RSection titre="Personnes à surveiller">
                 <ul className="space-y-2">{(x.vigilance || []).map((v, i) => (
                   <li key={i} className="rounded-xl border border-rose-200 bg-rose-50/40 p-3">
-                    <span className="font-mono font-semibold text-teal-800">{v.code}</span> · {v.motif}
+                    <span className="font-mono font-semibold text-teal-800">{v.code}<Prenom code={v.code} /></span> · {v.motif}
                     <div className="text-teal-700 mt-1"><span className="font-semibold">Action :</span> {v.suggestion}</div>
                   </li>
                 ))}</ul>
@@ -701,7 +702,7 @@ function RapportModal({ promo, onClose }) {
               <RSection titre="Par personne">
                 <ul className="space-y-2">{(x.parPersonne || []).map((p, i) => (
                   <li key={i}>
-                    <span className="font-mono font-semibold text-teal-800">{p.code}</span> · {p.trajectoire}
+                    <span className="font-mono font-semibold text-teal-800">{p.code}<Prenom code={p.code} /></span> · {p.trajectoire}
                     {p.aSuivre && <div className="text-teal-700/80 text-xs mt-0.5">À suivre : {p.aSuivre}</div>}
                   </li>
                 ))}</ul>
@@ -811,7 +812,7 @@ export function AssignModal({ parcours: tous, beneficiaires, current, defaultPar
                   <li key={b.id}>
                     <label className="flex items-center gap-2 p-2 rounded-lg border border-cream-200 hover:bg-cream-50 cursor-pointer">
                       <input type="checkbox" checked={selected.has(b.id)} onChange={() => toggle(b.id)} className="accent-teal-600" />
-                      <span className="font-mono text-sm font-semibold text-teal-800">{b.code}</span>
+                      <span className="font-mono text-sm font-semibold text-teal-800">{b.code}<Prenom code={b.code} /></span>
                       {ailleurs && <span className="text-[11px] text-amber-700">déjà dans « {b.promo || b.parcoursId} »</span>}
                       {b.status !== 'active' && <span className="text-[11px] text-teal-700/50">code non activé</span>}
                     </label>

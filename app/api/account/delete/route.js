@@ -9,8 +9,8 @@ export const dynamic = 'force-dynamic';
 // ════════════════════════════════════════════════════════════════════════════
 // Suppression de compte — droit à l'effacement (RGPD, article 17).
 //
-// Effacement TOTAL et définitif : on supprime le document CV, les compteurs de
-// rate limit, puis le compte Firebase Auth. La session est invalidée dans la
+// Effacement TOTAL et définitif : dossier d'accompagnement, CV, IAMONCV,
+// candidatures, campagnes, compteurs de rate limit, puis le compte Firebase Auth. La session est invalidée dans la
 // foulée. Action irréversible, déclenchée par l'utilisateur lui-même.
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -31,8 +31,8 @@ export async function POST(request) {
   }
 
   try {
-    // Effacement complet (CV, compteurs, compte Auth) via la logique partagée.
-    await deleteAccountData(uid);
+    // Effacement complet via la logique partagée (lib/account-deletion.js).
+    await deleteAccountData(uid, { purgeDossier: true });
 
     // Trace d'audit : on journalise l'uid effacé, jamais email ni nom.
     logEvent({ event: 'account-delete', requestId, uid, status: 'deleted' });

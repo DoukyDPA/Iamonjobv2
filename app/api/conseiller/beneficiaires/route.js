@@ -2,7 +2,8 @@
 // Route API — /api/conseiller/beneficiaires
 //
 // GET  → liste les bénéficiaires du conseiller connecté
-// POST → crée un bénéficiaire, renvoie le code pseudonyme à remettre
+// POST → crée un bénéficiaire, renvoie le code pseudonyme à remettre.
+//        body { count: 2 à 30 } : crée un lot de codes (une promo).
 //
 // Accès : rôle `conseiller` requis (custom claim), cookie __session.
 // ════════════════════════════════════════════════════════════════════════════
@@ -38,6 +39,27 @@ export async function POST(request) {
   if (!uid) return NextResponse.json({ error }, { status });
 
   const requestId = newRequestId();
+  const body = await request.json().catch(() => ({}));
+  const count = Math.floor(Number(body?.count) || 1);
+
+  // Création en lot (une promo) : de 2 à 30 codes d'un coup.
+  if (count > 1) {
+    if (count > 30) return NextResponse.json({ error: 'Trente codes au maximum à la fois.' }, { status: 400 });
+    const codes = [];
+    try {
+      for (let i = 0; i < count; i++) {
+        const r = await createBeneficiaire({ conseillerUid: uid, structureId: structureId || 'default' });
+        codes.push(r);
+      }
+      logEvent({ event: 'beneficiaire-create-lot', requestId, uid, status: 'ok', count });
+      return NextResponse.json({ codes });
+    } catch (err) {
+      logEvent({ event: 'beneficiaire-create-lot', requestId, uid, status: 'error', error: err.message, level: 'error', created: codes.length });
+      // Les codes déjà créés sont renvoyés : rien n'est perdu.
+      return NextResponse.json({ codes, error: `Création interrompue après ${codes.length} code(s).` }, { status: codes.length ? 207 : 500 });
+    }
+  }
+
   try {
     const { beneficiaireId, code } = await createBeneficiaire({
       conseillerUid: uid,

@@ -22,12 +22,16 @@ import {
   Compass, Copy, Check, X, AlertCircle, Send,
   MessageSquareHeart, Clock, CheckCircle2, ExternalLink, Coins, Eye, Trash2,
   Camera, UserCircle, Flag, Ban, ThumbsUp, Undo2, LayoutDashboard, UsersRound,
-  ClipboardList, MessagesSquare, FileSignature, HeartHandshake,
+  ClipboardList, MessagesSquare, FileSignature, HeartHandshake, Printer, Crown,
 } from 'lucide-react';
 import FichePersonne from '@/components/conseiller/FichePersonne';
 import BaseQuestionnaires from '@/components/conseiller/BaseQuestionnaires';
 import PromosPanel from '@/components/conseiller/PromosPanel';
 import AccompagnementsPanel from '@/components/conseiller/AccompagnementsPanel';
+import LotCodesModal, { printCoupons } from '@/components/conseiller/LotCodesModal';
+import ATraiter from '@/components/conseiller/ATraiter';
+import EquipePanel from '@/components/conseiller/EquipePanel';
+import { PrenomsProvider, PrenomsBar, Prenom } from '@/components/conseiller/Prenoms';
 import DocumentsPanel from '@/components/conseiller/DocumentsPanel';
 import ReponsesEnvois from '@/components/conseiller/ReponsesEnvois';
 
@@ -39,6 +43,8 @@ const ONGLETS = [
   { id: 'messages', label: 'Messages', icon: MessagesSquare },
   { id: 'documents', label: 'Documents', icon: FileSignature },
 ];
+// Onglet réservé au responsable de structure.
+const ONGLET_EQUIPE = { id: 'equipe', label: 'Équipe', icon: Crown };
 
 // Format court des grands nombres : 12 340 → « 12,3 k », lisible d'un coup d'œil.
 function formatTokens(n) {
@@ -94,11 +100,13 @@ export default function ConseillerPage() {
   const [profilOpen, setProfilOpen] = useState(false);
   const [promoFiltre, setPromoFiltre] = useState('');
   const [suiviFocus, setSuiviFocus] = useState(null);
+  const [lotOpen, setLotOpen] = useState(false);
+  const [responsable, setResponsable] = useState(false);
 
   // Onglet lu dans l'adresse au chargement, et mis à jour à chaque changement.
   useEffect(() => {
     const h = (typeof window !== 'undefined' ? window.location.hash : '').replace('#', '');
-    if (ONGLETS.some((o) => o.id === h)) setOnglet(h);
+    if (ONGLETS.some((o) => o.id === h) || h === 'equipe') setOnglet(h);
   }, []);
   function changerOnglet(id) {
     setOnglet(id);
@@ -111,6 +119,8 @@ export default function ConseillerPage() {
     if (!res.ok) { setError('Chargement impossible.'); setLoading(false); return; }
     const data = await res.json();
     setList(data.beneficiaires || []);
+    // Responsable de structure ? (onglet Équipe)
+    fetch('/api/conseiller/equipe').then((r) => (r.ok ? r.json() : null)).then((d) => setResponsable(Boolean(d?.responsable))).catch(() => {});
     // File des avis. Un échec ici ne bloque pas l'affichage du groupe.
     try {
       const ar = await fetch('/api/conseiller/avis');
@@ -235,6 +245,7 @@ export default function ConseillerPage() {
   const avisEnAttente = avis.filter((a) => a.status === 'pending').length;
 
   return (
+    <PrenomsProvider>
     <div className="min-h-screen bg-cream-100 text-teal-900 flex flex-col">
       <Header />
 
@@ -274,9 +285,20 @@ export default function ConseillerPage() {
           <Stat icon={Clock} label="Accès non activés" value={nonActives} tone={nonActives > 0 ? 'amber' : 'teal'} />
         </div>
 
+        {/* Prénoms lus dans le fichier local du conseiller, jamais envoyés */}
+        <PrenomsBar />
+
+        {/* Ce qui demande une action aujourd'hui */}
+        <ATraiter
+          list={list}
+          avisEnAttente={avisEnAttente}
+          onOpenPersonne={setFiche}
+          onGoTo={(id) => changerOnglet(id)}
+        />
+
         {/* Onglets */}
         <nav className="flex gap-1 overflow-x-auto border-b border-cream-200 mb-6 -mx-1 px-1" role="tablist" aria-label="Sections du tableau de bord">
-          {ONGLETS.map((o) => {
+          {(responsable ? [...ONGLETS, ONGLET_EQUIPE] : ONGLETS).map((o) => {
             const Icon = o.icon;
             const badge = o.id === 'messages' ? avisEnAttente : 0;
             const actif = onglet === o.id;
@@ -312,6 +334,7 @@ export default function ConseillerPage() {
             onOpen={setFiche}
             onDelete={setConfirmDelete}
             onCreate={handleCreate}
+            onCreateMany={() => setLotOpen(true)}
             creating={creating}
           />
         )}
@@ -339,6 +362,8 @@ export default function ConseillerPage() {
         )}
 
         {onglet === 'documents' && <DocumentsPanel beneficiaires={list} onOpenPersonne={setFiche} />}
+
+        {onglet === 'equipe' && responsable && <EquipePanel onChanged={load} />}
       </main>
 
       {/* Mon profil : prénom + photo, visibles par les personnes accompagnées */}
@@ -352,6 +377,8 @@ export default function ConseillerPage() {
           </div>
         </div>
       )}
+
+      {lotOpen && <LotCodesModal onClose={() => setLotOpen(false)} onCreated={load} />}
 
       {/* Fiche d'une personne : métiers, envois, transfert */}
       {fiche && <FichePersonne beneficiaire={fiche} onClose={() => setFiche(null)} onChanged={load} />}
@@ -370,7 +397,7 @@ export default function ConseillerPage() {
             </div>
             <h2 className="text-lg font-extrabold text-teal-800 text-center">Supprimer ce dossier ?</h2>
             <p className="text-sm text-teal-700/80 mt-2 text-center">
-              Le dossier <span className="font-mono font-semibold">{confirmDelete.code}</span> et toutes ses
+              Le dossier <span className="font-mono font-semibold">{confirmDelete.code}<Prenom code={confirmDelete.code} /></span> et toutes ses
               données (candidatures, campagnes, CV, échanges) seront effacés définitivement. Cette action est
               irréversible.
             </p>
@@ -437,8 +464,14 @@ export default function ConseillerPage() {
                 </button>
               </div>
               <button
+                onClick={() => printCoupons([newCode])}
+                className="mt-5 w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 border border-teal-200 bg-white text-teal-800 rounded-xl font-semibold hover:bg-teal-50 transition-all"
+              >
+                <Printer className="w-4 h-4" /> Imprimer le coupon
+              </button>
+              <button
                 onClick={() => setNewCode(null)}
-                className="mt-6 w-full px-5 py-2.5 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 transition-all"
+                className="mt-2 w-full px-5 py-2.5 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 transition-all"
               >
                 Terminé
               </button>
@@ -449,6 +482,7 @@ export default function ConseillerPage() {
 
       <Footer />
     </div>
+    </PrenomsProvider>
   );
 }
 
@@ -686,7 +720,7 @@ function AvisQueue({ avis, drafts, setDrafts, onReply, replyingId, onOpenFiche }
           <div key={a.id} className="bg-white border border-amber-200 rounded-2xl shadow-card p-5">
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <Clock className="w-4 h-4 text-amber-500" aria-hidden="true" />
-              <span className="font-mono font-semibold text-teal-800">{a.beneficiaireCode}</span>
+              <span className="font-mono font-semibold text-teal-800">{a.beneficiaireCode}<Prenom code={a.beneficiaireCode} /></span>
               <span className="text-teal-700/60">demande un avis sur</span>
               <span className="font-semibold text-teal-800">{a.context?.metier || 'des emplois'}</span>
             </div>
@@ -728,7 +762,7 @@ function AvisQueue({ avis, drafts, setDrafts, onReply, replyingId, onOpenFiche }
           <div key={a.id} className="bg-white border border-cream-200 rounded-2xl shadow-card p-5 opacity-90">
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <CheckCircle2 className="w-4 h-4 text-teal-600" aria-hidden="true" />
-              <span className="font-mono font-semibold text-teal-800">{a.beneficiaireCode}</span>
+              <span className="font-mono font-semibold text-teal-800">{a.beneficiaireCode}<Prenom code={a.beneficiaireCode} /></span>
               <span className="text-teal-700/60">— {a.context?.metier || 'emplois'} · répondu</span>
             </div>
             {a.note && (

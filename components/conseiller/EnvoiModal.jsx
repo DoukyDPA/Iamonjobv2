@@ -13,6 +13,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Briefcase, MessageCircle, ClipboardList, FileSignature, X, Loader2, Send, CheckCircle2 } from 'lucide-react';
+import { MODELES_MESSAGES } from '@/lib/modeles-messages';
+import { Prenom } from './Prenoms';
 
 const TABS = [
   { id: 'offre', label: 'Une offre', icon: Briefcase, hint: 'La personne verra le bouton « Offre de votre conseiller ».' },
@@ -82,6 +84,7 @@ export default function EnvoiModal({ beneficiaires = [], preset = {}, onClose, o
     if (!cible.ids.length) { setError('Choisissez au moins une personne.'); return; }
     if (type === 'offre' && !offre.intitule.trim()) { setError("Indiquez l'intitulé de l'offre."); return; }
     if (type === 'message' && !texte.trim()) { setError('Le message est vide.'); return; }
+    if (type === 'message' && /\[[^\]\n]{2,60}\]/.test(texte) && !window.confirm('Il reste des passages entre crochets à compléter (par exemple [jour]). Envoyer quand même ?')) return;
     if (type === 'questionnaire' && !questionnaireId) { setError('Choisissez un questionnaire.'); return; }
     if (type === 'document' && !documentId) { setError('Choisissez un document.'); return; }
     setSending(true);
@@ -177,7 +180,7 @@ export default function EnvoiModal({ beneficiaires = [], preset = {}, onClose, o
                         <li key={b.id}>
                           <label className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-cream-50 cursor-pointer">
                             <input type="checkbox" checked={selected.has(b.id)} onChange={() => toggle(b.id)} className="accent-teal-600" />
-                            <span className="font-mono text-sm font-semibold text-teal-800">{b.code}</span>
+                            <span className="font-mono text-sm font-semibold text-teal-800">{b.code}<Prenom code={b.code} /></span>
                             {b.promo && <span className="text-[11px] text-teal-700/60">{b.promo}</span>}
                             {b.status !== 'active' && <span className="text-[11px] text-amber-700">non activé</span>}
                           </label>
@@ -241,6 +244,24 @@ export default function EnvoiModal({ beneficiaires = [], preset = {}, onClose, o
                       {docs.map((d) => <option key={d.id} value={d.id}>{d.titre} · {d.mode === 'papier' ? 'signature papier' : 'signature en ligne'}</option>)}
                     </select>
                   )}
+                </label>
+              )}
+
+              {type === 'message' && (
+                <label className="block">
+                  <span className="block text-sm font-semibold text-teal-800 mb-1">Partir d'un modèle</span>
+                  <select
+                    defaultValue=""
+                    onChange={(e) => {
+                      const m = MODELES_MESSAGES.find((x) => x.id === e.target.value);
+                      if (m && (!texte.trim() || window.confirm('Remplacer le texte déjà écrit par ce modèle ?'))) setTexte(m.texte);
+                      e.target.value = '';
+                    }}
+                    className={input}
+                  >
+                    <option value="">Choisir un modèle…</option>
+                    {MODELES_MESSAGES.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+                  </select>
                 </label>
               )}
 

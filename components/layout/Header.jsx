@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { LogOut, Send, Users } from 'lucide-react';
 import { BrandLogo } from '../brand';
 import { auth } from '@/lib/firebase/client';
+import { signOut } from 'firebase/auth';
 import AccessibilityBar from './AccessibilityBar';
 import DeleteAccountButton from '../account/DeleteAccountButton';
 
@@ -75,7 +76,20 @@ export default function Header({ user, sessionLabel, onReadRequest }) {
           >
             {initial}
           </div>
-          <form action="/auth/signout" method="post">
+          {/* Déconnexion complète : session Firebase du navigateur ET cookie.
+              Sur un ordinateur partagé, la personne suivante ne doit rien
+              retrouver de la précédente. */}
+          <form
+            action="/auth/signout"
+            method="post"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const form = e.currentTarget;
+              try { await signOut(auth); } catch { /* on poursuit */ }
+              try { sessionStorage.removeItem('iamj_seance'); } catch { /* ignoré */ }
+              form.submit();
+            }}
+          >
             <button
               type="submit"
               title={`Déconnexion (${user?.email})`}

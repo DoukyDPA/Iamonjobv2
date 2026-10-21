@@ -111,6 +111,22 @@ export default function CampaignValidationPage() {
   // Panels expandés
   const [expandedRow, setExpandedRow] = useState(null);
 
+  // Prénom et nom de la personne, pour remplacer [PRÉNOM NOM] dans les
+  // messages. Saisi une fois, gardé dans ce navigateur pour ce compte
+  // seulement. Jamais envoyé au serveur ni à l'IA : IAMONJOB ne connaît que
+  // le code de la personne.
+  const [signature, setSignature] = useState('');
+  const signatureKey = () => `iamj_signature_${auth.currentUser?.uid || 'anon'}`;
+  useEffect(() => {
+    if (!authReady) return;
+    try { setSignature(localStorage.getItem(signatureKey()) || ''); } catch { /* navigateur sans stockage */ }
+  }, [authReady]);
+  const saveSignature = (v) => {
+    setSignature(v);
+    try { localStorage.setItem(signatureKey(), v); } catch { /* ignoré */ }
+  };
+  const [opened, setOpened] = useState({});
+
   // ── Auth ──────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -178,6 +194,26 @@ export default function CampaignValidationPage() {
       .replace(/\{\{NOM_ENTREPRISE\}\}/g, company.name || '')
       .replace(/\{\{VILLE\}\}/g, company.city || '')
       .replace(/\{\{SECTEUR\}\}/g, sector || 'votre secteur');
+  };
+
+  // Remplace la balise de signature par le prénom et le nom saisis.
+  const signMessage = (text) => {
+    const sig = signature.trim();
+    if (!sig) return text;
+    return String(text || '').replace(/\[\s*PR[ÉE]NOM\s+NOM\s*\]/gi, sig);
+  };
+
+  // Lien qui ouvre la messagerie du téléphone ou de l'ordinateur avec
+  // l'adresse, l'objet et le texte déjà remplis. Le CV reste à joindre à la
+  // main : un lien « mailto » ne peut pas porter de pièce jointe.
+  const mailtoFor = (company) => {
+    const sector = (company.nafText || company.naf || '').replace(/\(.*?\)/g, '').trim();
+    const subject = signMessage(String(emailSubject || '')
+      .replace(/\{\{NOM_ENTREPRISE\}\}/g, company.name || '')
+      .replace(/\{\{VILLE\}\}/g, company.city || '')
+      .replace(/\{\{SECTEUR\}\}/g, sector || 'votre secteur'));
+    const body = signMessage(company.emailBody || personalizeEmail(emailBody, company));
+    return `mailto:${encodeURIComponent(company.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   // Régénère les emailBody de toutes les entreprises quand le template change
@@ -427,6 +463,24 @@ export default function CampaignValidationPage() {
             )}
           </div>
           <div className="px-6 py-5 space-y-4">
+            <div className="rounded-xl border border-teal-200 bg-teal-50/50 p-4">
+              <label htmlFor="signature" className="block text-sm font-semibold text-teal-800 mb-1">
+                Mon prénom et mon nom
+              </label>
+              <input
+                id="signature"
+                type="text"
+                autoComplete="name"
+                value={signature}
+                onChange={(e) => saveSignature(e.target.value)}
+                placeholder="Ex. : Karim Benali"
+                className="w-full sm:max-w-sm rounded-xl border border-cream-300 bg-white px-4 py-2.5 text-sm text-teal-900 outline-none focus:ring-2 focus:ring-teal-400"
+              />
+              <p className="mt-1.5 text-xs text-teal-700/80">
+                Il remplace [PRÉNOM NOM] dans tous vos messages, au moment de les ouvrir dans votre messagerie.
+                Il reste sur cet appareil : il n'est jamais enregistré dans IAMONJOB ni envoyé à l'IA.
+              </p>
+            </div>
             <div>
               <label className="block text-xs font-semibold text-teal-600 uppercase tracking-wider mb-1.5">
                 Objet
@@ -445,7 +499,7 @@ export default function CampaignValidationPage() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-teal-600 uppercase tracking-wider mb-1.5">
-                Corps (marqueurs : {'{{'} NOM_ENTREPRISE {'}}'},  {'{{'} VILLE {'}}'},  {'{{'} SECTEUR {'}}'})
+                Texte du message (les mots entre accolades sont remplacés automatiquement : {'{{'}NOM_ENTREPRISE{'}}'} devient par exemple « Boulangerie Martin », {'{{'}VILLE{'}}'} devient « Créteil »)
               </label>
               <AutoTextarea
                 value={emailBody}
@@ -511,7 +565,7 @@ export default function CampaignValidationPage() {
                         )}
                         {company.lbbHasEmail && !company.email && (
                           <span className="text-emerald-600 font-medium" title="La Bonne Boîte indique qu'un email existe pour cette entreprise">
-                            ✉ email LBB
+                            ✉ adresse connue de La Bonne Boîte
                           </span>
                         )}
                       </div>
@@ -525,9 +579,22 @@ export default function CampaignValidationPage() {
                             <Mail className="w-3.5 h-3.5" />
                             {company.email}
                           </span>
-                          <span className="text-amber-500 font-medium" title="Adresse déduite algorithmiquement — à vérifier avant envoi">
+                          <span className="text-amber-500 font-medium" title="Adresse déduite algorithmiquement, à vérifier avant envoi">
                             ⚠ à vérifier
                           </span>
+                          <a
+                            href={mailtoFor(company)}
+                            onClick={(e) => { e.stopPropagation(); setOpened((o) => ({ ...o, [idx]: true })); }}
+                            className="mt-1 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 shadow-soft"
+                          >
+                            <Mail className="w-3.5 h-3.5" /> Écrire à cette entreprise
+                          </a>
+                          {opened[idx] && (
+                            <span className="text-[11px] text-teal-700 font-medium max-w-[16rem] text-right">
+                              Message ouvert. Joignez votre CV avant d'envoyer.
+                              {!signature.trim() && ' Remplissez « Mon prénom et mon nom » plus haut pour signer automatiquement.'}
+                            </span>
+                          )}
                         </div>
                       ) : (
                         <a

@@ -20,6 +20,7 @@ import {
   Paperclip, Download, FileText, Briefcase,
 } from 'lucide-react';
 import { Button } from './ui';
+import DictateButton from './DictateButton';
 
 function formatBytes(b) {
   if (!b) return '';
@@ -289,9 +290,12 @@ export default function MonConseiller({ variant = 'sidebar' }) {
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 iamj-scrollbar">
               {/* Nouveau message */}
               <div>
-                <label htmlFor="conseiller-note" className="block text-sm font-semibold text-teal-800 mb-1.5">
-                  Votre message
-                </label>
+                <div className="flex items-end justify-between gap-2 mb-1.5">
+                  <label htmlFor="conseiller-note" className="block text-sm font-semibold text-teal-800">
+                    Votre message
+                  </label>
+                  <DictateButton value={note} onChange={(t) => setNote(t.slice(0, 2000))} />
+                </div>
                 <textarea
                   id="conseiller-note"
                   value={note}

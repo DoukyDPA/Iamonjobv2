@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client';
+import { isPlausibleCode } from '@/lib/beneficiaire-auth';
 import { Loader2, Mail, Lock, AlertCircle, KeyRound, Users } from 'lucide-react';
 import { BrandLogo, CatMascot } from '@/components/brand';
 import AccessibilityBar from '@/components/layout/AccessibilityBar';
@@ -38,8 +39,13 @@ export default function LoginPage() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+    // Un code tapé ici par erreur : on aiguille vers la bonne page.
+    if (isPlausibleCode(email)) {
+      router.push('/acces');
+      return;
+    }
+    setLoading(true);
     try {
       const { user } = await signInWithEmailAndPassword(auth, email, password);
       await routeByRole(user);
@@ -78,87 +84,97 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Carte formulaire */}
-          <div className="bg-white border border-cream-200 rounded-2xl shadow-card p-8">
-            {error && (
-              <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2 text-rose-700 text-sm">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>{error}</span>
-              </div>
-            )}
+          {/* Accès principal : la plupart des personnes ont un code remis par
+              leur conseiller. On le met en premier et en grand, pour qu'elles
+              ne tapent pas leur code dans une case « Email ». */}
+          <div className="bg-white border border-cream-200 rounded-2xl shadow-card p-6 sm:p-8">
+            <Link
+              href="/acces"
+              className="flex items-center gap-4 p-5 rounded-2xl bg-teal-600 text-white hover:bg-teal-700 transition-colors shadow-soft focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+            >
+              <KeyRound className="w-8 h-8 shrink-0" aria-hidden="true" />
+              <span>
+                <span className="block text-lg font-extrabold">J'ai un code</span>
+                <span className="block text-sm text-white/85">Mon conseiller m'a donné un code (AC-…).</span>
+              </span>
+            </Link>
+            <p className="mt-3 text-center text-sm text-teal-700/80">
+              Première fois ?{' '}
+              <Link href="/activer" className="font-semibold text-teal-700 hover:text-teal-900 underline">
+                Activer mon code
+              </Link>
+            </p>
 
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-teal-800 mb-1">Email</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-teal-500" aria-hidden="true" />
-                  <input
-                    id="email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2.5 border border-cream-300 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-transparent outline-none transition-all bg-cream-50/40 text-teal-900 placeholder:text-teal-700/40"
-                    placeholder="vous@exemple.fr"
-                  />
-                </div>
-              </div>
+            {/* Connexion par e-mail, repliée : conseillers et comptes e-mail. */}
+            <details className="mt-6 pt-5 border-t border-cream-200 group" open={!!error}>
+              <summary className="cursor-pointer list-none flex items-center justify-center gap-2 text-sm font-semibold text-teal-700 hover:text-teal-900">
+                <Users className="w-4 h-4" aria-hidden="true" />
+                Je suis conseiller ou j'ai un compte e-mail
+              </summary>
 
-              <div>
-                <label htmlFor="password" className="block text-sm font-semibold text-teal-800 mb-1">Mot de passe</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-teal-500" aria-hidden="true" />
-                  <input
-                    id="password"
-                    type="password"
-                    required
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2.5 border border-cream-300 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-transparent outline-none transition-all bg-cream-50/40 text-teal-900 placeholder:text-teal-700/40"
-                    placeholder="••••••••"
-                  />
-                </div>
-              </div>
+              <div className="mt-5">
+                {error && (
+                  <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2 text-rose-700 text-sm">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{error}</span>
+                  </div>
+                )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 disabled:bg-teal-200 disabled:cursor-not-allowed transition-all shadow-soft focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
-              >
-                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                Se connecter
-              </button>
-            </form>
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-semibold text-teal-800 mb-1">Email</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-teal-500" aria-hidden="true" />
+                      <input
+                        id="email"
+                        type="text"
+                        inputMode="email"
+                        autoCapitalize="none"
+                        required
+                        autoComplete="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full pl-10 pr-3 py-2.5 border border-cream-300 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-transparent outline-none transition-all bg-cream-50/40 text-teal-900 placeholder:text-teal-700/40"
+                        placeholder="vous@exemple.fr"
+                      />
+                    </div>
+                  </div>
 
-            <div className="mt-6 pt-5 border-t border-cream-200">
-              <p className="text-xs font-bold tracking-[0.12em] text-teal-700/60 text-center mb-3">
-                PREMIÈRE FOIS ICI ?
-              </p>
-              <div className="grid gap-2">
-                <Link
-                  href="/acces"
-                  className="flex items-center gap-3 p-3 rounded-xl border border-cream-300 hover:border-teal-300 hover:bg-cream-50 transition-colors"
-                >
-                  <KeyRound className="w-5 h-5 text-teal-600 shrink-0" />
-                  <span className="text-sm">
-                    <span className="font-semibold text-teal-800">J'ai un code</span>
-                    <span className="block text-xs text-teal-700/70">Vous êtes accompagné par un conseiller.</span>
-                  </span>
-                </Link>
-                <Link
-                  href="/conseiller/connexion"
-                  className="flex items-center gap-3 p-3 rounded-xl border border-cream-300 hover:border-teal-300 hover:bg-cream-50 transition-colors"
-                >
-                  <Users className="w-5 h-5 text-teal-600 shrink-0" />
-                  <span className="text-sm">
-                    <span className="font-semibold text-teal-800">Je suis conseiller</span>
-                    <span className="block text-xs text-teal-700/70">Accès réservé aux conseillers autorisés.</span>
-                  </span>
-                </Link>
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-semibold text-teal-800 mb-1">Mot de passe</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-teal-500" aria-hidden="true" />
+                      <input
+                        id="password"
+                        type="password"
+                        required
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full pl-10 pr-3 py-2.5 border border-cream-300 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-transparent outline-none transition-all bg-cream-50/40 text-teal-900 placeholder:text-teal-700/40"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 border-teal-600 text-teal-700 rounded-xl font-semibold hover:bg-cream-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                  >
+                    {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Se connecter avec mon e-mail
+                  </button>
+                </form>
+
+                <p className="mt-4 text-center text-xs text-teal-700/70">
+                  Conseiller ?{' '}
+                  <Link href="/conseiller/connexion" className="underline hover:text-teal-900">
+                    Espace conseiller
+                  </Link>
+                </p>
               </div>
-            </div>
+            </details>
           </div>
 
           {/* Rassurance RGPD discrète sous la carte */}

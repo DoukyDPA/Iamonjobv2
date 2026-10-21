@@ -24,7 +24,8 @@ import {
 import { Button, Badge, Card } from '@/components/ui';
 import NotesBlock from '@/components/NotesBlock';
 import ShareToConseiller from '@/components/ShareToConseiller';
-import CoverLetterText from '@/components/CoverLetterText';
+import LetterTools from '@/components/LetterTools';
+import CandidatureStatus, { RelanceReminder, patchCandidature } from '@/components/CandidatureStatus';
 
 const TYPE_LABEL = {
   classique: { label: 'Classique',  color: 'bg-teal-100 text-teal-700' },
@@ -202,6 +203,12 @@ export default function CandidatureDetailPage() {
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-4">
 
+        {/* Suivi : ce que la personne a fait après l'analyse */}
+        <Card className="px-5 py-5 space-y-3">
+          <CandidatureStatus candidature={{ ...cand, id: candidatureId }} onChange={(next) => setCand((c) => ({ ...c, ...next }))} />
+          <RelanceReminder candidature={cand} />
+        </Card>
+
         {/* Carte résumé */}
         <Card className="px-5 py-5">
           <div className="flex items-start gap-5">
@@ -278,7 +285,12 @@ export default function CandidatureDetailPage() {
         <Section title="Lettre de motivation" icon={FileText} defaultOpen={!!coverLetter}>
           {coverLetter ? (
             <>
-              <CoverLetterText text={coverLetter} className="text-teal-900 text-sm mt-1" />
+              <LetterTools
+                text={coverLetter}
+                className="mt-1"
+                filename={`lettre-${String(offer.entreprise || 'entreprise').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'entreprise'}.docx`}
+                onSave={async (t) => { await patchCandidature(candidatureId, { coverLetter: t }); setCoverLetter(t); }}
+              />
               <div className="mt-4 flex justify-end">
                 <ShareToConseiller shared={sharedFiche} compact label="Partager avec mon conseiller" />
               </div>
