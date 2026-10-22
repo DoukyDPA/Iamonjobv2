@@ -115,7 +115,7 @@
 
             /* Rubriques vides : ne pas les imprimer ; placeholders masqués à l'impression */
             .empty-section { display: none !important; }
-            [data-ph]:empty:before { content: '' !important; }
+            [contenteditable]:empty:before { content: '' !important; }
         }
 
         /* --- STYLES ECRAN --- */
@@ -129,6 +129,17 @@
             font-weight: 400;
         }
         [contenteditable][data-ph]:empty { min-width: 3.5em; display: inline-block; }
+
+        /* Un champ entièrement effacé garde une taille cliquable : sinon il n'occupe
+           plus de place et on ne peut plus jamais y écrire. */
+        [contenteditable="true"]:empty { min-height: 1.2em; }
+        span[contenteditable="true"]:empty { min-width: 3.5em; display: inline-block; }
+        [contenteditable="true"]:not([data-ph]):empty:before {
+            content: 'à compléter';
+            opacity: 0.45;
+            font-style: italic;
+            font-weight: 400;
+        }
 
         /* Rubrique vide à l'écran : atténuée, mais toujours modifiable (bouton Ajouter visible) */
         .empty-section { opacity: 0.55; }

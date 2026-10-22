@@ -2154,6 +2154,14 @@ ${genderDirective()}`;
         }
         document.addEventListener('paste', pastePlainText);
 
+        // Un champ vidé garde souvent un <br> invisible : on le nettoie avant
+        // l'enregistrement (phase de capture) pour que le CSS le rende de nouveau cliquable.
+        function clearEmptyField(e) {
+            const el = e.target;
+            if (el && el.isContentEditable && el.innerText.trim() === '') el.textContent = '';
+        }
+        document.addEventListener('blur', clearEmptyField, true);
+
         function addCVSkill() { commitPendingEdit(); cvData.skills = cvData.skills || []; cvData.skills.push('Nouvelle compétence'); refreshCV(); }
         function removeCVSkill(i) { commitPendingEdit(); cvData.skills.splice(i, 1); refreshCV(); }
         // Les compétences arrivent dans l'ordre choisi par l'IA : la personne peut le changer.
@@ -2893,6 +2901,10 @@ ${genderDirective()}`;
             const bd = document.getElementById('btn-download');
             if (bd) bd.addEventListener('click', downloadUpdated);
             document.addEventListener('paste', pastePlainText);
+            document.addEventListener('blur', function (e) {
+                const el = e.target;
+                if (el && el.isContentEditable && el.innerText.trim() === '') el.textContent = '';
+            }, true);
 
             renderCV();
             initAvatarDrag();
@@ -2919,6 +2931,9 @@ ${genderDirective()}`;
                 + '[contenteditable="true"]:focus{background-color:rgba(30,122,107,.1);outline:2px solid #1E7A6B;border-radius:4px}'
                 + '[contenteditable][data-ph]:empty:before{content:attr(data-ph);opacity:.45;font-style:italic;font-weight:400}'
                 + '[contenteditable][data-ph]:empty{min-width:3.5em;display:inline-block}'
+                + '[contenteditable="true"]:empty{min-height:1.2em}'
+                + 'span[contenteditable="true"]:empty{min-width:3.5em;display:inline-block}'
+                + '[contenteditable="true"]:not([data-ph]):empty:before{content:\'à compléter\';opacity:.45;font-style:italic;font-weight:400}'
                 + '.empty-section{opacity:.55}'
                 + '@media print{'
                 + '@page{size:A4;margin:0}'
@@ -2931,7 +2946,7 @@ ${genderDirective()}`;
                 + '#cv-content,#cv-content *{font-family:Arial,Helvetica,sans-serif!important}'
                 + 'h2,h3,li,.experience-item{page-break-inside:avoid!important}'
                 + '.empty-section{display:none!important}'
-                + '[data-ph]:empty:before{content:\'\'!important}'
+                + '[contenteditable]:empty:before{content:\'\'!important}'
                 + '}';
 
             const scaffold = ''
