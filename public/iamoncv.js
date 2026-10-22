@@ -614,7 +614,7 @@
             let data;
             try {
                 const res = await cloudFetch('/api/cv-workspace');
-                if (res.status === 401) throw Object.assign(new Error('Votre session a expiré. Reconnectez-vous à IAMONJOB, puis rouvrez « Créer mon CV ».'), { fatal: true });
+                if (res.status === 401) throw Object.assign(new Error("Votre session a expiré. Reconnectez-vous à IAMONJOB, puis rouvrez IAMONCV depuis l'étape 1."), { fatal: true });
                 if (!res.ok) throw new Error('Impossible de charger vos CV pour le moment. Vérifiez votre connexion internet.');
                 data = await res.json();
             } catch (e) {
@@ -2391,7 +2391,7 @@ ${genderDirective()}`;
                 const d = await r.json().catch(() => ({}));
                 if (!r.ok) throw new Error(d.error || 'Envoi impossible.');
                 closePicker();
-                alert(`CV envoyé. ${code} le trouvera dans « Créer mon CV », sous le nom « CV préparé avec votre conseiller ».`);
+                alert(`CV envoyé. ${code} le trouvera en ouvrant IAMONCV (étape 1 de son parcours), sous le nom « CV préparé avec votre conseiller ».`);
             } catch (e) { alert(e.message); }
         }
 
