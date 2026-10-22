@@ -2134,8 +2134,40 @@ ${genderDirective()}`;
         }
         function refreshCV() { renderCV(); saveCV(); if (typeof updateOnePageStatus === 'function') updateOnePageStatus(); }
 
+        // Coller depuis Word, un PDF ou une page web : on ne garde que le texte brut,
+        // sinon la mise en forme d'origine (polices, couleurs, blocs) casse le CV.
+        // Tout tient sur une ligne, sauf le profil qui accepte plusieurs paragraphes.
+        function pastePlainText(e) {
+            let el = e.target;
+            if (el && el.nodeType === 3) el = el.parentElement;
+            el = el && el.closest ? el.closest('[contenteditable="true"]') : null;
+            if (!el || !e.clipboardData) return;
+            e.preventDefault();
+            let text = (e.clipboardData.getData('text/plain') || '')
+                .replace(/\r\n?/g, '\n')
+                .replace(/[\t  ]+/g, ' ')
+                .replace(/^[ ]*[•●▪◦‣■□➢✓\-–—*][ ]+/gm, '');
+            text = el.id === 'cv-profile'
+                ? text.replace(/[ ]*\n[ ]*/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
+                : text.replace(/\s*\n\s*/g, ' ').replace(/ {2,}/g, ' ').trim();
+            document.execCommand('insertText', false, text);
+        }
+        document.addEventListener('paste', pastePlainText);
+
         function addCVSkill() { commitPendingEdit(); cvData.skills = cvData.skills || []; cvData.skills.push('Nouvelle compétence'); refreshCV(); }
         function removeCVSkill(i) { commitPendingEdit(); cvData.skills.splice(i, 1); refreshCV(); }
+        // Les compétences arrivent dans l'ordre choisi par l'IA : la personne peut le changer.
+        function moveCVSkill(i, dir) {
+            commitPendingEdit();
+            const s = cvData.skills, j = i + dir;
+            if (!s || j < 0 || j >= s.length) return;
+            [s[i], s[j]] = [s[j], s[i]];
+            refreshCV();
+        }
+        function skillMoveButtons(i, n) {
+            const btn = (dir, icon, title) => `<button onclick="moveCVSkill(${i}, ${dir})" title="${title}" class="w-3.5 h-3.5 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/40 text-white text-[8px] leading-none"><i class="fas fa-arrow-${icon}"></i></button>`;
+            return `<span class="no-print absolute top-1/2 -translate-y-1/2 right-5 flex gap-0.5 th-bg-avatar pl-1 opacity-0 group-hover/sk:opacity-100 transition">${i > 0 ? btn(-1, 'up', 'Monter') : ''}${i < n - 1 ? btn(1, 'down', 'Descendre') : ''}</span>`;
+        }
 
         function addCVInterest() { commitPendingEdit(); cvData.interests = cvData.interests || []; cvData.interests.push('Nouveau centre d\'intérêt'); refreshCV(); }
         function removeCVInterest(i) { commitPendingEdit(); cvData.interests.splice(i, 1); refreshCV(); }
@@ -2173,8 +2205,9 @@ ${genderDirective()}`;
             document.getElementById('cv-profile').innerText = cvData.profile || "Profil...";
             
             const skillAdd = `<button onclick="addCVSkill()" title="Ajouter une compétence" class="no-print bg-white/10 border border-dashed th-border-avatar th-text-sidebar text-xs px-2 py-1 rounded w-fit opacity-70 hover:opacity-100 transition"><i class="fas fa-plus mr-1"></i>Ajouter</button>`;
+            const skillCount = (cvData.skills || []).length;
             document.getElementById('cv-skills').innerHTML = (cvData.skills || []).map((s, i) =>
-                `<span class="relative group/sk th-bg-avatar px-2 py-1 pr-5 rounded th-text-sidebar text-xs transition-colors duration-500 w-fit"><span contenteditable="true" onblur="updateCVSkill(${i}, this.innerText)">${s}</span><button onclick="removeCVSkill(${i})" title="Retirer" class="no-print absolute top-1/2 -translate-y-1/2 right-1 w-3.5 h-3.5 flex items-center justify-center rounded-full bg-black/20 hover:bg-red-500 text-white text-[9px] leading-none opacity-0 group-hover/sk:opacity-100 transition"><i class="fas fa-times"></i></button></span>`
+                `<span class="relative group/sk th-bg-avatar px-2 py-1 pr-5 rounded th-text-sidebar text-xs transition-colors duration-500 w-fit"><span contenteditable="true" onblur="updateCVSkill(${i}, this.innerText)">${s}</span>${skillMoveButtons(i, skillCount)}<button onclick="removeCVSkill(${i})" title="Retirer" class="no-print absolute top-1/2 -translate-y-1/2 right-1 w-3.5 h-3.5 flex items-center justify-center rounded-full bg-black/20 hover:bg-red-500 text-white text-[9px] leading-none opacity-0 group-hover/sk:opacity-100 transition"><i class="fas fa-times"></i></button></span>`
             ).join('') + skillAdd;
 
             // Intitulés de rubrique (éditables : ex. « Expérience » au singulier)
@@ -2596,6 +2629,33 @@ ${genderDirective()}`;
             function updateCVInterest(i, v) { if (cvData.interests[i] !== undefined) { cvData.interests[i] = v; saveCV(); } }
             function addCVSkill() { commitPendingEdit(); cvData.skills = cvData.skills || []; cvData.skills.push('Nouvelle compétence'); refreshCV(); }
             function removeCVSkill(i) { commitPendingEdit(); cvData.skills.splice(i, 1); refreshCV(); }
+            function moveCVSkill(i, dir) {
+                commitPendingEdit();
+                const s = cvData.skills, j = i + dir;
+                if (!s || j < 0 || j >= s.length) return;
+                const tmp = s[i]; s[i] = s[j]; s[j] = tmp;
+                refreshCV();
+            }
+            function skillMoveButtons(i, n) {
+                function btn(dir, icon, title) { return '<button onclick="moveCVSkill(' + i + ', ' + dir + ')" title="' + title + '" class="w-3.5 h-3.5 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/40 text-white text-[8px] leading-none"><i class="fas fa-arrow-' + icon + '"></i></button>'; }
+                return '<span class="no-print absolute top-1/2 -translate-y-1/2 right-5 flex gap-0.5 th-bg-avatar pl-1 opacity-0 group-hover/sk:opacity-100 transition">' + (i > 0 ? btn(-1, 'up', 'Monter') : '') + (i < n - 1 ? btn(1, 'down', 'Descendre') : '') + '</span>';
+            }
+            // Même règle que dans l'application : on colle du texte brut uniquement.
+            function pastePlainText(e) {
+                let el = e.target;
+                if (el && el.nodeType === 3) el = el.parentElement;
+                el = el && el.closest ? el.closest('[contenteditable="true"]') : null;
+                if (!el || !e.clipboardData) return;
+                e.preventDefault();
+                let text = (e.clipboardData.getData('text/plain') || '')
+                    .replace(/\r\n?/g, '\n')
+                    .replace(/[\t  ]+/g, ' ')
+                    .replace(/^[ ]*[•●▪◦‣■□➢✓\-–—*][ ]+/gm, '');
+                text = el.id === 'cv-profile'
+                    ? text.replace(/[ ]*\n[ ]*/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
+                    : text.replace(/\s*\n\s*/g, ' ').replace(/ {2,}/g, ' ').trim();
+                document.execCommand('insertText', false, text);
+            }
             function addCVInterest() { commitPendingEdit(); cvData.interests = cvData.interests || []; cvData.interests.push('Nouveau centre d\'intérêt'); refreshCV(); }
             function removeCVInterest(i) { commitPendingEdit(); cvData.interests.splice(i, 1); refreshCV(); }
             function addCVExp() { commitPendingEdit(); cvData.experiences = cvData.experiences || []; cvData.experiences.push({ title: 'Intitulé du poste', company: 'Entreprise', date: '', tasks: ['À compléter'] }); refreshCV(); }
@@ -2699,8 +2759,9 @@ ${genderDirective()}`;
                 document.getElementById('cv-profile').innerText = cvData.profile || 'Profil...';
 
                 const skillAdd = '<button onclick="addCVSkill()" title="Ajouter une compétence" class="no-print bg-white/10 border border-dashed th-border-avatar th-text-sidebar text-xs px-2 py-1 rounded w-fit opacity-70 hover:opacity-100 transition"><i class="fas fa-plus mr-1"></i>Ajouter</button>';
+                const skillCount = (cvData.skills || []).length;
                 document.getElementById('cv-skills').innerHTML = (cvData.skills || []).map(function (s, i) {
-                    return '<span class="relative group/sk th-bg-avatar px-2 py-1 pr-5 rounded th-text-sidebar text-xs w-fit"><span contenteditable="true" onblur="updateCVSkill(' + i + ', this.innerText)">' + s + '</span><button onclick="removeCVSkill(' + i + ')" title="Retirer" class="no-print absolute top-1/2 -translate-y-1/2 right-1 w-3.5 h-3.5 flex items-center justify-center rounded-full bg-black/20 hover:bg-red-500 text-white text-[9px] leading-none opacity-0 group-hover/sk:opacity-100 transition"><i class="fas fa-times"></i></button></span>';
+                    return '<span class="relative group/sk th-bg-avatar px-2 py-1 pr-5 rounded th-text-sidebar text-xs w-fit"><span contenteditable="true" onblur="updateCVSkill(' + i + ', this.innerText)">' + s + '</span>' + skillMoveButtons(i, skillCount) + '<button onclick="removeCVSkill(' + i + ')" title="Retirer" class="no-print absolute top-1/2 -translate-y-1/2 right-1 w-3.5 h-3.5 flex items-center justify-center rounded-full bg-black/20 hover:bg-red-500 text-white text-[9px] leading-none opacity-0 group-hover/sk:opacity-100 transition"><i class="fas fa-times"></i></button></span>';
                 }).join('') + skillAdd;
 
                 setLabel('cvh-experiences', cvLabel('experiences', 'Expériences'));
@@ -2815,7 +2876,7 @@ ${genderDirective()}`;
             Object.assign(window, {
                 updateCVField: updateCVField, updateCVExp: updateCVExp, updateCVTask: updateCVTask,
                 updateCVEdu: updateCVEdu, updateCVSkill: updateCVSkill, updateCVInterest: updateCVInterest,
-                addCVSkill: addCVSkill, removeCVSkill: removeCVSkill, addCVInterest: addCVInterest,
+                addCVSkill: addCVSkill, removeCVSkill: removeCVSkill, moveCVSkill: moveCVSkill, addCVInterest: addCVInterest,
                 removeCVInterest: removeCVInterest, addCVExp: addCVExp, removeCVExp: removeCVExp,
                 addCVTask: addCVTask, removeCVTask: removeCVTask, addCVEdu: addCVEdu, removeCVEdu: removeCVEdu,
                 updateCVLabel: updateCVLabel, updateCVLang: updateCVLang, addCVLang: addCVLang, removeCVLang: removeCVLang,
@@ -2831,6 +2892,7 @@ ${genderDirective()}`;
             if (bp) bp.addEventListener('click', function () { commitPendingEdit(); setTimeout(function () { window.print(); }, 80); });
             const bd = document.getElementById('btn-download');
             if (bd) bd.addEventListener('click', downloadUpdated);
+            document.addEventListener('paste', pastePlainText);
 
             renderCV();
             initAvatarDrag();
