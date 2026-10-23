@@ -22,7 +22,7 @@ import {
   Compass, Copy, Check, X, AlertCircle, Send,
   MessageSquareHeart, Clock, CheckCircle2, ExternalLink, Coins, Eye, Trash2,
   Camera, UserCircle, Flag, Ban, ThumbsUp, Undo2, LayoutDashboard, UsersRound,
-  ClipboardList, MessagesSquare, FileSignature, HeartHandshake, Printer, Crown,
+  ClipboardList, MessagesSquare, FileSignature, HeartHandshake, Printer, Crown, Building2,
 } from 'lucide-react';
 import FichePersonne from '@/components/conseiller/FichePersonne';
 import BaseQuestionnaires from '@/components/conseiller/BaseQuestionnaires';
@@ -31,6 +31,7 @@ import AccompagnementsPanel from '@/components/conseiller/AccompagnementsPanel';
 import LotCodesModal, { printCoupons } from '@/components/conseiller/LotCodesModal';
 import ATraiter from '@/components/conseiller/ATraiter';
 import EquipePanel from '@/components/conseiller/EquipePanel';
+import StructuresPanel from '@/components/conseiller/StructuresPanel';
 import { PrenomsProvider, PrenomsBar, Prenom } from '@/components/conseiller/Prenoms';
 import DocumentsPanel from '@/components/conseiller/DocumentsPanel';
 import ReponsesEnvois from '@/components/conseiller/ReponsesEnvois';
@@ -45,6 +46,8 @@ const ONGLETS = [
 ];
 // Onglet réservé au responsable de structure.
 const ONGLET_EQUIPE = { id: 'equipe', label: 'Équipe', icon: Crown };
+// Onglet réservé à l'administrateur de la plateforme (ADMIN_EMAILS).
+const ONGLET_STRUCTURES = { id: 'structures', label: 'Structures', icon: Building2 };
 
 // Format court des grands nombres : 12 340 → « 12,3 k », lisible d'un coup d'œil.
 function formatTokens(n) {
@@ -102,11 +105,12 @@ export default function ConseillerPage() {
   const [suiviFocus, setSuiviFocus] = useState(null);
   const [lotOpen, setLotOpen] = useState(false);
   const [responsable, setResponsable] = useState(false);
+  const [adminPlateforme, setAdminPlateforme] = useState(false);
 
   // Onglet lu dans l'adresse au chargement, et mis à jour à chaque changement.
   useEffect(() => {
     const h = (typeof window !== 'undefined' ? window.location.hash : '').replace('#', '');
-    if (ONGLETS.some((o) => o.id === h) || h === 'equipe') setOnglet(h);
+    if (ONGLETS.some((o) => o.id === h) || h === 'equipe' || h === 'structures') setOnglet(h);
   }, []);
   function changerOnglet(id) {
     setOnglet(id);
@@ -121,6 +125,8 @@ export default function ConseillerPage() {
     setList(data.beneficiaires || []);
     // Responsable de structure ? (onglet Équipe)
     fetch('/api/conseiller/equipe').then((r) => (r.ok ? r.json() : null)).then((d) => setResponsable(Boolean(d?.responsable))).catch(() => {});
+    // Administrateur de la plateforme ? (onglet Structures)
+    fetch('/api/admin/structures').then((r) => (r.ok ? r.json() : null)).then((d) => setAdminPlateforme(Boolean(d?.admin))).catch(() => {});
     // File des avis. Un échec ici ne bloque pas l'affichage du groupe.
     try {
       const ar = await fetch('/api/conseiller/avis');
@@ -298,7 +304,7 @@ export default function ConseillerPage() {
 
         {/* Onglets */}
         <nav className="flex gap-1 overflow-x-auto border-b border-cream-200 mb-6 -mx-1 px-1" role="tablist" aria-label="Sections du tableau de bord">
-          {(responsable ? [...ONGLETS, ONGLET_EQUIPE] : ONGLETS).map((o) => {
+          {[...ONGLETS, ...(responsable ? [ONGLET_EQUIPE] : []), ...(adminPlateforme ? [ONGLET_STRUCTURES] : [])].map((o) => {
             const Icon = o.icon;
             const badge = o.id === 'messages' ? avisEnAttente : 0;
             const actif = onglet === o.id;
@@ -364,6 +370,8 @@ export default function ConseillerPage() {
         {onglet === 'documents' && <DocumentsPanel beneficiaires={list} onOpenPersonne={setFiche} />}
 
         {onglet === 'equipe' && responsable && <EquipePanel onChanged={load} />}
+
+        {onglet === 'structures' && adminPlateforme && <StructuresPanel />}
       </main>
 
       {/* Mon profil : prénom + photo, visibles par les personnes accompagnées */}

@@ -45,7 +45,20 @@ Le fichier `.env.example` liste toutes les variables. Voici comment les remplir.
 
 Un compte devient conseiller si son email figure dans `CONSEILLER_EMAILS`, ou
 si son domaine figure dans `CONSEILLER_DOMAINS` (listes séparées par des
-virgules, voir `.env.example`).
+virgules, voir `.env.example`), ou s'il a été invité depuis l'interface.
+
+Trois niveaux, du plus large au plus local :
+
+1. **Administrateur de la plateforme** (`ADMIN_EMAILS`) : onglet « Structures »
+   de l'espace conseiller. Il crée une structure par organisation qui utilise
+   l'outil et y nomme un ou plusieurs responsables.
+2. **Responsable de structure** : onglet « Équipe ». Il invite ses conseillers
+   par e-mail, retire un accès au départ d'un salarié, réattribue les dossiers,
+   nomme d'autres responsables de sa structure.
+3. **Conseiller** : il crée son accès sur `/conseiller/connexion` avec l'adresse
+   invitée et rejoint la structure qui l'a invité.
+
+`RESPONSABLE_EMAILS` reste possible pour amorcer la structure par défaut.
 
 ### IA
 
