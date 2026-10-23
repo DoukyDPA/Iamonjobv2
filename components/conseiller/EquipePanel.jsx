@@ -77,7 +77,9 @@ export default function EquipePanel({ onChanged }) {
         <h3 className="font-bold text-teal-800 flex items-center gap-2"><UserPlus className="w-4 h-4" /> Inviter un conseiller</h3>
         <form
           className="mt-2 flex flex-wrap gap-2"
-          onSubmit={async (e) => { e.preventDefault(); if (await run({ action: 'inviter', email }, `Invitation enregistrée pour ${email}. Un e-mail lui explique comment créer son accès.`)) setEmail(''); }}
+          onSubmit={async (e) => { e.preventDefault(); if (await run({ action: 'inviter', email }, (d) => (d.emailEnvoye
+            ? `Invitation enregistrée pour ${email}. Un e-mail lui explique comment créer son accès.`
+            : `Invitation enregistrée pour ${email}, mais l'e-mail n'a pas pu partir. Transmettez-lui vous-même ce lien : https://www.iamonjob.ai/conseiller/connexion (avec cette adresse).`))) setEmail(''); }}
         >
           <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="prenom.nom@structure.fr" className="flex-1 min-w-[14rem] p-2.5 text-sm rounded-lg border border-teal-200" />
           <button disabled={busy} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 text-white font-semibold text-sm hover:bg-teal-700 disabled:bg-teal-200">

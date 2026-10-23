@@ -51,7 +51,7 @@ export async function POST(request) {
     let out = { ok: true };
     switch (body.action) {
       case 'inviter':
-        await inviter({ structureId: s.structureId, email: body.email, parEmail: s.email });
+        out = { ok: true, ...(await inviter({ structureId: s.structureId, email: body.email, parEmail: s.email })) };
         break;
       case 'annuler':
         await annulerInvitation({ structureId: s.structureId, email: body.email });

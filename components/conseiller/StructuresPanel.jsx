@@ -70,7 +70,9 @@ function CarteStructure({ s, busy, run }) {
           className="mt-2 flex flex-wrap gap-2"
           onSubmit={async (e) => {
             e.preventDefault();
-            if (await run({ action: 'responsable', structureId: s.id, email }, (d) => (d.invite ? `Invitation envoyée à ${email} : à son inscription, il sera responsable de ${s.nom}.` : `${email} est maintenant responsable de ${s.nom}.`))) setEmail('');
+            if (await run({ action: 'responsable', structureId: s.id, email }, (d) => (!d.invite ? `${email} est maintenant responsable de ${s.nom}.`
+              : d.emailEnvoye ? `Invitation envoyée à ${email} : à son inscription, il sera responsable de ${s.nom}.`
+              : `Invitation enregistrée pour ${email}, mais l'e-mail n'a pas pu partir. Transmettez-lui vous-même ce lien : https://www.iamonjob.ai/conseiller/connexion (avec cette adresse).`))) setEmail('');
           }}
         >
           <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="responsable@structure.fr" className="flex-1 min-w-[14rem] p-2 text-sm rounded-lg border border-teal-200" />
