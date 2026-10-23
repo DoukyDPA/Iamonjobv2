@@ -17,7 +17,7 @@ import { NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase/admin';
 import { isConseillerAllowed, conseillerStructureId } from '@/lib/conseiller-allowlist';
 import { logEvent, newRequestId } from '@/lib/logger';
-import { findInvitation, consumeInvitation, isRetire } from '@/lib/structures';
+import { findInvitation, consumeInvitation, isRetire, isPlatformAdmin, isResponsableEnv } from '@/lib/structures';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,9 +46,11 @@ export async function POST(request) {
     logEvent({ event: 'conseiller-claim', requestId, uid: decoded.uid, status: 'retire' });
     return NextResponse.json({ error: "L'accès de cette adresse a été retiré. Rapprochez-vous du responsable de votre structure." }, { status: 403 });
   }
-  // Autorisé par la liste technique, ou invité par un responsable.
+  // Autorisé par la liste technique, invité par un responsable, ou désigné
+  // administrateur / responsable par variable d'environnement.
   const invitation = await findInvitation(email).catch(() => null);
-  if (!invitation && !isConseillerAllowed(email)) {
+  const parVariable = isPlatformAdmin(email) || isResponsableEnv(email);
+  if (!invitation && !parVariable && !isConseillerAllowed(email)) {
     logEvent({ event: 'conseiller-claim', requestId, uid: decoded.uid, status: 'refused' });
     return NextResponse.json(
       { error: "Cet email n'est pas autorisé comme conseiller. Rapprochez-vous de votre structure." },

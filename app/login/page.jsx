@@ -33,6 +33,23 @@ export default function LoginPage() {
     await setSessionCookie(user);
     let role = null;
     try { role = (await user.getIdTokenResult()).claims.role; } catch { /* défaut */ }
+    // Pas encore de rôle : si l'adresse est autorisée comme conseiller
+    // (invitation, administrateur, responsable, domaine), on le pose ici aussi,
+    // sans obliger à passer par la connexion conseiller. Sinon, rien ne change.
+    if (role !== 'conseiller') {
+      try {
+        const r = await fetch('/api/conseiller/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: await user.getIdToken() }),
+        });
+        if (r.ok) {
+          await user.getIdToken(true);
+          await setSessionCookie(user);
+          role = (await user.getIdTokenResult()).claims.role;
+        }
+      } catch { /* on reste sur le parcours personne accompagnée */ }
+    }
     router.push(role === 'conseiller' ? '/conseiller' : '/');
     router.refresh();
   }
