@@ -18,6 +18,7 @@ import { adminAuth } from '@/lib/firebase/admin';
 import { isConseillerAllowed, conseillerStructureId } from '@/lib/conseiller-allowlist';
 import { logEvent, newRequestId } from '@/lib/logger';
 import { findInvitation, consumeInvitation, isRetire, isPlatformAdmin, isResponsableEnv } from '@/lib/structures';
+import { isStructureSuspendue } from '@/lib/suspension';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -56,6 +57,12 @@ export async function POST(request) {
       { error: "Cet email n'est pas autorisé comme conseiller. Rapprochez-vous de votre structure." },
       { status: 403 }
     );
+  }
+
+  const cible = invitation || decoded.structureId || conseillerStructureId();
+  if (!isPlatformAdmin(email) && await isStructureSuspendue(cible)) {
+    logEvent({ event: 'conseiller-claim', requestId, uid: decoded.uid, status: 'suspendue' });
+    return NextResponse.json({ error: "L'accès de cette structure est suspendu. Rapprochez-vous de l'administrateur d'IAMONJOB." }, { status: 403 });
   }
 
   try {

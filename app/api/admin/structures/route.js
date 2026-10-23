@@ -8,6 +8,9 @@
 //        { action: 'responsable', structureId, email }         nommer / inviter
 //        { action: 'retirerResponsable', structureId, email }
 //        { action: 'annuler', structureId, email }             invitation
+//        { action: 'suspendre', structureId, oui }             couper / rendre l'accès
+//        { action: 'retirer', structureId, uid, versUid }      retirer un membre
+// GET ?membres=<structureId> → membres d'une structure
 // ════════════════════════════════════════════════════════════════════════════
 
 import { NextResponse } from 'next/server';
@@ -15,6 +18,7 @@ import { requireRole } from '@/lib/session';
 import {
   isPlatformAdmin, listStructures, creerStructure, renommerStructure,
   nommerResponsableStructure, nommerResponsable, annulerInvitation,
+  suspendreStructure, listEquipe, retirerAcces,
 } from '@/lib/structures';
 import { logEvent, newRequestId } from '@/lib/logger';
 
@@ -34,11 +38,20 @@ const sid = (v) => {
 };
 
 export async function GET(request) {
-  const { res, ok } = await guard(request);
+  const { res, s, ok } = await guard(request);
   if (res) return res;
   if (!ok) return NextResponse.json({ admin: false });
+  const membresDe = new URL(request.url).searchParams.get('membres');
+  if (membresDe) {
+    try {
+      const { membres } = await listEquipe(sid(membresDe));
+      return NextResponse.json({ admin: true, membres });
+    } catch (err) {
+      return NextResponse.json({ error: err.message || 'Erreur chargement.' }, { status: err.status || 500 });
+    }
+  }
   try {
-    return NextResponse.json({ admin: true, structures: await listStructures() });
+    return NextResponse.json({ admin: true, maStructure: s.structureId || 'default', structures: await listStructures() });
   } catch (err) {
     return NextResponse.json({ error: err.message || 'Erreur chargement.' }, { status: 500 });
   }
@@ -68,6 +81,16 @@ export async function POST(request) {
       case 'annuler':
         await annulerInvitation({ structureId: sid(body.structureId), email: body.email });
         await nommerResponsable({ structureId: sid(body.structureId), email: body.email, oui: false });
+        break;
+      case 'suspendre': {
+        const id = sid(body.structureId);
+        if (body.oui && id === (s.structureId || 'default')) throw Object.assign(new Error('Vous ne pouvez pas suspendre votre propre structure.'), { status: 400 });
+        await suspendreStructure({ structureId: id, oui: Boolean(body.oui), parEmail: s.email });
+        break;
+      }
+      case 'retirer':
+        if (body.uid === s.uid) throw Object.assign(new Error('Vous ne pouvez pas retirer votre propre accès.'), { status: 400 });
+        out = { ok: true, ...(await retirerAcces({ structureId: sid(body.structureId), uid: String(body.uid || ''), versUid: body.versUid ? String(body.versUid) : null })) };
         break;
       default:
         throw Object.assign(new Error('Action inconnue.'), { status: 400 });

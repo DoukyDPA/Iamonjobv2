@@ -10,7 +10,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { useEffect, useState } from 'react';
-import { Loader2, Building2, Plus, Crown, Mail, X, Pencil, Check } from 'lucide-react';
+import { Loader2, Building2, Plus, Crown, Mail, X, Pencil, Check, PauseCircle, PlayCircle, Users, UserMinus } from 'lucide-react';
 
 async function post(body) {
   const r = await fetch('/api/admin/structures', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -19,15 +19,84 @@ async function post(body) {
   return d;
 }
 
-function CarteStructure({ s, busy, run }) {
+function Membres({ s, busy, run }) {
+  const [membres, setMembres] = useState(null);
+  const [erreur, setErreur] = useState(null);
+  const [depart, setDepart] = useState(null);
+  const [versUid, setVersUid] = useState('');
+  async function load() {
+    try {
+      const r = await fetch(`/api/admin/structures?membres=${encodeURIComponent(s.id)}`);
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Chargement impossible.');
+      setMembres(d.membres);
+    } catch (e) { setErreur(e.message); }
+  }
+  useEffect(() => { load(); }, []);
+  if (erreur) return <p className="text-xs text-rose-600 mt-2">{erreur}</p>;
+  if (!membres) return <Loader2 className="w-4 h-4 animate-spin text-teal-600 mt-2" />;
+  if (membres.length === 0) return <p className="text-xs text-teal-700/70 mt-2">Aucun conseiller ne s'est encore connecté dans cette structure.</p>;
+  const autres = membres.filter((m) => m.uid !== depart?.uid);
+  return (
+    <div className="mt-2">
+      <ul className="divide-y divide-cream-100 border border-cream-200 rounded-xl">
+        {membres.map((m) => (
+          <li key={m.uid} className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
+            <span className="text-teal-900">
+              {m.prenom ? `${m.prenom} · ` : ''}{m.email}
+              {m.responsable && <Crown className="inline w-3 h-3 ml-1 text-amber-600" aria-label="responsable" />}
+              <span className="text-teal-700/60"> · {m.dossiers} dossier{m.dossiers > 1 ? 's' : ''}</span>
+            </span>
+            <button onClick={() => { setDepart(m); setVersUid(''); }} disabled={busy} className="inline-flex items-center gap-1 font-semibold text-rose-600 hover:underline">
+              <UserMinus className="w-3.5 h-3.5" /> Retirer l'accès
+            </button>
+          </li>
+        ))}
+      </ul>
+      {depart && (
+        <div className="mt-2 p-3 rounded-xl border border-rose-200 bg-rose-50 text-xs text-rose-900 space-y-2">
+          <p>Retirer l'accès de <strong>{depart.email}</strong> ? Sa connexion est coupée et son adresse est bloquée. Rien n'est effacé.</p>
+          {depart.dossiers > 0 && (
+            autres.length > 0 ? (
+              <label className="block">Ses {depart.dossiers} dossiers passent à :{' '}
+                <select value={versUid} onChange={(e) => setVersUid(e.target.value)} className="ml-1 p-1 rounded border border-rose-200 bg-white">
+                  <option value="">choisir un collègue</option>
+                  {autres.map((m) => <option key={m.uid} value={m.uid}>{m.prenom || m.email}</option>)}
+                </select>
+              </label>
+            ) : <p>Personne d'autre dans cette structure pour reprendre ses dossiers : suspendez plutôt la structure.</p>
+          )}
+          <div className="flex gap-2">
+            <button
+              disabled={busy || (depart.dossiers > 0 && !versUid)}
+              onClick={async () => { if (await run({ action: 'retirer', structureId: s.id, uid: depart.uid, versUid: versUid || null }, `Accès de ${depart.email} retiré.`)) { setDepart(null); load(); } }}
+              className="px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold disabled:bg-rose-200"
+            >Confirmer</button>
+            <button onClick={() => setDepart(null)} className="px-3 py-1.5 rounded-lg border border-rose-200 bg-white">Annuler</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CarteStructure({ s, busy, run, moi }) {
   const [email, setEmail] = useState('');
   const [edit, setEdit] = useState(false);
   const [nom, setNom] = useState(s.nom);
+  const [voirMembres, setVoirMembres] = useState(false);
+  const [confirmSusp, setConfirmSusp] = useState(false);
+  const estMienne = s.id === moi;
   const enAttente = s.invitations.filter((e) => s.responsables.includes(e));
   const actifs = s.responsables.filter((e) => !s.invitations.includes(e));
 
   return (
-    <div className="bg-white border border-cream-200 rounded-2xl shadow-card p-4">
+    <div className={`border rounded-2xl shadow-card p-4 ${s.suspendue ? 'bg-cream-50 border-rose-200' : 'bg-white border-cream-200'}`}>
+      {s.suspendue && (
+        <p className="mb-3 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-2 py-1.5">
+          Structure suspendue{s.suspendueLe ? ` depuis le ${new Date(s.suspendueLe).toLocaleDateString('fr-FR')}` : ''} : ses conseillers n'ont plus accès. Rien n'est effacé.
+        </p>
+      )}
       <div className="flex items-start justify-between gap-3">
         <div>
           {edit ? (
@@ -81,6 +150,31 @@ function CarteStructure({ s, busy, run }) {
           </button>
         </form>
       </div>
+
+      <div className="mt-3 pt-3 border-t border-cream-100 flex flex-wrap gap-3 text-xs font-semibold">
+        <button onClick={() => setVoirMembres((v) => !v)} className="inline-flex items-center gap-1 text-teal-700 hover:underline">
+          <Users className="w-3.5 h-3.5" /> {voirMembres ? 'Masquer les conseillers' : 'Voir les conseillers'}
+        </button>
+        {!estMienne && (s.suspendue ? (
+          <button onClick={() => run({ action: 'suspendre', structureId: s.id, oui: false }, `${s.nom} est réactivée : ses conseillers retrouvent leur accès.`)} disabled={busy} className="inline-flex items-center gap-1 text-teal-700 hover:underline">
+            <PlayCircle className="w-3.5 h-3.5" /> Réactiver la structure
+          </button>
+        ) : (
+          <button onClick={() => setConfirmSusp(true)} disabled={busy} className="inline-flex items-center gap-1 text-rose-600 hover:underline">
+            <PauseCircle className="w-3.5 h-3.5" /> Suspendre la structure
+          </button>
+        ))}
+      </div>
+      {confirmSusp && (
+        <div className="mt-2 p-3 rounded-xl border border-rose-200 bg-rose-50 text-xs text-rose-900 space-y-2">
+          <p>Suspendre <strong>{s.nom}</strong> ? Tous ses conseillers et responsables perdent l'accès dans la minute. Rien n'est effacé : vous pourrez réactiver la structure à tout moment.</p>
+          <div className="flex gap-2">
+            <button disabled={busy} onClick={async () => { if (await run({ action: 'suspendre', structureId: s.id, oui: true }, `${s.nom} est suspendue.`)) setConfirmSusp(false); }} className="px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold disabled:bg-rose-200">Suspendre</button>
+            <button onClick={() => setConfirmSusp(false)} className="px-3 py-1.5 rounded-lg border border-rose-200 bg-white">Annuler</button>
+          </div>
+        </div>
+      )}
+      {voirMembres && <Membres s={s} busy={busy} run={run} />}
     </div>
   );
 }
@@ -136,7 +230,7 @@ export default function StructuresPanel() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {data.structures.map((s) => <CarteStructure key={s.id} s={s} busy={busy} run={run} />)}
+        {data.structures.map((s) => <CarteStructure key={s.id} s={s} busy={busy} run={run} moi={data.maStructure} />)}
       </div>
     </section>
   );
